@@ -1,0 +1,69 @@
+/* ✅ Tailwind v4 base layers */
+@import "tailwindcss/preflight";
+@import "tailwindcss/utilities";
+
+/* 🌍 Your custom theme tokens */
+:root {
+  --color-background: #f9f8c0;
+  --color-foreground: #1a1a1a;
+  --color-primary: #3B7A57;
+  --color-secondary: #5D8AA8;
+  --color-accent: #A0522D;
+}
+
+html, body {
+  padding: 0;
+  margin: 0;
+  min-height: 100%;
+  background-color: var(--color-background);
+  color: var(--color-foreground);
+  font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
+    "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif,
+    "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+  line-height: 1.5;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+img, video {
+  max-width: 100%;
+  height: auto;
+}
+
+a {
+  color: var(--color-primary);
+  text-decoration: none;
+}
+a:hover {
+  text-decoration: underline;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-weight: 700;
+  color: var(--color-foreground);
+  margin-top: 0;
+}
+
+button {
+  font-family: inherit;
+  cursor: pointer;
+}
+button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* Optional custom animation */
+@keyframes bounce-slow {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-10%);
+  }
+}
+.animate-bounce-slow {
+  animation: bounce-slow 2s infinite;
+}
