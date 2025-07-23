@@ -26,7 +26,7 @@ The Olive Branch Network is designed to:
 
 ## 📄 Whitepaper
 
-📥 [**Download the latest Whitepaper**](./Olive.Branch.Network.OBN.Whitepaper.pdf)  
+📥 [**Download the latest Whitepaper**](./Olive_Branch_Network_(OBN)_Whitepaper.pdf)
 (Hosted in the repository’s releases for a clean viewing experience.)
 
 ---
