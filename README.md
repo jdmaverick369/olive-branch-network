@@ -1,7 +1,7 @@
 # 🌿 Olive Branch Network (OBN)
 
 **Olive Branch Network (OBN)** is a next‑generation blockchain initiative with a mission to merge decentralized finance with real‑world impact.  
-At its core, OBN enables staking, governance, and trust‑based donation flows — automatically directing a portion of network rewards to vetted charities and community initiatives.
+At its core, OBN enables staking, governance, and trust‑based donation flows — automatically directing a portion of network rewards to vetted non-profit humanitarian organizations.
 
 ---
 
