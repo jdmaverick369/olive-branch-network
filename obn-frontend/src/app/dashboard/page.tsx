@@ -1,12 +1,10 @@
-"use client";
+"use client"; // This directive ensures that the component is treated as a client component
 
-import { useRouter } from "next/navigation";
-import { useAccount, useReadContract } from "wagmi";
 import { useEffect } from "react";
+import { useRouter } from "next/navigation";
+import { useAccount } from "wagmi";
 import PoolCard from "@/components/PoolCard";
 import { StatusBar } from "@/components/StatusBar";
-import { stakingAbi } from "@/lib/stakingAbi";
-import { useDisconnect } from "wagmi";
 
 const pools = [
   {
@@ -32,77 +30,32 @@ const pools = [
   },
 ];
 
-// ✅ helper hook to read live data for a pool
-function usePoolData(pid: number) {
-  const { address } = useAccount();
-
-  // read pool info (struct: [charityWallet, active, totalStaked, accRewardPerShare, lastRewardTime])
-  const { data: poolData } = useReadContract({
-    address: process.env.NEXT_PUBLIC_STAKING_CONTRACT as `0x${string}`,
-    abi: stakingAbi,
-    functionName: "pools",
-    args: [pid],
-  });
-
-  const { disconnect } = useDisconnect();
-// read user info (struct: [amount, rewardDebt, withTreasury])
-  const { data: userData } = useReadContract({
-    address: process.env.NEXT_PUBLIC_STAKING_CONTRACT as `0x${string}`,
-    abi: stakingAbi,
-    functionName: "userInfo",
-    args: [pid, address as `0x${string}`],
-    query: { enabled: !!address },
-  });
-
-  const totalStaked = poolData ? Number((poolData as any)[2]) / 1e18 : 0;
-  const userStake = userData ? Number((userData as any)[0]) / 1e18 : 0;
-
-  return { totalStaked, userStake };
-}
-
 export default function DashboardPage() {
   const { isConnected } = useAccount();
   const router = useRouter();
 
   useEffect(() => {
-    if (!isConnected) router.push("/");
+    if (!isConnected) router.push("/"); // Redirect to homepage if not connected
   }, [isConnected, router]);
 
   return (
-    <div className="relative min-h-screen bg-[#a9c7f9] flex flex-col">
-      <div></div>
+    <div className="relative min-h-screen bg-gradient-to-br from-green-50 to-green-100 flex flex-col">
+      {/* ✅ Fixed top header */}
+      <div className="fixed top-0 left-0 w-full bg-green-700 text-white py-3 text-center font-bold text-xl shadow-md z-50">
+        🌱 Olive Branch Network
+      </div>
 
-      {/* ✅ Main section is flex-grow with center alignment */}
-      <main
-        className="
-          flex-1
-          flex
-          flex-col
-          items-center
-          justify-center
-          pt-20
-          pb-20
-          px-4
-        "
-      >
-        <h1 className="text-center text-3xl md:text-4xl font-extrabold mb-12">
+      {/* Spacer so content doesn't hide behind header */}
+      <div className="pt-16"></div>
+
+      {/* ✅ Scrollable main content */}
+      <main className="flex-1 px-4 py-8 flex flex-col items-center">
+        <h1 className="text-center text-3xl md:text-4xl font-extrabold mb-6">
           Start earning OBN rewards by staking OBN to one of the following pools:
         </h1>
 
-        {/* ✅ Responsive grid */}
-        <div
-          className="
-            grid
-            gap-8
-            w-full
-            max-w-7xl
-            grid-cols-[repeat(auto-fit,minmax(18rem,1fr))]
-            justify-items-center
-          "
-        >
-          {pools.map((pool, index) => {
-            console.log("pool.pid:", pool.pid, "index:", index);
-            return (
+        <div className="w-full max-w-7xl grid gap-8 grid-cols-[repeat(auto-fit,minmax(18rem,1fr))] justify-items-center">
+          {pools.map((pool, index) => (
             <PoolCard
               key={index}
               pid={pool.pid ?? index}
@@ -110,14 +63,17 @@ export default function DashboardPage() {
               name={pool.name}
               description={pool.description}
             />
-        );
-        
-    })}
+          ))}
         </div>
-      </main><div className="fixed top-0 left-0 w-full z-50">
+      </main>
+
+      {/* Spacer so last pool card isn’t hidden by StatusBar */}
+      <div className="h-24"></div>
+
+      {/* ✅ Fixed bottom StatusBar */}
+      <div className="fixed bottom-0 left-0 right-0 z-50">
         <StatusBar />
       </div>
-
     </div>
   );
 }

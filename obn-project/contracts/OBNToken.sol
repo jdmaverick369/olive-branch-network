@@ -16,14 +16,31 @@ contract OBNToken is Initializable, ERC20VotesUpgradeable, OwnableUpgradeable, U
         _disableInitializers();
     }
 
-    function initialize(address initialOwner, uint256 initialSupply) public initializer {
+    function initialize(
+        address initialOwner, 
+        uint256 initialSupply,
+        address liquidityAddress, 
+        address airdropAddress,
+        address treasuryAddress, 
+        address teamVestingAddress
+    ) public initializer {
+        // Initializing ERC20 and Ownable
         __ERC20_init("Olive Branch Network", "OBN");
-        __EIP712_init("Olive Branch Network", "1"); // ✅ required parent initializer
+        __EIP712_init("Olive Branch Network", "1");
         __ERC20Votes_init();
-        __Ownable_init(initialOwner);
+        __Ownable_init(initialOwner);  // Proper initialization of OwnableUpgradeable with the owner address
         __UUPSUpgradeable_init();
 
-        _mint(initialOwner, initialSupply);
+        uint256 liquidityAmount = initialSupply * 40 / 100;   // 40% to liquidity
+        uint256 airdropAmount = initialSupply * 40 / 100;      // 40% to airdrop
+        uint256 treasuryAmount = initialSupply * 10 / 100;     // 10% to treasury
+        uint256 teamVestingAmount = initialSupply * 10 / 100;  // 10% to team vesting
+
+        // Mint tokens for the specified addresses
+        _mint(liquidityAddress, liquidityAmount);
+        _mint(airdropAddress, airdropAmount);
+        _mint(treasuryAddress, treasuryAmount);
+        _mint(teamVestingAddress, teamVestingAmount);
     }
 
     modifier onlyMinter() {
@@ -41,11 +58,4 @@ contract OBNToken is Initializable, ERC20VotesUpgradeable, OwnableUpgradeable, U
     }
 
     function _authorizeUpgrade(address newImplementation) internal override onlyOwner {}
-
-    function _update(address from, address to, uint256 amount)
-        internal
-        override(ERC20VotesUpgradeable)
-    {
-        super._update(from, to, amount);
-    }
 }

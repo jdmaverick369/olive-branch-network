@@ -1,6 +1,7 @@
-/* ✅ Tailwind v4 base layers */
-@import "tailwindcss/preflight";
-@import "tailwindcss/utilities";
+/* ✅ Tailwind v3 layers */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
 
 /* 🌍 Your custom theme tokens */
 :root {

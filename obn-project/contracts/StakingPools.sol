@@ -1,30 +1,29 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.28;
 
+import "@openzeppelin/contracts-upgradeable/token/ERC20/ERC20Upgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
+import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
+import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import "@openzeppelin/contracts/access/Ownable.sol";
-import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
-import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 
 interface IOBNMintable is IERC20 {
     function mint(address to, uint256 amount) external;
 }
 
-contract StakingPools is Ownable, ReentrancyGuard {
-    struct Pool {
+contract OBNStakingPools is Initializable, UUPSUpgradeable, ReentrancyGuardUpgradeable, OwnableUpgradeable {
+    using SafeERC20 for IOBNMintable;
+
+    struct PoolInfo {
         address charityWallet;
         bool active;
         uint256 totalStaked;
-        uint256 accRewardPerShare;
-        uint256 lastRewardTime;
-        address boostNFT; // NEW: optional NFT contract for bonus
-        uint256 voteWeight; // NEW: weight for governance purposes
     }
 
-    struct UserInfo {
+    struct UserPoolInfo {
         uint256 amount;
-        uint256 rewardDebt;
-        bool withTreasury; // true = 80/15/5, false = 85/15
     }
 
     struct Phase {
@@ -33,348 +32,313 @@ contract StakingPools is Ownable, ReentrancyGuard {
         uint256 bps;
     }
 
-    IOBNMintable public immutable stakingToken;
+    IOBNMintable public stakingToken;
     address public treasury;
-    uint256 public initialSupply;
-    uint256 public startTimestamp;
-    Phase[] public phases;
-    Pool[] public pools;
-    mapping(uint256 => mapping(address => UserInfo)) public userInfo;
+    uint256 public treasuryBps;
+    uint256 public constant CHARITY_BPS = 1500; // 15%
+    string public currentVersion;
+    bool public paused;
 
-    // ✅ Events
+    Phase[] public phases;
+    PoolInfo[] public poolInfo;
+    mapping(uint256 => mapping(address => UserPoolInfo)) public userPool;
+
+    uint256 public globalTotalStaked;
+    uint256 public globalAccRewardPerShare;
+    uint256 public lastGlobalRewardTime;
+
+    mapping(address => uint256) public userTotalStaked;
+    mapping(address => uint256) public userRewardDebt;
+
+    mapping(address => uint256) public totalClaimedByUser;
+    mapping(address => uint256) public totalDepositedByUser;
+    mapping(address => uint256) public totalWithdrawnByUser;
+
+    mapping(uint256 => uint256) public totalClaimedByPool;
+    mapping(uint256 => uint256) public totalDepositedByPool;
+    mapping(uint256 => uint256) public totalWithdrawnByPool;
+
     event PoolAdded(uint256 indexed pid, address charityWallet);
     event PoolRetired(uint256 indexed pid);
     event Deposit(address indexed user, uint256 indexed pid, uint256 amount);
     event Withdraw(address indexed user, uint256 indexed pid, uint256 amount);
-    event Claim(address indexed user, uint256 indexed pid, uint256 stakerAmount, uint256 charityAmount, uint256 treasuryAmount);
-    event Compound(address indexed user, uint256 indexed pid, uint256 addedStake, uint256 charityAmount, uint256 treasuryAmount);
-    event Voted(address indexed user, uint256 indexed pid, uint256 weight);
-    event BoostNFTSet(uint256 indexed pid, address nft);
+    event Claim(address indexed user, uint256 amount, bool toStake);
+    event TreasuryBpsChanged(uint256 newBps);
+    event Paused(bool isPaused);
+    event PhaseAdded(uint256 start, uint256 end, uint256 bps);
+    event ContractVersion(string version);
+    event RewardStaked(address indexed user, uint256 indexed pid, uint256 amount);
 
-    constructor(
+    modifier whenNotPaused() {
+        require(!paused, "Paused");
+        _;
+    }
+
+    /// @custom:oz-upgrades-unsafe-allow constructor
+    constructor() {
+        _disableInitializers();
+    }
+
+    function initialize(
         IOBNMintable _stakingToken,
-        address _treasury,
-        address initialOwner,
-        uint256 _initialSupply
-    ) Ownable(initialOwner) {
+        address _treasury
+    ) public initializer {
+        __ReentrancyGuard_init();
+        __UUPSUpgradeable_init();
+        __Ownable_init(msg.sender);
+
         require(address(_stakingToken) != address(0), "Invalid token");
         require(_treasury != address(0), "Invalid treasury");
 
         stakingToken = _stakingToken;
         treasury = _treasury;
-        initialSupply = _initialSupply;
-        startTimestamp = block.timestamp;
+        treasuryBps = 500;
 
+        uint256 start = block.timestamp;
         uint256 year = 365 days;
-        phases.push(Phase({start: startTimestamp, end: startTimestamp + 2 * year, bps: 1000}));
-        phases.push(Phase({start: startTimestamp + 2 * year, end: startTimestamp + 4 * year, bps: 750}));
-        phases.push(Phase({start: startTimestamp + 4 * year, end: startTimestamp + 6 * year, bps: 500}));
-        phases.push(Phase({start: startTimestamp + 6 * year, end: startTimestamp + 8 * year, bps: 250}));
-        phases.push(Phase({start: startTimestamp + 8 * year, end: startTimestamp + 10 * year, bps: 125}));
+        phases.push(Phase(start, start + 2 * year, 1000));
+        phases.push(Phase(start + 2 * year, start + 4 * year, 750));
+        phases.push(Phase(start + 4 * year, start + 6 * year, 500));
+        phases.push(Phase(start + 6 * year, start + 8 * year, 250));
+        phases.push(Phase(start + 8 * year, start + 10 * year, 125));
+
+        lastGlobalRewardTime = block.timestamp;
+        currentVersion = "2.0.0";
+        emit ContractVersion(currentVersion);
     }
 
-    // ---------------- Pool Management ----------------
+    function _authorizeUpgrade(address) internal override onlyOwner {
+        currentVersion = "2.0.X";
+        emit ContractVersion(currentVersion);
+    }
+
+    // ----------------- Admin -----------------
     function addPool(address charityWallet) external onlyOwner {
         require(charityWallet != address(0), "Invalid charity");
-        pools.push(Pool({
-            charityWallet: charityWallet,
-            active: true,
-            totalStaked: 0,
-            accRewardPerShare: 0,
-            lastRewardTime: block.timestamp,
-            boostNFT: address(0),
-            voteWeight: 0
-        }));
-        emit PoolAdded(pools.length - 1, charityWallet);
-    }
-
-    function setBoostNFT(uint256 pid, address nft) external onlyOwner {
-        require(pid < pools.length, "Invalid pool");
-        pools[pid].boostNFT = nft;
-        emit BoostNFTSet(pid, nft);
-    }
-
-    function setVoteWeight(uint256 pid, uint256 weight) external onlyOwner {
-        require(pid < pools.length, "Invalid pool");
-        pools[pid].voteWeight = weight;
+        poolInfo.push(PoolInfo(charityWallet, true, 0));
+        emit PoolAdded(poolInfo.length - 1, charityWallet);
     }
 
     function retirePool(uint256 pid) external onlyOwner {
-        require(pid < pools.length, "Invalid pool");
-        pools[pid].active = false;
+        require(pid < poolInfo.length, "Invalid pool");
+        poolInfo[pid].active = false;
         emit PoolRetired(pid);
     }
 
-    function poolLength() external view returns (uint256) {
-        return pools.length;
+    function setTreasuryBps(uint256 newBps) external onlyOwner {
+        require(newBps >= 100 && newBps <= 500, "1-5%");
+        treasuryBps = newBps;
+        emit TreasuryBpsChanged(newBps);
     }
 
-    // ---------------- Voting ----------------
-    function vote(uint256 pid, uint256 weight) external {
-        require(pid < pools.length, "Invalid pool");
-        UserInfo storage user = userInfo[pid][msg.sender];
-        require(user.amount > 0, "Stake required to vote");
-        // On-chain record (off-chain tally can read this)
-        emit Voted(msg.sender, pid, weight);
+    function setPaused(bool _paused) external onlyOwner {
+        paused = _paused;
+        emit Paused(_paused);
     }
 
-    // ---------------- User Functions ----------------
-    function setTreasuryPreference(uint256 pid, bool enable) external {
-        userInfo[pid][msg.sender].withTreasury = enable;
+    function addPhase(uint256 start, uint256 end, uint256 bps) external onlyOwner {
+        require(start < end, "Invalid");
+        phases.push(Phase(start, end, bps));
+        emit PhaseAdded(start, end, bps);
     }
 
-    function deposit(uint256 pid, uint256 amount) external nonReentrant {
-        Pool storage pool = pools[pid];
-        require(pool.active, "Pool retired");
-        _updatePool(pid);
-
-        UserInfo storage user = userInfo[pid][msg.sender];
-        if (user.amount == 0) {
-            user.withTreasury = true; // default 80/15/5
-        }
-
-        if (user.amount > 0) {
-            uint256 pending = ((user.amount * pool.accRewardPerShare) / 1e12) - user.rewardDebt;
-            if (pending > 0) {
-                _mintRewards(pid, msg.sender, pending, user.withTreasury);
-            }
-        }
-
-        if (amount > 0) {
-            IERC20(address(stakingToken)).transferFrom(msg.sender, address(this), amount);
-            user.amount += amount;
-            pool.totalStaked += amount;
-        }
-
-        user.rewardDebt = (user.amount * pool.accRewardPerShare) / 1e12;
-        emit Deposit(msg.sender, pid, amount);
+    function sweep(address token, uint256 amount) external onlyOwner {
+        require(token != address(stakingToken), "Cannot sweep staking token");
+        IERC20(token).transfer(treasury, amount);
     }
 
-    function withdraw(uint256 pid, uint256 amount) external nonReentrant {
-        Pool storage pool = pools[pid];
-        UserInfo storage user = userInfo[pid][msg.sender];
-        require(user.amount >= amount, "Withdraw > staked");
-
-        _updatePool(pid);
-
-        uint256 pending = ((user.amount * pool.accRewardPerShare) / 1e12) - user.rewardDebt;
-        if (pending > 0) {
-            _mintRewards(pid, msg.sender, pending, user.withTreasury);
-        }
-
-        if (amount > 0) {
-            user.amount -= amount;
-            pool.totalStaked -= amount;
-            IERC20(address(stakingToken)).transfer(msg.sender, amount);
-        }
-
-        user.rewardDebt = (user.amount * pool.accRewardPerShare) / 1e12;
-        emit Withdraw(msg.sender, pid, amount);
-    }
-
-    function claim(uint256 pid) external nonReentrant {
-        Pool storage pool = pools[pid];
-        UserInfo storage user = userInfo[pid][msg.sender];
-
-        _updatePool(pid);
-
-        uint256 pending = ((user.amount * pool.accRewardPerShare) / 1e12) - user.rewardDebt;
-        require(pending > 0, "Nothing to claim");
-
-        _mintRewards(pid, msg.sender, pending, user.withTreasury);
-        user.rewardDebt = (user.amount * pool.accRewardPerShare) / 1e12;
-    }
-
-    function compound(uint256 pid) external nonReentrant {
-        Pool storage pool = pools[pid];
-        UserInfo storage user = userInfo[pid][msg.sender];
-
-        _updatePool(pid);
-
-        uint256 pending = ((user.amount * pool.accRewardPerShare) / 1e12) - user.rewardDebt;
-        require(pending > 0, "Nothing to compound");
-
-        uint256 boosted = _applyNFTBoost(pid, msg.sender, pending);
-
-        uint256 stakerCut;
-        uint256 charityCut;
-        uint256 treasuryCut;
-
-        if (user.withTreasury) {
-            treasuryCut = (boosted * 5) / 100;
-            charityCut = (boosted * 15) / 100;
-            stakerCut = boosted - charityCut - treasuryCut;
-        } else {
-            charityCut = (boosted * 15) / 100;
-            stakerCut = boosted - charityCut;
-            treasuryCut = 0;
-        }
-
-        stakingToken.mint(address(this), stakerCut);
-        user.amount += stakerCut;
-        pool.totalStaked += stakerCut;
-
-        stakingToken.mint(pool.charityWallet, charityCut);
-        if (treasuryCut > 0) {
-            stakingToken.mint(treasury, treasuryCut);
-        }
-
-        user.rewardDebt = (user.amount * pool.accRewardPerShare) / 1e12;
-        emit Compound(msg.sender, pid, stakerCut, charityCut, treasuryCut);
-    }
-
-    function emergencyWithdraw(uint256 pid) external nonReentrant {
-        UserInfo storage user = userInfo[pid][msg.sender];
-        uint256 amount = user.amount;
-        require(amount > 0, "Nothing staked");
-        user.amount = 0;
-        user.rewardDebt = 0;
-        pools[pid].totalStaked -= amount;
-        IERC20(address(stakingToken)).transfer(msg.sender, amount);
-        emit Withdraw(msg.sender, pid, amount);
-    }
-
-    // ---------------- Internal Logic ----------------
+    // ----------------- Emissions -----------------
     function currentRewardsPerSecond() public view returns (uint256) {
         uint256 nowTs = block.timestamp;
         for (uint256 i = 0; i < phases.length; i++) {
             if (nowTs >= phases[i].start && nowTs < phases[i].end) {
-                uint256 yearlyReward = (initialSupply * phases[i].bps) / 10000;
-                return yearlyReward / (365 days);
+                uint256 yearly = (globalTotalStaked * phases[i].bps) / 10000;
+                return yearly / (365 days);
             }
         }
         return 0;
     }
 
-    function _updatePool(uint256 pid) internal {
-        Pool storage pool = pools[pid];
-        if (block.timestamp <= pool.lastRewardTime) return;
-        if (pool.totalStaked == 0) {
-            pool.lastRewardTime = block.timestamp;
+    function _updateGlobal() internal {
+        if (block.timestamp <= lastGlobalRewardTime) return;
+        if (globalTotalStaked == 0) {
+            lastGlobalRewardTime = block.timestamp;
             return;
         }
-        uint256 timeElapsed = block.timestamp - pool.lastRewardTime;
-        uint256 reward = timeElapsed * currentRewardsPerSecond();
-        pool.accRewardPerShare += (reward * 1e12) / pool.totalStaked;
-        pool.lastRewardTime = block.timestamp;
-    }
+        uint256 elapsed = block.timestamp - lastGlobalRewardTime;
+        uint256 reward = elapsed * currentRewardsPerSecond();
+        if (reward > 0) {
+            uint256 charityCut = (reward * CHARITY_BPS) / 10000;
+            uint256 tCut = (reward * treasuryBps) / 10000;
+            uint256 sCut = reward - charityCut - tCut;
 
-    function _mintRewards(uint256 pid, address user, uint256 amount, bool withTreasury) internal {
-        Pool storage pool = pools[pid];
+            if (sCut > 0) {
+                stakingToken.mint(address(this), sCut);
+                globalAccRewardPerShare += (sCut * 1e12) / globalTotalStaked;
+            }
+            if (tCut > 0) stakingToken.mint(treasury, tCut);
 
-        uint256 boosted = _applyNFTBoost(pid, user, amount);
-
-        if (withTreasury) {
-            uint256 treasuryCut = (boosted * 5) / 100;
-            uint256 charityCut = (boosted * 15) / 100;
-            uint256 stakerCut = boosted - charityCut - treasuryCut;
-
-            stakingToken.mint(user, stakerCut);
-            stakingToken.mint(pool.charityWallet, charityCut);
-            stakingToken.mint(treasury, treasuryCut);
-            emit Claim(user, pid, stakerCut, charityCut, treasuryCut);
-        } else {
-            uint256 charityCut = (boosted * 15) / 100;
-            uint256 stakerCut = boosted - charityCut;
-
-            stakingToken.mint(user, stakerCut);
-            stakingToken.mint(pool.charityWallet, charityCut);
-            emit Claim(user, pid, stakerCut, charityCut, 0);
-        }
-    }
-
-    function _applyNFTBoost(uint256 pid, address user, uint256 baseAmount) internal view returns (uint256) {
-        Pool storage pool = pools[pid];
-        if (pool.boostNFT != address(0)) {
-            try IERC721(pool.boostNFT).balanceOf(user) returns (uint256 bal) {
-                if (bal > 0) {
-                    return (baseAmount * 110) / 100; // 10% boost
+            if (charityCut > 0 && poolInfo.length > 0) {
+                for (uint256 i = 0; i < poolInfo.length; i++) {
+                    if (poolInfo[i].active && poolInfo[i].totalStaked > 0) {
+                        uint256 portion = (charityCut * poolInfo[i].totalStaked) / globalTotalStaked;
+                        if (portion > 0) {
+                            stakingToken.mint(poolInfo[i].charityWallet, portion);
+                        }
+                    }
                 }
-            } catch {}
-        }
-        return baseAmount;
-    }
-
-    // ---------------- Views ----------------
-    function getPool(uint256 pid) external view returns (
-        address charityWallet,
-        bool active,
-        uint256 totalStaked,
-        uint256 accRewardPerShare,
-        uint256 lastRewardTime
-    ) {
-        require(pid < pools.length, "Invalid pool");
-        Pool memory pool = pools[pid];
-        return (pool.charityWallet, pool.active, pool.totalStaked, pool.accRewardPerShare, pool.lastRewardTime);
-    }
-
-    function getUserStaked(uint256 pid, address user) external view returns (uint256) {
-        return userInfo[pid][user].amount;
-    }
-
-    function getPoolInfo(uint256 pid) external view returns (
-        address charityWallet,
-        bool active,
-        uint256 totalStaked,
-        uint256 accRewardPerShare,
-        uint256 lastRewardTime
-    ) {
-        Pool memory p = pools[pid];
-        return (p.charityWallet, p.active, p.totalStaked, p.accRewardPerShare, p.lastRewardTime);
-    }
-
-    function getUserInfo(uint256 pid, address userAddr) external view returns (uint256, uint256, bool) {
-        UserInfo memory u = userInfo[pid][userAddr];
-        return (u.amount, u.rewardDebt, u.withTreasury);
-    }
-
-    function pendingRewards(uint256 pid, address userAddr) external view returns (uint256) {
-        Pool memory pool = pools[pid];
-        UserInfo memory user = userInfo[pid][userAddr];
-        uint256 acc = pool.accRewardPerShare;
-        if (block.timestamp > pool.lastRewardTime && pool.totalStaked != 0) {
-            uint256 timeElapsed = block.timestamp - pool.lastRewardTime;
-            uint256 reward = timeElapsed * currentRewardsPerSecond();
-            acc += (reward * 1e12) / pool.totalStaked;
-        }
-        uint256 pending = (user.amount * acc) / 1e12 - user.rewardDebt;
-        return pending;
-    }
-
-    function getAllPools() external view returns (
-        address[] memory charityWallets,
-        bool[] memory activeFlags,
-        uint256[] memory totalStakedArr,
-        uint256[] memory accRewardPerShareArr,
-        uint256[] memory lastRewardTimes
-    ) {
-        uint256 length = pools.length;
-        charityWallets = new address[](length);
-        activeFlags = new bool[](length);
-        totalStakedArr = new uint256[](length);
-        accRewardPerShareArr = new uint256[](length);
-        lastRewardTimes = new uint256[](length);
-        for (uint256 i = 0; i < length; i++) {
-            Pool storage p = pools[i];
-            charityWallets[i] = p.charityWallet;
-            activeFlags[i] = p.active;
-            totalStakedArr[i] = p.totalStaked;
-            accRewardPerShareArr[i] = p.accRewardPerShare;
-            lastRewardTimes[i] = p.lastRewardTime;
-        }
-    }
-
-    function batchClaim(uint256[] calldata pids) external nonReentrant {
-        for (uint256 i = 0; i < pids.length; i++) {
-            uint256 pid = pids[i];
-            Pool storage pool = pools[pid];
-            UserInfo storage user = userInfo[pid][msg.sender];
-            _updatePool(pid);
-            uint256 pending = ((user.amount * pool.accRewardPerShare) / 1e12) - user.rewardDebt;
-            if (pending > 0) {
-                _mintRewards(pid, msg.sender, pending, user.withTreasury);
-                user.rewardDebt = (user.amount * pool.accRewardPerShare) / 1e12;
             }
         }
+        lastGlobalRewardTime = block.timestamp;
+    }
+
+    function _claimRewardsFor(address user) internal returns (uint256 pending) {
+        pending = ((userTotalStaked[user] * globalAccRewardPerShare) / 1e12) - userRewardDebt[user];
+        if (pending > 0) {
+            stakingToken.mint(user, pending);
+            totalClaimedByUser[user] += pending;
+            emit Claim(user, pending, false);
+        }
+    }
+
+    // ----------------- User Actions -----------------
+    function deposit(uint256 pid, uint256 amount) external nonReentrant whenNotPaused {
+        require(amount > 0, "Cannot stake 0 tokens");
+        require(poolInfo[pid].active, "Pool retired");
+        _updateGlobal();
+
+        // ✅ auto-claim pending rewards before updating stake
+        _claimRewardsFor(msg.sender);
+
+        stakingToken.safeTransferFrom(msg.sender, address(this), amount);
+        userPool[pid][msg.sender].amount += amount;
+        poolInfo[pid].totalStaked += amount;
+        userTotalStaked[msg.sender] += amount;
+        globalTotalStaked += amount;
+        totalDepositedByUser[msg.sender] += amount;
+        totalDepositedByPool[pid] += amount;
+
+        userRewardDebt[msg.sender] = (userTotalStaked[msg.sender] * globalAccRewardPerShare) / 1e12;
+        emit Deposit(msg.sender, pid, amount);
+    }
+
+    function withdraw(uint256 pid, uint256 amount) public nonReentrant whenNotPaused {
+        require(userPool[pid][msg.sender].amount >= amount, "Exceeds staked amount");
+        require(amount > 0, "Cannot withdraw 0 tokens");
+        _updateGlobal();
+
+        // ✅ auto-claim pending rewards before updating stake
+        _claimRewardsFor(msg.sender);
+
+        userPool[pid][msg.sender].amount -= amount;
+        poolInfo[pid].totalStaked -= amount;
+        userTotalStaked[msg.sender] -= amount;
+        globalTotalStaked -= amount;
+        totalWithdrawnByUser[msg.sender] += amount;
+        totalWithdrawnByPool[pid] += amount;
+
+        userRewardDebt[msg.sender] = (userTotalStaked[msg.sender] * globalAccRewardPerShare) / 1e12;
+
+        stakingToken.safeTransfer(msg.sender, amount);
+        emit Withdraw(msg.sender, pid, amount);
+    }
+
+    function claimToWallet() external nonReentrant whenNotPaused {
+        _updateGlobal();
+        uint256 pending = _claimRewardsFor(msg.sender);
+        userRewardDebt[msg.sender] = (userTotalStaked[msg.sender] * globalAccRewardPerShare) / 1e12;
+        emit Claim(msg.sender, pending, false);
+    }
+
+    function emergencyWithdraw(uint256 pid) external nonReentrant {
+        uint256 amt = userPool[pid][msg.sender].amount;
+        require(amt > 0, "Nothing staked");
+        userPool[pid][msg.sender].amount = 0;
+        poolInfo[pid].totalStaked -= amt;
+        userTotalStaked[msg.sender] -= amt;
+        globalTotalStaked -= amt;
+
+        stakingToken.safeTransfer(msg.sender, amt);
+        emit Withdraw(msg.sender, pid, amt);
+    }
+
+    // ----------------- Views -----------------
+    function getPoolInfo(uint256 pid) external view returns (address charityWallet, bool active, uint256 totalStaked) {
+        PoolInfo memory p = poolInfo[pid];
+        return (p.charityWallet, p.active, p.totalStaked);
+    }
+
+    function getTotalStakedAcrossPools() external view returns (uint256) {
+        return globalTotalStaked;
+    }
+
+    function pendingRewards(address userAddr) public view returns (uint256) {
+        uint256 acc = globalAccRewardPerShare;
+        if (block.timestamp > lastGlobalRewardTime && globalTotalStaked != 0) {
+            uint256 elapsed = block.timestamp - lastGlobalRewardTime;
+            uint256 reward = elapsed * currentRewardsPerSecond();
+            uint256 sCut = reward - ((reward * CHARITY_BPS) / 10000) - ((reward * treasuryBps) / 10000);
+            acc += (sCut * 1e12) / globalTotalStaked;
+        }
+        return ((userTotalStaked[userAddr] * acc) / 1e12) - userRewardDebt[userAddr];
+    }
+
+    function getUserStakeValue(uint256 pid, address userAddr) external view returns (uint256) {
+        return userPool[pid][userAddr].amount;
+    }
+
+    function getUserStats(address userAddr) external view returns (
+        uint256 totalUserStaked,
+        uint256 totalUserClaimed,
+        uint256 totalUserDeposited,
+        uint256 totalUserWithdrawn,
+        uint256 poolCount
+    ) {
+        for (uint256 i = 0; i < poolInfo.length; i++) {
+            if (userPool[i][userAddr].amount > 0) {
+                poolCount++;
+                totalUserStaked += userPool[i][userAddr].amount;
+            }
+        }
+        return (
+            totalUserStaked,
+            totalClaimedByUser[userAddr],
+            totalDepositedByUser[userAddr],
+            totalWithdrawnByUser[userAddr],
+            poolCount
+        );
+    }
+
+    function getUserInfo(uint256 pid, address userAddr) external view returns (uint256) {
+        return userPool[pid][userAddr].amount;
+    }
+
+    function getPoolAPR() external view returns (uint256 aprBps) {
+        if (globalTotalStaked == 0) return 0;
+        uint256 yearly = currentRewardsPerSecond() * 365 days;
+        return (yearly * 10000) / globalTotalStaked;
+    }
+
+    function poolLength() external view returns (uint256) {
+        return poolInfo.length;
+    }
+
+    function getEmissionStatus() external view returns (
+        uint256 currentBps,
+        uint256 emissionPerSecond,
+        uint256 phaseStart,
+        uint256 phaseEnd
+    ) {
+        uint256 nowTs = block.timestamp;
+        for (uint256 i = 0; i < phases.length; i++) {
+            if (nowTs >= phases[i].start && nowTs < phases[i].end) {
+                currentBps = phases[i].bps;
+                emissionPerSecond = (globalTotalStaked * currentBps) / 10000 / (365 days);
+                phaseStart = phases[i].start;
+                phaseEnd = phases[i].end;
+                return (currentBps, emissionPerSecond, phaseStart, phaseEnd);
+            }
+        }
+        return (0, 0, 0, 0);
     }
 }
