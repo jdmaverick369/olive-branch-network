@@ -9,24 +9,19 @@ import { StatusBar } from "@/components/StatusBar";
 const pools = [
   {
     pid: 0,
-    name: "Main Charity Pool",
+    name: "Treasury Pool (LIVE)",
     logo: "/charity1.png",
     description:
-      "Support environmental projects worldwide by staking your OBN here.",
+      "Until we onboard charities, stake OBN to support the Olive Branch Network treasury. 80% of rewards go to users, 20% to the treasury. Treasury funds will be used for growth and development. This pool will be removed once the first charity is onboarded.",
+    live: true, // 🆕 pool is live
   },
   {
     pid: 1,
-    name: "Education Fund",
+    name: "Example Charity Pool (NOT LIVE)",
     logo: "/charity2.png",
     description:
-      "Stake OBN to help build schools and provide learning resources.",
-  },
-  {
-    pid: 2,
-    name: "Clean Water Initiative",
-    logo: "/charity3.png",
-    description:
-      "Bring clean water to communities in need with your staked OBN.",
+      "Once we onboard charties, the reward structure will be 80% to the user, 15% to the charity, and 5% to the treasury (adjustable later from 1-5% when DAO is implemented, in which the user receives what the treasury does not).",
+    live: false, // 🆕 pool is not live yet
   },
 ];
 
@@ -51,7 +46,7 @@ export default function DashboardPage() {
       {/* ✅ Scrollable main content */}
       <main className="flex-1 px-4 py-8 flex flex-col items-center">
         <h1 className="text-center text-3xl md:text-4xl font-extrabold mb-6">
-          Start earning OBN rewards by staking OBN to one of the following pools:
+          Start earning rewards by staking OBN to one of the following pools:
         </h1>
 
         <div className="w-full max-w-7xl grid gap-8 grid-cols-[repeat(auto-fit,minmax(18rem,1fr))] justify-items-center">
@@ -62,6 +57,7 @@ export default function DashboardPage() {
               logo={pool.logo}
               name={pool.name}
               description={pool.description}
+              live={pool.live}
             />
           ))}
         </div>

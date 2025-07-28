@@ -154,28 +154,44 @@ export default function PoolDetailPage() {
   return (
     <div className="relative min-h-screen bg-gradient-to-br from-green-50 to-green-100 flex flex-col">
       <header className="fixed top-0 left-0 w-full bg-green-700 text-white py-3 text-center font-bold text-xl shadow-md z-50">
-        🌱 Olive Branch Network — Pool #{poolId}
+        🌱 Olive Branch Network
       </header>
 
       <div className="pt-16"></div>
 
       <main className="flex-1 px-4 py-8 flex flex-col items-center">
         <section className="bg-white rounded-xl shadow-lg p-6 max-w-md w-full mb-6">
-          <h2 className="text-2xl font-bold mb-4 text-center">Pool Details</h2>
-          <div className="mb-4">
-            <p className="text-gray-600">
-              <strong>Total Staked:</strong> {totalStaked.toFixed(4)} OBN
-            </p>
-            <p className="text-gray-600">
-              <strong>Your Stake:</strong> {userStake.toFixed(4)} OBN
-            </p>
-          </div>
-          <div className="mb-6">
-            <p className="text-gray-600">
-              <strong>Pending Rewards:</strong> {pendingRewards.toFixed(6)} OBN
-            </p>
-          </div>
-        </section>
+          <h2 className="text-2xl font-bold mb-4 text-center">Olive Branch Network Treasury</h2>
+
+          {/* 🖼️ Logo + Description */}
+          <div className="flex flex-col items-center mb-6">
+          <img
+            src={pid === 0 ? "/charity1.png" : "/charity2.png"}
+            alt="Pool Logo"
+            className="w-24 h-24 object-contain mb-2"
+          />
+          <p className="text-gray-700 text-center text-sm">
+            {pid === 0
+              ? "Until we onboard charities, stake OBN to support the Olive Branch Network treasury. 80% of rewards go to users, 20% to the treasury. Treasury funds will be used for growth and development. This pool will be removed once the first charity is onboarded."
+              : "This is a placeholder charity pool. Once live, rewards will split 80% to users, 15% to charity, and 5% to treasury."}
+          </p>
+        </div>
+
+    {/* 📊 Balances */}
+    <div className="mb-4">
+      <p className="text-gray-600">
+        <strong>Total Staked:</strong> {totalStaked.toFixed(4)} OBN
+      </p>
+      <p className="text-gray-600">
+        <strong>Your Stake:</strong> {userStake.toFixed(4)} OBN
+      </p>
+    </div>
+    <div className="mb-6">
+      <p className="text-gray-600">
+        <strong>Pending Rewards:</strong> {pendingRewards.toFixed(6)} OBN
+    </p>
+  </div>
+</section>
 
         <div className="flex flex-col items-center w-full max-w-md">
           <input

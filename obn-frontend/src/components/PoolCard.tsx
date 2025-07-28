@@ -3,10 +3,11 @@
 import Link from "next/link";
 
 interface PoolCardProps {
-  pid: number; // 🆕 pool ID for navigation
+  pid: number;
   logo: string;
   name: string;
   description: string;
+  live: boolean;
 }
 
 export default function PoolCard({
@@ -14,24 +15,27 @@ export default function PoolCard({
   logo,
   name,
   description,
+  live,
 }: PoolCardProps) {
-  return (
-    <Link
-      href={`/dashboard/${pid}`}
-      className="
+  const CardContent = (
+    <div
+      className={`
         flex flex-col items-center
         rounded-lg shadow-md border border-green-300
-        bg-green-200
-        p-6 text-center cursor-pointer
-        hover:scale-105 hover:shadow-xl
-        transition-transform
-      "
+        ${live ? "bg-green-200 cursor-pointer hover:scale-105 hover:shadow-xl" : "bg-gray-100 opacity-60 cursor-not-allowed"}
+        p-6 text-center transition-transform
+      `}
       style={{ minHeight: "350px", width: "100%" }}
     >
       <img src={logo} alt={name} className="h-24 w-24 object-contain mb-4" />
       <h2 className="text-xl font-bold mb-2">{name}</h2>
       <p className="text-sm text-gray-800 mb-4">{description}</p>
-      {/* 🔥 Entire card is now a clickable Link */}
-    </Link>
+    </div>
+  );
+
+  return live ? (
+    <Link href={`/dashboard/${pid}`}>{CardContent}</Link>
+  ) : (
+    CardContent
   );
 }

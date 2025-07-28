@@ -3,14 +3,14 @@ const { ethers } = require("hardhat");
 require("dotenv").config();
 
 async function main() {
-  const stakingAddress = process.env.STAKING_CONTRACT;
+  const stakingAddress = process.env.OBN_STAKING_ADDRESS;
   if (!stakingAddress) {
     throw new Error("❌ Missing STAKING_CONTRACT in .env");
   }
 
   console.log(`🔗 Connecting to StakingPools at ${stakingAddress}...`);
 
-  const staking = await ethers.getContractAt("StakingPools", stakingAddress);
+  const staking = await ethers.getContractAt("OBNStakingPools", stakingAddress);
 
   // ✅ poolLength is a BigInt in ethers v6
   const lengthBN = await staking.poolLength();
@@ -18,7 +18,7 @@ async function main() {
   console.log(`📌 Total Pools: ${poolCount}\n`);
 
   for (let pid = 0; pid < poolCount; pid++) {
-    const pool = await staking.pools(pid);
+    const pool = await staking["poolInfo"](pid);
 
     // pool is a struct: (charityWallet, active, totalStaked, accRewardPerShare, lastRewardTime)
     const charityWallet = pool.charityWallet || pool[0];
