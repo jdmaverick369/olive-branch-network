@@ -2,7 +2,7 @@ require("@nomicfoundation/hardhat-toolbox");
 require("@openzeppelin/hardhat-upgrades");
 require("dotenv").config();
 
-const { BASE_SEPOLIA_URL, PRIVATE_KEY } = process.env;
+const { BASE_SEPOLIA_URL, BASE_MAINNET_URL, PRIVATE_KEY } = process.env;
 
 module.exports = {
   solidity: {
@@ -17,6 +17,11 @@ module.exports = {
   networks: {
     base_sepolia: {
       url: BASE_SEPOLIA_URL,
+      accounts: [PRIVATE_KEY],
+    },
+    base: {
+      url: BASE_MAINNET_URL,
+      chainId: 8453,
       accounts: [PRIVATE_KEY],
     },
   },

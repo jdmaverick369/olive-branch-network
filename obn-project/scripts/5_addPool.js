@@ -7,7 +7,7 @@ async function main() {
 
   // 📦 Load contract addresses from .env
   const stakingAddress = process.env.OBN_STAKING_ADDRESS;
-  const charityWallet = process.env.PID_2; // Charity wallet address for the new pool
+  const charityWallet = process.env.PID_0; // Charity wallet address for the new pool
 
   // Validate env variables
   if (!stakingAddress || !charityWallet) {

@@ -1,0 +1,4 @@
+{
+  "compiler": "hardhat",
+  "target": "contracts/OBNToken.sol"
+}
