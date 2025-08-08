@@ -61,4 +61,10 @@ contract TeamVesting is Ownable {
         require(newWallet != address(0), "Invalid wallet");
         teamWallet = newWallet;
     }
+
+    /// @notice Rescue non-vested tokens or any stray ERC20 accidentally sent here (not the vested token).
+    function rescueERC20(address erc20, uint256 amount) external onlyOwner {
+        require(erc20 != address(token), "Not vested token");
+        require(IERC20(erc20).transfer(owner(), amount), "Rescue failed");
+    }
 }
