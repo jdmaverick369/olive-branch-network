@@ -14,7 +14,7 @@ async function main() {
   console.log("Deployer balance (wei):", balance.toString());
 
   // Owner for controller (default to OBN_TREASURY_ADDRESS if OWNER_ADDRESS not set)
-  const ownerAddress = process.env.OWNER_ADDRESS || process.env.OBN_TREASURY_ADDRESS;
+  const ownerAddress = process.env.OWNER_ADDRESS;
   if (!ownerAddress) throw new Error("Set OWNER_ADDRESS or OBN_TREASURY_ADDRESS in .env");
 
   // Start timestamp for hard-coded schedule (use START_TIMESTAMP if provided, else 'now')

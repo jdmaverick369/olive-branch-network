@@ -6,9 +6,11 @@ interface IStakingPoolReader {
 }
 
 /**
- * @title EmissionsControllerLocked
- * @notice Immutable, hard-coded deflation schedule. Pools can be registered/removed,
- *         but the global emission phases cannot be changed after deployment.
+ * @title EmissionsController (Global APY)
+ * @notice Immutable deflation schedule. Each registered StakingPools contract receives the
+ *         SAME currentGlobalBps(), so per-token APR is equal across all managers when
+ *         StakingPools computes:
+ *           rewards/sec = (globalTotalStaked * poolBps) / 10000 / 365 days
  *
  * Phases (relative to `start` passed in constructor):
  *  - [start, start+2y)       : 1000 bps  (10%)
@@ -20,7 +22,7 @@ interface IStakingPoolReader {
 contract EmissionsController {
     struct Phase { uint256 start; uint256 end; uint256 bps; }
 
-    address public owner; // used only for pool registry ops (optional to renounce later)
+    address public owner; // registry admin (optional to renounce later)
     Phase[] public phases;
 
     address[] public pools;
@@ -43,7 +45,7 @@ contract EmissionsController {
 
         uint256 year = 365 days;
 
-        // Hard-coded deflation schedule
+        // Hard-coded deflation schedule (global)
         phases.push(Phase(start,             start + 2*year, 1000)); // 10%
         phases.push(Phase(start + 2*year,    start + 4*year,  750)); // 7.5%
         phases.push(Phase(start + 4*year,    start + 6*year,  500)); // 5%
@@ -51,7 +53,7 @@ contract EmissionsController {
         phases.push(Phase(start + 8*year,    start +10*year,  125)); // 1.25%
     }
 
-    // -------- Optional admin (registry only) --------
+    // -------- Registry admin --------
 
     function setOwner(address newOwner) external onlyOwner {
         require(newOwner != address(0), "zero addr");
@@ -97,24 +99,12 @@ contract EmissionsController {
         return 0;
     }
 
-    /// @notice BPS share for `pool`, proportional to its stake vs total stake across all registered pools.
+    /**
+     * @notice Return the SAME BPS for every registered StakingPools manager.
+     *         This makes per-token APR equal across managers with the current
+     *         StakingPools formula.
+     */
     function currentBpsFor(address pool) external view returns (uint256) {
-        if (!isPool[pool]) return 0;
-
-        uint256 globalBps = currentGlobalBps();
-        if (globalBps == 0) return 0;
-
-        uint256 totalStakeAll;
-        uint256 thisStake;
-
-        uint256 n = pools.length;
-        for (uint256 i = 0; i < n; i++) {
-            uint256 st = IStakingPoolReader(pools[i]).getTotalStakedAcrossPools();
-            totalStakeAll += st;
-            if (pools[i] == pool) thisStake = st;
-        }
-        if (totalStakeAll == 0) return 0;
-
-        return (globalBps * thisStake) / totalStakeAll;
+        return isPool[pool] ? currentGlobalBps() : 0;
     }
 }

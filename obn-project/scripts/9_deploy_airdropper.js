@@ -13,8 +13,8 @@ async function main() {
   console.log("🚀 Deploying OBNAirdropper with deployer:", deployer.address);
   console.log("🔗 Token address:", tokenAddress);
 
-  const OBNAirdropper = await ethers.getContractFactory("OBNAirdropper");
-  const airdropper = await OBNAirdropper.deploy(tokenAddress);
+  const Airdropper = await ethers.getContractFactory("OBNAirdropper");
+  const airdropper = await Airdropper.deploy(tokenAddress);
 
   await airdropper.waitForDeployment();
   const contractAddress = await airdropper.getAddress();

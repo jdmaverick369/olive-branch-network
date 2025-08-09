@@ -1,6 +1,6 @@
-"use client"; // This directive ensures that the component is treated as a client component
+"use client";
 
-import { useEffect } from "react";
+import { useEffect, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { useAccount } from "wagmi";
 import PoolCard from "@/components/PoolCard";
@@ -13,7 +13,7 @@ const pools = [
     logo: "/charity1.png",
     description:
       "Until we onboard charities, stake OBN to support the Olive Branch Network treasury. 80% of rewards go to users, 20% to the treasury. Treasury funds will be used for growth and development. This pool will be removed once the first charity is onboarded.",
-    live: true, // 🆕 pool is live
+    live: true,
   },
   {
     pid: 1,
@@ -21,7 +21,7 @@ const pools = [
     logo: "/charity2.png",
     description:
       "Once we onboard charties, the reward structure will be 80% to the user, 15% to the charity, and 5% to the treasury (adjustable later from 1-5% when DAO is implemented, in which the user receives what the treasury does not).",
-    live: false, // 🆕 pool is not live yet
+    live: false,
   },
 ];
 
@@ -30,8 +30,20 @@ export default function DashboardPage() {
   const router = useRouter();
 
   useEffect(() => {
-    if (!isConnected) router.push("/"); // Redirect to homepage if not connected
+    if (!isConnected) router.push("/");
   }, [isConnected, router]);
+
+  // ✅ Sort A→Z by name (case/diacritic-insensitive), with stable tie-breakers
+  const sortedPools = useMemo(() => {
+    const collator = new Intl.Collator(undefined, { sensitivity: "base", numeric: true });
+    return [...pools].sort((a, b) => {
+      const an = a.name ?? "";
+      const bn = b.name ?? "";
+      const byName = collator.compare(an, bn);
+      if (byName !== 0) return byName;
+      return (a.pid ?? 0) - (b.pid ?? 0);
+    });
+  }, []);
 
   return (
     <div className="relative min-h-screen bg-gradient-to-br from-green-50 to-green-100 flex flex-col">
@@ -50,10 +62,10 @@ export default function DashboardPage() {
         </h1>
 
         <div className="w-full max-w-7xl grid gap-8 grid-cols-[repeat(auto-fit,minmax(18rem,1fr))] justify-items-center">
-          {pools.map((pool, index) => (
+          {sortedPools.map((pool) => (
             <PoolCard
-              key={index}
-              pid={pool.pid ?? index}
+              key={pool.pid}
+              pid={pool.pid}
               logo={pool.logo}
               name={pool.name}
               description={pool.description}

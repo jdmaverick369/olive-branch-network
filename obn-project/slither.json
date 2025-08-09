@@ -1,0 +1,19 @@
+{
+  "filter_paths": "node_modules|artifacts|cache",
+  "solc_remaps": [
+    "@openzeppelin=node_modules/@openzeppelin"
+  ],
+  "detectors_to_exclude": [
+    "low-level-calls",
+    "timestamp",
+    "incorrect-equality",
+    "too-many-digits"
+  ],
+  "compile_force_framework": "hardhat",
+  "target_paths": [
+    "contracts/OBNToken.sol",
+    "contracts/StakingPools.sol",
+    "contracts/EmissionController.sol"
+  ],
+  "markdown": "slither-report.md"
+}

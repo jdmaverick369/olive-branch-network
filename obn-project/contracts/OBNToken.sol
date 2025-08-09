@@ -30,6 +30,7 @@ contract OBNToken is
         uint256 initialSupply,
         address liquidityAddress,
         address airdropAddress,
+        address charityAddress,
         address treasuryAddress,
         address teamVestingAddress
     ) public initializer {
@@ -41,15 +42,21 @@ contract OBNToken is
         __Ownable_init(initialOwner);
         __UUPSUpgradeable_init();
 
-        uint256 liquidityAmount = (initialSupply * 40) / 100;   // 40% to liquidity
-        uint256 airdropAmount   = (initialSupply * 40) / 100;   // 40% to airdrop
-        uint256 treasuryAmount  = (initialSupply * 10) / 100;   // 10% to treasury
-        uint256 teamVestingAmt  = (initialSupply * 10) / 100;   // 10% to team vesting
+        // --- sanity checks ---
+        require(initialSupply > 0, "supply=0");
+        require(liquidityAddress != address(0), "liq=0");
+        require(airdropAddress   != address(0), "air=0");
+        require(charityAddress   != address(0), "char=0");
+        require(treasuryAddress  != address(0), "tre=0");
+        require(teamVestingAddress != address(0), "team=0");
 
-        _mint(liquidityAddress, liquidityAmount);
-        _mint(airdropAddress, airdropAmount);
-        _mint(treasuryAddress, treasuryAmount);
-        _mint(teamVestingAddress, teamVestingAmt);
+        // ===== Updated distribution (sum = 100%) =====
+        // 40% airdrop, 30% liquidity, 10% charity, 10% treasury, 10% team
+        _mint(airdropAddress,     (initialSupply * 40) / 100);
+        _mint(liquidityAddress,   (initialSupply * 30) / 100);
+        _mint(charityAddress,     (initialSupply * 10) / 100);
+        _mint(treasuryAddress,    (initialSupply * 10) / 100);
+        _mint(teamVestingAddress, (initialSupply * 10) / 100);
     }
 
     modifier onlyMinter() {
@@ -70,8 +77,6 @@ contract OBNToken is
     function _authorizeUpgrade(address newImplementation) internal override onlyOwner {}
 
     // --- Required OZ v5 overrides ---
-
-    // ERC20Votes hooks are wired through _update in v5
     function _update(address from, address to, uint256 value)
         internal
         override(ERC20Upgradeable, ERC20VotesUpgradeable)
@@ -79,7 +84,6 @@ contract OBNToken is
         super._update(from, to, value);
     }
 
-    // ERC20Permit + Nonces diamond requires this override in v5
     function nonces(address owner)
         public
         view
