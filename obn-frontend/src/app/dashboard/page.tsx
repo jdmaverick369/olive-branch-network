@@ -21,7 +21,7 @@ const pools = [
     logo: "/charity2.png",
     description:
       "Once we onboard charties, the reward structure will be 80% to the user, 15% to the charity, and 5% to the treasury (adjustable later from 1-5% when DAO is implemented, in which the user receives what the treasury does not).",
-    live: false,
+    live: true,
   },
 ];
 

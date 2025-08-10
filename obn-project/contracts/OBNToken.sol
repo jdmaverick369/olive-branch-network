@@ -9,8 +9,11 @@ import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/NoncesUpgradeable.sol";
 
+import { IOBNMintable } from "./StakingPools.sol";
+
 contract OBNToken is
     Initializable,
+    IOBNMintable,
     ERC20Upgradeable,
     ERC20PermitUpgradeable,
     ERC20VotesUpgradeable,
@@ -69,7 +72,7 @@ contract OBNToken is
         emit MinterUpdated(minter, enabled);
     }
 
-    function mint(address to, uint256 amount) external onlyMinter {
+    function mint(address to, uint256 amount) external override onlyMinter {
         _mint(to, amount);
     }
 
@@ -84,13 +87,14 @@ contract OBNToken is
         super._update(from, to, value);
     }
 
-    function nonces(address owner)
+    // rename param to avoid shadowing Ownable.owner()
+    function nonces(address account)
         public
         view
         override(ERC20PermitUpgradeable, NoncesUpgradeable)
         returns (uint256)
     {
-        return super.nonces(owner);
+        return super.nonces(account);
     }
 
     // Storage gap for future upgrades

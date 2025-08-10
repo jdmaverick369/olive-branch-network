@@ -1,9 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.28;
 
-interface IStakingPoolReader {
-    function getTotalStakedAcrossPools() external view returns (uint256);
-}
+import { IEmissionsController } from "./StakingPools.sol";
 
 /**
  * @title EmissionsController (Global APY)
@@ -19,7 +17,7 @@ interface IStakingPoolReader {
  *  - [start+6y, start+8y)    : 250  bps  (2.5%)
  *  - [start+8y, start+10y)   : 125  bps  (1.25%)
  */
-contract EmissionsController {
+contract EmissionsController is IEmissionsController {
     struct Phase { uint256 start; uint256 end; uint256 bps; }
 
     address public owner; // registry admin (optional to renounce later)
@@ -72,15 +70,25 @@ contract EmissionsController {
     function removePool(address pool) external onlyOwner {
         require(isPool[pool], "not found");
         isPool[pool] = false;
-        uint256 n = pools.length;
-        for (uint256 i = 0; i < n; i++) {
+
+        uint256 len = pools.length;
+        uint256 found = type(uint256).max;
+
+        for (uint256 i = 0; i < len; ++i) {
             if (pools[i] == pool) {
-                pools[i] = pools[n - 1];
-                pools.pop();
-                emit PoolRemoved(pool);
-                return;
+                found = i;
+                break;
             }
         }
+        require(found != type(uint256).max, "desync");
+
+        uint256 last = len - 1;
+        if (found != last) {
+            pools[found] = pools[last];
+        }
+        pools.pop();
+
+        emit PoolRemoved(pool);
     }
 
     function poolsLength() external view returns (uint256) {
@@ -91,20 +99,21 @@ contract EmissionsController {
 
     function currentGlobalBps() public view returns (uint256) {
         uint256 nowTs = block.timestamp;
-        for (uint256 i = 0; i < phases.length; i++) {
-            if (nowTs >= phases[i].start && nowTs < phases[i].end) {
-                return phases[i].bps;
+        uint256 len = phases.length;
+        for (uint256 i = 0; i < len; ++i) {
+            Phase memory p = phases[i];
+            if (nowTs >= p.start && nowTs < p.end) {
+                return p.bps;
             }
         }
         return 0;
     }
 
     /**
-     * @notice Return the SAME BPS for every registered StakingPools manager.
-     *         This makes per-token APR equal across managers with the current
-     *         StakingPools formula.
+     * @notice SAME BPS for every registered StakingPools manager.
+     *         Satisfies IEmissionsController.
      */
-    function currentBpsFor(address pool) external view returns (uint256) {
+    function currentBpsFor(address pool) external view override returns (uint256) {
         return isPool[pool] ? currentGlobalBps() : 0;
     }
 }
