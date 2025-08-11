@@ -1,25 +1,48 @@
 // src/app/layout.tsx
-import './globals.css';
-import { Providers } from './providers';
+import type { Metadata } from "next";
+import "./globals.css";
+import { Providers } from "./providers";
+import HeaderBar from "@/components/HeaderBar";
 
-export const metadata = {
-  title: 'Olive Branch Network',
-  description: 'Staking dApp',
+// Use your deployed URL for correct OG/Twitter absolute URLs
+const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
+
+export const metadata: Metadata = {
+  metadataBase: new URL(baseUrl),
+  title: {
+    default: "Olive Branch Network",
+    template: "%s • Olive Branch Network",
+  },
+  description: "Stake OBN to support verified nonprofits and treasury growth.",
+  openGraph: {
+    title: "Olive Branch Network",
+    description: "Stake OBN to support verified nonprofits and treasury growth.",
+    url: baseUrl,
+    siteName: "Olive Branch Network",
+    type: "website",
+    images: ["/og/default.png"], // place an image at public/og/default.png
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Olive Branch Network",
+    description: "Stake OBN to support verified nonprofits and treasury growth.",
+    images: ["/og/default.png"],
+  },
+  icons: {
+    icon: "/favicon.ico",
+    apple: "/apple-touch-icon.png",
+  },
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en" data-theme="earthtone">
-      <body className="bg-base-100 text-base-content min-h-screen flex flex-col">
+      <body className="bg-base-100 text-base-content">
         <Providers>
-          {/* Main content grows to fill available space */}
-          <div className="flex-1">{children}</div>
-
-          {/* 🌱 Global footer — now static, not fixed */}
-          <footer className="bg-white text-black p-4 flex items-center justify-center gap-2 text-sm shadow-inner">
-            <span className="text-xl">🌱</span>
-            <span className="font-medium">Olive Branch Network</span>
-          </footer>
+          {/* Global header (fixed) */}
+          <HeaderBar />
+          {/* Push content below fixed header */}
+          <div className="pt-16 min-h-screen">{children}</div>
         </Providers>
       </body>
     </html>

@@ -1,7 +1,6 @@
-/* ✅ Tailwind v3 layers */
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+
+/* src/app/globals.css */
+@import "tailwindcss";
 
 /* 🌍 Your custom theme tokens */
 :root {
