@@ -1,63 +1,110 @@
 # 🌱 Olive Branch Network (OBN)
 
-**OBN** is a next-generation staking protocol built to create sustainable, on-chain funding for real-world charities while rewarding long-term holders.  
-Every stake you make not only grows your holdings but also supports a nonprofit organization you choose — automatically, transparently, and without intermediaries.
+**OBN** is a staking protocol that turns on-chain participation into continuous funding for real-world charities—while keeping yields competitive for long-term holders.  
+Stake **OBN** into a pool tied to a charity wallet and earn rewards **every second**. A fixed share of emissions is routed to charities **on-chain, transparently, and by design**.
 
 ---
 
 ## ✨ Key Features
 
-- **Multi-Pool Staking** – Each pool represents a specific nonprofit organization
-- **Automatic Reward Splits** – Rewards are split every second:  
-  - **80–84%** to stakers  
-  - **15%** to the selected charity pool  
-  - **1–5%** to the network treasury  
-- **Deflationary Emission Schedule** – Incentivizes long-term holding and protocol sustainability:  
+- **Multi-Pool Staking (one wallet per pool)**  
+  Each pool maps to **exactly one** `charityWallet`. Routing is deterministic and easy to audit.
 
-| Years | Global APY |
-|-------|------------|
-| 1–2   | 10%        |
-| 3–4   | 7.5%       |
-| 5–6   | 5%         |
-| 7–8   | 2.5%       |
-| 9–10  | 1.25%      |
+- **Automatic, Hard-Coded Reward Splits (BPS)**  
+  Emissions are split **every accrual** with constants baked into the staking contract:
+  - **88%** → Stakers  
+  - **10%** → Charity (buffered globally, allocated to pools by TVL share)  
+  - **1%** → Charity Fund (for programmatic support + bootstraps)  
+  - **1%** → Treasury (lean operations)
 
-- **Initial Charity Boost** – The first **200 charities** onboarded each receive **500,000 OBN staked** from the charity fund to start generating rewards on day one  
-- **Upgradeable Smart Contracts** – Built using UUPS proxies and OpenZeppelin standards  
-- **Transparent Tracking** – All stakes, rewards, and distributions visible on-chain  
+- **TVL-Coupled Emissions (not supply-based)**  
+  Rewards per second scale with **staked TVL** under the active phase rate—**not** with total/circulating supply. If TVL is 0, issuance effectively pauses.
 
----
+- **Equal APR Across Pools**  
+  By construction, per-token APR depends only on the **current phase**, so users choose **causes**, not APR games.
 
-## 📊 Initial Token Distribution
+- **Deflationary-Trending Emission Schedule (10 years)**
 
-| Allocation         | % of Supply | Notes |
-|--------------------|-------------|-------|
-| Airdrop Missions   | 40%         | Distributed via community missions and campaigns |
-| Exchange Liquidity | 30%         | Initial market liquidity across key DEXs |
-| Charity Fund       | 10%         | Used to bootstrap the first 200 charity pools |
-| Treasury           | 10%         | Supports development, marketing, and operations |
-| Team (Vested)      | 10%         | Locked and released gradually over time |
+| Years | Phase Rate (annualized) |
+|------:|-------------------------:|
+| 1–2   | 10.00%                   |
+| 3–4   | 7.50%                    |
+| 5–6   | 5.00%                    |
+| 7–8   | 2.50%                    |
+| 9–10  | 1.25%                    |
 
----
+- **Bootstrap Program (Day-One Yield for Charities)**  
+  From the **10% Charity (Genesis Reserve)**, the first **100 charities** onboarded each receive **1,000,000 OBN** **staked and permanently locked** to their pool. The **1% Charity Fund** (from emissions) replenishes and enables future bootstrap waves.
 
-## 🏗️ Smart Contracts
+- **Permanent Locks (Bootstrap-Only)**  
+  Admin can **only increase** a user’s `lockedAmount` (never decrease). Locks **auto-shrink** if the user’s balance falls below the stored lock. Purpose: **ensure bootstrap stakes can’t be withdrawn/dumped** while generating rewards from day one.
 
-| Contract                    | Description |
-|-----------------------------|-------------|
-| **OBNToken.sol**            | ERC20 token with governance (ERC20Votes), controlled minting, and initial supply distribution |
-| **OBNStakingPools.sol**     | Multi-pool staking, emissions, and reward distribution logic |
-| **EmissionController.sol**  | Controls the global APY schedule and adjusts emissions according to protocol rules |
-| **Airdropper.sol**          | Batch token distribution system for airdrops |
-| **TeamVesting.sol**         | Time-based token release for the team allocation |
+- **Upgradeable via UUPS + OpenZeppelin**  
+  Token and staking contracts are **UUPS upgradeable** and designed to transition to a **DAO + timelock** for safe governance. Team vesting is a simple, non-upgradeable contract.
+
+- **Transparent Tracking**  
+  Emissions, charity allocations, and user claims are on-chain with rich view methods for dashboards.
 
 ---
 
-## 🚀 Getting Started (Developers)
+## 📊 Initial Token Distribution (Genesis)
+
+> Planned initial supply: **1,000,000,000 OBN**
+
+| Allocation              | % of Supply | Notes                                                                 |
+|-------------------------|-------------|-----------------------------------------------------------------------|
+| Exchange Liquidity      | **50%**     | Seeds DEX liquidity                                                   |
+| Airdrop                 | **20%**     | Community missions + growth                                           |
+| Charity (Genesis Reserve)| **10%**    | Funds the **1,000,000 OBN × 100 charities** bootstrap program         |
+| Treasury                | **10%**     | Lean ops (audits, infra, grants)                                      |
+| Team (Vested)           | **10%**     | ~4-month cliff, ~20-month linear vest                                 |
+
+**Ongoing issuance:** only via staking emissions; the **staking contract is the sole minter** (set **once** with `setMinterOnce`).
+
+---
+
+## 🏗️ Smart Contracts (current)
+
+| Contract                | Description |
+|-------------------------|-------------|
+| **OBNToken.sol**        | ERC-20 + Permit + Votes + Burnable (UUPS). One-time genesis distribution; **single minter** model (staking contract). |
+| **OBNStakingPools.sol** | Multi-pool staking with **TVL-coupled**, phase-based emissions and **hard-coded** splits (88/10/1/1). Charity buffer + per-pool allocation; Charity Fund bootstrap; permanent locks (bootstrap-only). |
+| **TeamVesting.sol**     | Simple linear vesting with a 4-month cliff and ~20-month stream; helper views for UX. |
+
+> **Not used:** There is **no separate EmissionController** or Airdropper contract in this implementation. Emission phases live inside **OBNStakingPools**, and airdrops are handled off-chain or via standard scripts.
+
+---
+
+## 🧭 Charities: Wallets, Onboarding & Display
+
+- **One wallet per pool** — each pool has a single `charityWallet`.
+- **Address-first listing** — we index **public Ethereum addresses** that organizations publish and can sign them up ourselves.  
+  Each charity page shows **“No Affiliation / Not Endorsed”** by default.  
+  We **do not** use logos or brand assets **without explicit permission**.
+- **Optional consented display** — with consent, we can show branding and richer profiles; otherwise routing remains address-only.
+- **Delisting** — if standards aren’t met, we remove the charity from our **frontend** and stop promotion. **On-chain funds remain untouched.**
+- **Bootstrap Program** — first **100 charities** receive **1,000,000 OBN** staked + **permanently locked** to earn from day one. Subsequent waves funded by the **1% Charity Fund** as it accrues.
+
+---
+
+## 🔐 Hard-Coded Guarantees (current implementation)
+
+- Reward splits: **88% stakers / 10% charity / 1% charity fund / 1% treasury**.
+- **TVL-coupled** emission math; **equal APR across pools** per phase.
+- **Single minter** model on the token (staking contract), set **once**.
+- **Permanent locks** are **increase-only** (bootstrap-only) and auto-shrink if balances drop.
+- **No pool retire/active flag**; operations are per-pool and bounded (gas-safe).
+- **DAO path:** UUPS upgrades gated by owner → multisig → **timelock + ERC20Votes DAO**.
+
+---
+
+## 🧪 Getting Started (Developers)
 
 ### Prerequisites
 - Node.js v18+
+- pnpm or npm
 - Hardhat
-- MetaMask or compatible wallet
+- A wallet (e.g., MetaMask)
 
 ### Install
 ```bash
