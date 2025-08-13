@@ -1,6 +1,7 @@
 # 🌱 Olive Branch Network (OBN)
 
-**OBN** is a staking protocol that turns on-chain participation into continuous funding for real-world charities—while keeping yields competitive for long-term holders.  
+**OBN** is a staking protocol that turns on-chain participation into continuous funding for real-world charities—while keeping yields competitive for long-term holders. 
+
 Stake **OBN** into a pool tied to a charity wallet and earn rewards **every second**. A fixed share of emissions is routed to charities **on-chain, transparently, and by design**.
 
 ---
