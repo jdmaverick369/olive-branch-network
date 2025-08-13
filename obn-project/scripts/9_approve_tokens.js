@@ -9,7 +9,7 @@ async function main() {
 
   const token = await ethers.getContractAt(
     "@openzeppelin/contracts/token/ERC20/IERC20.sol:IERC20",
-    process.env.OBN_TOKEN_ADDRESS,
+    process.env.OBN_TOKEN_CONTRACT,
     wallet
   );
 

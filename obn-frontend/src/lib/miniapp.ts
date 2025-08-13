@@ -1,16 +1,43 @@
-// src/lib/miniapp.ts
 export type MiniAppSession = {
   fid: number;
   username?: string;
   displayName?: string;
 };
 
+type FarcasterUser = {
+  fid?: number;
+  username?: string;
+  displayName?: string;
+};
+
+type FarcasterSession = {
+  fid: number;
+  username?: string;
+  displayName?: string;
+  user?: FarcasterUser;
+};
+
+type FarcasterBridge = {
+  getSession?: () => Promise<FarcasterSession | undefined>;
+  getUser?: () => Promise<FarcasterUser | undefined>;
+  session?: FarcasterSession;
+};
+
+type FrameworkFarcaster = {
+  farcaster?: {
+    session?: FarcasterSession;
+  };
+};
+
+type WindowMaybeFarcaster = Window & {
+  farcaster?: FarcasterBridge;
+  __FRAMEWORK?: FrameworkFarcaster;
+};
+
 export function isMiniAppRuntime(): boolean {
   if (typeof window === "undefined") return false;
-  // Warpcast exposes a Farcaster bridge in the Mini App webview.
-  // Different SDK versions expose slightly different shapes, so keep this loose.
-  const w = window as any;
-  return !!(w.farcaster || w.__FRAMEWORK?.farcaster);
+  const w = window as WindowMaybeFarcaster;
+  return Boolean(w.farcaster || w.__FRAMEWORK?.farcaster);
 }
 
 /**
@@ -21,9 +48,9 @@ export function isMiniAppRuntime(): boolean {
 export async function readMiniAppSession(): Promise<MiniAppSession | null> {
   if (typeof window === "undefined" || !isMiniAppRuntime()) return null;
 
-  const w = window as any;
+  const w = window as WindowMaybeFarcaster;
 
-  // 1) Newer MiniApp bridges often expose farcaster.getSession()
+  // 1) Newer bridges: farcaster.getSession()
   try {
     if (typeof w.farcaster?.getSession === "function") {
       const s = await w.farcaster.getSession();
@@ -39,7 +66,7 @@ export async function readMiniAppSession(): Promise<MiniAppSession | null> {
     /* noop */
   }
 
-  // 2) Older bridges may expose farcaster.getUser()
+  // 2) Older bridges: farcaster.getUser()
   try {
     if (typeof w.farcaster?.getUser === "function") {
       const u = await w.farcaster.getUser();
@@ -55,7 +82,7 @@ export async function readMiniAppSession(): Promise<MiniAppSession | null> {
     /* noop */
   }
 
-  // 3) Last resort: check if a session-like object is present
+  // 3) Last resort: session-like object
   const maybe = w.farcaster?.session ?? w.__FRAMEWORK?.farcaster?.session;
   if (maybe && typeof maybe.fid === "number") {
     return {
@@ -68,9 +95,9 @@ export async function readMiniAppSession(): Promise<MiniAppSession | null> {
   return null;
 }
 
-/** Tiny helper for the “Open in app” banner */
-export function getMiniAppDeepLink(currentUrl: string) {
-  // Warpcast can open normal https links, so just return the same URL.
+/** Tiny helper for an “Open in app” banner */
+export function getMiniAppDeepLink(currentUrl: string): string {
+  // Warpcast can open normal https links; return as-is.
   // If you later get a custom scheme, convert it here.
   return currentUrl;
 }

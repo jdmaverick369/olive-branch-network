@@ -1,47 +1,47 @@
+// scripts/4_deployOBNStakingPools.js
 const { ethers, upgrades } = require("hardhat");
 require("dotenv").config();
 
 async function main() {
+  const {
+    OBN_TOKEN_CONTRACT,        // ERC20 that implements IOBNMintable
+    OBN_TREASURY_ADDRESS,      // receives 1%
+    OBN_CHARITY_FUND_ADDRESS,  // receives 1%
+  } = process.env;
+
+  const req = (v, name) => {
+    if (!v || v === "" || v === "0x0000000000000000000000000000000000000000") {
+      throw new Error(`❌ Missing/invalid ${name} in .env`);
+    }
+  };
+  req(OBN_TOKEN_CONTRACT, "OBN_TOKEN_CONTRACT");
+  req(OBN_TREASURY_ADDRESS, "OBN_TREASURY_ADDRESS");
+  req(OBN_CHARITY_FUND_ADDRESS, "OBN_CHARITY_FUND_ADDRESS");
+
+  console.log("⚙️  Using:");
+  console.log("   staking token :", OBN_TOKEN_CONTRACT);
+  console.log("   treasury      :", OBN_TREASURY_ADDRESS);
+  console.log("   charity fund  :", OBN_CHARITY_FUND_ADDRESS);
+
   const [deployer] = await ethers.getSigners();
-  console.log("🚀 Deploying OBNStakingPools with account:", deployer.address);
+  console.log("👤 Deployer:", deployer.address);
 
-  // ✅ Match your .env variable names
-  const token = process.env.OBN_TOKEN_ADDRESS; // OBN Token address
-  const treasury = process.env.OBN_TREASURY_ADDRESS; // Treasury address
+  const Factory = await ethers.getContractFactory("OBNStakingPools");
 
-  if (!token || !treasury) {
-    throw new Error("❌ Missing OBN_TOKEN_ADDRESS or OBN_TREASURY_ADDRESS in .env");
-  }
-  
-  console.log("📦 OBN Token:", token);
-  console.log("🏦 Treasury Address:", treasury);
-
-  // ✅ Deploy upgradeable proxy
-  const OBNStakingPools = await ethers.getContractFactory("OBNStakingPools");
-
-  // Deploy the proxy contract
-  const stakingPools = await upgrades.deployProxy(
-    OBNStakingPools,
-    [token, treasury], // Pass the required constructor parameters
-    { initializer: "initialize", kind: "uups" }
+  // Deploy UUPS proxy with 3-arg initializer
+  const proxy = await upgrades.deployProxy(
+    Factory,
+    [OBN_TOKEN_CONTRACT, OBN_TREASURY_ADDRESS, OBN_CHARITY_FUND_ADDRESS],
+    { kind: "uups", initializer: "initialize" }
   );
 
-  // Wait for the contract deployment transaction to be mined
-  await stakingPools.deployTransaction?.wait(); // safely wait if transaction exists
+  await proxy.waitForDeployment();
+  const proxyAddress = await proxy.getAddress();
 
-  // Log the deployed contract address
-  const deployedAddress = await stakingPools.getAddress();
-  console.log("✅ OBNStakingPools deployed at:", deployedAddress);
-
-  // Explicitly check if the address is properly set after deployment
-  if (deployedAddress) {
-    console.log("📍 Successfully deployed to address:", deployedAddress);
-  } else {
-    console.error("❌ Failed to retrieve deployed contract address");
-  }
+  console.log("✅ OBNStakingPools successfully deployed at:", proxyAddress);
 }
 
-main().catch((error) => {
-  console.error(error);
-  process.exitCode = 1;
+main().catch((e) => {
+  console.error(e);
+  process.exit(1);
 });

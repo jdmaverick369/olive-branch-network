@@ -13,7 +13,7 @@ async function main() {
   // --- Env addresses ---
   const liquidityAddress   = process.env.OBN_LIQUIDITY_ADDRESS;
   const airdropAddress     = process.env.OBN_AIRDROP_ADDRESS;
-  const charityAddress     = process.env.OBN_CHARITY_FUND_ADDRESS; // NEW
+  const charityAddress     = process.env.OBN_CHARITY_FUND_ADDRESS;
   const treasuryAddress    = process.env.OBN_TREASURY_ADDRESS;
   const teamVestingAddress = process.env.OBN_TEAM_VESTING_ADDRESS;
 

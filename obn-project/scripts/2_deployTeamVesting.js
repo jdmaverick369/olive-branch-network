@@ -7,7 +7,7 @@ async function main() {
   const [deployer] = await ethers.getSigners();
   console.log("📦 Deployer:", deployer.address);
 
-  const tokenAddress = process.env.OBN_TOKEN_ADDRESS;
+  const tokenAddress = process.env.OBN_TOKEN_CONTRACT;
   const teamWallet = process.env.OBN_TEAM_VESTING_ADDRESS;
   const startTimestamp = Math.floor(Date.now() / 1000);
   const initialOwner = deployer.address;

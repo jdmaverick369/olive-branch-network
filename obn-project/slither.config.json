@@ -1,21 +1,13 @@
 {
   "compile_force_framework": "hardhat",
-  "filter_paths": "node_modules|artifacts|cache",
+  "filter_paths": "node_modules,artifacts,cache",
   "solc_remaps": [
     "@openzeppelin=node_modules/@openzeppelin"
   ],
   "detectors_to_exclude": [
-    "low-level-calls",
-    "timestamp",
-    "incorrect-equality",
-    "too-many-digits",
+    "calls-inside-a-loop",
+    "block-timestamp",
     "naming-convention",
-    "unused-state",
-    "assembly-usage",
-    "divide-before-multiply",
-    "incorrect-exponentiation",
-    "different-pragma-directives-are-used",
-    "incorrect-versions-of-solidity",
-    "missing-inheritance"
+    "unused-state-variable"
   ]
 }

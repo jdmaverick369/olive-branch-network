@@ -1,20 +1,25 @@
-// src/wagmiConfig.ts
-import { getDefaultConfig } from '@rainbow-me/rainbowkit';
-import { createConfig, http, type Config } from 'wagmi';
-import { base, baseSepolia, type Chain } from 'wagmi/chains';
+import { getDefaultConfig } from "@rainbow-me/rainbowkit";
+import {
+  createConfig,
+  http,
+  type Config,
+  type CreateConnectorFn,
+} from "wagmi";
+import { base, baseSepolia, type Chain } from "wagmi/chains";
 
 export const projectId = process.env.NEXT_PUBLIC_WC_PROJECT_ID!;
 const rpcUrl = process.env.NEXT_PUBLIC_RPC_URL; // optional override
 const targetChainId = Number(process.env.NEXT_PUBLIC_CHAIN_ID || 84532);
 
-// export this so Providers can pass it into OnchainKitProvider
-export const targetChain: Chain = targetChainId === base.id ? base : baseSepolia;
+// Export target chain for consumers that need it
+export const targetChain: Chain =
+  targetChainId === base.id ? base : baseSepolia;
 
 /**
- * Standard web (RainbowKit) config — your current behavior
+ * Standard web (RainbowKit) config
  */
 export const wagmiWebConfig: Config = getDefaultConfig({
-  appName: 'Olive Branch Network',
+  appName: "Olive Branch Network",
   projectId,
   chains: [targetChain],
   transports: {
@@ -24,35 +29,52 @@ export const wagmiWebConfig: Config = getDefaultConfig({
 });
 
 /**
- * MiniApp (Farcaster) config — built lazily so we don’t import the connector on web.
- * We intentionally type this loosely so it won’t break if the connector export name changes.
+ * MiniApp (Farcaster) config — built lazily so we don’t load it on web.
+ * This expects the package to export a connector **factory** that already
+ * conforms to Wagmi’s `CreateConnectorFn` (common in wagmi v2).
+ *
+ * No OnchainKit/BaseApp code here.
  */
-export async function makeMiniAppConfig(): Promise<Config> {
-  const mod: any = await import('@farcaster/miniapp-wagmi-connector');
-  // Try a few likely export names, fall back to default
-  const ConnectorClass =
-    mod?.FarcasterWagmiConnector ||
-    mod?.MiniAppConnector ||
-    mod?.FarcasterMiniAppConnector ||
-    mod?.default;
+type MiniAppModule = Partial<Record<string, unknown>>;
 
-  if (!ConnectorClass) {
-    throw new Error('MiniApp wagmi connector not found in @farcaster/miniapp-wagmi-connector');
+function pickConnectorFactory(mod: MiniAppModule): CreateConnectorFn | null {
+  // Try common factory export names that return a CreateConnectorFn
+  const candidates = [
+    "farcasterMiniApp",      // hypothetical factory
+    "createFarcasterConnector",
+    "miniAppConnector",
+    "default",
+  ] as const;
+
+  for (const key of candidates) {
+    const maybe = mod[key];
+    if (typeof maybe === "function") {
+      // We assume the function conforms to CreateConnectorFn
+      return maybe as unknown as CreateConnectorFn;
+    }
   }
+  return null;
+}
 
-  const miniConnector = new ConnectorClass({
-    options: {
-      // most apps don’t need extra options; add if your flow requires
-      // e.g. appName: 'Olive Branch Network'
-    },
-  });
+export async function makeMiniAppConfig(): Promise<Config> {
+  // Dynamic import keeps this out of the web bundle
+  const mod = (await import(
+    "@farcaster/miniapp-wagmi-connector"
+  )) as MiniAppModule;
+
+  const connectorFactory = pickConnectorFactory(mod);
+  if (!connectorFactory) {
+    throw new Error(
+      "Expected a CreateConnectorFn factory from @farcaster/miniapp-wagmi-connector"
+    );
+  }
 
   return createConfig({
     chains: [targetChain],
     transports: {
       [targetChain.id]: http(rpcUrl),
     },
-    connectors: [miniConnector],
+    connectors: [connectorFactory],
     ssr: true,
   });
 }

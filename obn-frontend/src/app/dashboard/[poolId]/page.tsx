@@ -2,20 +2,18 @@
 "use client";
 
 import Image from "next/image";
+import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState, useMemo } from "react";
 import { useAccount, useReadContract, useWriteContract, useBalance } from "wagmi";
 import { parseUnits, formatUnits, erc20Abi } from "viem";
 import { stakingAbi } from "@/lib/stakingAbi";
 import { ShareToFarcaster } from "@/components/ShareToFarcaster";
-import { getPoolMeta } from "@/lib/pools";
+import { getPoolMeta, type PoolMeta } from "@/lib/pools";
 
 const OBN_TOKEN_ADDRESS = process.env.NEXT_PUBLIC_OBN_TOKEN as `0x${string}`;
 const STAKING_CONTRACT = process.env.NEXT_PUBLIC_STAKING_CONTRACT as `0x${string}`;
 const ZERO_ADDR = "0x0000000000000000000000000000000000000000" as const;
-
-// getPoolInfo returns: (address charityWallet, bool active, uint256 totalStaked)
-type GetPoolInfoResult = readonly [`0x${string}`, boolean, bigint];
 
 const fmt = (n: number, d = 4) =>
   n.toLocaleString(undefined, { minimumFractionDigits: d, maximumFractionDigits: d });
@@ -26,33 +24,38 @@ export default function PoolDetailPage() {
   const router = useRouter();
   const { address } = useAccount();
 
-  // Derived metadata (no early return; keep hooks order stable)
-  const meta = Number.isFinite(pid) ? getPoolMeta(pid) : undefined;
+  const meta: PoolMeta | undefined = Number.isFinite(pid) ? getPoolMeta(pid) : undefined;
   const invalid = !Number.isFinite(pid) || !meta;
 
   const title = meta?.name ?? `Pool #${Number.isFinite(pid) ? pid : "?"}`;
   const logo = meta?.logo ?? "/charity1.png";
   const detailDescription = meta?.detailDescription ?? meta?.listDescription ?? "";
 
-  // Local UI state
+  const urls = useMemo(() => {
+    const list = [meta?.websiteUrl, meta?.twitterUrl].filter(
+      (u): u is string => typeof u === "string" && u.trim().length > 0
+    );
+    return Array.from(new Set(list));
+  }, [meta?.websiteUrl, meta?.twitterUrl]);
+
   const [amount, setAmount] = useState("");
   const [loading, setLoading] = useState(false);
 
-  const [totalStaked, setTotalStaked] = useState(0);
   const [userStake, setUserStake] = useState(0);
   const [pendingRewards, setPendingRewards] = useState(0);
 
-  // Wallet balances (call hooks unconditionally)
   const userAddr = (address ?? ZERO_ADDR) as `0x${string}`;
-  const { data: ethBal, refetch: refetchEth } = useBalance({ address: userAddr });
-  const { data: obnBal, refetch: refetchObn } = useBalance({ address: userAddr, token: OBN_TOKEN_ADDRESS });
-  const [ethBalance, setEthBalance] = useState(0);
+
+  // Token balance only (removed ETH/ZETH balance)
+  const { data: obnBal, refetch: refetchObn } = useBalance({
+    address: userAddr,
+    token: OBN_TOKEN_ADDRESS,
+  });
   const [obnBalance, setObnBalance] = useState(0);
 
-  // Reads (declare hooks always; gate with `enabled`)
   const effectivePid = useMemo(() => (Number.isFinite(pid) ? BigInt(pid) : 0n), [pid]);
 
-  const { data: poolData, refetch: refetchPool } = useReadContract({
+  const { refetch: refetchPool } = useReadContract({
     address: STAKING_CONTRACT,
     abi: stakingAbi,
     functionName: "getPoolInfo",
@@ -72,60 +75,43 @@ export default function PoolDetailPage() {
     address: STAKING_CONTRACT,
     abi: stakingAbi,
     functionName: "pendingRewards",
-    args: [userAddr],
+    args: [effectivePid, userAddr],
     query: { enabled: !invalid && address != null },
   });
 
-  // Push read results into UI state
   useEffect(() => {
-    if (poolData) {
-      const [, , totalStakedRaw] = poolData as GetPoolInfoResult;
-      setTotalStaked(Number.parseFloat(formatUnits(totalStakedRaw, 18)));
-    }
     if (typeof userStakeData !== "undefined") {
       setUserStake(Number.parseFloat(formatUnits(userStakeData as bigint, 18)));
     }
     if (typeof pendingRewardsData !== "undefined") {
       setPendingRewards(Number.parseFloat(formatUnits(pendingRewardsData as bigint, 18)));
     }
-  }, [poolData, userStakeData, pendingRewardsData]);
+  }, [userStakeData, pendingRewardsData]);
 
-  // Push balances into UI state
   useEffect(() => {
-    if (ethBal) setEthBalance(Number.parseFloat(formatUnits(ethBal.value, ethBal.decimals)));
     if (obnBal) setObnBalance(Number.parseFloat(formatUnits(obnBal.value, obnBal.decimals)));
-  }, [ethBal, obnBal]);
+  }, [obnBal]);
 
-  // Light polling (only when valid)
   useEffect(() => {
     if (invalid) return;
     const id = setInterval(() => {
       refetchPool();
       refetchUserStake();
       refetchPendingRewards();
-      refetchEth();
       refetchObn();
     }, 5000);
     return () => clearInterval(id);
-  }, [invalid, refetchPool, refetchUserStake, refetchPendingRewards, refetchEth, refetchObn]);
+  }, [invalid, refetchPool, refetchUserStake, refetchPendingRewards, refetchObn]);
 
-  // Helpers
   const postTxnRefresh = async () => {
-    await Promise.all([
-      refetchPool(),
-      refetchUserStake(),
-      refetchPendingRewards(),
-      refetchEth(),
-      refetchObn(),
-    ]);
+    await Promise.all([refetchPool(), refetchUserStake(), refetchPendingRewards(), refetchObn()]);
   };
 
-  // Actions
   const { writeContractAsync } = useWriteContract();
 
   const handleStake = async () => {
-    if (!Number.isFinite(pid)) return alert("Invalid pool");
-    if (!amount || isNaN(Number(amount))) return alert("Enter a valid amount");
+    if (!Number.isFinite(pid)) return;
+    if (!amount || isNaN(Number(amount))) return;
     setLoading(true);
     try {
       const amt = parseUnits(amount, 18);
@@ -141,18 +127,18 @@ export default function PoolDetailPage() {
         functionName: "deposit",
         args: [effectivePid, amt],
       });
-      alert("✅ Staked successfully!");
       await postTxnRefresh();
     } catch (err) {
+      // Wallet UI will show error; keep console for devs.
       console.error(err);
-      alert("❌ Transaction failed");
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   };
 
   const handleUnstake = async () => {
-    if (!Number.isFinite(pid)) return alert("Invalid pool");
-    if (!amount || isNaN(Number(amount))) return alert("Enter a valid amount");
+    if (!Number.isFinite(pid)) return;
+    if (!amount || isNaN(Number(amount))) return;
     setLoading(true);
     try {
       const amt = parseUnits(amount, 18);
@@ -162,31 +148,30 @@ export default function PoolDetailPage() {
         functionName: "withdraw",
         args: [effectivePid, amt],
       });
-      alert("✅ Unstaked successfully!");
       await postTxnRefresh();
     } catch (err) {
       console.error(err);
-      alert("❌ Transaction failed");
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   };
 
-  const handleClaimToWallet = async () => {
+  const handleClaim = async () => {
+    if (!Number.isFinite(pid)) return;
     setLoading(true);
     try {
       await writeContractAsync({
         address: STAKING_CONTRACT,
         abi: stakingAbi,
-        functionName: "claimToWallet",
-        args: [],
+        functionName: "claim",
+        args: [effectivePid],
       });
-      alert("✅ Claimed to wallet!");
       await postTxnRefresh();
     } catch (err) {
       console.error(err);
-      alert("❌ Transaction failed");
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   };
 
   const handleBackToDashboard = () => router.push("/dashboard");
@@ -212,7 +197,6 @@ export default function PoolDetailPage() {
             <section className="bg-white rounded-xl shadow-lg p-5 max-w-md w-full mb-5">
               <h2 className="text-xl font-bold mb-3 text-center">{title}</h2>
 
-              {/* Logo + description */}
               <div className="flex flex-col items-center mb-4">
                 <Image
                   src={logo}
@@ -222,32 +206,44 @@ export default function PoolDetailPage() {
                   className="mb-1.5"
                   priority
                 />
+                {meta?.ethereumAddress && (
+                  <p className="text-xs font-mono text-gray-500 break-all mb-1.5">
+                    {meta.ethereumAddress}
+                  </p>
+                )}
                 {detailDescription && (
-                  <p className="text-gray-700 text-center text-xs leading-relaxed">
+                  <p className="text-gray-700 text-center text-xs leading-relaxed whitespace-pre-line">
                     {detailDescription}
                   </p>
                 )}
+                {urls.length > 0 && (
+                  <div className="mt-2 flex flex-col items-center gap-1">
+                    {urls.map((u) => (
+                      <Link
+                        key={u}
+                        href={u}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-blue-600 text-xs underline break-all"
+                      >
+                        {u}
+                      </Link>
+                    ))}
+                  </div>
+                )}
               </div>
 
-              {/* VERTICAL GROUPS */}
               <div className="space-y-4">
-                <div className="bg-gray-50 rounded-lg p-3 shadow-sm text-center">
-                  <p className="text-gray-600 font-medium text-xs">Total Staked:</p>
-                  <p className="font-semibold text-sm">{fmt(totalStaked)} OBN</p>
-                </div>
-
                 <div className="bg-gray-50 rounded-lg p-3 shadow-sm text-center">
                   <p className="text-gray-600 font-medium text-xs">Your Stake:</p>
                   <p className="font-semibold text-sm mb-1.5">{fmt(userStake)} OBN</p>
                   <p className="text-gray-600 font-medium text-xs">Pending Rewards:</p>
                   <p className="font-semibold text-sm">{fmt(pendingRewards, 6)} OBN</p>
                 </div>
-
                 <div className="bg-gray-50 rounded-lg p-3 shadow-sm text-center">
                   <p className="text-gray-600 font-medium text-xs">OBN Balance:</p>
                   <p className="font-semibold text-sm mb-1.5">{fmt(obnBalance, 2)} OBN</p>
-                  <p className="text-gray-600 font-medium text-xs">ETH Balance:</p>
-                  <p className="font-semibold text-sm">{fmt(ethBalance, 4)}</p>
+                  {/* ETH/ZETH balance intentionally removed */}
                 </div>
               </div>
             </section>
@@ -261,7 +257,6 @@ export default function PoolDetailPage() {
                 placeholder="Enter OBN amount"
                 className="w-full border rounded-lg px-3.5 py-2.5 mb-3 text-center focus:ring-2 focus:ring-green-500 text-sm"
               />
-
               <div className="flex flex-wrap gap-3 justify-center">
                 <button
                   disabled={loading}
@@ -270,7 +265,6 @@ export default function PoolDetailPage() {
                 >
                   {loading ? "Processing..." : "Stake"}
                 </button>
-
                 <button
                   disabled={loading}
                   onClick={handleUnstake}
@@ -278,20 +272,17 @@ export default function PoolDetailPage() {
                 >
                   {loading ? "Processing..." : "Unstake"}
                 </button>
-
                 <button
                   disabled={loading}
-                  onClick={handleClaimToWallet}
+                  onClick={handleClaim}
                   className="px-5 py-2.5 rounded-lg font-semibold border border-blue-600 text-blue-600 hover:bg-blue-600 hover:text-white disabled:opacity-50 transition text-sm"
                 >
-                  {loading ? "Processing..." : "Claim to Wallet"}
+                  {loading ? "Processing..." : "Claim"}
                 </button>
               </div>
-
               <div className="mt-3">
                 <ShareToFarcaster text={`I'm staking OBN in pool #${pid} 🌱 Join me:`} />
               </div>
-
               <button
                 onClick={handleBackToDashboard}
                 className="mt-4 px-6 py-2.5 rounded-lg font-semibold border border-gray-600 text-gray-600 hover:bg-gray-600 hover:text-white transition text-sm"
@@ -302,6 +293,10 @@ export default function PoolDetailPage() {
           </>
         )}
       </main>
+      <footer className="mt-auto py-4 text-center text-[11px] text-gray-500">
+        Olive Branch Network is a decentralized protocol and does not have any direct
+        affiliation with any of the organizations displayed.
+      </footer>
     </div>
   );
 }

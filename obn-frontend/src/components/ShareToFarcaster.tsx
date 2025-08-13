@@ -6,21 +6,18 @@ import { usePathname } from "next/navigation";
 
 type Props = {
   text?: string;
-  className?: string;
 };
 
-export function ShareToFarcaster({ text, className }: Props) {
+export function ShareToFarcaster({ text }: Props) {
   const pathname = usePathname();
   const [pageUrl, setPageUrl] = useState("");
 
-  // Build absolute URL on the client
   useEffect(() => {
     if (typeof window !== "undefined") {
       setPageUrl(`${window.location.origin}${pathname}`);
     }
   }, [pathname]);
 
-  // Warpcast composer URL (prefills text + embeds the current page)
   const href = useMemo(() => {
     const u = new URL("https://warpcast.com/~/compose");
     u.searchParams.set(
@@ -36,11 +33,7 @@ export function ShareToFarcaster({ text, className }: Props) {
       href={href}
       target="_blank"
       rel="noreferrer"
-      className={
-        className ??
-        "inline-flex items-center gap-2 px-4 py-3 rounded-lg border " +
-          "border-purple-600 text-purple-600 hover:bg-purple-600 hover:text-white transition"
-      }
+      className="px-5 py-2.5 rounded-lg font-semibold border border-purple-600 !text-purple-600 hover:bg-purple-600 hover:!text-white disabled:opacity-50 transition text-sm"
     >
       Share on Farcaster
     </a>

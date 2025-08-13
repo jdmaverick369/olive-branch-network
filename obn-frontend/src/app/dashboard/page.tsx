@@ -24,10 +24,10 @@ export default function DashboardPage() {
   }, []);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-green-50 to-green-100">
+    <div className="min-h-screen bg-gradient-to-br from-green-50 to-green-100 flex flex-col">
       <main className="px-4 py-8 flex flex-col items-center">
         <h1 className="text-center text-3xl md:text-4xl font-extrabold mb-6">
-          Verified Nonprofit &amp; Charity Pools:
+          Stake With Purpose
         </h1>
 
         <div className="w-full max-w-7xl grid gap-8 grid-cols-[repeat(auto-fit,minmax(18rem,1fr))] justify-items-center">
@@ -43,6 +43,12 @@ export default function DashboardPage() {
           ))}
         </div>
       </main>
+
+      {/* Footer disclaimer */}
+      <footer className="mt-auto py-4 text-center text-[11px] text-gray-500">
+        Olive Branch Network is a decentralized protocol and does not have any direct
+        affiliation with any of the organizations displayed.
+      </footer>
     </div>
   );
 }

@@ -3,13 +3,13 @@ const { ethers } = require("hardhat");
 require("dotenv").config();
 
 async function main() {
-  const tokenAddr = process.env.OBN_TOKEN_ADDRESS;
-  const vestAddr  = process.env.TEAM_VESTING_CONTRACT; // <— TeamVesting contract address
+  const tokenAddr = process.env.OBN_TOKEN_CONTRACT;
+  const vestAddr  = process.env.TEAM_VESTING_CONTRACT;
   const amountStr = process.env.OBN_TEAM_MIGRATE_AMOUNT; // optional; if missing, moves full balance
   const decimals  = 18;
 
   if (!tokenAddr || !vestAddr) {
-    throw new Error("Missing OBN_TOKEN_ADDRESS or TEAM_VESTING_CONTRACT in .env");
+    throw new Error("Missing OBN_TOKEN_CONTRACT or TEAM_VESTING_CONTRACT in .env");
   }
 
   // Sign with the TEAM wallet (the one currently holding tokens)
@@ -39,7 +39,16 @@ async function main() {
   console.log(`Transferring ${amountStr ? amountStr : ethers.formatUnits(amount, decimals)} OBN → ${vestAddr} ...`);
   const tx = await token.transfer(vestAddr, amount);
   await tx.wait();
-  console.log("Done. New team balance:", (await token.balanceOf(teamAddr)).toString());
+  console.log("✅ Transfer complete.");
+
+  // Small delay before fetching the new balance to avoid race conditions
+  await new Promise(resolve => setTimeout(resolve, 3000));
+
+  const newBal = await token.balanceOf(teamAddr);
+  console.log("New team balance:", newBal.toString());
 }
 
-main().catch((e) => { console.error(e); process.exitCode = 1; });
+main().catch((e) => { 
+  console.error(e); 
+  process.exitCode = 1; 
+});

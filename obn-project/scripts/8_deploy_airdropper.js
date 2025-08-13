@@ -4,7 +4,7 @@ require("dotenv").config();
 
 async function main() {
   const [deployer] = await ethers.getSigners();
-  const tokenAddress = process.env.OBN_TOKEN_ADDRESS;
+  const tokenAddress = process.env.OBN_TOKEN_CONTRACT;
 
   if (!ethers.isAddress(tokenAddress)) {
     throw new Error("❌ Invalid OBN token address. Check .env");
