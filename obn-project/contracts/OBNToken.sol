@@ -81,11 +81,11 @@ contract OBNToken is
      * @notice Set the staking contract as the sole minter. Can only be called once.
      *         After this, no other minter can be set unless the contract is upgraded.
      */
-    function setMinterOnce(address _minter) external onlyOwner {
+    function setMinterOnce(address minterAddr) external onlyOwner {
         require(minter == address(0), "minter already set");
-        require(_minter != address(0), "minter=0");
-        minter = _minter;
-        emit MinterSet(_minter);
+        require(minterAddr != address(0), "minter=0");
+        minter = minterAddr;
+        emit MinterSet(minterAddr);
     }
 
     /// @notice Convenience helper for integrations / sanity checks.

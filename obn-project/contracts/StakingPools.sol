@@ -11,36 +11,40 @@ import "@openzeppelin/contracts/token/ERC20/extensions/IERC20Permit.sol";
 import {Math} from "@openzeppelin/contracts/utils/math/Math.sol";
 
 import "./interfaces/IOBNMintable.sol";
+import "./interfaces/IStakingPools.sol";
 
 /**
  * @title OBNStakingPools
  * @notice Timestamp-based emissions with fixed 4-way split:
- *         88% stakers, 10% charity buffer, 1% charity fund, 1% treasury.
+ *         88% stakers, 10% charity (per-pool accrual), 1% charity fund, 1% treasury.
  *         Per-pool accumulators; equal APR/token across pools.
  *         CEI + nonReentrant on mutating functions.
  *
- * @dev NOTE: All "retire pool" / "active" logic has been removed.
  */
-contract OBNStakingPools is Initializable, UUPSUpgradeable, ReentrancyGuardUpgradeable, OwnableUpgradeable {
+contract OBNStakingPools is
+    Initializable,
+    UUPSUpgradeable,
+    ReentrancyGuardUpgradeable,
+    OwnableUpgradeable,
+    IStakingPools
+{
     using SafeERC20 for IOBNMintable;
     using SafeERC20 for IERC20;
 
     // ---------- Fixed split (BPS) ----------
     uint256 public constant STAKER_BPS       = 8800; // 88%
-    uint256 public constant CHARITY_BPS      = 1000; // 10% (buffered then allocated/minted per-pool)
+    uint256 public constant CHARITY_BPS      = 1000; // 10% (per-pool accrual)
     uint256 public constant CHARITY_FUND_BPS = 100;  // 1%
     uint256 public constant TREASURY_BPS     = 100;  // 1%
     uint256 public constant TOTAL_BPS        = 10000;
 
     // ---------- Types ----------
     struct PoolInfo {
-        // tightened layout: removed `bool active`
         address charityWallet;
         uint256 totalStaked;
     }
 
     struct Phase {
-        // Timestamp-based schedule
         uint256 start;
         uint256 end;
         uint256 bps; // annualized BPS (e.g., 1000 = 10%)
@@ -68,10 +72,8 @@ contract OBNStakingPools is Initializable, UUPSUpgradeable, ReentrancyGuardUpgra
     // ---------- Global ----------
     uint256 public globalTotalStaked;
 
-    // ---------- Charity ----------
-    uint256 public charityBuffer;                      // global buffer to be allocated
+    // ---------- Charity (per-pool) ----------
     mapping(uint256 => uint256) public charityAccrued; // per-pool allocation awaiting mint
-    uint256 public charityCursor;                      // round-robin cursor (allocation only)
 
     // ---------- Permanent locks ----------
     mapping(uint256 => mapping(address => uint256)) public lockedAmount;
@@ -85,10 +87,17 @@ contract OBNStakingPools is Initializable, UUPSUpgradeable, ReentrancyGuardUpgra
     mapping(uint256 => uint256) public totalWithdrawnByPool;
     mapping(uint256 => uint256) public totalCharityMintedByPool;
 
-    // NEW: unique-staker counters
     mapping(uint256 => uint256) public uniqueStakersByPool;               // pid => count
-    uint256 public uniqueStakersGlobal;                                   // global count
+    uint256 public uniqueStakersGlobal;                                   // count of addresses with activePoolCount > 0 (true global uniques)
     mapping(uint256 => mapping(address => bool)) private _isActiveStaker; // pid => user => active>0
+
+    /// @notice Number of pools in which a user currently has a non-zero stake.
+    mapping(address => uint256) public activePoolCount;
+    /// @notice Timestamp when a user first became globally staked (activePoolCount moved 0 -> 1). Resets to 0 when it returns to 0.
+    mapping(address => uint64) public stakedSince;
+
+    // ==== Persistent cumulative staking time (does NOT reset on full unstake) ====
+    mapping(address => uint256) public cumulativeStakeSeconds;
 
     // ---------- Events ----------
     event PoolAdded(uint256 indexed pid, address charityWallet);
@@ -97,13 +106,15 @@ contract OBNStakingPools is Initializable, UUPSUpgradeable, ReentrancyGuardUpgra
     event Claim(address indexed user, uint256 indexed pid, uint256 amount);
     event PhaseAdded(uint256 start, uint256 end, uint256 bps);
 
-    event CharityBuffered(uint256 amount);
-    event CharityAllocated(uint256 indexed pid, uint256 amount);
-    event CharityDistributed(uint256 indexed pid, uint256 amount);
+    event CharityAllocated(uint256 indexed pid, uint256 amount);    // accrued to pool
+    event CharityDistributed(uint256 indexed pid, uint256 amount);  // minted to pool charity
     event TreasuryDistributed(uint256 amount);
     event CharityFundDistributed(uint256 amount);
 
     event LockedAmountSet(uint256 indexed pid, address indexed user, uint256 amount);
+
+    // NEW: ability to update charity wallet for a pool
+    event CharityWalletUpdated(uint256 indexed pid, address indexed oldWallet, address indexed newWallet);
 
     /// @custom:oz-upgrades-unsafe-allow constructor
     constructor() {
@@ -126,7 +137,7 @@ contract OBNStakingPools is Initializable, UUPSUpgradeable, ReentrancyGuardUpgra
         stakingToken = stakingTokenArg;
         treasury = treasuryAddr;
         charityFund = charityFundAddr;
-        version = "8.2.0-no-retire-no-active";
+        version = "8.5.0-perpool-charity-clean";
 
         // Local phases — timestamp schedule
         uint256 start = block.timestamp;
@@ -168,27 +179,20 @@ contract OBNStakingPools is Initializable, UUPSUpgradeable, ReentrancyGuardUpgra
         IERC20(token).safeTransfer(treasury, amount);
     }
 
-    // ---------- Charity fund bootstrapping ----------
-    /**
-     * @notice Charity fund can stake for a beneficiary with the deposit permanently locked.
-     *         Pulls tokens via transferFrom(charityFund -> this). Requires allowance.
-     */
-    function charityFundBootstrap(uint256 pid, uint256 amount, address beneficiary)
-        external
-        nonReentrant
-    {
-        require(msg.sender == charityFund, "Only charityFund");
-        _depositFor(pid, amount, beneficiary, true); // lock this deposit permanently
+    /// @notice Update the charity wallet for a pool (e.g., if compromised or rotating wallets).
+    function updateCharityWallet(uint256 pid, address newWallet) external onlyOwner {
+        require(pid < poolInfo.length, "Invalid pool");
+        require(newWallet != address(0), "Invalid wallet");
+        address old = poolInfo[pid].charityWallet;
+        require(newWallet != old, "Same wallet");
+        poolInfo[pid].charityWallet = newWallet;
+        emit CharityWalletUpdated(pid, old, newWallet);
     }
 
-    // =========================
-    // Permanent lock (admin)
-    // =========================
-    /**
-     * @notice Owner may only INCREASE a user's locked amount (never decrease).
-     *         Lock may still decrease automatically if the user's balance drops below it.
-     */
-    function setLockedAmount(uint256 pid, address user, uint256 amount) external onlyOwner {
+    /// @notice CharityFund may only INCREASE a user's locked amount (never decrease).
+    ///         Lock may still decrease automatically if the user's balance drops below it.
+    function setLockedAmount(uint256 pid, address user, uint256 amount) external {
+        require(msg.sender == charityFund, "Only charityFund");
         require(pid < poolInfo.length, "Invalid pool");
         uint256 bal = userAmount[pid][user];
         require(amount <= bal, "amount > balance");
@@ -216,9 +220,7 @@ contract OBNStakingPools is Initializable, UUPSUpgradeable, ReentrancyGuardUpgra
         return 0;
     }
 
-    /// @dev Sum raw gross reward for a pool across phases between [t0, t1).
-    ///      NOTE: By construction, global stake cancels out:
-    ///      reward_segment = duration * (global * bps / denom) * (pool/global) = duration * pool * bps / denom
+    /// Sum raw gross reward for a pool across phases between [t0, t1).
     function _sumRewardAcrossPhases(uint256 t0, uint256 t1, uint256 poolStake) internal view returns (uint256 total) {
         if (t1 <= t0 || poolStake == 0) return 0;
         uint256 len = phases.length;
@@ -230,30 +232,21 @@ contract OBNStakingPools is Initializable, UUPSUpgradeable, ReentrancyGuardUpgra
         for (uint256 i = 0; i < len && cursor < t1; i++) {
             Phase memory ph = phases[i];
 
-            // Skip phases that end before cursor or start after t1
-            if (ph.end <= cursor || ph.start >= t1) {
-                continue;
-            }
+            if (ph.end <= cursor || ph.start >= t1) continue;
 
             uint256 segStart = cursor < ph.start ? ph.start : cursor;
             if (segStart >= t1) break;
 
             uint256 segEnd = ph.end < t1 ? ph.end : t1;
-            if (segEnd <= segStart) {
-                cursor = ph.end;
-                continue;
-            }
+            if (segEnd <= segStart) { cursor = ph.end; continue; }
 
             uint256 dur = segEnd - segStart;
-            // SAFER multiply ordering: total += poolStake * (ph.bps * dur) / denom
             total += Math.mulDiv(poolStake, ph.bps * dur, denom);
-
             cursor = segEnd;
         }
     }
 
-    /// @dev Accrue rewards for a single pool (EFFECTS ONLY).
-    ///      Returns (sCut, tCut, fCut). Charity (10%) is buffered globally.
+    /// Accrue rewards for a single pool (EFFECTS ONLY).
     function _accruePool(uint256 pid) internal returns (uint256 sCut, uint256 tCut, uint256 fCut) {
         PoolInfo memory p = poolInfo[pid];
 
@@ -266,99 +259,24 @@ contract OBNStakingPools is Initializable, UUPSUpgradeable, ReentrancyGuardUpgra
             return (0, 0, 0);
         }
 
-        // Phase-accurate reward sum for this pool
         uint256 reward = _sumRewardAcrossPhases(last, nowTs, p.totalStaked);
         if (reward == 0) {
             lastRewardTime[pid] = nowTs;
             return (0, 0, 0);
         }
 
-        uint256 cCut = Math.mulDiv(reward, CHARITY_BPS, TOTAL_BPS);      // 10% to buffer
-        tCut = Math.mulDiv(reward, TREASURY_BPS, TOTAL_BPS);             // 1% to treasury
-        fCut = Math.mulDiv(reward, CHARITY_FUND_BPS, TOTAL_BPS);         // 1% to charityFund
-        sCut = reward - cCut - tCut - fCut;                              // 88% to stakers
+        uint256 cCut = Math.mulDiv(reward, CHARITY_BPS, TOTAL_BPS); // 10%
+        tCut = Math.mulDiv(reward, TREASURY_BPS, TOTAL_BPS);        // 1%
+        fCut = Math.mulDiv(reward, CHARITY_FUND_BPS, TOTAL_BPS);    // 1%
+        sCut = reward - cCut - tCut - fCut;                         // 88%
 
-        if (sCut > 0) {
-            accRewardPerShare[pid] += Math.mulDiv(sCut, 1e12, p.totalStaked);
-        }
+        if (sCut > 0) accRewardPerShare[pid] += Math.mulDiv(sCut, 1e12, p.totalStaked);
         if (cCut > 0) {
-            charityBuffer += cCut; // buffered globally
-            emit CharityBuffered(cCut);
+            charityAccrued[pid] += cCut;        // accrue charity directly to this pool
+            emit CharityAllocated(pid, cCut);
         }
 
-        lastRewardTime[pid] = nowTs; // EFFECTS END
-    }
-
-    // =========================
-    // Charity allocation (no external calls)
-    // =========================
-
-    function _allocateCharityForPid(uint256 pid) internal {
-        if (charityBuffer > 0 && globalTotalStaked > 0) {
-            PoolInfo memory p = poolInfo[pid];
-            if (p.totalStaked > 0) {
-                uint256 portion = Math.mulDiv(charityBuffer, p.totalStaked, globalTotalStaked);
-                if (portion > 0) {
-                    unchecked { charityBuffer -= portion; }
-                    charityAccrued[pid] += portion;
-                    emit CharityAllocated(pid, portion);
-                }
-            }
-        }
-    }
-
-    /// @notice Allocate charity to up to `maxPools` pools using round-robin. No external calls.
-    function distributeCharity(uint256 maxPools) external nonReentrant {
-        uint256 len = poolInfo.length;
-        if (len == 0 || charityBuffer == 0 || globalTotalStaked == 0 || maxPools == 0) return;
-
-        uint256 startIdx = charityCursor % len;
-        uint256 processed = (maxPools > len) ? len : maxPools;
-
-        uint256 totalToSub = 0;
-        for (uint256 step = 0; step < processed; step++) {
-            uint256 pid = (startIdx + step) % len;
-            PoolInfo memory p = poolInfo[pid];
-            if (p.totalStaked == 0) continue;
-
-            uint256 portion = Math.mulDiv(charityBuffer, p.totalStaked, globalTotalStaked);
-            if (portion == 0) continue;
-
-            charityAccrued[pid] += portion;
-            totalToSub += portion;
-            emit CharityAllocated(pid, portion);
-        }
-
-        if (totalToSub > 0) {
-            unchecked { charityBuffer -= totalToSub; } // single subtraction after loop
-        }
-
-        charityCursor = (startIdx + processed) % len;
-    }
-
-    /// @notice Allocate charity only to provided `pids`. No external calls.
-    function distributeCharityFor(uint256[] calldata pids) external nonReentrant {
-        if (charityBuffer == 0 || globalTotalStaked == 0) return;
-
-        uint256 totalToSub = 0;
-        uint256 len = pids.length;
-        for (uint256 i = 0; i < len; i++) {
-            uint256 pid = pids[i];
-            require(pid < poolInfo.length, "Invalid pid");
-            PoolInfo memory p = poolInfo[pid];
-            if (p.totalStaked == 0) continue;
-
-            uint256 portion = Math.mulDiv(charityBuffer, p.totalStaked, globalTotalStaked);
-            if (portion == 0) continue;
-
-            charityAccrued[pid] += portion;
-            totalToSub += portion;
-            emit CharityAllocated(pid, portion);
-        }
-
-        if (totalToSub > 0) {
-            unchecked { charityBuffer -= totalToSub; } // single subtraction after loop
-        }
+        lastRewardTime[pid] = nowTs;
     }
 
     // =========================
@@ -366,16 +284,17 @@ contract OBNStakingPools is Initializable, UUPSUpgradeable, ReentrancyGuardUpgra
     // =========================
 
     function deposit(uint256 pid, uint256 amount) external nonReentrant {
-        _depositFor(pid, amount, msg.sender, false);
+        _depositCore(pid, amount, msg.sender, false);
     }
 
     function depositFor(uint256 pid, uint256 amount, address beneficiary)
         external
         nonReentrant
     {
-        _depositFor(pid, amount, beneficiary, false);
+        _depositCore(pid, amount, beneficiary, false);
     }
 
+    // Reentrancy-friendly (effects before external calls)
     function depositWithPermit(
         uint256 pid,
         uint256 amount,
@@ -383,6 +302,172 @@ contract OBNStakingPools is Initializable, UUPSUpgradeable, ReentrancyGuardUpgra
         uint256 deadline,
         uint8 v, bytes32 r, bytes32 s
     ) external nonReentrant {
+        _depositCorePermit(pid, amount, beneficiary, false, deadline, v, r, s);
+    }
+
+    /// Only the charityFund is allowed to create permanently locked deposits.
+    function depositForWithLock(
+        uint256 pid,
+        uint256 amount,
+        address beneficiary
+    ) external nonReentrant {
+        require(msg.sender == charityFund, "Only charityFund");
+        _depositCore(pid, amount, beneficiary, true);
+    }
+
+    /// Convenience wrapper kept for parity with older interfaces.
+    function charityFundBootstrap(uint256 pid, uint256 amount, address beneficiary)
+        external
+        nonReentrant
+    {
+        require(msg.sender == charityFund, "Only charityFund");
+        _depositCore(pid, amount, beneficiary, true);
+    }
+
+    // ---------- Internal helpers to reduce cyclomatic complexity ----------
+
+    struct DepCalcs {
+        uint256 acc;
+        uint256 balBefore;
+        uint256 debtBefore;
+        uint256 pending;
+        uint256 tCut;
+        uint256 fCut;
+    }
+
+    function _accrueAndComputePending(uint256 pid, address user) internal returns (DepCalcs memory d) {
+        ( , d.tCut, d.fCut) = _accruePool(pid);
+        d.acc        = accRewardPerShare[pid];
+        d.balBefore  = userAmount[pid][user];
+        d.debtBefore = userRewardDebt[pid][user];
+        d.pending    = ((d.balBefore * d.acc) / 1e12) - d.debtBefore;
+    }
+
+    function _accountUniqueStaker(uint256 pid, address user, uint256 balBefore) internal {
+        if (balBefore == 0 && !_isActiveStaker[pid][user]) {
+            _isActiveStaker[pid][user] = true;
+            uniqueStakersByPool[pid] += 1;
+            // NOTE: uniqueStakersGlobal is now managed solely by global activePoolCount transitions (0->1 / 1->0)
+        }
+    }
+
+    function _bumpBalancesOnDeposit(uint256 pid, address user, uint256 amount, uint256 acc, uint256 balBefore) internal {
+        userAmount[pid][user] = balBefore + amount;
+        poolInfo[pid].totalStaked   += amount;
+        globalTotalStaked           += amount;
+        totalDepositedByUser[user]  += amount;
+        totalDepositedByPool[pid]   += amount;
+        userRewardDebt[pid][user]    = ((balBefore + amount) * acc) / 1e12;
+    }
+
+    function _updateGlobalStakeOnNewPool(address user, uint256 balBefore) internal {
+        if (balBefore == 0) {
+            uint256 prev = activePoolCount[user];
+            activePoolCount[user] = prev + 1;
+            if (prev == 0) {
+                stakedSince[user] = uint64(block.timestamp);
+                uniqueStakersGlobal += 1; // (2) increment only when user becomes globally active
+            }
+        }
+    }
+
+    function _applyLockIfNeeded(uint256 pid, address user, uint256 amount, bool lockThisDeposit) internal {
+        if (lockThisDeposit) {
+            require(msg.sender == charityFund, "Only charityFund");
+            lockedAmount[pid][user] += amount;
+            emit LockedAmountSet(pid, user, lockedAmount[pid][user]);
+        }
+    }
+
+    function _allocateAndPredebitCharity(uint256 pid) internal returns (uint256 charityToMint) {
+        // Read and clear this pool's accrued charity; mint after effects.
+        charityToMint = charityAccrued[pid];
+        if (charityToMint > 0) {
+            charityAccrued[pid] = 0;
+            totalCharityMintedByPool[pid] += charityToMint;
+        }
+    }
+
+    function _bookClaimed(address user, uint256 pending) internal {
+        if (pending > 0) {
+            totalClaimedByUser[user] += pending;
+        }
+    }
+
+    function _mintCharityIfAny(uint256 pid, uint256 charityToMint) internal {
+        if (charityToMint > 0) {
+            address cw = poolInfo[pid].charityWallet;
+            require(cw != address(0), "charity=0");
+            stakingToken.mint(cw, charityToMint);
+            emit CharityDistributed(pid, charityToMint);
+        }
+    }
+
+    function _mintSlices(address to, uint256 pending, uint256 tCut, uint256 fCut, uint256 pid) internal {
+        if (pending > 0) {
+            stakingToken.mint(to, pending);
+            emit Claim(to, pid, pending);
+        }
+        if (tCut > 0) {
+            stakingToken.mint(treasury, tCut);
+            emit TreasuryDistributed(tCut);
+        }
+        if (fCut > 0) {
+            stakingToken.mint(charityFund, fCut);
+            emit CharityFundDistributed(fCut);
+        }
+    }
+
+    // --- Core deposit without permit (thin wrapper) ---
+    function _depositCore(uint256 pid, uint256 amount, address beneficiary, bool lockThisDeposit) internal {
+        require(amount > 0, "Cannot stake 0");
+        require(pid < poolInfo.length, "Invalid pool");
+        require(beneficiary != address(0), "beneficiary=0");
+
+        DepCalcs memory d = _accrueAndComputePending(pid, beneficiary);
+
+        _accountUniqueStaker(pid, beneficiary, d.balBefore);
+        _bumpBalancesOnDeposit(pid, beneficiary, amount, d.acc, d.balBefore);
+        _updateGlobalStakeOnNewPool(beneficiary, d.balBefore);
+        _applyLockIfNeeded(pid, beneficiary, amount, lockThisDeposit);
+
+        uint256 charityToMint = _allocateAndPredebitCharity(pid);
+        _bookClaimed(beneficiary, d.pending);
+
+        // INTERACTIONS
+        _mintCharityIfAny(pid, charityToMint);
+        stakingToken.safeTransferFrom(msg.sender, address(this), amount);
+        _mintSlices(beneficiary, d.pending, d.tCut, d.fCut, pid);
+
+        emit Deposit(beneficiary, pid, amount);
+    }
+
+    // --- Core deposit with permit (thin wrapper) ---
+    function _depositCorePermit(
+        uint256 pid,
+        uint256 amount,
+        address beneficiary,
+        bool lockThisDeposit,
+        uint256 deadline,
+        uint8 v, bytes32 r, bytes32 s
+    ) internal {
+        require(amount > 0, "Cannot stake 0");
+        require(pid < poolInfo.length, "Invalid pool");
+        require(beneficiary != address(0), "beneficiary=0");
+
+        DepCalcs memory d = _accrueAndComputePending(pid, beneficiary);
+
+        _accountUniqueStaker(pid, beneficiary, d.balBefore);
+        _bumpBalancesOnDeposit(pid, beneficiary, amount, d.acc, d.balBefore);
+        _updateGlobalStakeOnNewPool(beneficiary, d.balBefore);
+        _applyLockIfNeeded(pid, beneficiary, amount, lockThisDeposit);
+
+        uint256 charityToMint = _allocateAndPredebitCharity(pid);
+        _bookClaimed(beneficiary, d.pending);
+
+        // INTERACTIONS (permit after effects)
+        _mintCharityIfAny(pid, charityToMint);
+
         IERC20Permit(address(stakingToken)).permit(
             msg.sender,
             address(this),
@@ -390,181 +475,133 @@ contract OBNStakingPools is Initializable, UUPSUpgradeable, ReentrancyGuardUpgra
             deadline,
             v, r, s
         );
-        _depositFor(pid, amount, beneficiary, false);
-    }
 
-    /// @notice Locks the deposit amount permanently for the beneficiary.
-    function depositForWithLock(
-        uint256 pid,
-        uint256 amount,
-        address beneficiary
-    ) external nonReentrant {
-        _depositFor(pid, amount, beneficiary, true);
-    }
-
-    function _depositFor(
-        uint256 pid,
-        uint256 amount,
-        address beneficiary,
-        bool lockThisDeposit
-    ) internal {
-        require(amount > 0, "Cannot stake 0");
-        require(pid < poolInfo.length, "Invalid pool");
-        require(beneficiary != address(0), "beneficiary=0");
-
-        ( , uint256 tCut, uint256 fCut) = _accruePool(pid); // EFFECTS ONLY
-
-        uint256 acc = accRewardPerShare[pid];
-        uint256 balBefore = userAmount[pid][beneficiary];
-        uint256 debtBefore = userRewardDebt[pid][beneficiary];
-        uint256 pending = ((balBefore * acc) / 1e12) - debtBefore;
-
-        // ---- UNIQUE STAKER ACCOUNTING (before balance change) ----
-        if (balBefore == 0 && !_isActiveStaker[pid][beneficiary]) {
-            _isActiveStaker[pid][beneficiary] = true;
-            uniqueStakersByPool[pid] += 1;
-            uniqueStakersGlobal += 1;
-        }
-
-        // EFFECTS: balances, debts, stats
-        userAmount[pid][beneficiary] = balBefore + amount;
-        poolInfo[pid].totalStaked   += amount;
-        globalTotalStaked           += amount;
-        totalDepositedByUser[beneficiary] += amount;
-        totalDepositedByPool[pid]   += amount;
-        userRewardDebt[pid][beneficiary] = ((balBefore + amount) * acc) / 1e12;
-
-        if (lockThisDeposit) {
-            lockedAmount[pid][beneficiary] += amount; // permanent increase
-            emit LockedAmountSet(pid, beneficiary, lockedAmount[pid][beneficiary]);
-        }
-
-        // EFFECTS: allocate charity for this pool
-        _allocateCharityForPid(pid);
-
-        // EFFECTS: pre-debit charityAccrued for auto-mint
-        uint256 charityToMint = charityAccrued[pid];
-        if (charityToMint > 0) {
-            charityAccrued[pid] = 0;
-            totalCharityMintedByPool[pid] += charityToMint;
-        }
-
-        // EFFECTS: claimed stats before any external call
-        if (pending > 0) {
-            totalClaimedByUser[beneficiary] += pending;
-        }
-
-        // INTERACTIONS — no storage writes after this point
-        if (charityToMint > 0) {
-            address cw = poolInfo[pid].charityWallet;
-            require(cw != address(0), "charity=0");
-            stakingToken.mint(cw, charityToMint);
-            emit CharityDistributed(pid, charityToMint);
-        }
-
-        // take stake tokens
         stakingToken.safeTransferFrom(msg.sender, address(this), amount);
-
-        // pay staker pending
-        if (pending > 0) {
-            stakingToken.mint(beneficiary, pending);
-            emit Claim(beneficiary, pid, pending);
-        }
-        // global 1% + 1% slices
-        if (tCut > 0) {
-            stakingToken.mint(treasury, tCut);
-            emit TreasuryDistributed(tCut);
-        }
-        if (fCut > 0) {
-            stakingToken.mint(charityFund, fCut);
-            emit CharityFundDistributed(fCut);
-        }
+        _mintSlices(beneficiary, d.pending, d.tCut, d.fCut, pid);
 
         emit Deposit(beneficiary, pid, amount);
+    }
+
+    // ---------- Withdraw / Claim ----------
+
+    struct WLocals {
+        uint256 userBal;
+        uint256 locked;
+        uint256 available;
+        uint256 acc;
+        uint256 debt;
+        uint256 pending;
+        uint256 newBal;
+        uint256 tCut;
+        uint256 fCut;
+        uint256 charityToMint;
+    }
+
+    function _loadAndCheckWithdraw(uint256 pid, address user, uint256 amount)
+        internal
+        view
+        returns (uint256 userBal, uint256 locked, uint256 available)
+    {
+        userBal = userAmount[pid][user];
+        require(userBal >= amount, "Exceeds staked");
+
+        locked = lockedAmount[pid][user];
+        if (locked > userBal) locked = userBal;
+        available = userBal - locked;
+        require(amount <= available, "amount exceeds unlocked");
+    }
+
+    function _afterWithdrawBalanceHooks(uint256 pid, address user, uint256 newBal) internal {
+        if (lockedAmount[pid][user] > newBal) {
+            lockedAmount[pid][user] = newBal;
+            emit LockedAmountSet(pid, user, newBal);
+        }
+
+        if (newBal == 0 && _isActiveStaker[pid][user]) {
+            _isActiveStaker[pid][user] = false;
+            uniqueStakersByPool[pid] -= 1;
+            // NOTE: do not touch uniqueStakersGlobal here; handle it on global 1->0 transition below
+        }
+
+        if (newBal == 0) {
+            uint256 prev = activePoolCount[user];
+            if (prev > 0) {
+                uint256 next = prev - 1;
+                activePoolCount[user] = next;
+                if (next == 0) {
+                    uint64 since = stakedSince[user];
+                    if (since != 0) {
+                        cumulativeStakeSeconds[user] += (block.timestamp - uint256(since));
+                    }
+                    stakedSince[user] = 0;
+                    uniqueStakersGlobal -= 1; // (2) decrement only when user becomes globally inactive
+                }
+            }
+        }
     }
 
     function withdraw(uint256 pid, uint256 amount) external nonReentrant {
         require(pid < poolInfo.length, "Invalid pool");
         require(amount > 0, "Zero amount");
-        uint256 userBal = userAmount[pid][msg.sender];
-        require(userBal >= amount, "Exceeds staked");
 
-        uint256 locked = lockedAmount[pid][msg.sender];
-        if (locked > userBal) locked = userBal;
-        uint256 available = userBal - locked;
-        require(amount <= available, "amount exceeds unlocked");
+        WLocals memory w = WLocals({
+            userBal: 0,
+            locked: 0,
+            available: 0,
+            acc: 0,
+            debt: 0,
+            pending: 0,
+            newBal: 0,
+            tCut: 0,
+            fCut: 0,
+            charityToMint: 0
+        });
 
-        ( , uint256 tCut, uint256 fCut) = _accruePool(pid); // EFFECTS ONLY
+        (w.userBal, w.locked, w.available) = _loadAndCheckWithdraw(pid, msg.sender, amount);
+        ( , w.tCut, w.fCut) = _accruePool(pid);
 
-        uint256 acc = accRewardPerShare[pid];
-        uint256 debt = userRewardDebt[pid][msg.sender];
-        uint256 pending = ((userBal * acc) / 1e12) - debt;
+        w.acc     = accRewardPerShare[pid];
+        w.debt    = userRewardDebt[pid][msg.sender];
+        w.pending = ((w.userBal * w.acc) / 1e12) - w.debt;
 
         // EFFECTS
-        uint256 newBal = userBal - amount;
-        userAmount[pid][msg.sender] = newBal;
+        w.newBal = w.userBal - amount;
+        userAmount[pid][msg.sender] = w.newBal;
         poolInfo[pid].totalStaked   -= amount;
         globalTotalStaked           -= amount;
         totalWithdrawnByUser[msg.sender] += amount;
         totalWithdrawnByPool[pid]        += amount;
 
-        if (lockedAmount[pid][msg.sender] > newBal) {
-            lockedAmount[pid][msg.sender] = newBal; // auto-shrink lock if needed
-            emit LockedAmountSet(pid, msg.sender, newBal);
+        _afterWithdrawBalanceHooks(pid, msg.sender, w.newBal);
+
+        userRewardDebt[pid][msg.sender] = (w.newBal * w.acc) / 1e12;
+
+        w.charityToMint = _allocateAndPredebitCharity(pid);
+
+        if (w.pending > 0) {
+            totalClaimedByUser[msg.sender] += w.pending;
         }
 
-        // ---- UNIQUE STAKER ACCOUNTING (after balance change) ----
-        if (newBal == 0 && _isActiveStaker[pid][msg.sender]) {
-            _isActiveStaker[pid][msg.sender] = false;
-            uniqueStakersByPool[pid] -= 1;
-            uniqueStakersGlobal -= 1;
-        }
-
-        userRewardDebt[pid][msg.sender] = (newBal * acc) / 1e12;
-
-        // EFFECTS: allocate charity for this pool
-        _allocateCharityForPid(pid);
-
-        // EFFECTS: pre-debit charityAccrued for auto-mint
-        uint256 charityToMint = charityAccrued[pid];
-        if (charityToMint > 0) {
-            charityAccrued[pid] = 0;
-            totalCharityMintedByPool[pid] += charityToMint;
-        }
-
-        // EFFECTS: claimed stats before external calls
-        if (pending > 0) {
-            totalClaimedByUser[msg.sender] += pending;
-        }
-
-        // INTERACTIONS — no storage writes after this point
-        if (charityToMint > 0) {
-            address cw = poolInfo[pid].charityWallet;
-            require(cw != address(0), "charity=0");
-            stakingToken.mint(cw, charityToMint);
-            emit CharityDistributed(pid, charityToMint);
-        }
-
+        // INTERACTIONS
+        _mintCharityIfAny(pid, w.charityToMint);
         stakingToken.safeTransfer(msg.sender, amount);
-
-        if (pending > 0) {
-            stakingToken.mint(msg.sender, pending);
-            emit Claim(msg.sender, pid, pending);
-        }
-        if (tCut > 0) {
-            stakingToken.mint(treasury, tCut);
-            emit TreasuryDistributed(tCut);
-        }
-        if (fCut > 0) {
-            stakingToken.mint(charityFund, fCut);
-            emit CharityFundDistributed(fCut);
-        }
+        _mintSlices(msg.sender, w.pending, w.tCut, w.fCut, pid);
 
         emit Withdraw(msg.sender, pid, amount);
     }
 
     function claim(uint256 pid) external nonReentrant {
         _claimTo(pid, msg.sender);
+    }
+
+    struct CLocals {
+        uint256 acc;
+        uint256 bal;
+        uint256 debt;
+        uint256 pending;
+        uint256 tCut;
+        uint256 fCut;
+        uint256 charityToMint;
     }
 
     function claimFor(uint256 pid, address user) external nonReentrant {
@@ -574,49 +611,34 @@ contract OBNStakingPools is Initializable, UUPSUpgradeable, ReentrancyGuardUpgra
     function _claimTo(uint256 pid, address user) internal {
         require(pid < poolInfo.length, "Invalid pool");
 
-        ( , uint256 tCut, uint256 fCut) = _accruePool(pid); // EFFECTS ONLY
+        CLocals memory c = CLocals({
+            acc: 0,
+            bal: 0,
+            debt: 0,
+            pending: 0,
+            tCut: 0,
+            fCut: 0,
+            charityToMint: 0
+        });
 
-        uint256 acc = accRewardPerShare[pid];
-        uint256 bal = userAmount[pid][user];
-        uint256 debt = userRewardDebt[pid][user];
-        uint256 pending = ((bal * acc) / 1e12) - debt;
+        ( , c.tCut, c.fCut) = _accruePool(pid);
+
+        c.acc     = accRewardPerShare[pid];
+        c.bal     = userAmount[pid][user];
+        c.debt    = userRewardDebt[pid][user];
+        c.pending = ((c.bal * c.acc) / 1e12) - c.debt;
 
         // EFFECTS
-        userRewardDebt[pid][user] = (bal * acc) / 1e12;
-        if (pending > 0) {
-            totalClaimedByUser[user] += pending;
+        userRewardDebt[pid][user] = (c.bal * c.acc) / 1e12;
+        if (c.pending > 0) {
+            totalClaimedByUser[user] += c.pending;
         }
 
-        // EFFECTS: allocate charity for this pool
-        _allocateCharityForPid(pid);
+        c.charityToMint = _allocateAndPredebitCharity(pid);
 
-        // EFFECTS: pre-debit charityAccrued for auto-mint
-        uint256 charityToMint = charityAccrued[pid];
-        if (charityToMint > 0) {
-            charityAccrued[pid] = 0;
-            totalCharityMintedByPool[pid] += charityToMint;
-        }
-
-        // INTERACTIONS — no storage writes after this point
-        if (charityToMint > 0) {
-            address cw = poolInfo[pid].charityWallet;
-            require(cw != address(0), "charity=0");
-            stakingToken.mint(cw, charityToMint);
-            emit CharityDistributed(pid, charityToMint);
-        }
-
-        if (pending > 0) {
-            stakingToken.mint(user, pending);
-            emit Claim(user, pid, pending);
-        }
-        if (tCut > 0) {
-            stakingToken.mint(treasury, tCut);
-            emit TreasuryDistributed(tCut);
-        }
-        if (fCut > 0) {
-            stakingToken.mint(charityFund, fCut);
-            emit CharityFundDistributed(fCut);
-        }
+        // INTERACTIONS
+        _mintCharityIfAny(pid, c.charityToMint);
+        _mintSlices(user, c.pending, c.tCut, c.fCut, pid);
     }
 
     // =========================
@@ -669,12 +691,9 @@ contract OBNStakingPools is Initializable, UUPSUpgradeable, ReentrancyGuardUpgra
         uint256 start = block.timestamp;
         uint256 end   = start + 365 days;
 
-        // Yearly gross rewards for this pool using phase-accurate math
         uint256 yearlyPoolGross = _sumRewardAcrossPhases(start, end, p.totalStaked);
         if (yearlyPoolGross == 0) return 0;
 
-        // APR in BPS for stakers in this pool:
-        // ((yearlyPoolGross * STAKER_BPS / TOTAL_BPS) / p.totalStaked) * TOTAL_BPS
         uint256 stakerYearly = Math.mulDiv(yearlyPoolGross, STAKER_BPS, TOTAL_BPS);
         return Math.mulDiv(stakerYearly, TOTAL_BPS, p.totalStaked);
     }
@@ -703,37 +722,26 @@ contract OBNStakingPools is Initializable, UUPSUpgradeable, ReentrancyGuardUpgra
         );
     }
 
+    /// @notice View how much charity is pending to be minted for a pool if we accrued right now.
+    ///         Equals already-accrued `charityAccrued[pid]` + new cCut since lastRewardTime.
     function pendingCharityFor(uint256 pid) external view returns (uint256) {
         if (pid >= poolInfo.length) return 0;
         PoolInfo memory p = poolInfo[pid];
 
-        // Always include what's already accrued for this pid
         uint256 accruedForPid = charityAccrued[pid];
-
-        // If TVL is zero, don't simulate further; return accrued
         if (p.totalStaked == 0) {
             return accruedForPid;
         }
 
-        // Include fair share of current global buffer + this interval's charity cut (virtual, across phases)
-        uint256 accGlobal = charityBuffer;
         uint256 last = lastRewardTime[pid];
         if (block.timestamp > last) {
             uint256 reward = _sumRewardAcrossPhases(last, block.timestamp, p.totalStaked);
             if (reward > 0) {
                 uint256 cCut = Math.mulDiv(reward, CHARITY_BPS, TOTAL_BPS);
-                accGlobal += cCut;
+                accruedForPid += cCut;
             }
         }
-
-        uint256 shareOfGlobal = 0;
-        if (globalTotalStaked > 0) {
-            shareOfGlobal = Math.mulDiv(accGlobal, p.totalStaked, globalTotalStaked);
-        }
-
-        // Guarantee result >= already-accrued amount
-        uint256 candidate = accruedForPid + shareOfGlobal;
-        return candidate >= accruedForPid ? candidate : accruedForPid;
+        return accruedForPid;
     }
 
     function _viewRps() internal view returns (uint256) {
@@ -750,9 +758,8 @@ contract OBNStakingPools is Initializable, UUPSUpgradeable, ReentrancyGuardUpgra
         return 0;
     }
 
-    // ====== NEW DASHBOARD HELPERS ======
+    // ====== DASHBOARD HELPERS ======
 
-    /// @notice Global snapshot useful for dashboards.
     function getGlobalStats()
         external
         view
@@ -760,18 +767,15 @@ contract OBNStakingPools is Initializable, UUPSUpgradeable, ReentrancyGuardUpgra
             uint256 poolCount,
             uint256 totalStaked_,
             uint256 uniqueStakers_,
-            uint256 charityBuffer_,
             uint256 rps
         )
     {
         poolCount       = poolInfo.length;
         totalStaked_    = globalTotalStaked;
-        uniqueStakers_  = uniqueStakersGlobal;
-        charityBuffer_  = charityBuffer;
+        uniqueStakers_  = uniqueStakersGlobal; // true global uniques (activePoolCount > 0)
         rps             = _viewRps();
     }
 
-    /// @notice Pool snapshot including unique stakers.
     function getPoolStats(uint256 pid)
         external
         view
@@ -800,7 +804,6 @@ contract OBNStakingPools is Initializable, UUPSUpgradeable, ReentrancyGuardUpgra
         charityMintedAllTime = totalCharityMintedByPool[pid];
     }
 
-    /// @notice User view for a given pool (single call for UI).
     function getUserPoolView(uint256 pid, address user)
         external
         view
@@ -820,7 +823,6 @@ contract OBNStakingPools is Initializable, UUPSUpgradeable, ReentrancyGuardUpgra
         unlocked   = staked - locked;
         rewardDebt = userRewardDebt[pid][user];
 
-        // simulate pending based on current acc and latest accrual if TVL>0
         uint256 acc = accRewardPerShare[pid];
         PoolInfo memory p = poolInfo[pid];
         uint256 last = lastRewardTime[pid];
@@ -838,7 +840,6 @@ contract OBNStakingPools is Initializable, UUPSUpgradeable, ReentrancyGuardUpgra
         isActive = _isActiveStaker[pid][user];
     }
 
-    /// @notice Compact list of all pools for UIs (parallel arrays).
     function listPoolsBasic()
         external
         view
@@ -858,6 +859,20 @@ contract OBNStakingPools is Initializable, UUPSUpgradeable, ReentrancyGuardUpgra
             totals[i]         = p.totalStaked;
             uniqueCounts[i]   = uniqueStakersByPool[i];
         }
+    }
+
+    function isGloballyStaked(address user) external view returns (bool) {
+        return activePoolCount[user] > 0;
+    }
+
+    /// Total staking seconds including current session if active (for XP bar / NFT gating)
+    function stakeElapsed(address user) external view returns (uint256) {
+        uint256 cum = cumulativeStakeSeconds[user];
+        uint64 since = stakedSince[user];
+        if (since != 0) {
+            cum += block.timestamp - uint256(since);
+        }
+        return cum;
     }
 
     // ---- storage gap for future upgrades ----

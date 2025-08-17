@@ -5,9 +5,8 @@
     "@openzeppelin=node_modules/@openzeppelin"
   ],
   "detectors_to_exclude": [
-    "calls-inside-a-loop",
-    "block-timestamp",
+    "timestamp",
     "naming-convention",
-    "unused-state-variable"
+    "unused-state"
   ]
 }

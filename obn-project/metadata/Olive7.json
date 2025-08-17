@@ -1,0 +1,24 @@
+{
+  "name": "Olive7",
+  "description": "Olive Branch Network Collectible",
+  "external_url": "https://olivebranch.network/nft",
+  "image": "ipfs://bafybeieotqqsfj5euli42qzn5ex2a4y36mmtkpky3bnkcx7oguprgv5hfm/olive7.png",
+  "attributes": [
+    {
+      "trait_type": "Background",
+      "value": "Blue"
+    },
+    {
+      "trait_type": "Olive",
+      "value": "Olive"
+    },
+    {
+      "trait_type": "Hat",
+      "value": "Pink Hat"
+    },
+    {
+      "trait_type": "Shoes",
+      "value": "Black Shoes"
+    }
+  ]
+}
