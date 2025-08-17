@@ -85,7 +85,7 @@ export default function LandingPage() {
 
   return (
     <div className="min-h-screen w-full flex flex-col bg-base-100">
-      {/* Fake Header with Logo + Dropdown (no connect button here) */}
+      {/* Fixed Header with Logo + Dropdown (no connect button here) */}
       <div className="fixed top-0 left-0 w-full bg-green-700 text-white z-50 shadow-md">
         <div className="mx-auto max-w-7xl px-4 py-3 flex items-center justify-between">
           {/* Left: Logo dropdown trigger */}
@@ -97,7 +97,8 @@ export default function LandingPage() {
               aria-haspopup="menu"
               aria-expanded={open}
               aria-controls="landing-header-menu"
-              className="flex items-center gap-2 focus:outline-none focus:ring-2 focus:ring-white/70 rounded-md"
+              aria-label="Open menu"
+              className="group flex items-center gap-2 rounded-md p-1.5 focus:outline-none focus-visible:ring-2 focus-visible:ring-white/70 transition-colors hover:bg-white/10"
               title="Menu"
             >
               <Image
@@ -106,7 +107,7 @@ export default function LandingPage() {
                 width={28}
                 height={28}
                 priority
-                className="rounded-full"
+                className="rounded-full transition-transform duration-200 ease-out group-hover:scale-110 group-hover:rotate-6"
               />
               <span className="sr-only">Open menu</span>
             </button>
@@ -120,11 +121,7 @@ export default function LandingPage() {
               >
                 <MenuItem href="https://x.com/OliveBranch_Net" label="X / Twitter" external />
                 <MenuItem href="https://farcaster.xyz/olivebranch" label="Farcaster" external />
-                <MenuItem
-                  href="https://discord.gg/KfMSCsss2z"
-                  label="Discord"
-                  external
-                />
+                <MenuItem href="https://discord.gg/KfMSCsss2z" label="Discord" external />
                 <MenuItem
                   href="https://github.com/jdmaverick369/olive-branch-network/releases/download/v1.0/Olive.Branch.Network.OBN.Whitepaper.pdf"
                   label="Whitepaper"
@@ -150,10 +147,7 @@ export default function LandingPage() {
           "
         >
           {/* Bouncing Logo */}
-          <span
-            className="inline-block animate-bounce"
-            style={{ animationDuration: "2s" }}
-          >
+          <span className="inline-block animate-bounce" style={{ animationDuration: "2s" }}>
             <Image
               src="/logo.png"
               alt="Olive Branch Network Logo"

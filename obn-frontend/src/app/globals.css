@@ -1,4 +1,3 @@
-
 /* src/app/globals.css */
 @import "tailwindcss";
 
@@ -11,7 +10,8 @@
   --color-accent: #A0522D;
 }
 
-html, body {
+html,
+body {
   padding: 0;
   margin: 0;
   min-height: 100%;
@@ -19,26 +19,17 @@ html, body {
   color: var(--color-foreground);
   font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
     "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif,
-    "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+    "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol",
+    "Noto Color Emoji";
   line-height: 1.5;
 }
 
-html {
-  scroll-behavior: smooth;
-}
+html { scroll-behavior: smooth; }
 
-img, video {
-  max-width: 100%;
-  height: auto;
-}
+img, video { max-width: 100%; height: auto; }
 
-a {
-  color: var(--color-primary);
-  text-decoration: none;
-}
-a:hover {
-  text-decoration: underline;
-}
+a { color: var(--color-primary); text-decoration: none; }
+a:hover { text-decoration: underline; }
 
 h1, h2, h3, h4, h5, h6 {
   font-weight: 700;
@@ -46,24 +37,139 @@ h1, h2, h3, h4, h5, h6 {
   margin-top: 0;
 }
 
-button {
-  font-family: inherit;
-  cursor: pointer;
-}
-button:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
-}
+button { font-family: inherit; cursor: pointer; }
+button:disabled { opacity: 0.6; cursor: not-allowed; }
 
 /* Optional custom animation */
 @keyframes bounce-slow {
-  0%, 100% {
-    transform: translateY(0);
-  }
-  50% {
-    transform: translateY(-10%);
+  0%, 100% { transform: translateY(0); }
+  50%      { transform: translateY(-10%); }
+}
+.animate-bounce-slow { animation: bounce-slow 2s infinite; }
+
+/* ============================= */
+/* 🌟 NFT Overlay Effects        */
+/* ============================= */
+
+/* --- White Glossy Sheen --- */
+@keyframes sheenSweep {
+  0%   { transform: translateX(-120%) rotate(20deg); opacity: 0; }
+  10%  { opacity: 0.35; }
+  50%  { opacity: 0.5; }
+  100% { transform: translateX(140%) rotate(20deg); opacity: 0; }
+}
+
+.sheen-band {
+  position: absolute;
+  top: -30%;
+  left: -30%;
+  width: 60%;
+  height: 160%;
+  transform: translateX(-120%) rotate(20deg);
+  background: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0) 0%,
+    rgba(255, 255, 255, 0.12) 35%,
+    rgba(255, 255, 255, 0.6) 50%,
+    rgba(255, 255, 255, 0.12) 65%,
+    rgba(255, 255, 255, 0) 100%
+  );
+  mix-blend-mode: screen;
+  filter: blur(1px);
+  animation: sheenSweep 2.2s ease-in-out infinite;
+  animation-delay: 0.4s;
+}
+
+.sheen-mask { border-radius: inherit; }
+
+@media (prefers-reduced-motion: reduce) {
+  .sheen-band {
+    animation: none;
+    opacity: 0.25;
+    transform: rotate(20deg);
   }
 }
-.animate-bounce-slow {
-  animation: bounce-slow 2s infinite;
+
+/* --- Gold Glossy Sheen --- */
+@keyframes goldSheenSweep {
+  0%   { transform: translateX(-120%) rotate(20deg); opacity: 0; }
+  10%  { opacity: 0.28; }
+  50%  { opacity: 0.85; }
+  100% { transform: translateX(140%) rotate(20deg); opacity: 0; }
+}
+
+.gold-sheen-band {
+  position: absolute;
+  top: -30%;
+  left: -30%;
+  width: 60%;
+  height: 160%;
+  transform: translateX(-120%) rotate(20deg);
+  background: linear-gradient(
+    90deg,
+    rgba(255, 215, 0, 0) 0%,
+    rgba(255, 215, 0, 0.18) 30%,
+    rgba(255, 215, 0, 0.6) 50%,
+    rgba(255, 215, 0, 0.18) 70%,
+    rgba(255, 215, 0, 0) 100%
+  );
+  box-shadow: 0 0 12px rgba(255, 200, 0, 0.25), inset 0 0 6px rgba(255, 220, 100, 0.2);
+  mix-blend-mode: screen;
+  filter: blur(0.8px);
+  animation: goldSheenSweep 2.2s ease-in-out infinite;
+  animation-delay: 0.25s;
+}
+
+.gold-sheen-mask { border-radius: inherit; }
+
+@media (prefers-reduced-motion: reduce) {
+  .gold-sheen-band {
+    animation: none;
+    opacity: 0.35;
+    transform: rotate(20deg);
+  }
+}
+
+/* --- Rainbow Glossy Sheen --- */
+@keyframes rainbowSheenSweep {
+  0%   { transform: translateX(-120%) rotate(20deg); opacity: 0; filter: hue-rotate(0deg); }
+  10%  { opacity: 0.35; }
+  50%  { opacity: 0.9;  filter: hue-rotate(180deg); }
+  100% { transform: translateX(140%) rotate(20deg); opacity: 0; filter: hue-rotate(360deg); }
+}
+
+.rainbow-sheen-band {
+  position: absolute;
+  top: -30%;
+  left: -30%;
+  width: 60%;
+  height: 160%;
+  transform: translateX(-120%) rotate(20deg);
+  /* A bright, multi-stop rainbow band */
+  background: linear-gradient(
+    90deg,
+    rgba(255,255,255,0) 0%,
+    rgba(255,  59,  48, 0.30) 18%,
+    rgba(255, 149,   0, 0.35) 32%,
+    rgba(255, 204,   0, 0.40) 46%,
+    rgba( 52, 199,  89, 0.40) 58%,
+    rgba( 50, 173, 230, 0.40) 70%,
+    rgba( 88,  86, 214, 0.35) 82%,
+    rgba(255,  59,  48, 0.30) 92%,
+    rgba(255,255,255,0) 100%
+  );
+  mix-blend-mode: screen;
+  filter: blur(0.8px);
+  animation: rainbowSheenSweep 2.6s ease-in-out infinite;
+  animation-delay: 0.15s;
+}
+
+.rainbow-sheen-mask { border-radius: inherit; }
+
+@media (prefers-reduced-motion: reduce) {
+  .rainbow-sheen-band {
+    animation: none;
+    opacity: 0.4;
+    transform: rotate(20deg);
+  }
 }
