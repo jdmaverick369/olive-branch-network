@@ -13,6 +13,5 @@ interface IStakingPools {
     function stakedSince(address user) external view returns (uint64);
 
     /// Lifetime staking seconds accrued excluding the current active session.
-    /// (Useful for some UIs; optional for NFT gating. Your pool already exposes this as a public mapping.)
     function cumulativeStakeSeconds(address user) external view returns (uint256);
 }

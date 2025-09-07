@@ -65,9 +65,9 @@ contract OBNToken is
         require(teamVestingAddress != address(0), "team=0");
 
         // ===== Distribution (sum = 100%) =====
-        // 40% airdrop, 30% liquidity, 10% charity, 10% treasury, 10% team
-        _mint(airdropAddress,     (initialSupply * 40) / 100);
-        _mint(liquidityAddress,   (initialSupply * 30) / 100);
+        // 30% airdrop, 40% liquidity, 10% charity, 10% treasury, 10% team
+        _mint(airdropAddress,     (initialSupply * 30) / 100);
+        _mint(liquidityAddress,   (initialSupply * 40) / 100);
         _mint(charityAddress,     (initialSupply * 10) / 100);
         _mint(treasuryAddress,    (initialSupply * 10) / 100);
         _mint(teamVestingAddress, (initialSupply * 10) / 100);

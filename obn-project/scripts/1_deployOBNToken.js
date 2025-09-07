@@ -38,8 +38,8 @@ async function main() {
 
   // --- Allocation preview (40/30/10/10/10) ---
   const hundred = 100n;
-  const airdropAmt   = (initialSupply * 40n) / hundred;
-  const liquidityAmt = (initialSupply * 30n) / hundred;
+  const airdropAmt   = (initialSupply * 30n) / hundred;
+  const liquidityAmt = (initialSupply * 40n) / hundred;
   const charityAmt   = (initialSupply * 10n) / hundred;
   const treasuryAmt  = (initialSupply * 10n) / hundred;
   const teamAmt      = (initialSupply * 10n) / hundred;
