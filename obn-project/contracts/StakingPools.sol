@@ -15,11 +15,9 @@ import "./interfaces/IStakingPools.sol";
 
 /**
  * @title OBNStakingPools
- * @notice Timestamp-based emissions with fixed 4-way split:
- *         88% stakers, 10% charity (per-pool accrual), 1% charity fund, 1% treasury.
- *         Per-pool accumulators; equal APR/token across pools.
- *         CEI + nonReentrant on mutating functions.
- *
+ * @notice Timestamp-based emissions where each user's pending reward is the GROSS amount.
+ *         On claim/deposit/withdraw we mint: 88% to user, 10% to pool charity,
+ *         1% to charity fund, 1% to treasury.
  */
 contract OBNStakingPools is
     Initializable,
@@ -33,7 +31,7 @@ contract OBNStakingPools is
 
     // ---------- Fixed split (BPS) ----------
     uint256 public constant STAKER_BPS       = 8800; // 88%
-    uint256 public constant CHARITY_BPS      = 1000; // 10% (per-pool accrual)
+    uint256 public constant CHARITY_BPS      = 1000; // 10%
     uint256 public constant CHARITY_FUND_BPS = 100;  // 1%
     uint256 public constant TREASURY_BPS     = 100;  // 1%
     uint256 public constant TOTAL_BPS        = 10000;
@@ -66,20 +64,20 @@ contract OBNStakingPools is
     mapping(uint256 => mapping(address => uint256)) public userRewardDebt; // pid => user => debt vs acc
 
     // Per-pool accumulators
-    mapping(uint256 => uint256) public accRewardPerShare; // pid => acc (1e12)
+    mapping(uint256 => uint256) public accRewardPerShare; // pid => acc (1e12), now GROSS
     mapping(uint256 => uint256) public lastRewardTime;    // pid => last accrual timestamp
 
     // ---------- Global ----------
     uint256 public globalTotalStaked;
 
-    // ---------- Charity (per-pool) ----------
-    mapping(uint256 => uint256) public charityAccrued; // per-pool allocation awaiting mint
+    // ---------- Charity (legacy per-pool accrual kept for layout/back-compat) ----------
+    mapping(uint256 => uint256) public charityAccrued; // legacy bucket (no longer increments)
 
     // ---------- Permanent locks ----------
     mapping(uint256 => mapping(address => uint256)) public lockedAmount;
 
     // ---------- Stats ----------
-    mapping(address => uint256) public totalClaimedByUser;
+    mapping(address => uint256) public totalClaimedByUser; // tracks ONLY what was minted to user
     mapping(address => uint256) public totalDepositedByUser;
     mapping(address => uint256) public totalWithdrawnByUser;
 
@@ -88,7 +86,7 @@ contract OBNStakingPools is
     mapping(uint256 => uint256) public totalCharityMintedByPool;
 
     mapping(uint256 => uint256) public uniqueStakersByPool;               // pid => count
-    uint256 public uniqueStakersGlobal;                                   // count of addresses with activePoolCount > 0 (true global uniques)
+    uint256 public uniqueStakersGlobal;                                   // count of addresses with activePoolCount > 0
     mapping(uint256 => mapping(address => bool)) private _isActiveStaker; // pid => user => active>0
 
     /// @notice Number of pools in which a user currently has a non-zero stake.
@@ -103,17 +101,15 @@ contract OBNStakingPools is
     event PoolAdded(uint256 indexed pid, address charityWallet);
     event Deposit(address indexed user, uint256 indexed pid, uint256 amount);
     event Withdraw(address indexed user, uint256 indexed pid, uint256 amount);
-    event Claim(address indexed user, uint256 indexed pid, uint256 amount);
+    event Claim(address indexed user, uint256 indexed pid, uint256 amountUser); // amount minted to user
     event PhaseAdded(uint256 start, uint256 end, uint256 bps);
 
-    event CharityAllocated(uint256 indexed pid, uint256 amount);    // accrued to pool
+    event CharityAllocated(uint256 indexed pid, uint256 amount);    // legacy (not used by new accrual)
     event CharityDistributed(uint256 indexed pid, uint256 amount);  // minted to pool charity
     event TreasuryDistributed(uint256 amount);
     event CharityFundDistributed(uint256 amount);
 
     event LockedAmountSet(uint256 indexed pid, address indexed user, uint256 amount);
-
-    // NEW: ability to update charity wallet for a pool
     event CharityWalletUpdated(uint256 indexed pid, address indexed oldWallet, address indexed newWallet);
 
     /// @custom:oz-upgrades-unsafe-allow constructor
@@ -137,7 +133,7 @@ contract OBNStakingPools is
         stakingToken = stakingTokenArg;
         treasury = treasuryAddr;
         charityFund = charityFundAddr;
-        version = "8.5.0-perpool-charity-clean";
+        version = "8.6.0-gross-pending-88_10_1_1";
 
         // Local phases — timestamp schedule
         uint256 start = block.timestamp;
@@ -247,6 +243,7 @@ contract OBNStakingPools is
     }
 
     /// Accrue rewards for a single pool (EFFECTS ONLY).
+    /// New behavior: credit 100% (gross) to the accumulator; no new pool-level charity accrual.
     function _accruePool(uint256 pid) internal returns (uint256 sCut, uint256 tCut, uint256 fCut) {
         PoolInfo memory p = poolInfo[pid];
 
@@ -259,28 +256,25 @@ contract OBNStakingPools is
             return (0, 0, 0);
         }
 
-        uint256 reward = _sumRewardAcrossPhases(last, nowTs, p.totalStaked);
-        if (reward == 0) {
+        uint256 rewardGross = _sumRewardAcrossPhases(last, nowTs, p.totalStaked);
+        if (rewardGross == 0) {
             lastRewardTime[pid] = nowTs;
             return (0, 0, 0);
         }
 
-        uint256 cCut = Math.mulDiv(reward, CHARITY_BPS, TOTAL_BPS); // 10%
-        tCut = Math.mulDiv(reward, TREASURY_BPS, TOTAL_BPS);        // 1%
-        fCut = Math.mulDiv(reward, CHARITY_FUND_BPS, TOTAL_BPS);    // 1%
-        sCut = reward - cCut - tCut - fCut;                         // 88%
+        // Accrue GROSS reward to accRewardPerShare
+        accRewardPerShare[pid] += Math.mulDiv(rewardGross, 1e12, p.totalStaked);
 
-        if (sCut > 0) accRewardPerShare[pid] += Math.mulDiv(sCut, 1e12, p.totalStaked);
-        if (cCut > 0) {
-            charityAccrued[pid] += cCut;        // accrue charity directly to this pool
-            emit CharityAllocated(pid, cCut);
-        }
+        // No new pool-level accruals for charity/treasury/fund in this version.
+        sCut = 0;
+        tCut = 0;
+        fCut = 0;
 
         lastRewardTime[pid] = nowTs;
     }
 
     // =========================
-    // User actions — CEI with auto charity/treasury/charityFund mint
+    // User actions — CEI with per-claim 88/10/1/1 split
     // =========================
 
     function deposit(uint256 pid, uint256 amount) external nonReentrant {
@@ -294,7 +288,6 @@ contract OBNStakingPools is
         _depositCore(pid, amount, beneficiary, false);
     }
 
-    // Reentrancy-friendly (effects before external calls)
     function depositWithPermit(
         uint256 pid,
         uint256 amount,
@@ -315,7 +308,6 @@ contract OBNStakingPools is
         _depositCore(pid, amount, beneficiary, true);
     }
 
-    /// Convenience wrapper kept for parity with older interfaces.
     function charityFundBootstrap(uint256 pid, uint256 amount, address beneficiary)
         external
         nonReentrant
@@ -324,40 +316,39 @@ contract OBNStakingPools is
         _depositCore(pid, amount, beneficiary, true);
     }
 
-    // ---------- Internal helpers to reduce cyclomatic complexity ----------
+    // ---------- Internal helpers ----------
 
     struct DepCalcs {
         uint256 acc;
         uint256 balBefore;
         uint256 debtBefore;
-        uint256 pending;
-        uint256 tCut;
-        uint256 fCut;
+        uint256 pending; // GROSS
+        uint256 tCut;    // unused
+        uint256 fCut;    // unused
     }
 
     function _accrueAndComputePending(uint256 pid, address user) internal returns (DepCalcs memory d) {
-        ( , d.tCut, d.fCut) = _accruePool(pid);
+        ( , d.tCut, d.fCut) = _accruePool(pid); // returns zeros now
         d.acc        = accRewardPerShare[pid];
         d.balBefore  = userAmount[pid][user];
         d.debtBefore = userRewardDebt[pid][user];
-        d.pending    = ((d.balBefore * d.acc) / 1e12) - d.debtBefore;
+        d.pending    = ((d.balBefore * d.acc) / 1e12) - d.debtBefore; // GROSS pending
     }
 
     function _accountUniqueStaker(uint256 pid, address user, uint256 balBefore) internal {
         if (balBefore == 0 && !_isActiveStaker[pid][user]) {
             _isActiveStaker[pid][user] = true;
             uniqueStakersByPool[pid] += 1;
-            // NOTE: uniqueStakersGlobal is now managed solely by global activePoolCount transitions (0->1 / 1->0)
         }
     }
 
     function _bumpBalancesOnDeposit(uint256 pid, address user, uint256 amount, uint256 acc, uint256 balBefore) internal {
-        userAmount[pid][user] = balBefore + amount;
-        poolInfo[pid].totalStaked   += amount;
-        globalTotalStaked           += amount;
-        totalDepositedByUser[user]  += amount;
-        totalDepositedByPool[pid]   += amount;
-        userRewardDebt[pid][user]    = ((balBefore + amount) * acc) / 1e12;
+        userAmount[pid][user]      = balBefore + amount;
+        poolInfo[pid].totalStaked  += amount;
+        globalTotalStaked          += amount;
+        totalDepositedByUser[user] += amount;
+        totalDepositedByPool[pid]  += amount;
+        userRewardDebt[pid][user]   = ((balBefore + amount) * acc) / 1e12;
     }
 
     function _updateGlobalStakeOnNewPool(address user, uint256 balBefore) internal {
@@ -366,7 +357,7 @@ contract OBNStakingPools is
             activePoolCount[user] = prev + 1;
             if (prev == 0) {
                 stakedSince[user] = uint64(block.timestamp);
-                uniqueStakersGlobal += 1; // (2) increment only when user becomes globally active
+                uniqueStakersGlobal += 1;
             }
         }
     }
@@ -380,17 +371,11 @@ contract OBNStakingPools is
     }
 
     function _allocateAndPredebitCharity(uint256 pid) internal returns (uint256 charityToMint) {
-        // Read and clear this pool's accrued charity; mint after effects.
+        // legacy flush (no longer accrues new amounts)
         charityToMint = charityAccrued[pid];
         if (charityToMint > 0) {
             charityAccrued[pid] = 0;
             totalCharityMintedByPool[pid] += charityToMint;
-        }
-    }
-
-    function _bookClaimed(address user, uint256 pending) internal {
-        if (pending > 0) {
-            totalClaimedByUser[user] += pending;
         }
     }
 
@@ -403,18 +388,37 @@ contract OBNStakingPools is
         }
     }
 
-    function _mintSlices(address to, uint256 pending, uint256 tCut, uint256 fCut, uint256 pid) internal {
-        if (pending > 0) {
-            stakingToken.mint(to, pending);
-            emit Claim(to, pid, pending);
+    /// Split a user's GROSS pending as 88/10/1/1 and record user's claimed amount.
+    function _mintSlices(address to, uint256 pendingGross, uint256 /*unused_tCut*/, uint256 /*unused_fCut*/, uint256 pid) internal {
+        if (pendingGross == 0) return;
+
+        // Compute splits from GROSS pending
+        uint256 userShare = Math.mulDiv(pendingGross, STAKER_BPS, TOTAL_BPS);       // 88%
+        uint256 charity   = Math.mulDiv(pendingGross, CHARITY_BPS, TOTAL_BPS);      // 10%
+        uint256 tShare    = Math.mulDiv(pendingGross, TREASURY_BPS, TOTAL_BPS);     // 1%
+        uint256 fShare    = Math.mulDiv(pendingGross, CHARITY_FUND_BPS, TOTAL_BPS); // 1%
+
+        // Mint to user
+        if (userShare > 0) {
+            stakingToken.mint(to, userShare);
+            totalClaimedByUser[to] += userShare;
+            emit Claim(to, pid, userShare);
         }
-        if (tCut > 0) {
-            stakingToken.mint(treasury, tCut);
-            emit TreasuryDistributed(tCut);
+
+        // Mint to charity / treasury / charity fund
+        address cw = poolInfo[pid].charityWallet;
+        if (charity > 0) {
+            require(cw != address(0), "charity=0");
+            stakingToken.mint(cw, charity);
+            emit CharityDistributed(pid, charity);
         }
-        if (fCut > 0) {
-            stakingToken.mint(charityFund, fCut);
-            emit CharityFundDistributed(fCut);
+        if (tShare > 0) {
+            stakingToken.mint(treasury, tShare);
+            emit TreasuryDistributed(tShare);
+        }
+        if (fShare > 0) {
+            stakingToken.mint(charityFund, fShare);
+            emit CharityFundDistributed(fShare);
         }
     }
 
@@ -432,7 +436,6 @@ contract OBNStakingPools is
         _applyLockIfNeeded(pid, beneficiary, amount, lockThisDeposit);
 
         uint256 charityToMint = _allocateAndPredebitCharity(pid);
-        _bookClaimed(beneficiary, d.pending);
 
         // INTERACTIONS
         _mintCharityIfAny(pid, charityToMint);
@@ -463,7 +466,6 @@ contract OBNStakingPools is
         _applyLockIfNeeded(pid, beneficiary, amount, lockThisDeposit);
 
         uint256 charityToMint = _allocateAndPredebitCharity(pid);
-        _bookClaimed(beneficiary, d.pending);
 
         // INTERACTIONS (permit after effects)
         _mintCharityIfAny(pid, charityToMint);
@@ -490,10 +492,10 @@ contract OBNStakingPools is
         uint256 available;
         uint256 acc;
         uint256 debt;
-        uint256 pending;
+        uint256 pending; // GROSS
         uint256 newBal;
-        uint256 tCut;
-        uint256 fCut;
+        uint256 tCut; // unused
+        uint256 fCut; // unused
         uint256 charityToMint;
     }
 
@@ -520,7 +522,6 @@ contract OBNStakingPools is
         if (newBal == 0 && _isActiveStaker[pid][user]) {
             _isActiveStaker[pid][user] = false;
             uniqueStakersByPool[pid] -= 1;
-            // NOTE: do not touch uniqueStakersGlobal here; handle it on global 1->0 transition below
         }
 
         if (newBal == 0) {
@@ -534,7 +535,7 @@ contract OBNStakingPools is
                         cumulativeStakeSeconds[user] += (block.timestamp - uint256(since));
                     }
                     stakedSince[user] = 0;
-                    uniqueStakersGlobal -= 1; // (2) decrement only when user becomes globally inactive
+                    uniqueStakersGlobal -= 1;
                 }
             }
         }
@@ -562,7 +563,7 @@ contract OBNStakingPools is
 
         w.acc     = accRewardPerShare[pid];
         w.debt    = userRewardDebt[pid][msg.sender];
-        w.pending = ((w.userBal * w.acc) / 1e12) - w.debt;
+        w.pending = ((w.userBal * w.acc) / 1e12) - w.debt; // GROSS
 
         // EFFECTS
         w.newBal = w.userBal - amount;
@@ -577,10 +578,6 @@ contract OBNStakingPools is
         userRewardDebt[pid][msg.sender] = (w.newBal * w.acc) / 1e12;
 
         w.charityToMint = _allocateAndPredebitCharity(pid);
-
-        if (w.pending > 0) {
-            totalClaimedByUser[msg.sender] += w.pending;
-        }
 
         // INTERACTIONS
         _mintCharityIfAny(pid, w.charityToMint);
@@ -598,9 +595,9 @@ contract OBNStakingPools is
         uint256 acc;
         uint256 bal;
         uint256 debt;
-        uint256 pending;
-        uint256 tCut;
-        uint256 fCut;
+        uint256 pending; // GROSS
+        uint256 tCut; // unused
+        uint256 fCut; // unused
         uint256 charityToMint;
     }
 
@@ -626,13 +623,10 @@ contract OBNStakingPools is
         c.acc     = accRewardPerShare[pid];
         c.bal     = userAmount[pid][user];
         c.debt    = userRewardDebt[pid][user];
-        c.pending = ((c.bal * c.acc) / 1e12) - c.debt;
+        c.pending = ((c.bal * c.acc) / 1e12) - c.debt; // GROSS
 
         // EFFECTS
         userRewardDebt[pid][user] = (c.bal * c.acc) / 1e12;
-        if (c.pending > 0) {
-            totalClaimedByUser[user] += c.pending;
-        }
 
         c.charityToMint = _allocateAndPredebitCharity(pid);
 
@@ -665,23 +659,22 @@ contract OBNStakingPools is
         return bal - lock;
     }
 
+    /// @notice Returns the user's GROSS pending amount.
     function pendingRewards(uint256 pid, address userAddr) external view returns (uint256) {
         PoolInfo memory p = poolInfo[pid];
         uint256 acc = accRewardPerShare[pid];
         uint256 last = lastRewardTime[pid];
 
         if (block.timestamp > last && p.totalStaked != 0) {
-            uint256 reward = _sumRewardAcrossPhases(last, block.timestamp, p.totalStaked);
-            if (reward > 0) {
-                uint256 nonStakerBps = CHARITY_BPS + TREASURY_BPS + CHARITY_FUND_BPS;
-                uint256 sCut = reward - Math.mulDiv(reward, nonStakerBps, TOTAL_BPS);
-                acc += Math.mulDiv(sCut, 1e12, p.totalStaked);
+            uint256 rewardGross = _sumRewardAcrossPhases(last, block.timestamp, p.totalStaked);
+            if (rewardGross > 0) {
+                acc += Math.mulDiv(rewardGross, 1e12, p.totalStaked); // accrue GROSS
             }
         }
 
         uint256 bal = userAmount[pid][userAddr];
         uint256 debt = userRewardDebt[pid][userAddr];
-        return ((bal * acc) / 1e12) - debt;
+        return ((bal * acc) / 1e12) - debt; // GROSS
     }
 
     function getPoolAPR(uint256 pid) external view returns (uint256 aprBps) {
@@ -694,6 +687,7 @@ contract OBNStakingPools is
         uint256 yearlyPoolGross = _sumRewardAcrossPhases(start, end, p.totalStaked);
         if (yearlyPoolGross == 0) return 0;
 
+        // Return APR for the user portion (88%)
         uint256 stakerYearly = Math.mulDiv(yearlyPoolGross, STAKER_BPS, TOTAL_BPS);
         return Math.mulDiv(stakerYearly, TOTAL_BPS, p.totalStaked);
     }
@@ -722,26 +716,10 @@ contract OBNStakingPools is
         );
     }
 
-    /// @notice View how much charity is pending to be minted for a pool if we accrued right now.
-    ///         Equals already-accrued `charityAccrued[pid]` + new cCut since lastRewardTime.
+    /// @notice Legacy helper: returns only already-accrued legacy charity (no new accrual).
     function pendingCharityFor(uint256 pid) external view returns (uint256) {
         if (pid >= poolInfo.length) return 0;
-        PoolInfo memory p = poolInfo[pid];
-
-        uint256 accruedForPid = charityAccrued[pid];
-        if (p.totalStaked == 0) {
-            return accruedForPid;
-        }
-
-        uint256 last = lastRewardTime[pid];
-        if (block.timestamp > last) {
-            uint256 reward = _sumRewardAcrossPhases(last, block.timestamp, p.totalStaked);
-            if (reward > 0) {
-                uint256 cCut = Math.mulDiv(reward, CHARITY_BPS, TOTAL_BPS);
-                accruedForPid += cCut;
-            }
-        }
-        return accruedForPid;
+        return charityAccrued[pid];
     }
 
     function _viewRps() internal view returns (uint256) {
@@ -772,7 +750,7 @@ contract OBNStakingPools is
     {
         poolCount       = poolInfo.length;
         totalStaked_    = globalTotalStaked;
-        uniqueStakers_  = uniqueStakersGlobal; // true global uniques (activePoolCount > 0)
+        uniqueStakers_  = uniqueStakersGlobal;
         rps             = _viewRps();
     }
 
@@ -812,7 +790,7 @@ contract OBNStakingPools is
             uint256 locked,
             uint256 unlocked,
             uint256 rewardDebt,
-            uint256 pending,
+            uint256 pending, // GROSS
             bool isActive
         )
     {
@@ -828,15 +806,13 @@ contract OBNStakingPools is
         uint256 last = lastRewardTime[pid];
 
         if (block.timestamp > last && p.totalStaked != 0) {
-            uint256 reward = _sumRewardAcrossPhases(last, block.timestamp, p.totalStaked);
-            if (reward > 0) {
-                uint256 nonStakerBps = CHARITY_BPS + TREASURY_BPS + CHARITY_FUND_BPS;
-                uint256 sCut = reward - Math.mulDiv(reward, nonStakerBps, TOTAL_BPS);
-                acc += Math.mulDiv(sCut, 1e12, p.totalStaked);
+            uint256 rewardGross = _sumRewardAcrossPhases(last, block.timestamp, p.totalStaked);
+            if (rewardGross > 0) {
+                acc += Math.mulDiv(rewardGross, 1e12, p.totalStaked); // accrue GROSS
             }
         }
 
-        pending = ((staked * acc) / 1e12) - rewardDebt;
+        pending = ((staked * acc) / 1e12) - rewardDebt; // GROSS
         isActive = _isActiveStaker[pid][user];
     }
 
@@ -865,7 +841,7 @@ contract OBNStakingPools is
         return activePoolCount[user] > 0;
     }
 
-    /// Total staking seconds including current session if active (for XP bar / NFT gating)
+    /// Total staking seconds including current session if active
     function stakeElapsed(address user) external view returns (uint256) {
         uint256 cum = cumulativeStakeSeconds[user];
         uint64 since = stakedSince[user];
