@@ -389,7 +389,14 @@ contract OBNStakingPools is
     }
 
     /// Split a user's GROSS pending as 88/10/1/1 and record user's claimed amount.
-    function _mintSlices(address to, uint256 pendingGross, uint256 /*unused_tCut*/, uint256 /*unused_fCut*/, uint256 pid) internal {
+    /// CEI fix: update internal state BEFORE any external mints.
+    function _mintSlices(
+        address to,
+        uint256 pendingGross,
+        uint256 /*unused_tCut*/,
+        uint256 /*unused_fCut*/,
+        uint256 pid
+    ) internal {
         if (pendingGross == 0) return;
 
         // Compute splits from GROSS pending
@@ -398,14 +405,17 @@ contract OBNStakingPools is
         uint256 tShare    = Math.mulDiv(pendingGross, TREASURY_BPS, TOTAL_BPS);     // 1%
         uint256 fShare    = Math.mulDiv(pendingGross, CHARITY_FUND_BPS, TOTAL_BPS); // 1%
 
-        // Mint to user
+        // ---- EFFECTS (no external calls) ----
+        if (userShare > 0) {
+            totalClaimedByUser[to] += userShare;
+        }
+
+        // ---- INTERACTIONS (external calls) ----
         if (userShare > 0) {
             stakingToken.mint(to, userShare);
-            totalClaimedByUser[to] += userShare;
             emit Claim(to, pid, userShare);
         }
 
-        // Mint to charity / treasury / charity fund
         address cw = poolInfo[pid].charityWallet;
         if (charity > 0) {
             require(cw != address(0), "charity=0");
