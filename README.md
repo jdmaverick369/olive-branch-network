@@ -9,9 +9,10 @@ Every stake you make not only grows your holdings but also supports a nonprofit 
 
 - **Multi-Pool Staking** – Each pool represents a specific nonprofit organization
 - **Automatic Reward Splits** – Rewards are split every second:  
-  - **80–84%** to stakers  
-  - **15%** to the selected charity pool  
-  - **1–5%** to the network treasury  
+  - **88%** to stakers  
+  - **10%** to the selected charity pool  
+  - **1%** to the network treasury
+  - **1%** to the charity fund    
 - **Deflationary Emission Schedule** – Incentivizes long-term holding and protocol sustainability:  
 
 | Years | Global APY |
@@ -32,8 +33,8 @@ Every stake you make not only grows your holdings but also supports a nonprofit 
 
 | Allocation         | % of Supply | Notes |
 |--------------------|-------------|-------|
-| Airdrop Missions   | 40%         | Distributed via community missions and campaigns |
-| Exchange Liquidity | 30%         | Initial market liquidity across key DEXs |
+| Exchange Liquidity | 40%         | Initial market liquidity across key DEXs |
+| Airdrop Missions   | 30%         | Distributed via community missions and campaigns |
 | Charity Fund       | 10%         | Used to bootstrap the first 200 charity pools |
 | Treasury           | 10%         | Supports development, marketing, and operations |
 | Team (Vested)      | 10%         | Locked and released gradually over time |
@@ -46,7 +47,6 @@ Every stake you make not only grows your holdings but also supports a nonprofit 
 |-----------------------------|-------------|
 | **OBNToken.sol**            | ERC20 token with governance (ERC20Votes), controlled minting, and initial supply distribution |
 | **OBNStakingPools.sol**     | Multi-pool staking, emissions, and reward distribution logic |
-| **EmissionController.sol**  | Controls the global APY schedule and adjusts emissions according to protocol rules |
 | **Airdropper.sol**          | Batch token distribution system for airdrops |
 | **TeamVesting.sol**         | Time-based token release for the team allocation |
 
