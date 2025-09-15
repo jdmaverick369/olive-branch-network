@@ -36,7 +36,7 @@ Every stake you make not only grows your holdings but also supports a nonprofit 
 |--------------------|-------------|-------|
 | Exchange Liquidity | 40%         | Initial market liquidity across key DEXs |
 | Airdrop/Bug Bounty | 30%         | Allocated to community growth through missions, campaigns, and security incentives |
-| Charity Fund       | 10%         | Used to bootstrap the first 200 charity pools |
+| Charity Fund       | 10%         | Used to bootstrap nonprofits and remove OBN permanently from circulation |
 | Treasury           | 10%         | Supports development, marketing, and operations |
 | Team (Vested)      | 10%         | Locked and released gradually over time |
 
@@ -47,7 +47,7 @@ Every stake you make not only grows your holdings but also supports a nonprofit 
 | Contract                    | Description |
 |-----------------------------|-------------|
 | **OBNToken.sol**            | ERC20 token with governance (ERC20Votes), controlled minting, and initial supply distribution |
-| **StakingPools.sol**     | Multi-pool staking, emissions, and reward distribution logic |
+| **StakingPools.sol**        | Multi-pool staking, emissions, and reward distribution logic |
 | **TeamVesting.sol**         | Time-based token release for the team allocation |
 
 ---
