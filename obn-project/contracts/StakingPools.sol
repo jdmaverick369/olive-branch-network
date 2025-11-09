@@ -97,8 +97,13 @@ contract OBNStakingPools is
     // ==== Persistent cumulative staking time (does NOT reset on full unstake) ====
     mapping(address => uint256) public cumulativeStakeSeconds;
 
+    // ---------- Pool lifecycle (shutdown/remove) ----------
+    mapping(uint256 => bool) public poolRemoved; // true => deposits disabled; removal requires totalStaked==0
+
     // ---------- Events ----------
     event PoolAdded(uint256 indexed pid, address charityWallet);
+    event PoolShutdown(uint256 indexed pid); // deposits disabled; claims/withdraws allowed
+    event PoolRemoved(uint256 indexed pid);  // soft delete after empty
     event Deposit(address indexed user, uint256 indexed pid, uint256 amount);
     event Withdraw(address indexed user, uint256 indexed pid, uint256 amount);
     event Claim(address indexed user, uint256 indexed pid, uint256 amountUser); // amount minted to user
@@ -133,7 +138,7 @@ contract OBNStakingPools is
         stakingToken = stakingTokenArg;
         treasury = treasuryAddr;
         charityFund = charityFundAddr;
-        version = "8.6.0-gross-pending-88_10_1_1";
+        version = "8.9.0-charity-freeze+shutdown+forceExit+remove";
 
         // Local phases — timestamp schedule
         uint256 start = block.timestamp;
@@ -157,6 +162,35 @@ contract OBNStakingPools is
         uint256 pid = poolInfo.length - 1;
         lastRewardTime[pid] = block.timestamp; // init per-pool timer
         emit PoolAdded(pid, charityWallet);
+    }
+
+    /// @notice Put the pool into "shutdown": blocks NEW deposits; claims/withdraws continue so users can exit.
+    function shutdownPool(uint256 pid) external onlyOwner {
+        require(pid < poolInfo.length, "Invalid pool");
+        if (!poolRemoved[pid]) {
+            poolRemoved[pid] = true;
+            emit PoolShutdown(pid);
+        }
+    }
+
+    /**
+     * @notice Soft-remove a pool after it is empty. No PID reindexing.
+     * Deposits are already blocked by shutdown; we also clear the charity wallet as a defensive measure.
+     * PATCH: flush legacy charity before clearing the wallet to avoid future reverts.
+     */
+    function removePool(uint256 pid) external onlyOwner {
+        require(pid < poolInfo.length, "Invalid pool");
+        require(poolInfo[pid].totalStaked == 0, "Pool not empty");
+
+        // Flush any legacy-accrued charity to the current charity wallet BEFORE clearing it.
+        uint256 charityToMint = _allocateAndPredebitCharity(pid);
+        if (charityToMint > 0) {
+            _mintCharityIfAny(pid, charityToMint); // requires charityWallet != 0
+        }
+
+        poolRemoved[pid] = true;
+        poolInfo[pid].charityWallet = address(0);
+        emit PoolRemoved(pid);
     }
 
     /// @notice Add a new emission phase using timestamps.
@@ -274,10 +308,43 @@ contract OBNStakingPools is
     }
 
     // =========================
+    // Policy: charity self-stake freeze (bootstrap-only)
+    // =========================
+
+    function _isPoolCharity(uint256 pid, address addr) internal view returns (bool) {
+        return addr == poolInfo[pid].charityWallet;
+    }
+
+    /**
+     * @dev Enforces that a pool's charity wallet may receive exactly ONE permanent, locked
+     * bootstrap deposit from charityFund (when its balance is 0). Any other self-stake is disallowed.
+     * Existing locked stake remains claimable (not withdrawable) unless admin force exits.
+     */
+    function _enforceCharitySelfStakePolicy(
+        uint256 pid,
+        address beneficiary,
+        bool lockThisDeposit
+    ) internal view {
+        if (!_isPoolCharity(pid, beneficiary)) return;
+
+        uint256 curr = userAmount[pid][beneficiary];
+        bool firstBootstrap = (
+            msg.sender == charityFund &&
+            lockThisDeposit == true &&
+            curr == 0
+        );
+
+        require(firstBootstrap, "charity self-stake disabled");
+    }
+
+    // =========================
     // User actions — CEI with per-claim 88/10/1/1 split
     // =========================
 
     function deposit(uint256 pid, uint256 amount) external nonReentrant {
+        require(pid < poolInfo.length, "Invalid pool");
+        require(!poolRemoved[pid], "Pool shutdown");
+        _enforceCharitySelfStakePolicy(pid, msg.sender, false);
         _depositCore(pid, amount, msg.sender, false);
     }
 
@@ -285,6 +352,9 @@ contract OBNStakingPools is
         external
         nonReentrant
     {
+        require(pid < poolInfo.length, "Invalid pool");
+        require(!poolRemoved[pid], "Pool shutdown");
+        _enforceCharitySelfStakePolicy(pid, beneficiary, false);
         _depositCore(pid, amount, beneficiary, false);
     }
 
@@ -295,16 +365,23 @@ contract OBNStakingPools is
         uint256 deadline,
         uint8 v, bytes32 r, bytes32 s
     ) external nonReentrant {
+        require(pid < poolInfo.length, "Invalid pool");
+        require(!poolRemoved[pid], "Pool shutdown");
+        _enforceCharitySelfStakePolicy(pid, beneficiary, false);
         _depositCorePermit(pid, amount, beneficiary, false, deadline, v, r, s);
     }
 
-    /// Only the charityFund is allowed to create permanently locked deposits.
+    /// Only the charityFund is allowed to create permanently locked deposits (used for bootstrap).
     function depositForWithLock(
         uint256 pid,
         uint256 amount,
         address beneficiary
     ) external nonReentrant {
         require(msg.sender == charityFund, "Only charityFund");
+        require(pid < poolInfo.length, "Invalid pool");
+        require(!poolRemoved[pid], "Pool shutdown");
+        require(_isPoolCharity(pid, beneficiary), "not pool charity"); // NEW guard
+        _enforceCharitySelfStakePolicy(pid, beneficiary, true);
         _depositCore(pid, amount, beneficiary, true);
     }
 
@@ -313,6 +390,10 @@ contract OBNStakingPools is
         nonReentrant
     {
         require(msg.sender == charityFund, "Only charityFund");
+        require(pid < poolInfo.length, "Invalid pool");
+        require(!poolRemoved[pid], "Pool shutdown");
+        require(_isPoolCharity(pid, beneficiary), "not pool charity"); // NEW guard
+        _enforceCharitySelfStakePolicy(pid, beneficiary, true);
         _depositCore(pid, amount, beneficiary, true);
     }
 
@@ -436,6 +517,7 @@ contract OBNStakingPools is
     function _depositCore(uint256 pid, uint256 amount, address beneficiary, bool lockThisDeposit) internal {
         require(amount > 0, "Cannot stake 0");
         require(pid < poolInfo.length, "Invalid pool");
+        require(!poolRemoved[pid], "Pool shutdown");
         require(beneficiary != address(0), "beneficiary=0");
 
         DepCalcs memory d = _accrueAndComputePending(pid, beneficiary);
@@ -466,6 +548,7 @@ contract OBNStakingPools is
     ) internal {
         require(amount > 0, "Cannot stake 0");
         require(pid < poolInfo.length, "Invalid pool");
+        require(!poolRemoved[pid], "Pool shutdown");
         require(beneficiary != address(0), "beneficiary=0");
 
         DepCalcs memory d = _accrueAndComputePending(pid, beneficiary);
@@ -643,6 +726,72 @@ contract OBNStakingPools is
         // INTERACTIONS
         _mintCharityIfAny(pid, c.charityToMint);
         _mintSlices(user, c.pending, c.tCut, c.fCut, pid);
+    }
+
+    // =========================
+    // Admin emergency: force exit a single user (ignores locks)
+    // =========================
+
+    /**
+     * @notice Forcefully exits a user from a pool, ignoring locks (used during shutdown/migration).
+     * @param pid Pool id
+     * @param user Address to exit
+     * @param claimRewards If true, mints their pending rewards (88/10/1/1) before exiting
+     * @param recipient Address to receive the staked principal (can be `user`, `charityFund`, a migrator, etc.)
+     */
+    function forceExitUser(
+        uint256 pid,
+        address user,
+        bool claimRewards,
+        address recipient
+    ) external onlyOwner nonReentrant {
+        require(pid < poolInfo.length, "Invalid pool");
+        require(user != address(0), "user=0");
+        require(recipient != address(0), "recipient=0");
+
+        // Accrue pool first
+        _accruePool(pid);
+
+        uint256 acc = accRewardPerShare[pid];
+        uint256 bal = userAmount[pid][user];
+        if (bal == 0) {
+            return; // nothing to do
+        }
+
+        uint256 debt = userRewardDebt[pid][user];
+        uint256 pending = ((bal * acc) / 1e12) - debt; // GROSS pending
+
+        // EFFECTS: zero the user
+        userAmount[pid][user] = 0;
+        poolInfo[pid].totalStaked -= bal;
+        globalTotalStaked -= bal;
+        totalWithdrawnByUser[user] += bal;
+        totalWithdrawnByPool[pid]  += bal;
+
+        // Reset active counters
+        _afterWithdrawBalanceHooks(pid, user, 0);
+
+        // Reset reward debt and clear lock
+        userRewardDebt[pid][user] = 0;
+        if (lockedAmount[pid][user] != 0) {
+            lockedAmount[pid][user] = 0;
+            emit LockedAmountSet(pid, user, 0);
+        }
+
+        uint256 charityToMint = _allocateAndPredebitCharity(pid);
+
+        // INTERACTIONS
+        _mintCharityIfAny(pid, charityToMint);
+
+        // Return principal to recipient
+        stakingToken.safeTransfer(recipient, bal);
+
+        // Optionally mint pending rewards
+        if (claimRewards && pending > 0) {
+            _mintSlices(user, pending, 0, 0, pid);
+        }
+
+        emit Withdraw(user, pid, bal);
     }
 
     // =========================
@@ -862,5 +1011,5 @@ contract OBNStakingPools is
     }
 
     // ---- storage gap for future upgrades ----
-    uint256[100] private __gap;
+    uint256[99] private __gap; // reduced by 1 to append poolRemoved
 }
