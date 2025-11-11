@@ -24,6 +24,7 @@ module.exports = {
           optimizer: { enabled: true, runs: 500 },
           viaIR: true,
           metadata: { bytecodeHash: "ipfs" },
+          evmVersion: "cancun",
         },
       },
       {

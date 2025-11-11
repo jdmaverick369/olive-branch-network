@@ -138,7 +138,7 @@ contract OBNStakingPools is
         stakingToken = stakingTokenArg;
         treasury = treasuryAddr;
         charityFund = charityFundAddr;
-        version = "8.9.0-charity-freeze+shutdown+forceExit+remove";
+        version = "9.0";
 
         // Local phases — timestamp schedule
         uint256 start = block.timestamp;
@@ -177,6 +177,7 @@ contract OBNStakingPools is
      * @notice Soft-remove a pool after it is empty. No PID reindexing.
      * Deposits are already blocked by shutdown; we also clear the charity wallet as a defensive measure.
      * PATCH: flush legacy charity before clearing the wallet to avoid future reverts.
+     * HARDENED: Set charity wallet to treasury instead of zero to prevent stranded rewards.
      */
     function removePool(uint256 pid) external onlyOwner {
         require(pid < poolInfo.length, "Invalid pool");
@@ -189,8 +190,12 @@ contract OBNStakingPools is
         }
 
         poolRemoved[pid] = true;
-        poolInfo[pid].charityWallet = address(0);
+        // HARDENED: Set to treasury instead of zero, so future claims/rewards can be minted
+        // This prevents reward loss if users claim after pool removal.
+        address old = poolInfo[pid].charityWallet;
+        poolInfo[pid].charityWallet = treasury;
         emit PoolRemoved(pid);
+        emit CharityWalletUpdated(pid, old, treasury);
     }
 
     /// @notice Add a new emission phase using timestamps.
@@ -217,6 +222,97 @@ contract OBNStakingPools is
         require(newWallet != old, "Same wallet");
         poolInfo[pid].charityWallet = newWallet;
         emit CharityWalletUpdated(pid, old, newWallet);
+    }
+
+    /// @notice Migrate bootstrap position from one nonprofit address to another.
+    ///         Preserves pending rewards by copying the amount and rewardDebt.
+    ///         Does NOT mint to the old address.
+    ///         Pool and global staking totals remain unchanged.
+    ///
+    /// HARDENED:
+    ///  - Atomically updates charity wallet (prevents stranding)
+    ///  - Validates that newNonprofit will be the new pool charity BEFORE migration
+    ///  - Ensures no lost rewards through explicit debt copying
+    ///
+    /// Preconditions:
+    ///  - oldNonprofit IS the pool's current charity wallet
+    ///  - oldNonprofit != newNonprofit
+    ///  - oldNonprofit has a non-zero stake (bootstrap) in this pool
+    ///  - newNonprofit does not already have a stake in this pool
+    function migrateBootstrap(
+        uint256 pid,
+        address oldNonprofit,
+        address newNonprofit
+    ) external onlyOwner nonReentrant {
+        require(pid < poolInfo.length, "Invalid pool");
+        require(oldNonprofit != address(0), "oldNonprofit=0");
+        require(newNonprofit != address(0), "newNonprofit=0");
+        require(oldNonprofit != newNonprofit, "Same address");
+
+        // HARDENED: Ensure old nonprofit is the pool's current charity wallet
+        address currentCharity = poolInfo[pid].charityWallet;
+        require(oldNonprofit == currentCharity, "oldNonprofit not pool charity");
+
+        // HARDENED: Ensure new nonprofit doesn't already have a stake in this pool
+        require(userAmount[pid][newNonprofit] == 0, "newNonprofit already staked");
+
+        // Get the old nonprofit's stake and locked amount
+        uint256 amtOld = userAmount[pid][oldNonprofit];
+        require(amtOld > 0, "no bootstrap at old");
+
+        uint256 debtOld = userRewardDebt[pid][oldNonprofit];
+        uint256 lockOld = lockedAmount[pid][oldNonprofit];
+
+        // Freeze pool accumulator so pending = amt*acc - debt stays consistent
+        _accruePool(pid);
+
+        // Deactivate old user's pool counters
+        _afterWithdrawBalanceHooks(pid, oldNonprofit, 0);
+
+        // Zero old mappings (NO MINT to old)
+        userAmount[pid][oldNonprofit] = 0;
+        userRewardDebt[pid][oldNonprofit] = 0;
+        if (lockOld != 0) {
+            lockedAmount[pid][oldNonprofit] = 0;
+            emit LockedAmountSet(pid, oldNonprofit, 0);
+        }
+
+        // Push to new address
+        uint256 balBeforeNew = userAmount[pid][newNonprofit];
+
+        // If new had no stake in this pool, bump unique counters
+        _accountUniqueStaker(pid, newNonprofit, balBeforeNew);
+        _updateGlobalStakeOnNewPool(newNonprofit, balBeforeNew);
+
+        // Transfer amount and debt (preserves pending = amt*acc - debt)
+        // HARDENED: Explicit validation that debt preservation works
+        uint256 pendingBefore = ((amtOld * accRewardPerShare[pid]) / 1e12) - debtOld;
+
+        userAmount[pid][newNonprofit] = balBeforeNew + amtOld;
+        userRewardDebt[pid][newNonprofit] = userRewardDebt[pid][newNonprofit] + debtOld;
+
+        // HARDENED: Verify pending is preserved (allow 1 wei tolerance for rounding)
+        uint256 pendingAfter = ((userAmount[pid][newNonprofit] * accRewardPerShare[pid]) / 1e12) - userRewardDebt[pid][newNonprofit];
+        require(
+            pendingAfter >= pendingBefore && pendingAfter <= pendingBefore + 1,
+            "pending rewards not preserved"
+        );
+
+        if (lockOld != 0) {
+            // HARDENED: Prevent lock overflow
+            uint256 newLock = lockedAmount[pid][newNonprofit] + lockOld;
+            require(newLock <= userAmount[pid][newNonprofit], "lock would exceed balance");
+            lockedAmount[pid][newNonprofit] = newLock;
+            emit LockedAmountSet(pid, newNonprofit, newLock);
+        }
+
+        // HARDENED: Update charity wallet ATOMICALLY as part of migration
+        // This ensures the new nonprofit is registered as charity wallet at the same time
+        // their bootstrap position is transferred. Prevents stranding.
+        poolInfo[pid].charityWallet = newNonprofit;
+
+        // Invariants: poolInfo[pid].totalStaked and globalTotalStaked unchanged
+        emit CharityWalletUpdated(pid, oldNonprofit, newNonprofit);
     }
 
     /// @notice CharityFund may only INCREASE a user's locked amount (never decrease).
@@ -733,21 +829,19 @@ contract OBNStakingPools is
     // =========================
 
     /**
-     * @notice Forcefully exits a user from a pool, ignoring locks (used during shutdown/migration).
+     * @notice Convenience function that returns principal to the user itself (no separate recipient).
+     *         Used for governance pool removal when users get their principal back directly.
      * @param pid Pool id
      * @param user Address to exit
-     * @param claimRewards If true, mints their pending rewards (88/10/1/1) before exiting
-     * @param recipient Address to receive the staked principal (can be `user`, `charityFund`, a migrator, etc.)
+     * @param claimRewards If true, mints their pending rewards before exiting
      */
-    function forceExitUser(
+    function forceExitUserToSelf(
         uint256 pid,
         address user,
-        bool claimRewards,
-        address recipient
+        bool claimRewards
     ) external onlyOwner nonReentrant {
         require(pid < poolInfo.length, "Invalid pool");
         require(user != address(0), "user=0");
-        require(recipient != address(0), "recipient=0");
 
         // Accrue pool first
         _accruePool(pid);
@@ -783,8 +877,8 @@ contract OBNStakingPools is
         // INTERACTIONS
         _mintCharityIfAny(pid, charityToMint);
 
-        // Return principal to recipient
-        stakingToken.safeTransfer(recipient, bal);
+        // Return principal to user
+        stakingToken.safeTransfer(user, bal);
 
         // Optionally mint pending rewards
         if (claimRewards && pending > 0) {

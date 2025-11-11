@@ -1,0 +1,17 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npx hardhat test:*)",
+      "Bash(timeout 120 npx hardhat test:*)",
+      "Bash(npx hardhat compile:*)",
+      "Bash(npm run:*)",
+      "Bash(npx hardhat verify:*)",
+      "Bash(cat:*)",
+      "Bash(npx hardhat run:*)",
+      "Bash(git log:*)",
+      "Bash(\"c:\\obn\\version_comparison.diff\")"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}

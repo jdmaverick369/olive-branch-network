@@ -6,16 +6,28 @@ const { ethers } = require("hardhat");
 const fs = require("fs");
 
 async function main() {
-  // Read the upgrade JSON file
-  const files = fs.readdirSync(".").filter(f => f.startsWith("upgrade_stakingpools_"));
+  // Read the upgrade JSON file from governance-operations/
+  const path = require("path");
+  const projectRoot = path.join(__dirname, "../..");
+  const govOpsDir = path.join(projectRoot, "governance-operations");
+
+  if (!fs.existsSync(govOpsDir)) {
+    throw new Error("governance-operations/ folder not found");
+  }
+
+  const files = fs.readdirSync(govOpsDir).filter(f =>
+    f.includes("upgrade") && f.endsWith(".json")
+  );
+
   if (files.length === 0) {
-    throw new Error("No upgrade JSON file found.");
+    throw new Error("No upgrade JSON file found in governance-operations/");
   }
 
   const latestFile = files.sort().reverse()[0];
-  console.log(`Reading from: ${latestFile}\n`);
+  const filePath = path.join(govOpsDir, latestFile);
+  console.log(`Reading from: governance-operations/${latestFile}\n`);
 
-  const data = JSON.parse(fs.readFileSync(latestFile, "utf8"));
+  const data = JSON.parse(fs.readFileSync(filePath, "utf8"));
 
   const TIMELOCK_ADDR = data.timelock;
   const OP_ID = data.opId;
