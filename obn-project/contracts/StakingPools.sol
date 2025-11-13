@@ -152,6 +152,17 @@ contract OBNStakingPools is
 
     function _authorizeUpgrade(address) internal override onlyOwner {}
 
+    /// @notice Custom upgrade function that accepts initialization data
+    /// @dev Delegates to upgradeToAndCall for compatibility with timelock governance
+    function upgradeTo(address newImplementation, bytes calldata data) external onlyOwner {
+        upgradeToAndCall(newImplementation, data);
+    }
+
+    /// @notice Update the version string
+    function setVersion(string calldata newVersion) external onlyOwner {
+        version = newVersion;
+    }
+
     // =========================
     // Admin
     // =========================
