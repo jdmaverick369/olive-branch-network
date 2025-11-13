@@ -9,7 +9,11 @@
       "Bash(cat:*)",
       "Bash(npx hardhat run:*)",
       "Bash(git log:*)",
-      "Bash(\"c:\\obn\\version_comparison.diff\")"
+      "Bash(\"c:\\obn\\version_comparison.diff\")",
+      "Bash(npm test:*)",
+      "Bash(dir:*)",
+      "Bash(node scripts/check_actual_opid.js:*)",
+      "Bash(node -e:*)"
     ],
     "deny": [],
     "ask": []

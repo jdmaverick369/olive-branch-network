@@ -1,4 +1,6 @@
-# OBN v9.0 Upgrade - Master Announcement
+# OBN Skipping v8.9.0 → Upgrading to v9.0
+
+**Why we're upgrading to v9.0 instead of v8.9.0**
 
 **Timeline: Live November 11, 2025 at 10:19 PM CST**
 
@@ -6,7 +8,7 @@
 
 ## The Full Story
 
-We discovered a critical security issue in OBN StakingPools v8.9.0 that we were preparing to deploy. Instead of pushing the vulnerable version to mainnet, we fixed it and built v9.0.
+We built OBN StakingPools v8.9.0 with several improvements. During security review before mainnet deployment, we discovered a critical honeypot risk in the `forceExitUser()` function. Instead of deploying the vulnerable v8.9.0, we fixed the issue and created v9.0—which keeps all the good v8.9.0 features, fixes the security flaw, and adds even more improvements.
 
 ### The Problem: v8.9.0 forceExitUser() Honeypot Risk
 
@@ -36,17 +38,20 @@ function forceExitUserToSelf(uint256 pid, address user, bool claimRewards) exter
 
 ### What v9.0 Includes
 
-**From v8.9.0 (the good parts):**
+**Carried Forward from v8.9.0 (solid features we're keeping):**
 - `removePool()` - Safely remove pools with charity wallet fallback
 - `shutdownPool()` - Block new deposits while allowing exits
-- Pool lifecycle management
+- Pool lifecycle management architecture
 
-**New in v9.0 (the fixes + improvements):**
-- `forceExitUserToSelf()` - Safe emergency exit (honeypot fixed)
-- `migrateBootstrap()` - Nonprofit bootstrap address migration (atomic, safe)
-- Reward preservation validation (prevents silent reward loss)
+**Fixed in v9.0 (security improvement):**
+- `forceExitUser()` → `forceExitUserToSelf()` - Emergency exit without theft vector
+
+**Brand New in v9.0 (enhancements we added):**
+- `migrateBootstrap()` - Nonprofit bootstrap address migration (atomic, safe, preserves rewards)
+- Reward preservation validation (prevents silent reward loss down to 1 wei)
 - Lock overflow prevention (prevents lock corruption)
 - Atomic charity wallet updates (all-or-nothing operations)
+- Extra hardening validations for edge cases
 
 ---
 
@@ -100,13 +105,25 @@ We found a critical issue before it reached mainnet. We fixed it completely. We'
 
 ---
 
-## Version Timeline
+## Version Timeline: What Happened & Why
 
-- **v8.5.0** (Current): Basic staking, currently live
-- **v8.9.0** (Planned): Added forceExitUser() but found honeypot risk → NOT DEPLOYED
-- **v9.0** (New): Fixed forceExitUser() to forceExitUserToSelf() + bootstrap migration + safety checks → DEPLOYING NOW
+**v8.5.0** (Current Live)
+- Basic staking with 88/10/1/1 reward split
+- Works great, no issues
 
-**Key Point**: We jumped from v8.5.0 to v9.0 because v9.0 is the safe, complete version that fixed the issue we found in v8.9.0.
+**v8.9.0** (Planned, NOT Deployed)
+- ✅ Added `removePool()` - Safe pool removal
+- ✅ Added `shutdownPool()` - Block deposits while allowing exits
+- ✅ Enhanced pool lifecycle management
+- ❌ Included `forceExitUser(user, recipient)` - Found honeypot risk before deployment
+
+**v9.0** (Deploying Now)
+- ✅ Keeps ALL v8.9.0 improvements (removePool, shutdownPool, lifecycle management)
+- ✅ Fixes the honeypot: `forceExitUser()` → `forceExitUserToSelf()`
+- ✅ Adds new features: bootstrap migration, reward preservation checks, lock overflow prevention
+- ✅ Better tested, safer, more audited than v8.9.0
+
+**Key Point**: v8.9.0's development wasn't wasted—it gave us removePool and shutdownPool, which we're keeping and shipping in v9.0. We just fixed the one dangerous function and added more features on top. This is v8.9.0 + security fix + enhancements.
 
 ---
 
@@ -137,9 +154,17 @@ A: The timelock gives us 24 hours to cancel if needed. After that, we can always
 
 ## Bottom Line
 
-We were going to deploy v8.9.0. We audited it. We found a honeypot risk. We fixed it. Now we're deploying v9.0 - which is safer, has more features, and is completely transparent about what we found and fixed.
+**v8.9.0's work wasn't wasted.** removePool, shutdownPool, and lifecycle management are all staying. We just caught a security issue, fixed it, and added even more features on top.
 
-Your stakes are safer tomorrow. Your rewards still work the same. You get new features. And you can trust that we audit our code seriously.
+Timeline:
+1. Built v8.9.0 with pool management improvements ✅
+2. Audited it before mainnet deployment ✅
+3. Found honeypot risk in forceExitUser() ⚠️
+4. Fixed it with forceExitUserToSelf() ✅
+5. Added new features (bootstrap migration, safety checks) ✅
+6. Now shipping v9.0 - everything from v8.9.0 + the fix + enhancements ✅
+
+Your stakes are safer tomorrow. Your rewards still work the same. You get new features. All the months of v8.9.0 development made it into v9.0. And you can trust that we audit our code seriously before it touches your funds.
 
 **That's how you build a secure, trustworthy protocol.**
 
