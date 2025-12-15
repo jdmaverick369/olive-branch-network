@@ -526,6 +526,6 @@ OBN aligns self-interest with public good: compelling user yields, credible char
 
 **Version:** 9.0
 **Date:** November 2025
-**Last Updated:** November 15, 2025
+**Last Updated:** December 15, 2025
 
 **Canonical Repository:** [github.com/jdmaverick369/olive-branch-network](https://github.com/jdmaverick369/olive-branch-network)
