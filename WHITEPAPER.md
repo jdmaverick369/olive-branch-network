@@ -2,13 +2,13 @@
 
 ## Purpose
 
-OBN is a staking protocol that turns on-chain participation into continuous funding for real-world charities—without sacrificing compelling yields for users. This paper covers the canonical contract suite, hard-coded guarantees, token economics, governance/upgradeability, security model, and the end-to-end process for onboarding and supporting charities.
+OBN is a staking protocol that turns on-chain participation into continuous funding for real-world nonprofits—without sacrificing compelling yields for users. This paper covers the canonical contract suite, hard-coded guarantees, token economics, governance/upgradeability, security model, and the end-to-end process for onboarding and supporting nonprofits.
 
 ## 1) Executive Summary
 
-**Mission:** Make donating the path of least resistance by routing a fixed portion of staking emissions to verified charity wallets—automatically, transparently, and forever on-chain.
+**Mission:** Make donating the path of least resistance by routing a fixed portion of staking emissions to verified nonprofit wallets—automatically, transparently, and forever on-chain.
 
-**Mechanism:** Users stake OBN in charity-specific pools. Emissions split is hard-coded: 88% stakers, 10% charity (minted per action directly to each pool's charityWallet), 1% Charity Fund, 1% Treasury.
+**Mechanism:** Users stake OBN in nonprofit-specific pools. Emissions split is hard-coded: 88% stakers, 10% nonprofit (minted per action directly to each pool's charityWallet), 1% nonprofit Fund, 1% Treasury.
 
 **Design guarantees:**
 
@@ -42,7 +42,7 @@ OBN is a staking protocol that turns on-chain participation into continuous fund
 
 - 40% Liquidity — for DEX pool bootstrapping
 - 30% Airdrop — early distribution to community
-- 10% Charity Fund — dedicated for charity programs, including pool bootstraps
+- 10% nonprofit Fund — dedicated for nonprofit programs, including pool bootstraps
 - 10% Treasury — for protocol governance and operations
 - 10% Team — to the TeamVesting contract with cliff and vesting schedule
 
@@ -66,8 +66,8 @@ One-time distribution removes ambiguity about initial supply. A sole minter elim
 **Hard-coded reward split (BPS):**
 
 - STAKER_BPS = 8_800 → 88% to users
-- CHARITY_BPS = 1_000 → 10% to charity wallet
-- CHARITY_FUND_BPS = 100 → 1% to Charity Fund
+- nonprofit_BPS = 1_000 → 10% to nonprofit wallet
+- nonprofit_FUND_BPS = 100 → 1% to nonprofit Fund
 - TREASURY_BPS = 100 → 1% to Treasury
 
 **Emission phases (initialized at deploy):**
@@ -94,9 +94,9 @@ Governance may append future phases contiguously; prior phases remain immutable.
 - `claim(pid)` — Claim pending rewards
 - `claimFor(pid, user)` — Claim rewards for another address
 
-**Charity mechanics:**
+**nonprofit mechanics:**
 - 10% of rewards is minted per user action (claim, deposit, withdraw) directly to that pool's charityWallet
-- 1% Charity Fund accrues continuously to a dedicated address; can perform bootstrap stakes via `charityFundBootstrap`
+- 1% nonprofit Fund accrues continuously to a dedicated address; can perform bootstrap stakes via `nonprofitFundBootstrap`
 - No global TVL buffer; splits happen per-action for atomic execution
 
 #### 2.2.2 NEW v9.0: Pool Lifecycle Management
@@ -109,16 +109,16 @@ Governance may append future phases contiguously; prior phases remain immutable.
 **Pool removal:**
 - `removePool(pid)` — Soft-delete after pool is completely empty (totalStaked == 0)
 - No PID reindexing; backward compatible
-- **Treasury safety:** If legacy charity accrues before removal, it's flushed to the pool's charityWallet; if wallet is zero, it's redirected to treasury
+- **Treasury safety:** If legacy nonprofit accrues before removal, it's flushed to the pool's charityWallet; if wallet is zero, it's redirected to treasury
 - Prevents reward loss if users claim after removal
 
 #### 2.2.3 NEW v9.0: Nonprofit Self-Stake Protection
 
-**Policy:** Charities can receive exactly ONE permanent locked bootstrap deposit. All other self-staking is blocked.
+**Policy:** nonprofits can receive exactly ONE permanent locked bootstrap deposit. All other self-staking is blocked.
 
-**Enforcement:** The `_enforceCharitySelfStakePolicy` function checks:
-- Is the beneficiary the pool's charity wallet?
-- If yes, is this from charityFund AND locked AND their current balance is zero?
+**Enforcement:** The `_enforcenonprofitSelfStakePolicy` function checks:
+- Is the beneficiary the pool's nonprofit wallet?
+- If yes, is this from nonprofitFund AND locked AND their current balance is zero?
 - If all true, allow it (first bootstrap). Otherwise, reject.
 
 **Rationale:** Prevents accidental or malicious self-stakes by nonprofits that could break pool reward dynamics or enable attacks.
@@ -130,12 +130,12 @@ Governance may append future phases contiguously; prior phases remain immutable.
 **Atomic guarantees:**
 - Preserves pending rewards (verified down to 1 wei tolerance)
 - Copies locked amounts safely with overflow prevention
-- Updates charity wallet atomically in same transaction
+- Updates nonprofit wallet atomically in same transaction
 - Deactivates old user's pool counters
 - Activates new user if it's their first pool stake
 
 **Preconditions:**
-- oldNonprofit IS the pool's current charity wallet
+- oldNonprofit IS the pool's current nonprofit wallet
 - oldNonprofit ≠ newNonprofit
 - oldNonprofit has a non-zero stake
 - newNonprofit does not already have a stake in this pool
@@ -154,17 +154,17 @@ Governance may append future phases contiguously; prior phases remain immutable.
 
 **Use case:** Emergency governance control for pool removal when users need recovery; used after a pool is shutdown.
 
-#### 2.2.6 Charity Wallet Updates
+#### 2.2.6 nonprofit Wallet Updates
 
-**Function:** `updateCharityWallet(pid, newWallet)` (owner-only)
+**Function:** `updatecharityWallet(pid, newWallet)` (owner-only)
 
-**Allows:** Updating a pool's charity address (e.g., if compromised or rotating to new address).
+**Allows:** Updating a pool's nonprofit address (e.g., if compromised or rotating to new address).
 
-**Tracked via:** CharityWalletUpdated event.
+**Tracked via:** charityWalletUpdated event.
 
 #### 2.2.7 Lock Management
 
-**Function:** `setLockedAmount(pid, user, amount)` (charityFund-only)
+**Function:** `setLockedAmount(pid, user, amount)` (nonprofitFund-only)
 
 **Rules:**
 - Can only INCREASE or keep same; never decrease
@@ -177,7 +177,7 @@ Governance may append future phases contiguously; prior phases remain immutable.
 - `unlockedBalance(pid, user)` — Returns balance minus lock
 - `getPoolAPR(pid)` — Returns user portion APR (88% of pool APY)
 - `getGlobalStats()` — Pool count, total TVL, unique stakers, RPS
-- `getPoolStats(pid)` — Charity wallet, total staked, unique stakers, per-share accumulator, last accrual time, all-time stats
+- `getPoolStats(pid)` — nonprofit wallet, total staked, unique stakers, per-share accumulator, last accrual time, all-time stats
 - `getUserPoolView(pid, user)` — Staked, locked, unlocked, reward debt, pending, active status
 - `stakeElapsed(user)` — Total staking seconds (persists across unstakes)
 
@@ -201,7 +201,7 @@ Let the phase APR basis be B (in BPS), global TVL G, and pool TVL P.
 
 **Yearly gross to the pool:** YearlyPoolGross = P × (B / 10,000)
 
-**Stakers receive 88% of that;** the rest routes to charity (10%), Charity Fund (1%), Treasury (1%).
+**Stakers receive 88% of that;** the rest routes to nonprofit (10%), nonprofit Fund (1%), Treasury (1%).
 
 **Per-token APR simplifies to** 0.88 × (B / 10,000), **equal across pools** — independent of supply size.
 
@@ -209,7 +209,7 @@ Let the phase APR basis be B (in BPS), global TVL G, and pool TVL P.
 
 **Sell-pressure decay:** Lower issuance over time reduces structural sell pressure.
 
-**Cause-driven demand:** The charity buffer/fund accumulates for real organizations, seeding authentic use and alignment.
+**Cause-driven demand:** The nonprofit buffer/fund accumulates for real organizations, seeding authentic use and alignment.
 
 **TVL credibility:** Bootstrap locks create persistent TVL, improving confidence and price discovery.
 
@@ -217,8 +217,8 @@ Let the phase APR basis be B (in BPS), global TVL G, and pool TVL P.
 
 ### 3.3 Treasury minimalism (1%)
 
-Users get 88%, charities get 10%, the Charity Fund gets 1%, and the Treasury gets 1%.
-Capping Treasury at 1% keeps the protocol lean, reduces rent extraction risk, and keeps yields user/charity-centric.
+Users get 88%, nonprofits get 10%, the nonprofit Fund gets 1%, and the Treasury gets 1%.
+Capping Treasury at 1% keeps the protocol lean, reduces rent extraction risk, and keeps yields user/nonprofit-centric.
 
 ### 3.4 Burnability (optional sink)
 
@@ -228,19 +228,19 @@ OBN is inflationary via staking, but voluntary burns (e.g., future app fees) can
 
 ## 4) Protocol Mechanics & Rationale
 
-### 4.1 Charity distribution
+### 4.1 nonprofit distribution
 
 **Per-action model:** On every claim/deposit/withdraw, 10% of the user's pending rewards is minted directly to that pool's charityWallet.
 
 **Atomic execution:** No external calls or global buffers; all splits happen within the user's transaction.
 
-**No allocation contention:** Each pool's charity is independent; no global reallocation function.
+**No allocation contention:** Each pool's nonprofit is independent; no global reallocation function.
 
-### 4.2 Charity Fund (1%) vs. Charity (Genesis Reserve, 10%)
+### 4.2 nonprofit Fund (1%) vs. nonprofit (Genesis Reserve, 10%)
 
-**Charity (Genesis Reserve, 10%):** One-time genesis allocation held by governance for programmatic uses, primarily initial pool bootstraps (§5.5).
+**nonprofit (Genesis Reserve, 10%):** One-time genesis allocation held by governance for programmatic uses, primarily initial pool bootstraps (§5.5).
 
-**Charity Fund (1% emissions):** Ongoing stream to a governance-controlled address to replenish capacity for future bootstraps and campaigns.
+**nonprofit Fund (1% emissions):** Ongoing stream to a governance-controlled address to replenish capacity for future bootstraps and campaigns.
 
 ### 4.3 Permanent locks (bootstrap-only; increase-only)
 
@@ -256,7 +256,7 @@ Phases fully specify issuance; there's no external "rate knob." DAO may append f
 
 ---
 
-## 5) Charities: Wallets, Onboarding & Display
+## 5) nonprofits: Wallets, Onboarding & Display
 
 ### 5.1 One wallet per pool
 
@@ -268,25 +268,25 @@ We are indexing public Ethereum addresses that reputable organizations already p
 
 In addition, we are reaching out to organizations through email and phone to let them know about our platform.
 
-Every charity page shows a clear "No Affiliation / Not Endorsed" banner by default.
+Every nonprofit page shows a clear "No Affiliation / Not Endorsed" banner by default.
 
 ### 5.3 Bootstrap Program
 
-**Objective:** Ensure each newly onboarded charity earns from day one and that pools start with credible TVL.
+**Objective:** Ensure each newly onboarded nonprofit earns from day one and that pools start with credible TVL.
 
-**Source of funds:** The 10% Charity (Genesis Reserve) is earmarked to bootstrap up to 100 charities at launch (1,000,000 OBN each = 100,000,000 OBN total).
+**Source of funds:** The 10% nonprofit (Genesis Reserve) is earmarked to bootstrap up to 100 nonprofits at launch (1,000,000 OBN each = 100,000,000 OBN total).
 
 **Mechanism:**
 
-1. Governance (or the Charity Fund executor) calls `charityFundBootstrap(pid, amount, beneficiary)` or uses `depositForWithLock(pid, amount, beneficiary)` (charityFund-only).
-2. The 1,000,000 OBN is staked and permanently locked for that charity's pool/beneficiary.
-3. The lock prevents withdrawal of the seeded principal, eliminating immediate dump risk while the position earns yield continuously (staker share + the pool's 10% charity allocation routed to the charityWallet).
+1. Governance (or the nonprofit Fund executor) calls `nonprofitFundBootstrap(pid, amount, beneficiary)` or uses `depositForWithLock(pid, amount, beneficiary)` (nonprofitFund-only).
+2. The 1,000,000 OBN is staked and permanently locked for that nonprofit's pool/beneficiary.
+3. The lock prevents withdrawal of the seeded principal, eliminating immediate dump risk while the position earns yield continuously (staker share + the pool's 10% nonprofit allocation routed to the charityWallet).
 
-**Expansion after the first 100:** As the 1% Charity Fund from emissions accrues, governance can bootstrap additional charities in subsequent waves using the same 1,000,000 OBN per charity target (or a DAO-approved updated target).
+**Expansion after the first 100:** As the 1% nonprofit Fund from emissions accrues, governance can bootstrap additional nonprofits in subsequent waves using the same 1,000,000 OBN per nonprofit target (or a DAO-approved updated target).
 
 **Reporting:** Each bootstrap is transparent on-chain and included in periodic public disclosures.
 
-**Protection:** The `_enforceCharitySelfStakePolicy` ensures each charity can only receive one bootstrap position; future stakes must come from the charity itself or external users.
+**Protection:** The `_enforcenonprofitSelfStakePolicy` ensures each nonprofit can only receive one bootstrap position; future stakes must come from the nonprofit itself or external users.
 
 ### 5.4 Delisting policy
 
@@ -322,10 +322,10 @@ Upgrades require `_authorizeUpgrade` (owner).
 
 **Governed (no upgrade needed):**
 - Add pools (`addPool(charityWallet)`)
-- Execute bootstrap stakes from the Charity Fund
+- Execute bootstrap stakes from the nonprofit Fund
 - Append future phases contiguously (`addPhase`)
 - Shutdown or remove pools (v9.0)
-- Spend policies for Treasury & Charity Fund (with transparency reports)
+- Spend policies for Treasury & nonprofit Fund (with transparency reports)
 
 ### 6.3 NFT upgradability
 
@@ -363,7 +363,7 @@ Upgrades require `_authorizeUpgrade` (owner).
 
 Equal APR keeps focus on impact, not APR gaming.
 
-Per-action charity minting is atomic but requires every action to mint (gas trade-off).
+Per-action nonprofit minting is atomic but requires every action to mint (gas trade-off).
 
 Appending phases centralizes some discretion; timelock + DAO voting mitigates.
 
@@ -373,17 +373,17 @@ Appending phases centralizes some discretion; timelock + DAO voting mitigates.
 
 **Events:**
 - Deposit, Withdraw, Claim
-- CharityDistributed, CharityFundDistributed, TreasuryDistributed
-- LockedAmountSet, CharityWalletUpdated
+- nonprofitDistributed, nonprofitFundDistributed, TreasuryDistributed
+- LockedAmountSet, charityWalletUpdated
 - PoolAdded, PoolShutdown, PoolRemoved
 - PhaseAdded
 
 **Views:**
 - getGlobalStats, getPoolStats, getUserPoolView
-- pendingRewards, getPoolAPR, pendingCharityFor
+- pendingRewards, getPoolAPR, pendingnonprofitFor
 - unlockedBalance, stakeElapsed, isGloballyStaked
 
-**Disclosures:** Quarterly public report of Charity (Genesis Reserve) balances, bootstraps executed, and Charity Fund (emissions) flows.
+**Disclosures:** Quarterly public report of nonprofit (Genesis Reserve) balances, bootstraps executed, and nonprofit Fund (emissions) flows.
 
 ---
 
@@ -392,8 +392,8 @@ Appending phases centralizes some discretion; timelock + DAO voting mitigates.
 1. **Acquire OBN** (DEX liquidity seeded from the 40% Liquidity allocation)
 2. **Pick a pool by cause** — APR is equal across pools at a given time
 3. **Stake** (`deposit`) or stake for another address (`depositFor`). Optionally use Permit to avoid a separate approval transaction
-4. **Earn & do good:** Claims mint OBN to you; charity accrues and mints to the charityWallet
-5. **Withdraw** any unlocked principal anytime. (Bootstrap locks do not apply to your self-stakes unless explicitly opted via `charityFundBootstrap`)
+4. **Earn & do good:** Claims mint OBN to you; nonprofit accrues and mints to the charityWallet
+5. **Withdraw** any unlocked principal anytime. (Bootstrap locks do not apply to your self-stakes unless explicitly opted via `nonprofitFundBootstrap`)
 
 ---
 
@@ -404,7 +404,7 @@ Appending phases centralizes some discretion; timelock + DAO voting mitigates.
 **Genesis distribution (on initialize):**
 - 40% Liquidity
 - 30% Airdrop
-- 10% Charity (Genesis Reserve) — used chiefly for 1,000,000 OBN bootstrap stakes per charity (first 100), see §5.3
+- 10% nonprofit (Genesis Reserve) — used chiefly for 1,000,000 OBN bootstrap stakes per nonprofit (first 100), see §5.3
 - 10% Treasury
 - 10% Team (to TeamVesting; ~4-month cliff, ~20-month linear vest)
 
@@ -416,9 +416,9 @@ Appending phases centralizes some discretion; timelock + DAO voting mitigates.
 
 ## 11) Roadmap (Indicative)
 
-- **DAO & Timelock:** Transfer upgrade authority; ratify Treasury/Charity policies
+- **DAO & Timelock:** Transfer upgrade authority; ratify Treasury/nonprofit policies
 - **NFT Impact Badges:** Opt-in attestations with upgradeable metadata
-- **Expanded reporting:** Per-charity transparency dashboards
+- **Expanded reporting:** Per-nonprofit transparency dashboards
 - **Integrations:** Wallets, Farcaster actions, nonprofit tooling where appropriate
 - **Phase extension (if needed):** Append contiguous phases with DAO approval
 - **Further pool lifecycle features:** Advanced governance controls for exceptional circumstances
@@ -433,8 +433,8 @@ Appending phases centralizes some discretion; timelock + DAO voting mitigates.
 - `deposit(pid, amount)`
 - `depositFor(pid, amount, beneficiary)`
 - `depositWithPermit(pid, amount, beneficiary, deadline, v, r, s)`
-- `depositForWithLock(pid, amount, beneficiary)` (charityFund-only)
-- `charityFundBootstrap(pid, amount, beneficiary)` (charityFund-only)
+- `depositForWithLock(pid, amount, beneficiary)` (nonprofitFund-only)
+- `nonprofitFundBootstrap(pid, amount, beneficiary)` (nonprofitFund-only)
 - `withdraw(pid, amount)`
 - `claim(pid)`
 - `claimFor(pid, user)`
@@ -444,10 +444,10 @@ Appending phases centralizes some discretion; timelock + DAO voting mitigates.
 - `shutdownPool(pid)`
 - `removePool(pid)`
 - `addPhase(start, end, bps)`
-- `updateCharityWallet(pid, newWallet)`
+- `updatecharityWallet(pid, newWallet)`
 - `migrateBootstrap(pid, oldNonprofit, newNonprofit)`
 - `forceExitUserToSelf(pid, user, claimRewards)`
-- `setLockedAmount(pid, user, amount)` (charityFund-only)
+- `setLockedAmount(pid, user, amount)` (nonprofitFund-only)
 - `setVersion(newVersion)` (owner-only)
 - `upgradeTo(newImplementation, data)` (owner-only, governance-compatible)
 
@@ -495,9 +495,9 @@ Appending phases centralizes some discretion; timelock + DAO voting mitigates.
 
 ## Final Word
 
-OBN aligns self-interest with public good: compelling user yields, credible charity funding, and a governance path that minimizes rent extraction. With hard-coded safeguards, a lean treasury, pool lifecycle controls for emergencies, and atomic bootstrap migration that protects both donors and charities, OBN is built for longevity—**do well by doing good.**
+OBN aligns self-interest with public good: compelling user yields, credible nonprofit funding, and a governance path that minimizes rent extraction. With hard-coded safeguards, a lean treasury, pool lifecycle controls for emergencies, and atomic bootstrap migration that protects both donors and nonprofits, OBN is built for longevity—**do well by doing good.**
 
-**v9.0 introduces critical governance controls:** nonprofit protection, pool lifecycle management, and safe bootstrap migration. These features enable the protocol to scale responsibly, protect charity participants, and respond to emergencies while maintaining the integrity of the staking mechanism.
+**v9.0 introduces critical governance controls:** nonprofit protection, pool lifecycle management, and safe bootstrap migration. These features enable the protocol to scale responsibly, protect nonprofit participants, and respond to emergencies while maintaining the integrity of the staking mechanism.
 
 ---
 
