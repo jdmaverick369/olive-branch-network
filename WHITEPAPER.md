@@ -20,8 +20,7 @@ OBN is a staking protocol that turns on-chain participation into continuous fund
 - Timestamp-based emission phases with a 10-year declining schedule
 - **NEW v9.0:** Nonprofit self-stake protection, pool lifecycle management, atomic bootstrap migration, emergency force-exit controls
 
-**Governance & Upgradability:** UUPS proxies for Token & Staking; ownership migrates to a DAO + timelock. A future upgradeable NFT module will attest to impact and participation.
-
+**Governance & Upgradability:** UUPS proxies for Token & Staking; ownership migrates to a DAO + timelock.
 ---
 
 ## 2) Contract Suite
