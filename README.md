@@ -53,6 +53,24 @@ Every stake you make not only grows your holdings but also supports a nonprofit 
 
 ---
 
+## ✅ Official OBN Addresses (Base)
+
+| Purpose | Address |
+|--------|---------|
+| **Treasury** | `0x5C8a0aCfAD4528714076068f71a5ff2Ee06c3718` |
+| **Charity Fund** | `0x398fe423a8b4fd9b40cadf8bc72448c95474455f` |
+| **Team Wallet** | `0xf765637e2c162219bc188391c0869c7bD35d8816` |
+| **Airdrop / Earn / Bug Bounty** | `0xA699c2885cC72398430a8a75c80406C2b6A7B096` |
+
+---
+
+## 🌊 Official Uniswap Pools (Base)
+
+- **OBN/ETH:** `https://app.uniswap.org/explore/pools/base/0x8fce8be03745fa2821cb25f7dfebbfc5573a9beaca433f69a53c998a6fff1e94`
+- **OBN/USDC:** `https://app.uniswap.org/explore/pools/base/0xbc13498e05d9ca80a21fbee72dbbcbedda835c4021be85be025a50dd39409cb1`
+
+---
+
 ## 🚀 Getting Started (Developers)
 
 ### Prerequisites
