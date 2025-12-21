@@ -512,10 +512,6 @@ OBN aligns self-interest with public good: compelling user yields, credible char
 
 **Network:** Base Mainnet (Chain ID: 8453)
 
-**Contract Verification:**
-- ✅ OBNStakingPools v9.0 implementation verified on BaseScan (full source code transparent)
-- OBNToken and other contracts verification pending
-
 **Key Notes:**
 - OBNToken and OBNStakingPools use UUPS proxy pattern for governance-controlled upgrades
 - TeamVesting is non-upgradeable (immutable schedule)
