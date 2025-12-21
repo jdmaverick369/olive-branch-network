@@ -8,7 +8,7 @@ OBN is a staking protocol that turns on-chain participation into continuous fund
 
 **Mission:** Make donating the path of least resistance by routing a fixed portion of staking emissions to verified nonprofit wallets—automatically, transparently, and forever on-chain.
 
-**Mechanism:** Users stake OBN in nonprofit-specific pools. Emissions split is hard-coded: 88% stakers, 10% nonprofit (minted per action directly to each pool's charityWallet), 1% charity fund, 1% Treasury.
+**Mechanism:** Users stake OBN in nonprofit-specific pools. Emissions split is hard-coded: 88% stakers, 10% nonprofit (minted per action directly to each pool's charityWallet), 1% charity fund, 1% treasury.
 
 **Design guarantees:**
 
@@ -324,15 +324,7 @@ Upgrades require `_authorizeUpgrade` (owner).
 - Execute bootstrap stakes from the charity fund
 - Append future phases contiguously (`addPhase`)
 - Shutdown or remove pools (v9.0)
-- Spend policies for Treasury & charity fund (with transparency reports)
-
-### 6.3 NFT upgradability
-
-**OBN Impact Badges (ERC-721/SBT):** Opt-in attestations for impact (donations, streaks, campaigns).
-
-**Upgradeable metadata** to reflect live contribution stats.
-
-**Privacy-respecting;** opt-in mint and display.
+- Spend policies for treasury & charity fund (with transparency reports)
 
 ---
 
@@ -415,8 +407,7 @@ Appending phases centralizes some discretion; timelock + DAO voting mitigates.
 
 ## 11) Roadmap (Indicative)
 
-- **DAO & Timelock:** Transfer upgrade authority; ratify Treasury/nonprofit policies
-- **NFT Impact Badges:** Opt-in attestations with upgradeable metadata
+- **DAO & Timelock:** Transfer upgrade authority; ratify treasury/nonprofit policies
 - **Expanded reporting:** Per-nonprofit transparency dashboards
 - **Integrations:** Wallets, Farcaster actions, nonprofit tooling where appropriate
 - **Phase extension (if needed):** Append contiguous phases with DAO approval
