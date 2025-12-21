@@ -66,8 +66,8 @@ Every stake you make not only grows your holdings but also supports a nonprofit 
 
 ## 🌊 Official Uniswap Pools (Base)
 
-- **OBN/ETH:** `https://app.uniswap.org/explore/pools/base/0x8fce8be03745fa2821cb25f7dfebbfc5573a9beaca433f69a53c998a6fff1e94`
-- **OBN/USDC:** `https://app.uniswap.org/explore/pools/base/0xbc13498e05d9ca80a21fbee72dbbcbedda835c4021be85be025a50dd39409cb1`
+- **OBN/ETH:** [`0x8fce8be03745fa2821cb25f7dfebbfc5573a9beaca433f69a53c998a6fff1e94`](https://app.uniswap.org/explore/pools/base/0x8fce8be03745fa2821cb25f7dfebbfc5573a9beaca433f69a53c998a6fff1e94)
+- **OBN/USDC:** [`0xbc13498e05d9ca80a21fbee72dbbcbedda835c4021be85be025a50dd39409cb1`](https://app.uniswap.org/explore/pools/base/0xbc13498e05d9ca80a21fbee72dbbcbedda835c4021be85be025a50dd39409cb1)
 
 ---
 
