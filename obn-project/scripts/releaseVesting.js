@@ -54,7 +54,11 @@ async function main() {
   console.log("Sending release()...");
   const tx = await vesting.release();
   console.log("tx:", tx.hash);
-  await tx.wait();
+  const receipt = await tx.wait();
+  console.log("Confirmed in block:", receipt.blockNumber);
+
+  // Small delay to ensure RPC node has updated state
+  await new Promise(resolve => setTimeout(resolve, 2000));
 
   const balTeamAfter = await token.balanceOf(teamWallet);
   console.log("Done. Team new balance:", fmt(balTeamAfter));

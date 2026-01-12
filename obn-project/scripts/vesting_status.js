@@ -75,8 +75,6 @@ async function main() {
     released,
     vested,
     timeUntilCliff,
-    timeUntilNextRelease,
-    nextReleaseTs,
   ] = await Promise.all([
     vesting.teamWallet(),
     vesting.start(),
@@ -85,8 +83,6 @@ async function main() {
     vesting.released(),
     vesting.vestedAmount(),
     vesting.timeUntilCliff().catch(() => 0n),
-    vesting.timeUntilNextRelease().catch(() => 0n),
-    vesting.nextReleaseTimestamp().catch(() => 0n),
   ]);
 
   const [bal, decimals, symbol] = await Promise.all([
@@ -129,17 +125,36 @@ async function main() {
   console.log(`  claimable (unlocked): ${fmtAmount(claimable, decimals)} ${symbol}`);
   console.log("");
 
-  // Cliff / next release info
+  // Vesting status
   if (now < cliffAt) {
     console.log("⏳ Cliff not reached yet.");
     console.log("  time until cliff    :", fmtDuration(timeUntilCliff));
-    console.log("  next release at     :", cliffAt);
+    console.log("  cliff date (unix)   :", cliffAt);
   } else if (now >= vestEnd) {
     console.log("✅ Fully vested. All remaining tokens are unlocked (if any remain in the contract).");
   } else {
-    console.log("⏱  Mid‑vesting.");
-    console.log("  time until next release:", fmtDuration(timeUntilNextRelease));
-    console.log("  next release at        :", Number(nextReleaseTs));
+    // Calculate vesting progress and rates
+    const elapsed = now - cliffAt;
+    const vestingDuration = Number(DURATION);
+    const progressPct = (elapsed / vestingDuration) * 100;
+    const totalAllocation = bal + released;
+
+    // Unlock rates (tokens are in wei, need to convert)
+    const tokensPerSecond = Number(totalAllocation) / 1e18 / vestingDuration;
+    const tokensPerDay = tokensPerSecond * 86400;
+    const tokensPerMonth = tokensPerDay * 30;
+
+    const timeRemaining = vestEnd - now;
+    const daysRemaining = Math.floor(timeRemaining / 86400);
+    const monthsRemaining = Math.floor(daysRemaining / 30);
+    const daysRemainingAfterMonths = daysRemaining % 30;
+
+    console.log("⏱️  Vesting in progress");
+    console.log(`  progress            : ${progressPct.toFixed(2)}% complete`);
+    console.log(`  unlock rate         : ${tokensPerDay.toLocaleString(undefined, {maximumFractionDigits: 2})} OBN per day`);
+    console.log(`                      : ${tokensPerMonth.toLocaleString(undefined, {maximumFractionDigits: 2})} OBN per month`);
+    console.log(`  time remaining      : ${monthsRemaining} month${monthsRemaining !== 1 ? 's' : ''}, ${daysRemainingAfterMonths} day${daysRemainingAfterMonths !== 1 ? 's' : ''}`);
+    console.log(`  full vesting at     : ${vestEnd} (unix)`);
   }
 
   console.log("");
