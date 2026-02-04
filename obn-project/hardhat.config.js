@@ -67,17 +67,14 @@ module.exports = {
   },
 
   etherscan: {
-    // Basescan verification
-    apiKey: {
-      base: BASESCAN_API_KEY,
-      "base-sepolia": BASESCAN_API_KEY,
-    },
+    // Basescan verification using Etherscan V2 API
+    apiKey: BASESCAN_API_KEY,
     customChains: [
       {
         network: "base",
         chainId: 8453,
         urls: {
-          apiURL: "https://api.basescan.org/api",
+          apiURL: "https://api.basescan.org/v2/api",
           browserURL: "https://basescan.org",
         },
       },
@@ -85,11 +82,15 @@ module.exports = {
         network: "base-sepolia",
         chainId: 84532,
         urls: {
-          apiURL: "https://api-sepolia.basescan.org/api",
+          apiURL: "https://api-sepolia.basescan.org/v2/api",
           browserURL: "https://sepolia.basescan.org",
         },
       },
     ],
+  },
+
+  sourcify: {
+    enabled: true
   },
 
   paths: {

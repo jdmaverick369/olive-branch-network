@@ -5,14 +5,15 @@ require("dotenv").config();
 const { execSync } = require("child_process");
 
 async function main() {
-  console.log("=== VERIFYING EIP-1271 IMPLEMENTATION ON BASESCAN ===\n");
+  console.log("=== VERIFYING STAKINGPOOLS v9.1 IMPLEMENTATION ON BASESCAN ===\n");
 
   // Implementation address from deployment
-  const IMPLEMENTATION_ADDRESS = "0xb3bE63923f91Ba2EaE263139E9622cC57003D308";
-  const CONTRACT_NAME = "OBNStakingPools";
+  const IMPLEMENTATION_ADDRESS = "0x37951A530114421E7a52Edca3837D003d02e56aa";
+  const CONTRACT_NAME = "contracts/StakingPools.sol:OBNStakingPools";
 
   console.log("Implementation Address:", IMPLEMENTATION_ADDRESS);
   console.log("Contract Name:         ", CONTRACT_NAME);
+  console.log("Version:               ", "9.1 (charity contribution tracking)");
   console.log();
 
   console.log("Running hardhat verify...");
@@ -41,11 +42,10 @@ async function main() {
     console.log("2. CHECK BASESCAN");
     console.log(`   https://basescan.org/address/${IMPLEMENTATION_ADDRESS}`);
     console.log();
-    console.log("3. VERIFY NEW FUNCTIONS ARE LISTED");
-    console.log("   - depositWithSignature");
-    console.log("   - depositWithSignatureAndLock");
-    console.log("   - domainSeparator");
-    console.log("   - getDepositSignatureDigest");
+    console.log("3. VERIFY NEW MAPPINGS ARE LISTED");
+    console.log("   - charityContributedByUserInPool");
+    console.log("   - totalCharityContributedByUser");
+    console.log("   - version should show: 9.1");
     console.log();
 
   } catch (error) {
