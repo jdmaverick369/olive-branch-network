@@ -138,7 +138,7 @@ contract OBNStakingPools is
         stakingToken = stakingTokenArg;
         treasury = treasuryAddr;
         charityFund = charityFundAddr;
-        version = "9.1";
+        version = "9.2";
 
         // Local phases — timestamp schedule
         uint256 start = block.timestamp;
@@ -1075,6 +1075,56 @@ contract OBNStakingPools is
     /// @notice Total minted-to-charity amount attributable to a user across all pools.
     mapping(address => uint256) public totalCharityContributedByUser;
 
+    // =========================
+    // NEW v9.2: Multi-claim functions
+    // =========================
+
+    /// @notice Claim rewards from multiple pools in one transaction.
+    /// @dev User controls which pools to claim from. Gas limit is the only constraint.
+    /// @param pids Array of pool IDs to claim from
+    function claimMultiple(uint256[] calldata pids) external nonReentrant {
+        require(pids.length > 0, "Empty array");
+        for (uint256 i = 0; i < pids.length; i++) {
+            _claimTo(pids[i], msg.sender);
+        }
+    }
+
+    /// @notice Get pending rewards for multiple pools in one call.
+    /// @dev User specifies which pools to check (no unbounded loops).
+    /// @param pids Array of pool IDs to check
+    /// @param user Address to check pending rewards for
+    /// @return pendings Array of pending reward amounts (GROSS) for each pool
+    /// @return total Sum of all pending rewards (GROSS)
+    function pendingRewardsMultiple(uint256[] calldata pids, address user)
+        external
+        view
+        returns (uint256[] memory pendings, uint256 total)
+    {
+        pendings = new uint256[](pids.length);
+        for (uint256 i = 0; i < pids.length; i++) {
+            uint256 pid = pids[i];
+            if (pid >= poolInfo.length) continue;
+
+            PoolInfo memory p = poolInfo[pid];
+            uint256 acc = accRewardPerShare[pid];
+            uint256 last = lastRewardTime[pid];
+
+            if (block.timestamp > last && p.totalStaked != 0) {
+                uint256 rewardGross = _sumRewardAcrossPhases(last, block.timestamp, p.totalStaked);
+                if (rewardGross > 0) {
+                    acc += Math.mulDiv(rewardGross, 1e12, p.totalStaked);
+                }
+            }
+
+            uint256 bal = userAmount[pid][user];
+            uint256 debt = userRewardDebt[pid][user];
+            uint256 pending = ((bal * acc) / 1e12) - debt;
+
+            pendings[i] = pending;
+            total += pending;
+        }
+    }
+
     // ---- storage gap for future upgrades ----
-    uint256[97] private __gap; // reduced by 2 to append the new mappings
+    uint256[97] private __gap; // no new storage added in v9.2 (only functions)
 }
