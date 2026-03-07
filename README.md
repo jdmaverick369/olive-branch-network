@@ -85,7 +85,7 @@ No infinite minting. No hyperinflation. Just measured, predictable growth that a
 | **OBNStakingPools** | Staking (UUPS Proxy) | [0x2C4Bd5B2a48a76f288d7F2DB23aFD3a03b9E7cD2](https://basescan.org/address/0x2C4Bd5B2a48a76f288d7F2DB23aFD3a03b9E7cD2) | [Verified](https://basescan.org/address/0x2C4Bd5B2a48a76f288d7F2DB23aFD3a03b9E7cD2) |
 | **OBNStakingPools (v9.2 Impl)** | Implementation | [0xdbeFe63a1F0ca12EAeFCDF48f1ABf0ACf14EfB48](https://basescan.org/address/0xdbeFe63a1F0ca12EAeFCDF48f1ABf0ACf14EfB48#code) | [Verified](https://basescan.org/address/0xdbeFe63a1F0ca12EAeFCDF48f1ABf0ACf14EfB48#code) |
 | **TeamVesting** | Vesting (non-upgradeable) | [0x9428Edd912224778d84D762ebCDA52e1c829aB8d](https://basescan.org/address/0x9428Edd912224778d84D762ebCDA52e1c829aB8d) | [View](https://basescan.org/address/0x9428Edd912224778d84D762ebCDA52e1c829aB8d) |
-| **OBN Impact NFT** | ERC-721 | [0xB66F67444b09f509D72d832567C2df84Edeb80F8](https://basescan.org/address/0xB66F67444b09f509D72d832567C2df84Edeb80F8) | [Verified](https://basescan.org/address/0xB66F67444b09f509D72d832567C2df84Edeb80F8) |
+| **Olive NFT** | ERC-721 | [0xB66F67444b09f509D72d832567C2df84Edeb80F8](https://basescan.org/address/0xB66F67444b09f509D72d832567C2df84Edeb80F8) | [Verified](https://basescan.org/address/0xB66F67444b09f509D72d832567C2df84Edeb80F8) |
 
 OBNToken and StakingPools use UUPS proxy with 24-hour timelock governance. TeamVesting is non-upgradeable by design.
 
