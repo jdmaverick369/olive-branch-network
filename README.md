@@ -51,7 +51,7 @@ OBN uses a 10-year emission schedule that rewards early adopters while ensuring 
 | 7-8 | 2.5% |
 | 9-10 | 1.25% |
 
-No infinite minting. No hyperinflation. Just measured, predictable growth that aligns incentives between stakers and nonprofits for the long term.
+No hyperinflation. Just measured, predictable growth that aligns incentives between stakers and nonprofits for the long term.
 
 ---
 
