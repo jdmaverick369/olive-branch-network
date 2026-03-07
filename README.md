@@ -2,11 +2,13 @@
 
 ## Redefining Philanthropy Through DeFi
 
-Traditional charity is broken. Donors give once and hope their money reaches the cause. Nonprofits spend 20-40% of their budgets just asking for more donations. There's no transparency, no sustainability, and no compounding impact.
+Traditional philanthropy is often inefficient, opaque, and difficult to sustain. Donors make contributions with limited visibility into impact, while nonprofits spend valuable time and resources fundraising instead of focusing fully on their mission.
 
-**OBN changes everything.**
+**Olive Branch Network offers a different model.**
 
-We've built a protocol where supporting nonprofits isn't a sacrifice—it's the default. Every time you stake OBN, 10% of your rewards flow directly to your chosen nonprofit's wallet. No intermediaries. No overhead. No asking. Just permanent, verifiable, on-chain funding that grows as the network grows.
+OBN is a decentralized giving protocol that embeds charitable funding directly into staking. Users stake OBN to earn rewards, while a portion of those rewards is automatically routed onchain to the nonprofit they choose to support. This creates a system where giving is transparent, verifiable, and built into the core mechanics of the network.
+
+As participation grows, charitable impact can grow alongside it. The result is a more sustainable model for philanthropy—one that aligns incentives, expands access to giving, and uses DeFi to create measurable social good.
 
 ---
 
