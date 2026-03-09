@@ -1,4 +1,4 @@
-// scripts/7_bootstrapPool.js
+// governance/schedule_bootstrap.js
 // Bootstraps an existing pool's charity deposit using the charity fund key.
 // NOTE: This will NOT create pools anymore (owner-only). Create via Timelock first.
 

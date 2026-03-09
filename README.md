@@ -2,13 +2,11 @@
 
 ## Redefining Philanthropy Through DeFi
 
-Traditional philanthropy is often inefficient, opaque, and difficult to sustain. Donors make contributions with limited visibility into impact, while nonprofits spend valuable time and resources fundraising instead of focusing fully on their mission.
+Traditional charity is broken. Donors give once and hope their money reaches the cause. Nonprofits spend 20-40% of their budgets just asking for more donations. There's no transparency, no sustainability, and no compounding impact.
 
-**Olive Branch Network offers a different model.**
+**OBN changes everything.**
 
-OBN is a decentralized giving protocol that embeds charitable funding directly into staking. Users stake OBN to earn rewards, while a portion of those rewards is automatically routed onchain to the nonprofit they choose to support. This creates a system where giving is transparent, verifiable, and built into the core mechanics of the network.
-
-As participation grows, charitable impact can grow alongside it. The result is a more sustainable model for philanthropy—one that aligns incentives, expands access to giving, and uses DeFi to create measurable social good.
+We've built a protocol where supporting nonprofits isn't a sacrifice—it's the default. Every time you stake OBN, 10% of your rewards flow directly to your chosen nonprofit's wallet. No intermediaries. No overhead. No asking. Just permanent, verifiable, on-chain funding that grows as the network grows.
 
 ---
 
@@ -53,7 +51,7 @@ OBN uses a 10-year emission schedule that rewards early adopters while ensuring 
 | 7-8 | 2.5% |
 | 9-10 | 1.25% |
 
-No hyperinflation. Just measured, predictable growth that aligns incentives between stakers and nonprofits for the long term.
+No infinite minting. No hyperinflation. Just measured, predictable growth that aligns incentives between stakers and nonprofits for the long term.
 
 ---
 
@@ -87,7 +85,7 @@ No hyperinflation. Just measured, predictable growth that aligns incentives betw
 | **OBNStakingPools** | Staking (UUPS Proxy) | [0x2C4Bd5B2a48a76f288d7F2DB23aFD3a03b9E7cD2](https://basescan.org/address/0x2C4Bd5B2a48a76f288d7F2DB23aFD3a03b9E7cD2) | [Verified](https://basescan.org/address/0x2C4Bd5B2a48a76f288d7F2DB23aFD3a03b9E7cD2) |
 | **OBNStakingPools (v9.2 Impl)** | Implementation | [0xdbeFe63a1F0ca12EAeFCDF48f1ABf0ACf14EfB48](https://basescan.org/address/0xdbeFe63a1F0ca12EAeFCDF48f1ABf0ACf14EfB48#code) | [Verified](https://basescan.org/address/0xdbeFe63a1F0ca12EAeFCDF48f1ABf0ACf14EfB48#code) |
 | **TeamVesting** | Vesting (non-upgradeable) | [0x9428Edd912224778d84D762ebCDA52e1c829aB8d](https://basescan.org/address/0x9428Edd912224778d84D762ebCDA52e1c829aB8d) | [View](https://basescan.org/address/0x9428Edd912224778d84D762ebCDA52e1c829aB8d) |
-| **Olive NFT** | ERC-721 | [0xB66F67444b09f509D72d832567C2df84Edeb80F8](https://basescan.org/address/0xB66F67444b09f509D72d832567C2df84Edeb80F8) | [Verified](https://basescan.org/address/0xB66F67444b09f509D72d832567C2df84Edeb80F8) |
+| **OBN Impact NFT** | ERC-721 | [0xB66F67444b09f509D72d832567C2df84Edeb80F8](https://basescan.org/address/0xB66F67444b09f509D72d832567C2df84Edeb80F8) | [Verified](https://basescan.org/address/0xB66F67444b09f509D72d832567C2df84Edeb80F8) |
 
 OBNToken and StakingPools use UUPS proxy with 24-hour timelock governance. TeamVesting is non-upgradeable by design.
 
