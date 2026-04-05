@@ -1,5 +1,5 @@
 # Guarded Mission Governance  
-## A Draft Long-Term Governance Architecture for the Olive Branch Network
+## A Long-Term Governance Architecture for the Olive Branch Network
 
 ## Draft Status Notice
 
