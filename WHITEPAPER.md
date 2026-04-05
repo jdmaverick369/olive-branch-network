@@ -2,7 +2,7 @@
 
 ## Purpose
 
-OBN is a staking protocol that turns on-chain participation into continuous funding for nonprofits—without sacrificing compelling yields for users. This paper covers the canonical contract suite, hard-coded guarantees, token economics, governance/upgradeability, security model, and the end-to-end process for onboarding and supporting nonprofits.
+OBN is a staking protocol that turns on-chain participation into continuous funding for nonprofits while rewarding users for participating. This paper covers the canonical contract suite, hard-coded guarantees, token economics, governance/upgradeability, security model, and the end-to-end process for onboarding and supporting nonprofits.
 
 ## 1) Executive Summary
 
