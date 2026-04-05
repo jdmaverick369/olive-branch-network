@@ -70,8 +70,8 @@ async function main() {
 
     if (timestamp > 0n) {
       const now = Math.floor(Date.now() / 1000);
-      const scheduledAt = Number(timestamp);
-      const readyAt = scheduledAt + Number(minDelay);
+      const readyAt = Number(timestamp); // getTimestamp() returns block.timestamp + delay (the ready-at time)
+      const scheduledAt = readyAt - Number(minDelay);
       const timeUntilReady = readyAt - now;
 
       console.log("\nTiming:");

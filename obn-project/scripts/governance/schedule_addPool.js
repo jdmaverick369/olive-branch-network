@@ -61,7 +61,7 @@ async function main() {
   const datas = [data];
   const predecessor = ethers.ZeroHash;
   const salt = ethers.hexlify(crypto.randomBytes(32)); // save this somewhere
-  const delayArg = 0; // Timelock enforces minDelay itself
+  const delayArg = Number(process.env.TIMELOCK_DELAY ?? 86400);
 
   const opId = await timelock.hashOperationBatch(targets, values, datas, predecessor, salt);
 
