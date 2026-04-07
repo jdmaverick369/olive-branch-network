@@ -9,6 +9,14 @@ import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
 import "@openzeppelin/contracts/utils/cryptography/EIP712.sol";
 
+// -------------------------------------------------------------------------
+// Minimal interface — only what this contract calls on StakingPools
+// -------------------------------------------------------------------------
+
+interface IStakingPoolsDeposit {
+    function depositFor(uint256 pid, uint256 amount, address beneficiary) external;
+}
+
 /**
  * @title  OBNAirdropClaim
  * @notice Signature-based OBN airdrop distributor for Base mainnet.
@@ -54,14 +62,6 @@ import "@openzeppelin/contracts/utils/cryptography/EIP712.sol";
 contract OBNAirdropClaim is Ownable, Pausable, ReentrancyGuard, EIP712 {
     using SafeERC20 for IERC20;
     using ECDSA for bytes32;
-
-    // -------------------------------------------------------------------------
-    // Minimal interface — only what this contract calls on StakingPools
-    // -------------------------------------------------------------------------
-
-    interface IStakingPoolsDeposit {
-        function depositFor(uint256 pid, uint256 amount, address beneficiary) external;
-    }
 
     // -------------------------------------------------------------------------
     // Constants
