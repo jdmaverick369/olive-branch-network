@@ -10,7 +10,7 @@ async function main() {
   if (!tokenAddr) throw new Error("Missing OBN_TOKEN_CONTRACT in .env");
 
   // EXACT amount you asked to burn
-  const amountStr = "561287.349924";
+  const amountStr = "232591.736232";
 
   const [signer] = await ethers.getSigners();
   const burner = await signer.getAddress();
