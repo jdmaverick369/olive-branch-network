@@ -1,49 +1,126 @@
 # Olive Branch Network (OBN)
 
-## Staking with Purpose
+## Proof-of-Contribution on Base
 
-The Olive Branch Network is built on the premise that decentralized finance can do more than generate yield — it can direct that yield toward the people and causes that need it most.
+The Olive Branch network is a staking protocol on Base that turns onchain participation into continuous nonprofit funding. Users stake OBN into nonprofit-specific pools, earn yield, and automatically direct a portion of every reward claim to the nonprofit pool they chose. No separate donation. No manual transfer. No offchain accounting.
 
-OBN is a staking protocol on Base that embeds charitable funding into its core mechanics. Users stake OBN to earn yield while automatically directing a portion of their rewards to a nonprofit of their choice — no separate donation, no manual action required. Every time rewards are claimed, 10% flows directly to that organization's wallet, onchain and verifiable.
+Every claim creates a transparent onchain contribution event: the user earns, the nonprofit receives funding, and the network records that participation as part of OBN's broader Proof-of-Contribution model.
 
-The result is a self-sustaining funding model: as participation grows, so does the impact. Nonprofits receive predictable, passive income tied to community support rather than fundraising cycles. Stakers earn competitive yield without sacrificing the causes they care about.
+OBN is not only a staking app. It is a contribution layer for crypto — a system where earning and giving become one action.
+
+---
+
+## Core Idea
+
+**Stake. Earn. Give. Prove it onchain.**
+
+Traditional staking proves participation by locking capital and earning rewards. OBN expands that idea through **Proof-of-Contribution**: participation is measured not only by the tokens users stake, but by the value their activity helps route toward real-world causes.
+
+When users stake in a nonprofit pool, their rewards continuously generate funding for that nonprofit. Over time, each user builds a transparent history of contribution across the causes they support.
+
+The result is a self-sustaining funding model: as participation grows, so does the impact. Nonprofits receive passive, verifiable income tied to community support rather than traditional fundraising cycles. Stakers earn yield without separating their financial activity from the causes they care about.
 
 ---
 
 ## How It Works
 
-**Stake once. Fund forever.**
+**Stake once. Fund continuously.**
 
-When you stake OBN in a nonprofit's pool, the protocol continuously mints rewards and splits them:
+When you stake OBN in a nonprofit pool, the protocol continuously mints rewards and splits them:
 
 | Recipient | Share | Purpose |
 |-----------|-------|---------|
 | You | 88% | Your yield for participating |
-| Nonprofit | 10% | Direct funding to their wallet |
-| Charity Fund | 1% | Onboards new nonprofits |
-| Treasury | 1% | Protocol development |
+| Nonprofit | 10% | Direct funding to the selected nonprofit wallet |
+| Charity Fund | 1% | Governance-controlled fund; long-term purpose under active review |
+| Treasury | 1% | Protocol development, operations, and sustainability |
 
-This isn't a donation—it's a self-sustaining funding mechanism. Your stake generates rewards indefinitely. The nonprofit receives funding indefinitely. Everyone wins.
+This is not a traditional donation flow. It is a programmable funding mechanism.
+
+Your stake generates rewards. The nonprofit receives funding. The protocol records contribution onchain. Everyone can verify the flow.
+
+---
+
+## Proof-of-Contribution
+
+Proof-of-Contribution is the identity layer of OBN.
+
+In most crypto systems, users are recognized for ownership, trading volume, speculation, or governance power. OBN introduces a different signal: how much value a user helps direct toward nonprofit causes through protocol participation.
+
+Each claim routes rewards according to the fixed protocol split. The nonprofit allocation is minted directly to the selected pool's charity wallet, creating transparent and attributable contribution data.
+
+Over time, OBN can use this data to power:
+
+- user contribution histories
+- nonprofit-specific impact dashboards
+- lifetime contribution metrics
+- pool-level funding analytics
+- public transparency reports
+- future governance and community reputation tools
+
+Proof-of-Contribution makes OBN more than a yield protocol. It makes OBN a public-good participation network.
+
+---
+
+## The 99 Nonprofit Pool Cap
+
+OBN will intentionally cap the network at **99 nonprofit pools**.
+
+This cap keeps the protocol focused. Instead of spreading emissions across an unlimited number of organizations, OBN concentrates funding around a curated set of nonprofit pools where contribution can become meaningful, visible, and measurable.
+
+The 99-pool model is designed to:
+
+- prevent impact dilution
+- strengthen each nonprofit's earning potential
+- simplify discovery for users
+- improve transparency and reporting
+- keep onboarding selective and intentional
+- make each pool matter
+
+Once the 99-pool limit is reached, future changes should focus on maintaining quality rather than expanding endlessly. Governance may replace inactive, compromised, or delisted nonprofit pools, but the default structure remains capped and focused.
+
+**99 nonprofit pools. One contribution network. Every stake becomes proof.**
 
 ---
 
 ## The Bootstrap Model
 
-Every nonprofit onboarded to OBN receives **1,000,000 OBN permanently staked** in their pool from the Charity Fund. This bootstrap gives them:
+Each approved nonprofit pool may receive **1,000,000 OBN permanently staked** in its pool from the Charity Genesis Reserve.
 
-- Reward generation from day one, before a single user has staked in their pool
-- A permanently locked position they can never lose — principal is sealed at the contract level
-- A credible, verifiable TVL foundation that grows as community participation increases
+This bootstrap gives each nonprofit:
 
-The bootstrap is not a grant. It is a permanent stake. The nonprofit earns 10% of all rewards generated by that position indefinitely, alongside every user who chooses to stake in their pool. As community staking grows, so does the nonprofit's share of emissions — automatically, onchain, with no administrative action required.
+- reward generation from day one, before any user stakes in its pool
+- a permanently locked position that cannot be withdrawn as ordinary liquid supply
+- a credible, verifiable TVL foundation
+- ongoing rewards as long as the protocol remains active
 
-The first 100 nonprofits are funded from the 10% Genesis Reserve allocated at launch. As the protocol matures, ongoing bootstrap capacity is replenished by the 1% emissions stream that accrues continuously to the Charity Fund.
+The bootstrap is not a grant. It is a permanent stake. The nonprofit benefits from the rewards generated by that position while the principal remains locked at the contract level.
+
+The 99-pool cap means the full bootstrap model requires:
+
+```text
+99 nonprofit pools × 1,000,000 OBN = 99,000,000 OBN
+```
+
+The 10% Charity Genesis Reserve equals **100,000,000 OBN** out of the initial 1,000,000,000 OBN supply. Bootstrapping 99 nonprofit pools with 1,000,000 OBN each uses **99,000,000 OBN**, leaving **1,000,000 OBN** for flexibility, operational needs, or governance-approved nonprofit support.
+
+---
+
+## Charity Fund Status
+
+The protocol still routes **1% of staking emissions to the Charity Fund**.
+
+The Charity Fund remains a governance-controlled address in the protocol's reward split. However, its long-term purpose is currently being refined.
+
+The Charity Fund may eventually support activities such as nonprofit verification, onboarding support, transparency infrastructure, public-good campaigns, pool maintenance, contribution analytics, or other governance-approved uses that strengthen the Proof-of-Contribution ecosystem.
+
+Until finalized, the important point is simple: the 1% Charity Fund remains part of the protocol design, but its future role should be defined carefully so it supports the network without diluting the direct 10% nonprofit funding mechanism.
 
 ---
 
 ## Deflationary Sustainability
 
-OBN uses a 10-year emission schedule that rewards early adopters while ensuring long-term viability:
+OBN uses a 10-year emission schedule that rewards early participation while reducing issuance over time:
 
 | Years | APY |
 |-------|-----|
@@ -53,17 +130,25 @@ OBN uses a 10-year emission schedule that rewards early adopters while ensuring 
 | 7-8 | 2.5% |
 | 9-10 | 1.25% |
 
-Controlled, predictable inflation — inspired by Bitcoin's halving schedule. Emissions decline on a fixed curve, rewarding early participants while ensuring the protocol remains sustainable for the long term.
+Controlled, predictable inflation is inspired by Bitcoin's halving logic. Emissions decline on a fixed curve, rewarding early participants while supporting long-term sustainability.
+
+Because rewards are split automatically, every emission phase supports three outcomes at once:
+
+1. stakers earn yield
+2. nonprofits receive direct funding
+3. contribution data accumulates onchain
 
 ---
 
 ## Why This Matters
 
-**For Donors:** Your capital works for you AND for the causes you care about. No more choosing between growing your portfolio and giving back.
+**For stakers:** Your capital works for you and for the causes you care about. You do not have to choose between earning yield and supporting nonprofits.
 
-**For Nonprofits:** Predictable, passive income that scales with community support. No fundraising campaigns. No donor fatigue. Just sustainable funding.
+**For nonprofits:** OBN creates passive, verifiable funding that scales with community participation. The model reduces dependence on one-time fundraising campaigns and gives each pool a transparent funding stream.
 
-**For Crypto:** A use case that actually matters. Proof that DeFi can do more than shuffle money between wallets.
+**For crypto:** OBN proves that DeFi can do more than move value between traders. It can route value toward real-world organizations while preserving user incentives.
+
+**For the public good:** Proof-of-Contribution creates a new kind of onchain reputation — one based on participation, support, and measurable contribution.
 
 ---
 
@@ -73,9 +158,9 @@ Controlled, predictable inflation — inspired by Bitcoin's halving schedule. Em
 |------------|---|---------|
 | Exchange Liquidity | 40% | Market access and trading |
 | Airdrop/Community | 30% | Growth, engagement, and security incentives |
-| Charity Fund | 10% | Nonprofit bootstraps (permanently locked) |
+| Charity Genesis Reserve | 10% | Nonprofit bootstraps, primarily 99 locked pool positions |
 | Treasury | 10% | Development and operations |
-| Team (Vested) | 10% | Aligned incentives with cliff + linear release |
+| Team (Vested) | 10% | Long-term aligned incentives with cliff + linear release |
 
 ---
 
@@ -87,16 +172,16 @@ Controlled, predictable inflation — inspired by Bitcoin's halving schedule. Em
 | **OBNStakingPools** | Staking (UUPS Proxy) | [0x2C4Bd5B2a48a76f288d7F2DB23aFD3a03b9E7cD2](https://basescan.org/address/0x2C4Bd5B2a48a76f288d7F2DB23aFD3a03b9E7cD2) | [Verified](https://basescan.org/address/0x2C4Bd5B2a48a76f288d7F2DB23aFD3a03b9E7cD2) |
 | **OBNStakingPools (v9.2 Impl)** | Implementation | [0xdbeFe63a1F0ca12EAeFCDF48f1ABf0ACf14EfB48](https://basescan.org/address/0xdbeFe63a1F0ca12EAeFCDF48f1ABf0ACf14EfB48#code) | [Verified](https://basescan.org/address/0xdbeFe63a1F0ca12EAeFCDF48f1ABf0ACf14EfB48#code) |
 | **TeamVesting** | Vesting (non-upgradeable) | [0x9428Edd912224778d84D762ebCDA52e1c829aB8d](https://basescan.org/address/0x9428Edd912224778d84D762ebCDA52e1c829aB8d) | [View](https://basescan.org/address/0x9428Edd912224778d84D762ebCDA52e1c829aB8d) |
-| **Olive NFT** | ERC-721 | [0xB66F67444b09f509D72d832567C2df84Edeb80F8](https://basescan.org/address/0xB66F67444b09f509D72d832567C2df84Edeb80F8) | [Verified](https://basescan.org/address/0xB66F67444b09f509D72d832567C2df84Edeb80F8) |
+| **OBN Impact NFT** | ERC-721 | [0xB66F67444b09f509D72d832567C2df84Edeb80F8](https://basescan.org/address/0xB66F67444b09f509D72d832567C2df84Edeb80F8) | [Verified](https://basescan.org/address/0xB66F67444b09f509D72d832567C2df84Edeb80F8) |
 
-OBNToken and StakingPools use UUPS proxy with 24-hour timelock governance. TeamVesting is non-upgradeable by design.
+OBNToken and OBNStakingPools use the UUPS proxy pattern with governance-controlled upgrades. TeamVesting is non-upgradeable by design.
 
 ---
 
 ## Links
 
 - **Whitepaper:** [WHITEPAPER.md](WHITEPAPER.md)
-- **Base Mainnet Contracts:** See Appendix B of Whitepaper
+- **Base Mainnet Contracts:** See Appendix B of the Whitepaper
 - **Website:** [olivebranch.network](https://olivebranch.network)
 
 ---
