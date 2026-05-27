@@ -1,19 +1,29 @@
-# Olive Branch Network Whitepaper v9.2
+# Olive Branch Network Whitepaper v9.3 — Proof-of-Contribution
 
 ## Purpose
 
-OBN is a staking protocol that turns on-chain participation into continuous funding for nonprofits while rewarding users for participating. This paper covers the canonical contract suite, hard-coded guarantees, token economics, governance/upgradeability, security model, and the end-to-end process for onboarding and supporting nonprofits.
+Olive Branch Network (OBN) is a Proof-of-Contribution staking protocol that turns on-chain participation into continuous funding for nonprofits while rewarding users for participating. OBN allows users to stake into nonprofit-specific pools, earn staking emissions, and generate transparent on-chain contribution records tied to the causes they support.
+
+This paper covers the canonical contract suite, hard-coded guarantees, token economics, governance/upgradeability, security model, and the end-to-end process for onboarding and supporting nonprofits. It also introduces the protocol-level framing of **Proof-of-Contribution** and the decision to cap the network at 99 nonprofit pools.
+
+---
 
 ## 1) Executive Summary
 
 **Mission:** Make donating the path of least resistance by routing a fixed portion of staking emissions to verified nonprofit wallets—automatically, transparently, and forever on-chain.
 
-**Mechanism:** Users stake OBN in nonprofit-specific pools. Emissions split is hard-coded: 88% stakers, 10% nonprofit (minted per action directly to each pool's charityWallet), 1% Charity Fund, 1% Treasury.
+**Core idea:** OBN is built around **Proof-of-Contribution**: a model where users prove participation not only by staking capital, but by continuously helping route value toward real-world nonprofit causes. Every stake, claim, and nonprofit reward flow becomes part of an on-chain contribution layer.
+
+**Mechanism:** Users stake OBN in nonprofit-specific pools. Emissions split is hard-coded: 88% stakers, 10% nonprofit, 1% Charity Fund, 1% Treasury.
+
+**Focused impact model:** OBN will intentionally cap the protocol at 99 nonprofit pools. This keeps contribution focused, prevents dilution across too many organizations, and gives the network a clear, curated structure for long-term impact.
 
 **Design guarantees:**
 
 - Fixed four-way split (88/10/1/1) at the contract level
 - Equal APR per token across all pools at a given time (pool APRs normalize by design)
+- Proof-of-Contribution accounting through on-chain nonprofit funding flows and user contribution views
+- Maximum nonprofit pool target of 99 pools for focused impact
 - One charityWallet per pool; no "retire/active" flags on pools
 - Admin locks are increase-only and auto-shrink if balance falls; intended only for bootstrap
 - Single minter: Only the staking contract can mint OBN after setMinterOnce
@@ -24,13 +34,56 @@ OBN is a staking protocol that turns on-chain participation into continuous fund
 
 ---
 
-## 2) Contract Suite
+## 2) Proof-of-Contribution
 
-### 2.1 OBNToken (ERC20 + Permit + Votes + Burnable, UUPS)
+### 2.1 What Proof-of-Contribution Means
+
+Proof-of-Contribution is the core identity of OBN.
+
+In traditional staking systems, users prove participation by locking capital and earning yield. OBN keeps that staking foundation, but adds a second layer: every user action also helps fund a nonprofit pool. This means participation is not measured only by speculation, ownership, or yield extraction. It is also measured by contribution.
+
+When a user stakes OBN into a nonprofit pool, they are not simply choosing where to earn rewards. They are choosing which cause their participation helps support. When they claim rewards, the protocol automatically mints the nonprofit share to the selected pool's charityWallet. The result is a transparent, on-chain record of contribution generated through ordinary protocol participation.
+
+OBN therefore turns staking into a contribution mechanism.
+
+### 2.2 Why This Matters
+
+Most crypto protocols measure success through liquidity, volume, price, users, and TVL. OBN keeps these metrics, but adds another important measurement: how much value the network routes toward public-good organizations.
+
+This creates a different type of network effect:
+
+- More users create more staking activity
+- More staking activity creates more emissions
+- More emissions create more nonprofit funding
+- More nonprofit funding creates more visible impact
+- More visible impact strengthens the protocol's identity and credibility
+
+Proof-of-Contribution aligns self-interest with public good. Users can earn, nonprofits can receive, and the protocol can build transparent contribution history without requiring users to make separate donations.
+
+### 2.3 Contribution as an On-Chain Identity Layer
+
+OBN can track contribution through existing and future protocol views, including:
+
+- charityContributedByUserInPool(pid, user)
+- totalCharityContributedByUser(user)
+- pool-level charity distributions
+- total charity minted to each nonprofit wallet
+- time staked and participation history
+
+These metrics allow the protocol to build future contribution dashboards, user impact profiles, nonprofit reporting pages, and governance tools. Over time, Proof-of-Contribution can become an identity layer showing how users participated in the network and which causes they helped support.
+
+This does not require users to sacrifice yield. The protocol is designed so earning and giving occur in the same action.
+
+---
+
+## 3) Contract Suite
+
+### 3.1 OBNToken (ERC20 + Permit + Votes + Burnable, UUPS)
 
 **Standards:** ERC20, EIP-2612 Permit, ERC20Votes (checkpointed voting power), Burnable.
 
 **Core features:**
+
 - **ERC20Upgradeable:** Standard token transfers, approvals, balances
 - **ERC20PermitUpgradeable:** EIP-2612 permit() for gasless approvals
 - **ERC20VotesUpgradeable:** Checkpointed voting power for governance (vote delegation, historical lookups)
@@ -49,6 +102,7 @@ OBN is a staking protocol that turns on-chain participation into continuous fund
 Total distribution is hard-coded in `initialize()` and happens atomically; no additional minting occurs during genesis.
 
 **Single-minter model (hard rule):**
+
 - `setMinterOnce(address minterAddr)` sets exactly one minter (the staking contract) and can only be called once
 - After calling `setMinterOnce`, the minter cannot be changed unless the contract is upgraded
 - Only the minter can call `mint(to, amount)` to distribute staking rewards
@@ -61,7 +115,7 @@ Total distribution is hard-coded in `initialize()` and happens atomically; no ad
 **Why this structure?**
 One-time distribution removes ambiguity about initial supply. A sole minter eliminates ad-hoc issuance risk. ERC20Votes aligns the token with DAO control and enables future governance. Burnability provides a voluntary sink for future integrations. Permit support (EIP-2612) improves UX by eliminating separate approval transactions.
 
-### 2.2 OBNStakingPools (timestamp phases, per-pool accounting, UUPS)
+### 3.2 OBNStakingPools (timestamp phases, per-pool accounting, UUPS)
 
 **Hard-coded reward split (BPS):**
 
@@ -69,6 +123,8 @@ One-time distribution removes ambiguity about initial supply. A sole minter elim
 - CHARITY_BPS = 1_000 → 10% to charity wallet
 - CHARITY_FUND_BPS = 100 → 1% to Charity Fund
 - TREASURY_BPS = 100 → 1% to Treasury
+
+The 1% Charity Fund remains contractually routed to the `charityFund` address. Its long-term purpose is currently being refined and will be governed through protocol policy. It may support nonprofit-related operations, contribution infrastructure, transparency tooling, ecosystem campaigns, future bootstrap needs, or other public-good functions approved by governance.
 
 **Emission phases (initialized at deploy):**
 
@@ -82,11 +138,14 @@ Governance may append future phases contiguously; prior phases remain immutable.
 
 **Equal APR per pool:** By construction, per-token APR depends only on the active phase, not on which pool you choose.
 
+**Proof-of-Contribution accounting:** The staking contract exposes user and pool contribution views that allow the protocol to calculate how much nonprofit funding is attributable to each user's participation.
+
 **Data model:** PoolInfo { address charityWallet; uint256 totalStaked; } (one wallet per pool).
 
-#### 2.2.1 Core User Actions
+#### 3.2.1 Core User Actions
 
 **Bounded, per-pool endpoints:**
+
 - `deposit(pid, amount)` — Stake OBN in a pool
 - `depositFor(pid, amount, beneficiary)` — Stake on behalf of another address
 - `depositWithPermit(...)` — Stake with ERC20 Permit (no separate approval)
@@ -96,39 +155,44 @@ Governance may append future phases contiguously; prior phases remain immutable.
 - `claimMultiple(pids[])` — Claim pending rewards from multiple pools in one transaction
 
 **Charity mechanics:**
+
 - 10% of rewards is minted per user action (claim, deposit, withdraw) directly to that pool's charityWallet
-- 1% Charity Fund accrues continuously to a dedicated address; can perform bootstrap stakes via `charityFundBootstrap`
+- 1% Charity Fund accrues continuously to a dedicated address; its future policy use is currently being brainstormed and should be governed transparently
 - No global TVL buffer; splits happen per-action for atomic execution
 
-#### 2.2.2 Pool Lifecycle Management
+#### 3.2.2 Pool Lifecycle Management
 
 **Shutdown mechanism:**
+
 - `shutdownPool(pid)` — Blocks NEW deposits; claims and withdrawals continue
 - Allows users to exit gracefully without pool removal
 - Pool data remains intact for stakers
 
 **Pool removal:**
+
 - `removePool(pid)` — Soft-delete after pool is completely empty (totalStaked == 0)
 - No PID reindexing; backward compatible
 - **Treasury safety:** If legacy charity accrues before removal, it's flushed to the pool's charityWallet; if wallet is zero, it's redirected to treasury
 - Prevents reward loss if users claim after removal
 
-#### 2.2.3 Nonprofit Self-Stake Protection
+#### 3.2.3 Nonprofit Self-Stake Protection
 
 **Policy:** Nonprofits can receive exactly ONE permanent locked bootstrap deposit. All other self-staking is blocked.
 
 **Enforcement:** The `_enforceCharitySelfStakePolicy` function checks:
+
 - Is the beneficiary the pool's charity wallet?
 - If yes, is this from charityFund AND locked AND their current balance is zero?
 - If all true, allow it (first bootstrap). Otherwise, reject.
 
 **Rationale:** Prevents accidental or malicious self-stakes by nonprofits that could break pool reward dynamics or enable attacks.
 
-#### 2.2.4 Atomic Bootstrap Migration
+#### 3.2.4 Atomic Bootstrap Migration
 
 **Function:** `migrateBootstrap(pid, oldNonprofit, newNonprofit)`
 
 **Atomic guarantees:**
+
 - Preserves pending rewards (verified down to 1 wei tolerance)
 - Copies locked amounts safely with overflow prevention
 - Updates charity wallet atomically in same transaction
@@ -136,6 +200,7 @@ Governance may append future phases contiguously; prior phases remain immutable.
 - Activates new user if it's their first pool stake
 
 **Preconditions:**
+
 - oldNonprofit IS the pool's current charity wallet
 - oldNonprofit ≠ newNonprofit
 - oldNonprofit has a non-zero stake
@@ -143,11 +208,12 @@ Governance may append future phases contiguously; prior phases remain immutable.
 
 **Purpose:** Enables seamless nonprofit position transfers (e.g., address compromise, wallet rotation) without reward loss or stranding.
 
-#### 2.2.5 Emergency Force Exit
+#### 3.2.5 Emergency Force Exit
 
 **Function:** `forceExitUserToSelf(pid, user, claimRewards)` (owner-only, nonReentrant)
 
 **Behavior:**
+
 - Force-exits a user from a pool, ignoring locks
 - Returns principal to the user immediately
 - Optionally mints pending rewards to user
@@ -155,7 +221,7 @@ Governance may append future phases contiguously; prior phases remain immutable.
 
 **Use case:** Emergency governance control for pool removal when users need recovery; used after a pool is shutdown.
 
-#### 2.2.6 Charity Wallet Updates
+#### 3.2.6 Charity Wallet Updates
 
 **Function:** `updateCharityWallet(pid, newWallet)` (owner-only)
 
@@ -163,17 +229,19 @@ Governance may append future phases contiguously; prior phases remain immutable.
 
 **Tracked via:** CharityWalletUpdated event.
 
-#### 2.2.7 Lock Management
+#### 3.2.7 Lock Management
 
 **Function:** `setLockedAmount(pid, user, amount)` (charityFund-only)
 
 **Rules:**
+
 - Can only INCREASE or keep same; never decrease
 - Cannot exceed user's balance
 - Locks auto-shrink if balance drops below lock amount
 - Intended only for bootstrap deposits
 
 **Observability:**
+
 - `pendingRewards(pid, user)` — Returns GROSS pending amount
 - `pendingRewardsMultiple(pids[], user)` — Returns pending amounts for multiple pools plus total
 - `unlockedBalance(pid, user)` — Returns balance minus lock
@@ -185,7 +253,7 @@ Governance may append future phases contiguously; prior phases remain immutable.
 - `charityContributedByUserInPool(pid, user)` — Total charity minted attributable to user in a pool
 - `totalCharityContributedByUser(user)` — Total charity minted attributable to user across all pools
 
-### 2.3 TeamVesting (linear, cliffed; non-upgradeable)
+### 3.3 TeamVesting (linear, cliffed; non-upgradeable)
 
 **Cliff:** ~4 months; **Duration:** ~20 months linear thereafter.
 
@@ -197,9 +265,9 @@ Governance may append future phases contiguously; prior phases remain immutable.
 
 ---
 
-## 3) Token Economics & Long-Term Profitability
+## 4) Token Economics & Long-Term Profitability
 
-### 3.1 Emission math (intuition)
+### 4.1 Emission math (intuition)
 
 Let the phase APR basis be B (in BPS), global TVL G, and pool TVL P.
 
@@ -209,30 +277,39 @@ Let the phase APR basis be B (in BPS), global TVL G, and pool TVL P.
 
 **Per-token APR simplifies to** 0.88 × (B / 10,000), **equal across pools** — independent of supply size.
 
-### 3.2 Declining emissions support value
+### 4.2 Declining emissions support value
 
 **Sell-pressure decay:** Lower issuance over time reduces structural sell pressure.
 
-**Cause-driven demand:** The charity buffer/fund accumulates for real organizations, seeding authentic use and alignment.
+**Cause-driven demand:** The protocol creates ongoing alignment between users, nonprofits, and long-term network credibility.
 
 **TVL credibility:** Bootstrap locks create persistent TVL, improving confidence and price discovery.
 
 **Predictability:** With splits and phases on-chain, participants can plan long-term.
 
-### 3.3 Treasury minimalism (1%)
+**Contribution history:** Proof-of-Contribution adds another form of protocol value: transparent evidence of public-good funding generated through user participation.
+
+### 4.3 Treasury minimalism (1%)
 
 Users get 88%, charities get 10%, the Charity Fund gets 1%, and the Treasury gets 1%.
+
 Capping Treasury at 1% keeps the protocol lean, reduces rent extraction risk, and keeps yields user/charity-centric.
 
-### 3.4 Burnability (optional sink)
+### 4.4 Charity Fund policy status (1%)
+
+The 1% Charity Fund remains part of the hard-coded reward split. Its purpose is currently being brainstormed and should remain flexible while the protocol matures.
+
+The key distinction is that the **10% charity allocation** routes directly and automatically to the selected nonprofit pool, while the **1% Charity Fund** is a governance-controlled resource intended to strengthen the overall nonprofit and contribution layer of the protocol.
+
+### 4.5 Burnability (optional sink)
 
 OBN is inflationary via staking, but voluntary burns (e.g., future app fees) can offset issuance—decentralized and market-driven.
 
 ---
 
-## 4) Protocol Mechanics & Rationale
+## 5) Protocol Mechanics & Rationale
 
-### 4.1 Nonprofit distribution
+### 5.1 Nonprofit distribution
 
 **Per-action model:** On every claim/deposit/withdraw, 10% of the user's pending rewards is minted directly to that pool's charityWallet.
 
@@ -240,13 +317,21 @@ OBN is inflationary via staking, but voluntary burns (e.g., future app fees) can
 
 **No allocation contention:** Each pool's charity is independent; no global reallocation function.
 
-### 4.2 Charity Fund (1%) vs. Charity (Genesis Reserve, 10%)
+**Proof-of-Contribution:** Because charity distribution is tied to user actions and pool selection, the protocol can attribute contribution to specific users and nonprofit pools.
 
-**Charity (Genesis Reserve, 10%):** One-time genesis allocation held by governance for programmatic uses, primarily initial pool bootstraps (§5.5).
+### 5.2 Charity Fund (1%) vs. Charity Genesis Reserve (10%)
 
-**Charity Fund (1% emissions):** Ongoing stream to a governance-controlled address to replenish capacity for future bootstraps and campaigns.
+**Charity Genesis Reserve (10%):** One-time genesis allocation held by governance for programmatic uses, primarily initial pool bootstraps.
 
-### 4.3 Permanent locks (bootstrap-only; increase-only)
+**Charity Fund (1% emissions):** Ongoing stream to a governance-controlled address. Its final long-term policy is currently being brainstormed. It remains available for nonprofit-related support, transparency infrastructure, contribution tooling, public-good campaigns, future bootstrap needs, or other governance-approved purposes.
+
+This distinction is important:
+
+- The **10% nonprofit reward share** is automatic and pool-specific.
+- The **10% Charity Genesis Reserve** is a one-time allocation from the initial supply.
+- The **1% Charity Fund** is an ongoing emissions stream whose role can evolve through governance.
+
+### 5.3 Permanent locks (bootstrap-only; increase-only)
 
 **Policy:** Admin can only increase lockedAmount and never decrease it; locks auto-shrink if the user's balance drops below the stored lock.
 
@@ -254,57 +339,89 @@ OBN is inflationary via staking, but voluntary burns (e.g., future app fees) can
 
 **User stakes are unlocked by default;** users can always withdraw their unlocked balance.
 
-### 4.4 No emission controller
+### 5.4 No emission controller
 
 Phases fully specify issuance; there's no external "rate knob." DAO may append future phases contiguously with notice (timelock).
 
+### 5.5 Why cap nonprofit pools at 99?
+
+OBN will intentionally target a maximum of **99 nonprofit pools**.
+
+This cap is a strategic design choice, not a technical limitation. The goal is to prevent impact dilution. If the protocol supports too many nonprofits at once, emissions and attention can become spread too thin. By capping the network at 99 pools, OBN can focus contribution around a curated set of organizations and make funding more visible, meaningful, and measurable.
+
+The 99-pool model also gives OBN a clear public identity:
+
+**99 nonprofit pools. One Proof-of-Contribution network. Every stake becomes proof.**
+
+Once the 99-pool target is reached, governance should prioritize quality, transparency, and pool maintenance rather than endless expansion. New nonprofits may be considered only when a pool is removed, replaced, or migrated according to protocol policy.
+
 ---
 
-## 5) Nonprofits: Wallets, Onboarding & Display
+## 6) Nonprofits: Wallets, Onboarding & Display
 
-### 5.1 One wallet per pool
+### 6.1 One wallet per pool
 
 Each pool maps to a single charityWallet. This keeps routing deterministic and reporting simple.
 
-### 5.2 Address-first listing
+### 6.2 Address-first listing
 
-We are indexing public Ethereum addresses that reputable organizations already publish and onboard them onto our platform.
+We are indexing public Ethereum addresses that reputable organizations already publish and onboarding them onto our platform.
 
 In addition, we are reaching out to organizations through email and phone to let them know about our platform.
 
-Every charity page shows a clear "No Affiliation / Not Endorsed" banner by default.
+Every charity page shows a clear "No Affiliation / Not Endorsed" banner by default unless a direct relationship or formal acknowledgment exists.
 
-### 5.3 Bootstrap Program
+### 6.3 The 99 Nonprofit Pool Model
+
+OBN will limit the protocol to a maximum target of 99 nonprofit pools.
+
+This creates a focused contribution network rather than an unlimited directory. The purpose is to support a curated group of nonprofits with enough concentration that the protocol's funding can become meaningful over time.
+
+The 99-pool model supports:
+
+- stronger nonprofit visibility
+- more focused protocol reporting
+- reduced contribution dilution
+- clearer public communication
+- easier governance oversight
+- better long-term user understanding
+
+OBN is not trying to list every nonprofit in the world. It is trying to build a focused, transparent, on-chain contribution system around a limited group of trusted public-good organizations.
+
+### 6.4 Bootstrap Program
 
 **Objective:** Ensure each newly onboarded charity earns from day one and that pools start with credible TVL.
 
-**Source of funds:** The 10% Charity (Genesis Reserve) is earmarked to bootstrap up to 100 nonprofits at launch (1,000,000 OBN each = 100,000,000 OBN total).
+**Source of funds:** The 10% Charity Genesis Reserve is earmarked to bootstrap up to 99 nonprofits. The intended bootstrap target is 1,000,000 OBN per nonprofit, subject to governance and available reserves.
+
+At 99 pools, a 1,000,000 OBN bootstrap per nonprofit would require 99,000,000 OBN, leaving 1,000,000 OBN from the 100,000,000 OBN Charity Genesis Reserve for governance-approved nonprofit-related uses, reserves, operational flexibility, or future policy decisions.
 
 **Mechanism:**
 
-1. Governance (or the Charity Fund executor) calls `charityFundBootstrap(pid, amount, beneficiary)` or uses `depositForWithLock(pid, amount, beneficiary)` (charityFund-only).
-2. The 1,000,000 OBN is staked and permanently locked for that nonprofit's pool/beneficiary.
-3. The lock prevents withdrawal of the seeded principal, eliminating immediate dump risk while the position earns yield continuously (staker share + the pool's 10% charity allocation routed to the charityWallet).
+1. Governance or the authorized Charity Fund executor calls `charityFundBootstrap(pid, amount, beneficiary)` or uses `depositForWithLock(pid, amount, beneficiary)` where applicable.
+2. The bootstrap OBN is staked and permanently locked for that nonprofit's pool/beneficiary.
+3. The lock prevents withdrawal of the seeded principal, eliminating immediate dump risk while the position earns yield continuously.
+4. The nonprofit benefits from both the staker-share yield on its locked bootstrap position and the pool's 10% charity allocation routed to the charityWallet.
 
-**Expansion after the first 100:** As the 1% Charity Fund from emissions accrues, governance can bootstrap additional charities in subsequent waves using the same 1,000,000 OBN per charity target (or a DAO-approved updated target).
+**Expansion policy after 99:** OBN should not continue expanding indefinitely. Once the protocol reaches the 99-pool target, governance may replace, migrate, or remove pools according to clear standards, but the network should maintain the 99-pool cap unless governance explicitly changes the model.
 
 **Reporting:** Each bootstrap is transparent on-chain and included in periodic public disclosures.
 
 **Protection:** The `_enforceCharitySelfStakePolicy` ensures each charity can only receive one bootstrap position; future stakes must come from the charity itself or external users.
 
-### 5.4 Delisting policy
+### 6.5 Delisting policy
 
 If standards aren't met, we remove the nonprofit from our frontend and stop promoting that pool.
 
-Users stake and pending rewards will all be returned to them before the pool is shutdown and removed from the protocol.
+User stakes and pending rewards should be returned to users before the pool is shutdown and removed from the protocol.
 
 OBN is a routing & staking protocol, not a registered nonprofit or certifier. Users should independently verify organizations and consult tax professionals.
 
 ---
 
-## 6) Governance & Upgradability
+## 7) Governance & Upgradability
 
-### 6.1 UUPS proxies (Token & Staking)
+### 7.1 UUPS proxies (Token & Staking)
 
 Upgrades require `_authorizeUpgrade` (owner).
 
@@ -314,28 +431,48 @@ Upgrades require `_authorizeUpgrade` (owner).
 2. Timelock (with enforced delay)
 3. ERC20Votes-based DAO
 
-### 6.2 Hard-coded vs Governed
+### 7.2 Hard-coded vs Governed
 
-**Hard-coded (requires upgrade to change):**
+**Hard-coded or contract-level constraints (requires upgrade to change where applicable):**
+
 - Four-way split: 88% / 10% / 1% / 1%
 - 10-year emission schedule (changing every 2 years): 10% APY → 7.5% APY → 5% APY → 2.5% APY → 1.25% APY
 - Admin lock semantics (increase-only, auto-shrink)
 - Single-minter in OBNToken
 - Nonprofit self-stake policy
 - Bootstrap migration atomicity guarantees
+- Contribution accounting exposed by contract views
 
-**Governed (no upgrade needed):**
+**Governed (no upgrade needed unless a specific implementation requires it):**
+
 - Add pools (`addPool(charityWallet)`)
-- Execute bootstrap stakes from the Charity Fund
+- Maintain the 99-pool curation policy
+- Execute bootstrap stakes from the Charity Genesis Reserve or authorized funding source
+- Define long-term Charity Fund policy
 - Append future phases contiguously (`addPhase`)
 - Shutdown or remove pools
 - Spend policies for Treasury & Charity Fund (with transparency reports)
+- Standards for nonprofit onboarding, delisting, replacement, and migration
+
+### 7.3 Governance and the 99-pool cap
+
+The 99-pool cap should be treated as a foundational policy commitment of the protocol.
+
+Governance may manage which nonprofits are included, but the default assumption should be that OBN remains capped at 99 nonprofit pools to preserve focused impact. If governance ever proposes expanding beyond 99, that decision should require clear public justification, community review, and a transparent vote.
+
+### 7.4 Governance and the Charity Fund
+
+The 1% Charity Fund's long-term purpose is intentionally not finalized in this version of the whitepaper.
+
+This gives the protocol room to learn from real-world usage before permanently defining the fund's role. Potential uses should be evaluated based on whether they strengthen the nonprofit layer, improve transparency, increase contribution visibility, support users, or advance OBN's Proof-of-Contribution mission.
+
+Any Charity Fund policy should be disclosed publicly and eventually governed through the DAO.
 
 ---
 
-## 7) Security Model
+## 8) Security Model
 
-### 7.1 Core principles
+### 8.1 Core principles
 
 - **Checks-Effects-Interactions:** State updates before external calls
 - **Reentrancy guards:** nonReentrant on all mutating paths
@@ -343,7 +480,7 @@ Upgrades require `_authorizeUpgrade` (owner).
 - **Precision math:** Math.mulDiv for accurate calculations
 - **No unbounded loops:** Per-pool endpoints, bounded updates
 
-### 7.2 Hardening
+### 8.2 Hardening
 
 **Atomic operations:** Bootstrap migration, pool removal, force exit all complete atomically.
 
@@ -355,7 +492,9 @@ Upgrades require `_authorizeUpgrade` (owner).
 
 **Emergency controls:** Force exit enables governance to recover users in emergencies.
 
-### 7.3 Design trade-offs
+**Focused pool surface:** A 99-pool cap reduces governance complexity and makes nonprofit monitoring more manageable.
+
+### 8.3 Design trade-offs
 
 Equal APR keeps focus on impact, not APR gaming.
 
@@ -363,69 +502,150 @@ Per-action charity minting is atomic but requires every action to mint (gas trad
 
 Appending phases centralizes some discretion; timelock + DAO voting mitigates.
 
+The 99-pool model limits breadth in favor of depth, focus, and measurable contribution.
+
+The Charity Fund remains flexible while its best long-term purpose is determined.
+
 ---
 
-## 8) Transparency & Reporting
+## 9) Transparency & Reporting
 
-**Events:**
+### 9.1 Events
+
 - Deposit, Withdraw, Claim
 - CharityDistributed, CharityFundDistributed, TreasuryDistributed
 - LockedAmountSet, CharityWalletUpdated
 - PoolAdded, PoolShutdown, PoolRemoved
 - PhaseAdded
 
-**Views:**
+### 9.2 Views
+
 - getGlobalStats, getPoolStats, getUserPoolView
 - pendingRewards, pendingRewardsMultiple, getPoolAPR, pendingCharityFor
 - unlockedBalance, stakeElapsed, isGloballyStaked
 - charityContributedByUserInPool, totalCharityContributedByUser
 
-**Disclosures:** Quarterly public report of Charity (Genesis Reserve) balances, bootstraps executed, and Charity Fund (emissions) flows.
+### 9.3 Proof-of-Contribution reporting
+
+Proof-of-Contribution reporting should become one of OBN's most important transparency layers.
+
+Future dashboards may show:
+
+- total OBN contributed to nonprofits
+- total OBN contributed by pool
+- total OBN contribution attributable to each user
+- lifetime contribution history by wallet
+- user contribution across multiple nonprofit pools
+- top pools by contribution
+- active stakers per pool
+- currently staked OBN per pool
+- charity emissions over time
+- Charity Fund inflows and outflows
+- Treasury inflows and outflows
+
+These reports should help users understand not only what they earned, but what their participation helped generate.
+
+### 9.4 Disclosures
+
+OBN should publish periodic public reports covering:
+
+- Charity Genesis Reserve balances
+- bootstraps executed
+- nonprofit pool status
+- pool additions, removals, or migrations
+- direct charity distributions
+- Charity Fund balances and usage
+- Treasury balances and usage
+- Proof-of-Contribution metrics
 
 ---
 
-## 9) User Journey
+## 10) User Journey
 
-1. **Acquire OBN** (DEX liquidity seeded from the 40% Liquidity allocation)
-2. **Pick a pool by cause** — APR is equal across pools at a given time
-3. **Stake** (`deposit`) or stake for another address (`depositFor`). Optionally use Permit to avoid a separate approval transaction
-4. **Earn & do good:** Claims mint OBN to you; nonprofit accrues and mints to the charityWallet
-5. **Withdraw** any unlocked principal anytime. (Bootstrap locks do not apply to your self-stakes unless explicitly opted via `charityFundBootstrap`)
+1. **Acquire OBN** — Users acquire OBN through available liquidity sources.
+2. **Pick a nonprofit pool by cause** — APR is equal across pools at a given time, so users choose based on mission rather than yield differences.
+3. **Stake** — Users stake with `deposit`, stake for another address with `depositFor`, or use Permit where supported.
+4. **Earn rewards** — Users earn the staker portion of emissions.
+5. **Generate contribution** — The selected nonprofit receives its protocol-defined share when users interact with the pool.
+6. **Build Proof-of-Contribution** — User contribution can be tracked across pools and over time.
+7. **Withdraw unlocked principal anytime** — Bootstrap locks do not apply to ordinary user stakes.
+
+OBN is designed so users do not need to choose between earning and giving. Both happen through the same protocol action.
 
 ---
 
-## 10) Token Supply & Distribution
+## 11) Token Supply & Distribution
 
 **Initial Supply:** 1,000,000,000 OBN (current plan).
 
 **Genesis distribution (on initialize):**
+
 - 40% Liquidity
 - 30% Airdrop
-- 10% Charity (Genesis Reserve) — used chiefly for 1,000,000 OBN bootstrap stakes per charity (first 100), see §5.3
+- 10% Charity Genesis Reserve — used chiefly for 1,000,000 OBN bootstrap stakes per charity, targeting up to 99 nonprofit pools
 - 10% Treasury
 - 10% Team (to TeamVesting; ~4-month cliff, ~20-month linear vest)
 
 **Ongoing issuance:** Only via staking emissions; the staking contract is the sole minter.
 
+**Reward split on emissions:**
+
+- 88% stakers
+- 10% selected nonprofit pool
+- 1% Charity Fund
+- 1% Treasury
+
 **Voluntary burn:** Available via burn for future sinks.
 
 ---
 
-## 11) Roadmap (Indicative)
+## 12) Roadmap (Indicative)
 
-- **DAO & Timelock:** Transfer upgrade authority; ratify Treasury/Charity policies
-- **Expanded reporting:** Per-charity transparency dashboards
-- **Integrations:** Wallets, Farcaster actions, nonprofit tooling where appropriate
-- **Phase extension (if needed):** Append contiguous phases with DAO approval
-- **Further pool lifecycle features:** Advanced governance controls for exceptional circumstances
+### 12.1 Germination
+
+- Form the base protocol concept
+- Build and test the smart contracts
+- Deploy OBNToken and OBNStakingPools to Base
+- Launch initial frontend
+- Seed liquidity
+- Run early airdrop campaigns
+- Integrate Farcaster and Base-native user flows
+- Begin public nonprofit wallet indexing
+- Establish the initial Proof-of-Contribution narrative
+
+### 12.2 Vegetation
+
+- Implement expanded contribution tracking in the frontend
+- Build Proof-of-Contribution dashboards
+- Improve nonprofit reporting pages
+- Continue curating toward the 99-pool model
+- Refine Charity Fund policy
+- Produce educational media
+- Onboard additional nonprofits
+- Explore partnerships
+- Hire essential contributors where possible
+- Obtain third-party security audits
+- Complete legal and governance work
+- Build and test DAO backend/frontend
+
+### 12.3 Bloom
+
+- Deploy DAO and pass governance to the community
+- Transfer upgrade authority through timelock governance
+- Ratify long-term Charity Fund policy
+- Maintain the 99-pool nonprofit network
+- Update frontend with DAO features
+- Expand contribution reputation and reporting tools
+- Maintain and adapt protocol as public-good needs evolve
 
 ---
 
-## 12) Appendix — Key Functions
+## 13) Appendix — Key Functions
 
 ### OBNStakingPools
 
 **User mutations:**
+
 - `deposit(pid, amount)`
 - `depositFor(pid, amount, beneficiary)`
 - `depositWithPermit(pid, amount, beneficiary, deadline, v, r, s)`
@@ -437,6 +657,7 @@ Appending phases centralizes some discretion; timelock + DAO voting mitigates.
 - `claimMultiple(pids[])`
 
 **Admin mutations:**
+
 - `addPool(charityWallet)`
 - `shutdownPool(pid)`
 - `removePool(pid)`
@@ -449,6 +670,7 @@ Appending phases centralizes some discretion; timelock + DAO voting mitigates.
 - `upgradeTo(newImplementation, data)` (owner-only, governance-compatible)
 
 **Views:**
+
 - `pendingRewards(pid, user)` — GROSS pending amount
 - `pendingRewardsMultiple(pids[], user)` — Pending amounts for multiple pools plus total
 - `getPoolAPR(pid)` — User portion APR
@@ -465,6 +687,7 @@ Appending phases centralizes some discretion; timelock + DAO voting mitigates.
 ### OBNToken
 
 **Mutations:**
+
 - `setMinterOnce(minter)` (owner-only, once)
 - `mint(to, amount)` (minter-only)
 - Standard ERC20: `transfer`, `approve`, `transferFrom`
@@ -473,6 +696,7 @@ Appending phases centralizes some discretion; timelock + DAO voting mitigates.
 - `delegate(delegatee)` — Vote delegation (ERC20Votes)
 
 **Views:**
+
 - Standard ERC20: `balanceOf`, `allowance`, `totalSupply`
 - ERC20Votes: `getVotes`, `getPastVotes`, `checkpoints`
 - EIP-2612: `nonces`
@@ -480,11 +704,13 @@ Appending phases centralizes some discretion; timelock + DAO voting mitigates.
 ### TeamVesting
 
 **Mutations:**
+
 - `release()` — Release vested tokens to teamWallet
 - `updateTeamWallet(newWallet)` (owner-only)
 - `rescueERC20(token, amount)` (owner-only, excludes vested token)
 
 **Views:**
+
 - `vestedAmount(timestamp)` — Total vested at time
 - `claimableNow()` — Currently claimable
 - `timeUntilCliff()` — Cliff countdown
@@ -493,9 +719,13 @@ Appending phases centralizes some discretion; timelock + DAO voting mitigates.
 
 ---
 
-## Final Word
+## 14) Final Word
 
-OBN aligns self-interest with public good: compelling user yields, credible nonprofit funding, and a governance path that minimizes rent extraction. With hard-coded safeguards, a lean treasury, pool lifecycle controls for emergencies, and atomic bootstrap migration that protects both donors and charities, OBN is built for longevity—**do well by doing good.**
+OBN aligns self-interest with public good: compelling user yields, credible nonprofit funding, and a governance path that minimizes rent extraction.
+
+With Proof-of-Contribution, OBN becomes more than a staking protocol. It becomes a transparent contribution network where every stake can help fund a real-world cause and every claim can leave an on-chain record of support.
+
+The 99-pool cap gives the protocol focus. The hard-coded reward split gives it credibility. The Charity Fund gives governance flexibility while its long-term purpose is refined. The contribution layer gives users something deeper than yield alone: a visible record of participation in a network designed to do well by doing good.
 
 ---
 
@@ -512,15 +742,16 @@ OBN aligns self-interest with public good: compelling user yields, credible nonp
 **Network:** Base Mainnet (Chain ID: 8453)
 
 **Key Notes:**
+
 - OBNToken and OBNStakingPools use UUPS proxy pattern for governance-controlled upgrades
 - TeamVesting is non-upgradeable (immutable schedule)
 - All proxy contracts use timelock for governance safety
 
 ---
 
-**Version:** 9.2
-**Date:** February 2026
-**Last Updated:** February 10, 2026
+**Version:** 9.3 Proof-of-Contribution  
+**Date:** May 2026  
+**Last Updated:** May 26, 2026  
 
 **Canonical Repository:** [github.com/jdmaverick369/olive-branch-network](https://github.com/jdmaverick369/olive-branch-network)
 
