@@ -754,4 +754,3 @@ The 99-pool cap gives the protocol focus. The hard-coded reward split gives it c
 **Last Updated:** May 26, 2026  
 
 **Canonical Repository:** [github.com/jdmaverick369/olive-branch-network](https://github.com/jdmaverick369/olive-branch-network)
-
