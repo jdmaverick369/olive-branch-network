@@ -1,7 +1,5 @@
 # Olive Branch Network (OBN)
 
-## Proof-of-Contribution
-
 The Olive Branch network is a staking protocol on Base that turns onchain participation into continuous nonprofit funding. Users stake OBN into nonprofit-specific pools, earn yield, and automatically direct a portion of every reward claim to the nonprofit pool they chose. No separate donation. No manual transfer. No offchain accounting.
 
 Every claim creates a transparent onchain contribution event: the user earns, the nonprofit receives funding, and the network records that participation as part of OBN's broader Proof-of-Contribution model.
