@@ -23,14 +23,15 @@ Hard stops are prefixed **[HARD STOP]**. Any hard stop triggers a mandatory halt
 ## Address Registry (fill in before execution begins)
 
 ```
-OBN_TOKEN            = 0x...    (confirmed mainnet)
-STAKING_PROXY        = 0x...    (confirmed mainnet)
-TIMELOCK             = 0x...    (confirmed mainnet)
-OPERATOR_SAFE        = 0x...    (confirmed mainnet)
-OLD_CHARITY_FUND     = 0x...    (confirmed mainnet)
-OLD_TREASURY         = 0x...    (confirmed mainnet)
+# Confirmed mainnet — do not modify
+OBN_TOKEN            = 0x07e5efCD1B5fAE3f461bf913BBEE03a10A20C685
+STAKING_PROXY        = 0x2C4Bd5B2a48a76f288d7F2DB23aFD3a03b9E7cD2
+TIMELOCK             = 0x86396526286769ace21982E798Df5eef2389f51c
+OPERATOR_SAFE        = 0x066e2FABb036deab7DC58bAde428F819AC3542DD
+OLD_CHARITY_FUND     = 0x398fE423a8b4FD9B40CADF8bc72448C95474455F
+OLD_TREASURY         = 0x5C8a0aCfAD4528714076068f71a5ff2Ee06c3718
 
-# Deployed during this upgrade:
+# Deployed during this upgrade — fill in as each contract is deployed:
 V93_IMPL             = 0x...
 EXTENDING_OB_ADDR    = 0x...
 OFFERING_ADDR        = 0x...
@@ -40,7 +41,7 @@ LENS_PROXY           = 0x...
 LENS_IMPL            = 0x...
 ```
 
-All addresses must be filled in and agreed upon by both auditors before Phase 3 begins.
+The six permanent addresses above are confirmed against mainnet. Both auditors must independently verify each new deployment address before Phase 3 begins.
 
 ---
 
@@ -52,7 +53,8 @@ All addresses must be filled in and agreed upon by both auditors before Phase 3 
 - All test artifacts compiled cleanly (`npx hardhat compile`).
 - OZ upgrades validator passes: `npx hardhat run scripts/validate_upgrades.js`
   - Expected output: `OBNStakingLens: PASS` and `AnnualGovernance: PASS`
-- Fork tests pass: `npx hardhat test` → 105 passing / 56 pending / 0 failing.
+- Fork tests pass: `npx hardhat test` → 98 passing / 56 pending / 0 failing (unit + integration suite).
+- Fork suite passes: `FORK_MAINNET=true npx hardhat test test/V93ForkMigration.test.js` → 61 passing / 0 failing.
 
 **[HARD STOP]** OZ upgrades validator does not pass on both contracts.
 
@@ -423,14 +425,14 @@ cast call $STAKING_PROXY "version()(string)"
 cast call $STAKING_PROXY "upgradeBlock()(uint256)"
 # Expected: current block number (non-zero)
 
-cast call $STAKING_PROXY "charityFundOperator()(address)"
-# Expected: OPERATOR_SAFE
-
-cast call $STAKING_PROXY "theOffering()(address)"
+cast call $STAKING_PROXY "treasury()(address)"
 # Expected: OFFERING_ADDR
 
-cast call $STAKING_PROXY "extendOliveBranch()(address)"
+cast call $STAKING_PROXY "charityFund()(address)"
 # Expected: EXTENDING_OB_ADDR
+
+cast call $STAKING_PROXY "charityFundOperator()(address)"
+# Expected: OPERATOR_SAFE
 ```
 
 **[HARD STOP]** `version()` on the proxy is not "9.3" after upgradeToAndCall.
@@ -450,10 +452,13 @@ cast storage $STAKING_PROXY 0x360894a13ba1a3210667c828492db98dca3e2076cc3735a920
 
 ```bash
 cast call $STAKING_PROXY "globalTotalStaked()(uint256)"
-# Expected: matches pre-upgrade snapshot (Phase 0.2) ± normal reward accumulation
+# Expected: matches Phase 0.2 snapshot exactly, unless a user deposited or withdrew
+# between the snapshot and this verification. Reward accrual alone must NOT change
+# globalTotalStaked — any deviation that cannot be explained by a deposit or withdrawal
+# is a migration error and a hard stop.
 
 cast call $STAKING_PROXY "poolLength()(uint256)"
-# Expected: matches pre-upgrade snapshot
+# Expected: matches pre-upgrade snapshot exactly
 ```
 
 ### 6.6 Basescan verification — staking proxy re-registration
@@ -471,13 +476,19 @@ After indexing (2–5 minutes), `https://basescan.org/address/$STAKING_PROXY#rea
 
 ---
 
-## Phase 7 — Bootstrap checkpoints (batchBootstrap)
+## Phase 7 — Bootstrap checkpoints (batchBootstrap) — Optional
 
-This can be called by anyone. Run on the operator Safe or directly.
+This phase is **not required for the upgrade to be safe or complete.** The upgrade is fully functional without it.
+
+`batchBootstrap` is a gas-saving preparation step. Any staker who has not been pre-bootstrapped will be automatically bootstrapped (lazy-initialized) the first time they cast a vote, deposit, withdraw, or interact with the staking contract. No staker loses access to their funds or voting rights by skipping this phase.
+
+**Recommended before the first governance cycle** to reduce gas costs for large stakers during Phase 1/2 voting, since bootstrapping on-demand during a vote costs slightly more than pre-bootstrapping.
 
 ```bash
 # Call staking.batchBootstrap([addr1, addr2, ...])
-# with a representative sample of top stakers
+# Permissionless — can be called by anyone, from any wallet.
+# Use the active_stakers.js script to generate the address list:
+#   npx hardhat run scripts/active_stakers.js --network base
 ```
 
 ### Verify (spot check)
@@ -532,6 +543,52 @@ cast call $ANNUAL_GOV_PROXY "currentCycleId()(uint256)"
 
 **[HARD STOP]** `NEXT_PUBLIC_LENS_CONTRACT` is set to `LENS_IMPL` instead of `LENS_PROXY`.
 
+**[HARD STOP]** Production deployment must not proceed if `NEXT_PUBLIC_LENS_CONTRACT` is unset, empty, or does not equal `LENS_PROXY`. An unset or invalid value causes silent read failures — users see zero balances and zero rewards with no error message.
+
+---
+
+## Phase 10 — Reserve transfer
+
+**Prerequisites — all must be confirmed before executing this phase:**
+- Phase 6 complete: `staking.version()` == "9.3" and `staking.upgradeBlock()` != 0
+- Phase 9 complete: frontend live and reading correctly from `LENS_PROXY`
+- Both auditors have signed off on the two-way checklist
+
+**Never bundle this transfer with the upgrade transaction.** It must be a separate, standalone operation executed only after the full system is verified functional.
+
+The 88,000,000 OBN reserve currently held at `OLD_CHARITY_FUND` needs to move to `OPERATOR_SAFE` (the new `charityFundOperator`), where it will be used for future `depositForWithLock` bootstrapping.
+
+### 10.1 Verify source balance before transfer
+
+```bash
+cast call $OBN_TOKEN "balanceOf(address)(uint256)" $OLD_CHARITY_FUND
+# Expected: 88,000,000 OBN (88000000000000000000000000 in wei)
+# Record the exact value before transferring.
+```
+
+**[HARD STOP]** Balance at `OLD_CHARITY_FUND` does not match expected reserve amount. Investigate before proceeding.
+
+### 10.2 Execute transfer via Timelock
+
+The transfer must be executed by the address that controls `OLD_CHARITY_FUND`. Queue and execute through the appropriate multisig or Timelock.
+
+```
+OBNToken.transfer(OPERATOR_SAFE, 88000000000000000000000000)
+# Sent from OLD_CHARITY_FUND
+```
+
+### 10.3 Verify after transfer
+
+```bash
+cast call $OBN_TOKEN "balanceOf(address)(uint256)" $OPERATOR_SAFE
+# Expected: increased by exactly 88,000,000 OBN vs pre-transfer balance
+
+cast call $OBN_TOKEN "balanceOf(address)(uint256)" $OLD_CHARITY_FUND
+# Expected: 0 (or pre-transfer balance minus 88,000,000 OBN)
+```
+
+**[HARD STOP]** `OPERATOR_SAFE` balance did not increase by the expected amount.
+
 ---
 
 ## Two-way audit checklist (complete after all phases)
@@ -542,8 +599,8 @@ Both auditors independently verify each row. Mark only when both agree.
 |---|---|---|
 | `staking.version()` == "9.3" | | |
 | `staking.upgradeBlock()` is non-zero | | |
-| `staking.theOffering()` == OFFERING_ADDR | | |
-| `staking.extendOliveBranch()` == EXTENDING_OB_ADDR | | |
+| `staking.treasury()` == OFFERING_ADDR | | |
+| `staking.charityFund()` == EXTENDING_OB_ADDR | | |
 | `staking.charityFundOperator()` == OPERATOR_SAFE | | |
 | `staking.globalTotalStaked()` matches pre-upgrade ± rewards | | |
 | ERC1967 slot on staking proxy == V93_IMPL | | |
@@ -561,6 +618,8 @@ Both auditors independently verify each row. Mark only when both agree.
 | AnnualGov bare impl reverts on initialize() | | |
 | Lens bare impl reverts on initialize() | | |
 | NEXT_PUBLIC_LENS_CONTRACT == LENS_PROXY | | |
+| `OLD_CHARITY_FUND` balance transferred to OPERATOR_SAFE | | |
+| `OLD_CHARITY_FUND` balance is 0 after transfer | | |
 
 ---
 
