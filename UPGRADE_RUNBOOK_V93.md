@@ -542,8 +542,10 @@ cast call $ANNUAL_GOV_PROXY "currentCycleId()(uint256)"
 
 1. Set `NEXT_PUBLIC_LENS_CONTRACT` = `LENS_PROXY` in the production environment.
    - **This must be the proxy address, not the Lens implementation address.**
-2. Remove or leave blank `NEXT_PUBLIC_LENS_CONTRACT` in staging until verified.
-3. Deploy frontend. Monitor for:
+2. Set `NEXT_PUBLIC_GOVERNANCE_CONTRACT` = `ANNUAL_GOV_PROXY` in the production environment.
+   - **This must be the proxy address, not the implementation address.**
+3. Remove or leave blank both env vars in staging until verified.
+4. Deploy frontend. Monitor for:
    - `pendingRewards` calls succeeding on the Lens proxy.
    - `userAmount` mapping reads on the staking proxy.
    - No `invalid address` errors in viem (would indicate env var is empty).
@@ -551,6 +553,23 @@ cast call $ANNUAL_GOV_PROXY "currentCycleId()(uint256)"
 **[HARD STOP]** `NEXT_PUBLIC_LENS_CONTRACT` is set to `LENS_IMPL` instead of `LENS_PROXY`.
 
 **[HARD STOP]** Production deployment must not proceed if `NEXT_PUBLIC_LENS_CONTRACT` is unset, empty, or does not equal `LENS_PROXY`. An unset or invalid value causes silent read failures — users see zero balances and zero rewards with no error message.
+
+**[HARD STOP]** `NEXT_PUBLIC_GOVERNANCE_CONTRACT` is set to `ANNUAL_GOV_IMPL` instead of `ANNUAL_GOV_PROXY`. Governance reads will fail silently or revert.
+
+### 9.1 Verify archive RPC supports historical block reads (required for governance page)
+
+The governance page displays voting power for unbootstrapped pre-upgrade stakers by reading `userAmount(pid, user)` at `blockNumber = snapshotBlock` via Multicall3. This requires an archive-capable RPC endpoint. Alchemy Base (the configured provider) supports this, but confirm before deploying the governance page.
+
+```bash
+# Replace UPGRADE_BLOCK with the actual upgradeBlock value from Phase 6.
+cast call --block $UPGRADE_BLOCK $STAKING_PROXY \
+  "userAmount(uint256,address)(uint256)" 0 <any_known_staker_address>
+# Expected: non-zero value matching their pre-upgrade stake in pool 0.
+# If this returns 0 and the staker is known to have stake, the RPC endpoint
+# does not serve historical state — switch to an archive provider.
+```
+
+**[HARD STOP]** The above call reverts or returns an unexpected value. Your RPC endpoint does not support archive reads. The governance page will show "temporarily unavailable" for unbootstrapped stakers instead of their correct voting power. Switch to an archive-capable provider before deploying the governance page.
 
 ---
 
