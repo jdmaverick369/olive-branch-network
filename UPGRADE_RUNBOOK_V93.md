@@ -84,7 +84,7 @@ forge create contracts/StakingPoolsV93.sol:OBNStakingPools \
 # Record: V93_IMPL
 ```
 
-### Verify
+### Verify on-chain
 
 ```bash
 cast call $V93_IMPL "version()(string)"
@@ -98,6 +98,15 @@ cast call $V93_IMPL "owner()(address)"
 ```
 
 **[HARD STOP]** `impl.owner()` returns Timelock, Safe, deployer, or any other privileged address. If nonzero-privileged, stop and investigate. The bare implementation must not be ownable-initialized.
+
+### Basescan verification
+
+```bash
+V93_IMPL=$V93_IMPL npx hardhat verify --network base "$V93_IMPL" \
+  --contract "contracts/StakingPoolsV93.sol:OBNStakingPools"
+```
+
+Wait 2–5 minutes after deployment before running. If it fails with "already verified", the contract was auto-verified during deployment — no action needed. Check: `https://basescan.org/address/$V93_IMPL#code`
 
 ---
 
@@ -126,6 +135,12 @@ cast call $EXTENDING_OB_ADDR "governance()(address)"
 ```
 
 **[HARD STOP]** `ExtendOliveBranch.owner()` is not Timelock.
+
+### Basescan verification — ExtendOliveBranch
+
+```bash
+npx hardhat verify --network base "$EXTENDING_OB_ADDR" "$OBN_TOKEN" "$TIMELOCK"
+```
 
 ### 2.2 TheOffering
 
@@ -156,6 +171,12 @@ cast call $OFFERING_ADDR "governance()(address)"
 **[HARD STOP]** `TheOffering.owner()` is not Timelock.
 
 **[HARD STOP]** `TheOffering.obn()` is not OBN_TOKEN or `TheOffering.extendOliveBranch()` is not EXTENDING_OB_ADDR. These are immutables — they cannot be corrected after deployment. The contract must be redeployed.
+
+### Basescan verification — TheOffering
+
+```bash
+npx hardhat verify --network base "$OFFERING_ADDR" "$OBN_TOKEN" "$EXTENDING_OB_ADDR" "$TIMELOCK"
+```
 
 ---
 
@@ -227,6 +248,22 @@ cast call $ANNUAL_GOV_IMPL "initialize(address,address,address,address,address,a
 
 **[HARD STOP]** The bare AnnualGovernance implementation can be initialized (i.e., `_disableInitializers()` is not working).
 
+### Basescan verification — AnnualGovernance
+
+```bash
+# 1. Verify the implementation (no constructor args — _disableInitializers() is the only constructor logic)
+npx hardhat verify --network base "$ANNUAL_GOV_IMPL" \
+  --contract "contracts/AnnualGovernance.sol:AnnualGovernance"
+
+# 2. Register the proxy so Basescan shows the implementation ABI at the proxy address
+curl -s "https://api.basescan.org/api?module=contract&action=verifyproxycontract\
+&address=$ANNUAL_GOV_PROXY&apikey=$BASESCAN_API_KEY"
+# Expected response: { "status": "1", ... }
+# If Basescan has not yet indexed the proxy, retry in 2–3 minutes.
+```
+
+After proxy registration, `https://basescan.org/address/$ANNUAL_GOV_PROXY#readProxyContract` should show the AnnualGovernance ABI.
+
 ---
 
 ## Phase 4 — Deploy OBNStakingLens as UUPS proxy
@@ -275,6 +312,20 @@ cast call $LENS_IMPL "initialize(address,address)" $STAKING_PROXY $TIMELOCK
 ```
 
 **[HARD STOP]** The bare Lens implementation can be initialized.
+
+### Basescan verification — OBNStakingLens
+
+```bash
+# 1. Verify the implementation
+npx hardhat verify --network base "$LENS_IMPL" \
+  --contract "contracts/OBNStakingLens.sol:OBNStakingLens"
+
+# 2. Register the proxy
+curl -s "https://api.basescan.org/api?module=contract&action=verifyproxycontract\
+&address=$LENS_PROXY&apikey=$BASESCAN_API_KEY"
+```
+
+After proxy registration, `https://basescan.org/address/$LENS_PROXY#readProxyContract` should show the OBNStakingLens ABI.
 
 ### Smoke test Lens reads (pre-upgrade — should still work against v9.2 proxy)
 
@@ -405,6 +456,19 @@ cast call $STAKING_PROXY "poolLength()(uint256)"
 # Expected: matches pre-upgrade snapshot
 ```
 
+### 6.6 Basescan verification — staking proxy re-registration
+
+The staking proxy was already verified before this upgrade. After `upgradeToAndCall`, Basescan's proxy reader needs to be updated so it shows the v9.3 ABI at the proxy address (the implementation changed from v9.2 to v9.3).
+
+V93_IMPL was verified in Phase 1. Only the proxy registration needs to be refreshed:
+
+```bash
+curl -s "https://api.basescan.org/api?module=contract&action=verifyproxycontract\
+&address=$STAKING_PROXY&apikey=$BASESCAN_API_KEY"
+```
+
+After indexing (2–5 minutes), `https://basescan.org/address/$STAKING_PROXY#readProxyContract` should show the v9.3 ABI including `upgradeBlock`, `totalStakedByUser`, and `userAmount`.
+
 ---
 
 ## Phase 7 — Bootstrap checkpoints (batchBootstrap)
@@ -522,3 +586,31 @@ Both auditors independently verify each row. Mark only when both agree.
 | 15 | `startAnnualCycle` is called before both vaults return `governance() == ANNUAL_GOV_PROXY` |
 | 16 | `startAnnualCycle` is called before all intended nonprofit addresses are approved in ExtendOliveBranch |
 | 17 | Either auditor cannot independently reproduce a required on-chain value |
+
+---
+
+## Basescan verification — all-in-one
+
+After completing all phases, run the verification script once with all addresses filled in. It will verify every implementation and register every proxy:
+
+```bash
+V93_IMPL=$V93_IMPL \
+EXTENDING_OB_ADDR=$EXTENDING_OB_ADDR \
+OFFERING_ADDR=$OFFERING_ADDR \
+ANNUAL_GOV_IMPL=$ANNUAL_GOV_IMPL \
+ANNUAL_GOV_PROXY=$ANNUAL_GOV_PROXY \
+LENS_IMPL=$LENS_IMPL \
+LENS_PROXY=$LENS_PROXY \
+STAKING_PROXY=$STAKING_PROXY \
+OBN_TOKEN=$OBN_TOKEN \
+TIMELOCK=$TIMELOCK \
+npx hardhat run scripts/governance/verify_v93.js --network base
+```
+
+Or add the addresses to `.env` and run:
+
+```bash
+npx hardhat run scripts/governance/verify_v93.js --network base
+```
+
+**Expected outcome:** 5 implementation verifications pass, 3 proxy registrations submitted. `#readProxyContract` tab shows the correct ABI at each proxy address on Basescan.
