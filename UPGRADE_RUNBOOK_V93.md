@@ -53,7 +53,7 @@ The six permanent addresses above are confirmed against mainnet. Both auditors m
 - All test artifacts compiled cleanly (`npx hardhat compile`).
 - OZ upgrades validator passes: `npx hardhat run scripts/validate_upgrades.js`
   - Expected output: `OBNStakingLens: PASS` and `AnnualGovernance: PASS`
-- Fork tests pass: `npx hardhat test` → 103 passing / 56 pending / 0 failing (unit + integration suite).
+- Fork tests pass: `npx hardhat test` → 106 passing / 56 pending / 0 failing (unit + integration suite).
 - Fork suite passes: `FORK_MAINNET=true npx hardhat test test/V93ForkMigration.test.js` → 61 passing / 0 failing.
 
 **[HARD STOP]** OZ upgrades validator does not pass on both contracts.
