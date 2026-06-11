@@ -16,11 +16,12 @@ const ERC20_MIN_ABI = [
 const POOL_ABI = [
   "function poolLength() view returns (uint256)",
   "function charityFund() view returns (address)",
+  "function charityFundOperator() view returns (address)",
   "function getPoolInfo(uint256 pid) view returns (address charityWallet, uint256 totalStaked)",
   "function charityFundBootstrap(uint256 pid, uint256 amount, address beneficiary) external",
   "function lockedAmount(uint256 pid, address user) view returns (uint256)",
   "function unlockedBalance(uint256 pid, address user) view returns (uint256)",
-  "function getUserStakeValue(uint256 pid, address userAddr) view returns (uint256)",
+  "function userAmount(uint256 pid, address user) view returns (uint256)",
 ];
 
 function isAddr(a) { return !!a && /^0x[a-fA-F0-9]{40}$/.test(a); }
@@ -56,11 +57,18 @@ async function main() {
   const poolWrite = new ethers.Contract(STAKING, POOL_ABI, charitySigner);
   const tokenChar = new ethers.Contract(TOKEN, ERC20_MIN_ABI, charitySigner);
 
-  // Confirm on-chain charityFund matches our signer
-  const chainCharityFund = await poolRead.charityFund();
-  const ourCharityFund = await charitySigner.getAddress();
-  if (chainCharityFund.toLowerCase() !== ourCharityFund.toLowerCase()) {
-    throw new Error(`❌ charityFund mismatch. On-chain: ${chainCharityFund}  Your key: ${ourCharityFund}`);
+  // Confirm our signer is either charityFund or charityFundOperator (both have bootstrap rights in v9.3)
+  const chainCharityFund     = await poolRead.charityFund();
+  const chainCharityOperator = await poolRead.charityFundOperator();
+  const ourCharityFund       = await charitySigner.getAddress();
+  const ourAddr = ourCharityFund.toLowerCase();
+  if (ourAddr !== chainCharityFund.toLowerCase() && ourAddr !== chainCharityOperator.toLowerCase()) {
+    throw new Error(
+      `❌ Signer is neither charityFund nor charityFundOperator.\n` +
+      `   charityFund:         ${chainCharityFund}\n` +
+      `   charityFundOperator: ${chainCharityOperator}\n` +
+      `   Your key:            ${ourCharityFund}`
+    );
   }
 
   // Resolve PID from existing pools
@@ -137,7 +145,7 @@ async function main() {
   }
 
   await sleep(1200);
-  const staked   = await poolRead.getUserStakeValue(pid, charityWallet);
+  const staked   = await poolRead.userAmount(pid, charityWallet);
   const locked   = await poolRead.lockedAmount(pid, charityWallet);
   const unlocked = await poolRead.unlockedBalance(pid, charityWallet);
 

@@ -31,7 +31,7 @@ describe("StakingPools v8.10.0 - Bootstrap Migration & ForceExit", function () {
     await token.setMinterOnce(owner.address);
 
     // Deploy StakingPools
-    const StakingPoolsFactory = await ethers.getContractFactory("OBNStakingPools");
+    const StakingPoolsFactory = await ethers.getContractFactory("contracts/StakingPools.sol:OBNStakingPools");
     const poolsProxy = await upgrades.deployProxy(
       StakingPoolsFactory,
       [await token.getAddress(), treasury.address, charityFund.address],
@@ -324,9 +324,9 @@ describe("StakingPools v8.10.0 - Bootstrap Migration & ForceExit", function () {
   });
 
   describe("Version", function () {
-    it("Should have correct version 9.0", async function () {
+    it("Should have correct version 9.2", async function () {
       const version = await stakingPools.version();
-      expect(version).to.equal("9.0");
+      expect(version).to.equal("9.2");
     });
   });
 });

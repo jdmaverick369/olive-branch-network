@@ -1,3 +1,10 @@
+// BREAKING CHANGE (v9.3): claimFor is now onlyOwner (proxy owner = Timelock).
+// This script calls claimFor directly from the private key signer, which will
+// REVERT on mainnet after the v9.3 upgrade. To use claimFor post-upgrade,
+// the call must be routed through the Timelock governance flow (queue + execute
+// via the operator Safe at 0x066e2FABb036deab7DC58bAde428F819AC3542DD).
+// Do NOT run this script against the live proxy after the v9.3 upgrade is applied.
+
 // Force-claim all pools' charity wallets without skipping.
 // Attempts every pid from 0..poolLength-1.
 // If a tx reverts, it logs and continues to the next pid.

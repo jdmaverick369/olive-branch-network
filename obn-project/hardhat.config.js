@@ -8,6 +8,8 @@ const {
   BASE_MAINNET_URL,
   PRIVATE_KEY = "",
   BASESCAN_API_KEY = "",
+  FORK_MAINNET = "",
+  FORK_BLOCK_NUMBER = "",
 } = process.env;
 
 const accounts = PRIVATE_KEY
@@ -46,6 +48,10 @@ module.exports = {
         version: "0.8.28",
         settings: { optimizer: { enabled: true, runs: 500 }, viaIR: true },
       },
+      "contracts/StakingPoolsV93.sol": {
+        version: "0.8.28",
+        settings: { optimizer: { enabled: true, runs: 500 }, viaIR: true },
+      },
       "contracts/OliveNFT.sol": {
         version: "0.8.28",
         settings: { optimizer: { enabled: true, runs: 500 }, viaIR: true },
@@ -64,6 +70,29 @@ module.exports = {
       chainId: 8453,
       accounts,
     },
+    // Conditional Base mainnet fork — enabled when FORK_MAINNET=true in .env or shell.
+    // Usage: FORK_MAINNET=true npx hardhat test test/V93ForkMigration.test.js
+    // Optional: FORK_BLOCK_NUMBER=<block> for a reproducible fork point.
+    ...(FORK_MAINNET === "true" && BASE_MAINNET_URL
+      ? {
+          hardhat: {
+            forking: {
+              url: BASE_MAINNET_URL,
+              ...(FORK_BLOCK_NUMBER ? { blockNumber: Number(FORK_BLOCK_NUMBER) } : {}),
+            },
+            // Base mainnet (8453) hardfork history is not built into Hardhat.
+            // Declaring Cancun from block 0 lets the EDR provider resolve EVM rules
+            // for any historical block on this chain without throwing "No known hardfork".
+            chains: {
+              8453: {
+                hardforkHistory: {
+                  cancun: 0,
+                },
+              },
+            },
+          },
+        }
+      : {}),
   },
 
   etherscan: {
