@@ -354,6 +354,23 @@ cast call $LENS_PROXY "getPoolStats(uint256)" 0
 
 Both vault calls must go through the Timelock. Queue and execute as separate transactions with the mandatory delay.
 
+### 5.0 Confirm proxy ownership before queueing
+
+Do this before preparing the Timelock proposal. These values must be correct or the vault wiring targets the wrong contract.
+
+```bash
+cast call $ANNUAL_GOV_PROXY "owner()(address)"
+# Expected: TIMELOCK
+
+cast call $ANNUAL_GOV_PROXY "voteAdmin()(address)"
+# Expected: OPERATOR_SAFE
+
+cast call $ANNUAL_GOV_PROXY "stakingPools()(address)"
+# Expected: STAKING_PROXY (not the staking implementation)
+```
+
+**[HARD STOP]** Any of the above does not match. Do not queue vault wiring until the proxy state is confirmed.
+
 ### 5.1 Queue both calls
 
 ```
@@ -376,18 +393,6 @@ cast call $EXTENDING_OB_ADDR "governance()(address)"
 ```
 
 **[HARD STOP]** Either vault governance is not ANNUAL_GOV_PROXY after execution.
-
-### 5.3 Confirm proxy ownership before proceeding
-
-Before queueing vault wiring, independently confirm:
-
-```bash
-cast call $ANNUAL_GOV_PROXY "owner()(address)"
-# Expected: TIMELOCK
-
-cast call $ANNUAL_GOV_PROXY "voteAdmin()(address)"
-# Expected: OPERATOR_SAFE
-```
 
 **[HARD STOP]** Do not call `startAnnualCycle` until:
 - Both vaults return `governance() == ANNUAL_GOV_PROXY`
@@ -426,16 +431,18 @@ cast call $STAKING_PROXY "upgradeBlock()(uint256)"
 # Expected: current block number (non-zero)
 
 cast call $STAKING_PROXY "treasury()(address)"
-# Expected: OFFERING_ADDR
+# Expected: OFFERING_ADDR (not OLD_TREASURY)
 
 cast call $STAKING_PROXY "charityFund()(address)"
-# Expected: EXTENDING_OB_ADDR
+# Expected: EXTENDING_OB_ADDR (not OLD_CHARITY_FUND)
 
 cast call $STAKING_PROXY "charityFundOperator()(address)"
 # Expected: OPERATOR_SAFE
 ```
 
 **[HARD STOP]** `version()` on the proxy is not "9.3" after upgradeToAndCall.
+
+**[HARD STOP]** `staking.treasury()` equals OLD_TREASURY or `staking.charityFund()` equals OLD_CHARITY_FUND — migration did not redirect fund flows to the new vaults.
 
 **[HARD STOP]** `upgradeBlock()` is 0 after the upgrade (migrateV93 did not run).
 
@@ -558,7 +565,22 @@ cast call $ANNUAL_GOV_PROXY "currentCycleId()(uint256)"
 
 The 88,000,000 OBN reserve currently held at `OLD_CHARITY_FUND` needs to move to `OPERATOR_SAFE` (the new `charityFundOperator`), where it will be used for future `depositForWithLock` bootstrapping.
 
-### 10.1 Verify source balance before transfer
+### 10.1 Confirm controller of OLD_CHARITY_FUND
+
+Do not assume Timelock controls `OLD_CHARITY_FUND`. Confirm the actual controller before preparing the transfer.
+
+```bash
+# Check if OLD_CHARITY_FUND is a contract or EOA:
+cast code $OLD_CHARITY_FUND
+# If bytecode is returned it is a contract — identify it (Safe, Timelock, or other).
+# If empty it is an EOA — the private key holder must sign the transfer directly.
+
+# If it is a Safe, confirm the signers match expected operators before proceeding.
+```
+
+**[HARD STOP]** The controller of `OLD_CHARITY_FUND` cannot be identified or does not match expected operators. Do not proceed until confirmed.
+
+### 10.2 Verify source balance before transfer
 
 ```bash
 cast call $OBN_TOKEN "balanceOf(address)(uint256)" $OLD_CHARITY_FUND
@@ -568,16 +590,16 @@ cast call $OBN_TOKEN "balanceOf(address)(uint256)" $OLD_CHARITY_FUND
 
 **[HARD STOP]** Balance at `OLD_CHARITY_FUND` does not match expected reserve amount. Investigate before proceeding.
 
-### 10.2 Execute transfer via Timelock
+### 10.3 Execute transfer
 
-The transfer must be executed by the address that controls `OLD_CHARITY_FUND`. Queue and execute through the appropriate multisig or Timelock.
+The transfer must be signed by the controller confirmed in step 10.1.
 
 ```
 OBNToken.transfer(OPERATOR_SAFE, 88000000000000000000000000)
-# Sent from OLD_CHARITY_FUND
+# Sent from OLD_CHARITY_FUND (via Timelock, Safe, or EOA as identified above)
 ```
 
-### 10.3 Verify after transfer
+### 10.4 Verify after transfer
 
 ```bash
 cast call $OBN_TOKEN "balanceOf(address)(uint256)" $OPERATOR_SAFE
@@ -602,7 +624,7 @@ Both auditors independently verify each row. Mark only when both agree.
 | `staking.treasury()` == OFFERING_ADDR | | |
 | `staking.charityFund()` == EXTENDING_OB_ADDR | | |
 | `staking.charityFundOperator()` == OPERATOR_SAFE | | |
-| `staking.globalTotalStaked()` matches pre-upgrade ± rewards | | |
+| `staking.globalTotalStaked()` matches pre-upgrade exactly (reward accrual alone must not change it) | | |
 | ERC1967 slot on staking proxy == V93_IMPL | | |
 | `theOffering.governance()` == ANNUAL_GOV_PROXY | | |
 | `extendOliveBranch.governance()` == ANNUAL_GOV_PROXY | | |
