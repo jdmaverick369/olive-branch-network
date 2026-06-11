@@ -291,13 +291,16 @@ contract AnnualGovernance is Initializable, OwnableUpgradeable, UUPSUpgradeable 
             c.onBallot[addr]  = true;
         }
 
-        c.snapshotBlock  = uint48(block.number);
+        // Snapshot one block before cycle start so any stake deposited in the same
+        // block as startAnnualCycle cannot be counted toward voting power.
+        uint48 snap      = uint48(block.number - 1);
+        c.snapshotBlock  = snap;
         c.phase1End      = uint64(block.timestamp) + phase1Duration;
         c.phase2Duration = phase2Duration;
         // phase2End is intentionally not set here; it is set in executePhase1() so
         // Phase 2 always receives its full duration regardless of when Phase 1 is executed.
 
-        emit CycleStarted(cycleId, block.number, c.phase1End, phase2Duration, finalBallot);
+        emit CycleStarted(cycleId, snap, c.phase1End, phase2Duration, finalBallot);
     }
 
     // ─── Voting ──────────────────────────────────────────────────────────────────

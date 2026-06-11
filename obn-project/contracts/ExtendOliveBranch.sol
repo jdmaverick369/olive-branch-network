@@ -104,6 +104,7 @@ contract ExtendOliveBranch {
     /// @notice Sweeps the full balance of any ERC20 token to `to`.
     ///         `token` is the ERC20 to recover (pass obn address to recover OBN).
     function emergencySweep(address token, address to) external onlyTimelockOwner {
+        require(token != address(0), "token=0");
         require(to != address(0), "to=0");
         uint256 bal = IERC20(token).balanceOf(address(this));
         require(bal > 0, "nothing to sweep");

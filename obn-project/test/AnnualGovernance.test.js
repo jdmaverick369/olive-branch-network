@@ -844,4 +844,44 @@ describe("AnnualGovernance", function () {
       expect(power).to.equal(ethers.parseEther("100"));
     });
   });
+
+  // ─── 14. Snapshot block ───────────────────────────────────────────────────────
+
+  describe("14. snapshot block = block.number - 1", function () {
+
+    it("snapshotBlock is one less than the block containing startAnnualCycle", async function () {
+      const tx = await startCycle();
+      const receipt = await tx.wait();
+      const cycleBlock = BigInt(receipt.blockNumber);
+
+      const [snapshotBlock] = await governance.getCycleSummary(1);
+      expect(snapshotBlock).to.equal(cycleBlock - 1n);
+    });
+
+    it("snapshotBlock emitted in CycleStarted equals block.number - 1", async function () {
+      const tx = await startCycle();
+      const receipt = await tx.wait();
+      const cycleBlock = BigInt(receipt.blockNumber);
+
+      await expect(tx)
+        .to.emit(governance, "CycleStarted")
+        .withArgs(
+          1n,
+          cycleBlock - 1n,
+          (v) => true,
+          PHASE2_DURATION,
+          (v) => true
+        );
+    });
+
+    it("snapshotBlock is strictly less than the cycle-start block", async function () {
+      const tx = await startCycle();
+      const receipt = await tx.wait();
+      const cycleBlock = BigInt(receipt.blockNumber);
+
+      const [snapshotBlock] = await governance.getCycleSummary(1);
+      expect(snapshotBlock).to.be.lessThan(cycleBlock);
+    });
+
+  });
 });

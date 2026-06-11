@@ -1072,6 +1072,7 @@ contract OBNStakingPools is
     /// @notice Returns the staked balance of `user` at `blockNumber`. Called by AnnualGovernance
     ///         to determine voting power at the snapshot block.
     function getPastVotingPower(address user, uint256 blockNumber) external view returns (uint256) {
+        require(blockNumber <= type(uint48).max, "block too large");
         return uint256(_stakeCheckpoints[user].upperLookup(uint48(blockNumber)));
     }
 
