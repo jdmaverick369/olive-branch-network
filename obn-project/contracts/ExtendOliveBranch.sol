@@ -17,9 +17,13 @@ import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol
 ///   governance    — mutable (set by timelockOwner). Can distribute to approved nonprofits.
 ///                   Starts as address(0); wired to AnnualGovernance after deployment.
 ///
-/// Safety note: distribute() enforces an approvedNonprofit whitelist even when called by
-/// governance. This limits governance's distribution power to addresses explicitly approved
-/// by timelockOwner, regardless of what AnnualGovernance votes for.
+/// Distribution paths:
+///   distribute()              — timelockOwner or governance, whitelist enforced.
+///   distributeFromGovernance() — AnnualGovernance only, whitelist intentionally omitted.
+///                               Recipient was validated against the whitelist at
+///                               startAnnualCycle(); a post-vote revocation must not
+///                               invalidate a completed community vote. TimelockOwner
+///                               retains emergencySweep() as a pre-distribution override.
 contract ExtendOliveBranch {
     using SafeERC20 for IERC20;
 
@@ -58,7 +62,8 @@ contract ExtendOliveBranch {
     // ─── Distribution (timelockOwner or governance) ────────────────────────────
 
     /// @notice Sends `amount` OBN to `nonprofit`. Nonprofit must be whitelisted.
-    ///         Called by timelockOwner for manual distributions (whitelist enforced).
+    ///         Called by timelockOwner or governance for manual distributions (whitelist enforced).
+    ///         AnnualGovernance uses distributeFromGovernance() instead (no whitelist check).
     function distribute(address nonprofit, uint256 amount) external onlyDistributor {
         require(approvedNonprofit[nonprofit], "nonprofit not approved");
         require(amount > 0, "amount=0");
