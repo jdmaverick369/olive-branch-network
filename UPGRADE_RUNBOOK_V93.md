@@ -683,6 +683,7 @@ Both auditors independently verify each row. Mark only when both agree.
 | 12 | `staking.upgradeBlock()` is 0 after upgradeToAndCall |
 | 13 | ERC1967 slot on staking proxy does not contain V93_IMPL |
 | 14 | `NEXT_PUBLIC_LENS_CONTRACT` is set to LENS_IMPL instead of LENS_PROXY |
+| 14b | `NEXT_PUBLIC_GOVERNANCE_CONTRACT` is set to ANNUAL_GOV_IMPL instead of ANNUAL_GOV_PROXY |
 | 15 | `startAnnualCycle` is called before both vaults return `governance() == ANNUAL_GOV_PROXY` |
 | 16 | `startAnnualCycle` is called before all intended nonprofit addresses are approved in ExtendOliveBranch |
 | 17 | Either auditor cannot independently reproduce a required on-chain value |
