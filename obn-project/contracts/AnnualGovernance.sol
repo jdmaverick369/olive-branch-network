@@ -516,4 +516,23 @@ contract AnnualGovernance is Initializable, OwnableUpgradeable, UUPSUpgradeable 
     function hasVotedPhase2(uint256 cycleId, address voter) external view returns (bool) {
         return _cycles[cycleId].votedPhase2[voter];
     }
+
+    /// @notice Returns the voting power of `user` at the snapshot block for `cycleId`.
+    ///
+    /// `bootstrapped` is false when the user has no post-upgrade checkpoint yet.
+    /// In that case `power` is 0 even if they have stake — it will become non-zero
+    /// automatically when they cast their first vote (lazy bootstrap) or when someone
+    /// calls bootstrapCheckpoint for them.
+    ///
+    /// Returns (0, false) if cycleId does not exist.
+    function getVotingPowerForCycle(uint256 cycleId, address user)
+        external
+        view
+        returns (uint256 power, bool bootstrapped)
+    {
+        if (cycleId == 0 || cycleId > currentCycleId) return (0, false);
+        Cycle storage c = _cycles[cycleId];
+        bootstrapped = stakingPools.checkpointCount(user) > 0;
+        power = stakingPools.getPastVotingPower(user, uint256(c.snapshotBlock));
+    }
 }

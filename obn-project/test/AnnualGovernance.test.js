@@ -796,4 +796,52 @@ describe("AnnualGovernance", function () {
       await governance.connect(timelockOwner).upgradeToAndCall(await newImpl.getAddress(), "0x");
     });
   });
+
+  // ─── 13. getVotingPowerForCycle ──────────────────────────────────────────────
+
+  describe("13. getVotingPowerForCycle", function () {
+    it("returns (0, false) for cycleId 0", async function () {
+      const [power, bootstrapped] = await governance.getVotingPowerForCycle(0, staker1.address);
+      expect(power).to.equal(0n);
+      expect(bootstrapped).to.equal(false);
+    });
+
+    it("returns (0, false) for a cycleId that has not been started", async function () {
+      const [power, bootstrapped] = await governance.getVotingPowerForCycle(99, staker1.address);
+      expect(power).to.equal(0n);
+      expect(bootstrapped).to.equal(false);
+    });
+
+    it("returns correct power for a bootstrapped staker during an active cycle", async function () {
+      // Mock returns checkpointCount = 1 by default (not uninitialized)
+      await startCycle();
+
+      const [power, bootstrapped] = await governance.getVotingPowerForCycle(1, staker1.address);
+      expect(bootstrapped).to.equal(true);
+      expect(power).to.equal(ethers.parseEther("100"));
+    });
+
+    it("returns bootstrapped=false for an unbootstrapped staker", async function () {
+      // setUninitialized makes checkpointCount return 0 for this staker
+      await mockStaking.setUninitialized(staker2.address, true);
+      await startCycle();
+
+      const [, bootstrapped] = await governance.getVotingPowerForCycle(1, staker2.address);
+      expect(bootstrapped).to.equal(false);
+      // On-chain the real staking contract returns power=0 when no checkpoints exist.
+      // The mock returns the flat configured value — the bootstrapped flag is what matters
+      // for the frontend to show the "will be calculated at first vote" warning.
+    });
+
+    it("returns correct power for a completed cycle (historical lookup)", async function () {
+      // staker1 is bootstrapped by default (checkpointCount returns 1)
+      await startCycle();
+      await executePhase1();
+      await executePhase2();
+
+      const [power, bootstrapped] = await governance.getVotingPowerForCycle(1, staker1.address);
+      expect(bootstrapped).to.equal(true);
+      expect(power).to.equal(ethers.parseEther("100"));
+    });
+  });
 });

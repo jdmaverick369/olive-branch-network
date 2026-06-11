@@ -29,6 +29,8 @@ interface IStakingPoolsV93 {
     function sumRewardAcrossPhases(uint256 t0, uint256 t1, uint256 poolStake) external view returns (uint256);
     function STAKER_BPS() external view returns (uint256);
     function TOTAL_BPS() external view returns (uint256);
+    function getPastVotingPower(address user, uint256 blockNumber) external view returns (uint256);
+    function checkpointCount(address user) external view returns (uint256);
 }
 
 /// @title OBNStakingLens
@@ -250,6 +252,27 @@ contract OBNStakingLens is Initializable, OwnableUpgradeable, UUPSUpgradeable {
             pendings[i] = p;
             total       += p;
         }
+    }
+
+    // ─── Voting power ──────────────────────────────────────────────────────────
+
+    /// @notice Returns the voting power of `user` at `snapshotBlock` (the block captured
+    ///         by AnnualGovernance.startAnnualCycle).
+    ///
+    /// `bootstrapped` is false when the user has no post-upgrade checkpoint.
+    /// In that case `power` is 0 even if they have stake — it becomes non-zero
+    /// automatically when they cast their first vote or when bootstrapCheckpoint is called.
+    ///
+    /// Typical frontend usage:
+    ///   const snap = (await annualGov.getCycleSummary(cycleId)).snapshotBlock;
+    ///   const { power, bootstrapped } = await lens.getVotingPower(userAddress, snap);
+    function getVotingPower(address user, uint256 snapshotBlock)
+        external
+        view
+        returns (uint256 power, bool bootstrapped)
+    {
+        bootstrapped = stakingPools.checkpointCount(user) > 0;
+        power = stakingPools.getPastVotingPower(user, snapshotBlock);
     }
 
     // ─── Global views ──────────────────────────────────────────────────────────
