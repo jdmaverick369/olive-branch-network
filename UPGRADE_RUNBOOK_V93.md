@@ -95,10 +95,12 @@ forge create contracts/StakingPoolsV93.sol:OBNStakingPools \
 
 ```bash
 cast call $V93_IMPL "version()(string)"
-# Expected: "9.3"
+# Expected: "" (empty string — correct for an uninitialized bare implementation)
 ```
 
-**[HARD STOP]** `version()` on the bare implementation is not "9.3".
+`version` is a storage variable set only by `initialize()` (→ "9.2") and `migrateV93()` (→ "9.3"). Neither is ever called on the bare implementation — the constructor only runs `_disableInitializers()`. An empty string here confirms the correct uninitialized state. The proxy will read "9.3" after the upgrade executes in Phase 6.
+
+**[HARD STOP]** `version()` on the bare implementation returns any non-empty string. This means `initialize()` or `migrateV93()` was accidentally called on the impl itself — stop and investigate.
 
 ```bash
 cast call $V93_IMPL "owner()(address)"

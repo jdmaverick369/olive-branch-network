@@ -90,6 +90,11 @@ async function main() {
   if (maxBallotSize !== MAX_BALLOT) hardStop(`maxBallotSize() returned ${maxBallotSize} — expected ${MAX_BALLOT}.`);
   console.log("                      PASS");
 
+  const obn = await proxy.obn();
+  console.log(`  obn()               = ${obn}`);
+  if (!addrEq(obn, OBN_TOKEN)) hardStop(`obn() returned ${obn} — expected OBN_TOKEN ${OBN_TOKEN}. Wrong OBN address stored in proxy.`);
+  console.log("                      PASS");
+
   console.log("\nVerifying ERC1967 implementation slot...");
   const slotRaw = await hre.ethers.provider.getStorage(ANNUAL_GOV_PROXY, IMPL_SLOT);
   const implFromSlot = hre.ethers.getAddress("0x" + slotRaw.slice(-40));

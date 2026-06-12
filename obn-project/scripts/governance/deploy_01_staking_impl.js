@@ -28,8 +28,11 @@ async function main() {
 
   const version = await impl.version();
   console.log(`  version()  = "${version}"`);
-  if (version !== "9.3") hardStop(`version() returned "${version}" — expected "9.3". Wrong bytecode deployed.`);
-  console.log("             PASS");
+  // Bare implementation has _disableInitializers() only in its constructor — version is never
+  // set on the impl's own storage. An empty string here confirms the correct uninitialized state.
+  // version == "9.3" only becomes true on the PROXY after migrateV93() runs.
+  if (version !== "") hardStop(`version() returned "${version}" — expected "" (uninitialized bare impl). Wrong bytecode or initialize() was accidentally called.`);
+  console.log("             PASS (uninitialized — correct for bare impl)");
 
   const owner = await impl.owner();
   console.log(`  owner()    = ${owner}`);

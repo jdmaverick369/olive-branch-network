@@ -92,8 +92,11 @@ async function main() {
 
   const implVersion = await impl.version();
   console.log(`  V93_IMPL.version()             = "${implVersion}"`);
-  if (implVersion !== "9.3") hardStop(`V93_IMPL.version() is "${implVersion}" — expected "9.3". Wrong implementation address.`);
-  console.log("                                 PASS");
+  // Bare implementation has _disableInitializers() only — version is never written on the impl's
+  // own storage. Empty string confirms correct uninitialized state. Wrong bytecode or accidentally
+  // initialized impl would produce a non-empty value here.
+  if (implVersion !== "") hardStop(`V93_IMPL.version() is "${implVersion}" — expected "" (uninitialized bare impl). Wrong implementation address or initialize() was called on the impl.`);
+  console.log("                                 PASS (uninitialized — correct for bare impl)");
 
   const offeringGov = await offering.governance();
   console.log(`  TheOffering.governance()       = ${offeringGov}`);

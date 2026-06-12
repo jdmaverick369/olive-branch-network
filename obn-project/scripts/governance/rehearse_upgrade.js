@@ -169,10 +169,13 @@ async function main() {
     stakingOwner
   );
 
-  // V93_IMPL must report version "9.3" and must not be initialized by a privileged address.
+  // V93_IMPL must be uninitialized (version == "") and must not be owned by a privileged address.
+  // version is a storage variable set only by initialize() → "9.2" and migrateV93() → "9.3".
+  // A bare implementation never calls either; its storage is empty. Expect "".
+  // The real version check happens post-upgrade on the PROXY (section 3 below).
   const implV93 = await ethers.getContractAt("OBNStakingPools", V93_IMPL);
   const implVersion = await implV93.version();
-  identityOk &= check(implVersion === "9.3", 'V93_IMPL.version() == "9.3"', implVersion);
+  identityOk &= check(implVersion === "", 'V93_IMPL.version() == "" (uninitialized bare impl)', implVersion);
 
   const implOwner = await implV93.owner();
   const implOwnerIsPrivileged =
