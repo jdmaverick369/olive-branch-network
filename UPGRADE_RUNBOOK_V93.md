@@ -845,4 +845,282 @@ Or add the addresses to `.env` and run:
 npx hardhat run scripts/governance/verify_v93.js --network base
 ```
 
+---
+
+## Two-Auditor Verification Protocol
+
+**Rule:** Claude gathers and formats raw on-chain data. ChatGPT verifies raw values. Jack proceeds only after explicit PASS. No phase proceeds from summaries or confidence.
+
+**ChatGPT response format for each package:**
+
+```
+PACKAGE X VERIFICATION RESULT: PASS / FAIL
+
+1. <check> — PASS/FAIL — <reason if fail>
+2. <check> — PASS/FAIL — <reason if fail>
+...
+
+Decision:
+PASS TO NEXT PHASE
+or
+HARD STOP — DO NOT PROCEED
+Required correction: <exact issue>
+```
+
+**Operating rules:**
+- Submit one package at a time. Do not proceed until explicit PASS is returned.
+- If any field is missing, truncated, summarized, or replaced with "same as before" → FAIL (insufficient raw data).
+- For Package 3: the full raw hex payload is required. Decoded values alone are not sufficient.
+- Hash mismatch in Package 3 is an unconditional NO-GO regardless of decoded values.
+
+---
+
+### Package 1 — Deployments (Phases 1–4)
+
+Paste to ChatGPT after all contracts are deployed and before Phase 5 vault wiring begins.
+
+```
+REQUESTED DECISION: PASS TO NEXT PHASE / FAIL AND HARD STOP
+
+OBN v9.3 Deployment Verification — Package 1
+CURRENT COMMIT = <git rev-parse HEAD>
+
+KNOWN GOOD ADDRESSES (hardcoded — do not accept substitutes):
+  OBN_TOKEN        = 0x07e5efCD1B5fAE3f461bf913BBEE03a10A20C685
+  STAKING_PROXY    = 0x2C4Bd5B2a48a76f288d7F2DB23aFD3a03b9E7cD2
+  TIMELOCK         = 0x86396526286769ace21982E798Df5eef2389f51c
+  OPERATOR_SAFE    = 0x066e2FABb036deab7DC58bAde428F819AC3542DD
+  OLD_TREASURY     = 0x5C8a0aCfAD4528714076068f71a5ff2Ee06c3718
+  OLD_CHARITY_FUND = 0x398fE423a8b4FD9B40CADF8bc72448C95474455F
+
+NEWLY DEPLOYED:
+  V93_IMPL          = <address>
+  EXTENDING_OB_ADDR = <address>
+  OFFERING_ADDR     = <address>
+  ANNUAL_GOV_PROXY  = <address>
+  ANNUAL_GOV_IMPL   = <address>
+  LENS_PROXY        = <address>
+  LENS_IMPL         = <address>
+
+ON-CHAIN READS:
+  V93_IMPL.version()                           = <value>
+  V93_IMPL.owner()                             = <value>
+
+  EXTENDING_OB_ADDR.obn()                      = <value>
+  EXTENDING_OB_ADDR.timelockOwner()            = <value>
+  EXTENDING_OB_ADDR.governance()               = <value>
+
+  OFFERING_ADDR.obn()                          = <value>
+  OFFERING_ADDR.extendOliveBranch()            = <value>
+  OFFERING_ADDR.timelockOwner()                = <value>
+  OFFERING_ADDR.governance()                   = <value>
+
+  ANNUAL_GOV_PROXY.owner()                     = <value>
+  ANNUAL_GOV_PROXY.stakingPools()              = <value>
+  ANNUAL_GOV_PROXY.theOffering()               = <value>
+  ANNUAL_GOV_PROXY.extendOliveBranch()         = <value>
+  ANNUAL_GOV_PROXY.voteAdmin()                 = <value>
+  ANNUAL_GOV_PROXY.currentCycleId()            = <value>
+  ANNUAL_GOV_PROXY.maxBallotSize()             = <value>
+  ANNUAL_GOV_PROXY ERC1967 slot                = <value>
+  ANNUAL_GOV_IMPL.initialize() result          = <reverted / did not revert>
+
+  LENS_PROXY.owner()                           = <value>
+  LENS_PROXY.stakingPools()                    = <value>
+  LENS_PROXY ERC1967 slot                      = <value>
+  LENS_PROXY.getGlobalStats()                  = <value or reverted>
+  LENS_IMPL.initialize() result                = <reverted / did not revert>
+
+  STAKING_PROXY.version()                      = <value>
+  STAKING_PROXY.owner()                        = <value>
+
+EXPECTED VALUES:
+  V93_IMPL.version()                   = "9.3"
+  V93_IMPL.owner()                     = address(0) or non-privileged
+  EXTENDING_OB_ADDR.obn()              = OBN_TOKEN
+  EXTENDING_OB_ADDR.timelockOwner()    = TIMELOCK
+  EXTENDING_OB_ADDR.governance()       = address(0)
+  OFFERING_ADDR.obn()                  = OBN_TOKEN
+  OFFERING_ADDR.extendOliveBranch()    = EXTENDING_OB_ADDR
+  OFFERING_ADDR.timelockOwner()        = TIMELOCK
+  OFFERING_ADDR.governance()           = address(0)
+  ANNUAL_GOV_PROXY.owner()             = TIMELOCK
+  ANNUAL_GOV_PROXY.stakingPools()      = STAKING_PROXY
+  ANNUAL_GOV_PROXY.theOffering()       = OFFERING_ADDR
+  ANNUAL_GOV_PROXY.extendOliveBranch() = EXTENDING_OB_ADDR
+  ANNUAL_GOV_PROXY.voteAdmin()         = OPERATOR_SAFE
+  ANNUAL_GOV_PROXY.currentCycleId()    = 0
+  ANNUAL_GOV_PROXY.maxBallotSize()     = 100
+  ANNUAL_GOV_PROXY ERC1967 slot        = ANNUAL_GOV_IMPL
+  ANNUAL_GOV_IMPL.initialize()         = reverted
+  LENS_PROXY.owner()                   = TIMELOCK
+  LENS_PROXY.stakingPools()            = STAKING_PROXY
+  LENS_PROXY ERC1967 slot              = LENS_IMPL
+  LENS_PROXY.getGlobalStats()          = non-zero totalStaked (safe pre-upgrade call)
+  LENS_IMPL.initialize()               = reverted
+  STAKING_PROXY.version()              = "9.2"
+  STAKING_PROXY.owner()                = TIMELOCK
+```
+
+---
+
+### Package 2 — Vault wiring + fork rehearsal (Phase 5 + 6.0)
+
+Paste to ChatGPT after vault governance is wired and fork rehearsal passes. Must precede Timelock queue.
+
+```
+REQUESTED DECISION: PASS TO NEXT PHASE / FAIL AND HARD STOP
+
+OBN v9.3 Deployment Verification — Package 2
+CURRENT COMMIT = <git rev-parse HEAD>
+
+ADDRESSES CARRIED FROM PACKAGE 1 (do not re-derive):
+  OFFERING_ADDR     = <value from Package 1>
+  EXTENDING_OB_ADDR = <value from Package 1>
+  ANNUAL_GOV_PROXY  = <value from Package 1>
+  V93_IMPL          = <value from Package 1>
+  OPERATOR_SAFE     = 0x066e2FABb036deab7DC58bAde428F819AC3542DD
+  STAKING_PROXY     = 0x2C4Bd5B2a48a76f288d7F2DB23aFD3a03b9E7cD2
+
+VAULT GOVERNANCE WIRING (post Phase 5 execution):
+  OFFERING_ADDR.governance()     = <value>
+  EXTENDING_OB_ADDR.governance() = <value>
+
+PRE-UPGRADE SNAPSHOT (gathered now — used to verify Package 4):
+  STAKING_PROXY.version()           = <value>
+  STAKING_PROXY.owner()             = <value>
+  STAKING_PROXY.globalTotalStaked() = <value>
+  STAKING_PROXY.poolLength()        = <value>
+
+FORK REHEARSAL — full output of rehearse_upgrade.js:
+<paste complete script output here>
+
+CALLDATA (for Timelock queue):
+  OUTER_CALLDATA_TARGET = STAKING_PROXY
+  OUTER_CALLDATA_VALUE  = 0
+  MIGRATE_CALLDATA      = <full hex>
+  OUTER_CALLDATA        = <full hex>
+
+HASHES TO LOCK IN:
+  V93_IMPL_CODEHASH     = <value>
+  MIGRATE_CALLDATA_HASH = <value>
+  OUTER_CALLDATA_HASH   = <value>
+
+EXPECTED VALUES:
+  OFFERING_ADDR.governance()     = ANNUAL_GOV_PROXY
+  EXTENDING_OB_ADDR.governance() = ANNUAL_GOV_PROXY
+  STAKING_PROXY.version()        = "9.2"
+  STAKING_PROXY.owner()          = TIMELOCK
+  Rehearsal result               = REHEARSAL PASSED (all 10 checks)
+  MIGRATE_CALLDATA arg[0]        = OFFERING_ADDR
+  MIGRATE_CALLDATA arg[1]        = EXTENDING_OB_ADDR
+  MIGRATE_CALLDATA arg[2]        = OPERATOR_SAFE
+  OUTER_CALLDATA arg[0]          = V93_IMPL
+  OUTER_CALLDATA arg[1]          = MIGRATE_CALLDATA (inner bytes match)
+```
+
+---
+
+### Package 3 — Timelock queued event (Window 3, before 24h expires)
+
+Paste to ChatGPT after the Timelock `schedule` transaction is confirmed. Must precede execution.
+
+```
+REQUESTED DECISION: PASS TO NEXT PHASE / FAIL AND HARD STOP
+
+OBN v9.3 Deployment Verification — Package 3
+CURRENT COMMIT = <git rev-parse HEAD>
+
+LOCKED HASHES FROM PACKAGE 2 (do not accept new values):
+  MIGRATE_CALLDATA_HASH = <value from Package 2>
+  OUTER_CALLDATA_HASH   = <value from Package 2>
+
+TIMELOCK CallScheduled EVENT:
+  Transaction hash      = <tx hash>
+  Operation ID/hash     = <value>
+  Executable timestamp  = <unix timestamp — must be >= now + 24h>
+  target                = <value>
+  value                 = <value>
+  data (raw hex)        = <full payload hex>
+  predecessor           = <value>
+  salt                  = <value>
+  delay                 = <value in seconds>
+
+DECODED PAYLOAD:
+  outer function        = <upgradeToAndCall or other>
+  outer arg[0]          = <value>
+  outer arg[1] decoded  = <inner function name>
+  inner arg[0]          = <value>
+  inner arg[1]          = <value>
+  inner arg[2]          = <value>
+
+ON-CHAIN PAYLOAD HASH:
+  keccak256(data)       = <value>
+
+EXPECTED VALUES:
+  target                = STAKING_PROXY
+  value                 = 0
+  outer function        = upgradeToAndCall
+  outer arg[0]          = V93_IMPL
+  inner function        = migrateV93
+  inner arg[0]          = OFFERING_ADDR
+  inner arg[1]          = EXTENDING_OB_ADDR
+  inner arg[2]          = OPERATOR_SAFE
+  keccak256(data)       = OUTER_CALLDATA_HASH from Package 2
+
+HARD RULE: If keccak256(data) != OUTER_CALLDATA_HASH, NO-GO regardless of
+decoded values. A hash mismatch means the queued bytes differ from what was rehearsed.
+```
+
+---
+
+### Package 4 — Post-execution verification (Phase 6.3)
+
+Paste to ChatGPT immediately after the upgrade execution transaction is confirmed.
+
+```
+REQUESTED DECISION: PASS / FAIL
+
+OBN v9.3 Deployment Verification — Package 4
+CURRENT COMMIT = <git rev-parse HEAD>
+
+PRE-UPGRADE SNAPSHOT FROM PACKAGE 2 (reference values):
+  globalTotalStaked (pre) = <value from Package 2>
+  poolLength (pre)        = <value from Package 2>
+
+FINAL PRE-EXECUTION READ (gathered immediately before pressing execute):
+  STAKING_PROXY.version() = <value>
+
+UPGRADE TRANSACTION:
+  tx hash      = <value>
+  block number = <value>
+
+POST-UPGRADE ON-CHAIN READS:
+  STAKING_PROXY.version()             = <value>
+  STAKING_PROXY.upgradeBlock()        = <value>
+  STAKING_PROXY.treasury()            = <value>
+  STAKING_PROXY.charityFund()         = <value>
+  STAKING_PROXY.charityFundOperator() = <value>
+  STAKING_PROXY ERC1967 slot          = <value>
+  STAKING_PROXY.globalTotalStaked()   = <value>
+  STAKING_PROXY.poolLength()          = <value>
+
+NEGATIVE CHECKS:
+  STAKING_PROXY.treasury()    != OLD_TREASURY (0x5C8a0aC...)    = <true/false>
+  STAKING_PROXY.charityFund() != OLD_CHARITY_FUND (0x398fE4...) = <true/false>
+
+EXPECTED VALUES:
+  Final pre-execution version  = "9.2"
+  version() post               = "9.3"
+  upgradeBlock()               = <tx block number above>
+  treasury()                   = OFFERING_ADDR
+  charityFund()                = EXTENDING_OB_ADDR
+  charityFundOperator()        = OPERATOR_SAFE
+  ERC1967 slot                 = V93_IMPL
+  globalTotalStaked            = matches Package 2 snapshot exactly
+  poolLength                   = matches Package 2 snapshot exactly
+  treasury != OLD_TREASURY     = true
+  charityFund != OLD_CHARITY_FUND = true
+```
+
 **Expected outcome:** 5 implementation verifications pass, 3 proxy registrations submitted. `#readProxyContract` tab shows the correct ABI at each proxy address on Basescan.
