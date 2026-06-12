@@ -38,6 +38,11 @@ contract OBNStakingPools is
     uint256 public constant TREASURY_BPS     = 100;  // 1%
     uint256 public constant TOTAL_BPS        = 10000;
 
+    // ---------- Emission fallback ----------
+    // Applied once all defined phases are exhausted. Protocol continues at this
+    // rate until governance adds new phases via addPhase() or upgrades the contract.
+    uint256 public constant FALLBACK_EMISSION_BPS = 300; // 3%
+
     // ---------- Types ----------
     struct PoolInfo {
         address charityWallet;
@@ -369,12 +374,18 @@ contract OBNStakingPools is
         if (globalTotalStaked == 0) return 0;
         uint256 nowTs = block.timestamp;
         uint256 len = phases.length;
+        uint256 denom = TOTAL_BPS * (365 days);
         for (uint256 i = 0; i < len; i++) {
             Phase memory ph = phases[i];
             if (nowTs >= ph.start && nowTs < ph.end) {
-                uint256 denom = TOTAL_BPS * (365 days);
                 return Math.mulDiv(globalTotalStaked, ph.bps, denom);
             }
+        }
+        // Safety net: once all defined phases are exhausted the protocol continues
+        // at FALLBACK_EMISSION_BPS (3%) indefinitely. Governance can change the
+        // effective rate at any time by appending new phases via addPhase().
+        if (len > 0 && nowTs >= phases[len - 1].end) {
+            return Math.mulDiv(globalTotalStaked, FALLBACK_EMISSION_BPS, denom);
         }
         return 0;
     }
@@ -402,6 +413,18 @@ contract OBNStakingPools is
             uint256 dur = segEnd - segStart;
             total += Math.mulDiv(poolStake, ph.bps * dur, denom);
             cursor = segEnd;
+        }
+
+        // Safety net: once all defined phases are exhausted the protocol continues
+        // at FALLBACK_EMISSION_BPS (3%) indefinitely. Governance can change the
+        // effective rate at any time by appending new phases via addPhase().
+        if (cursor < t1) {
+            Phase memory lastPh = phases[len - 1];
+            uint256 fallbackStart = cursor > lastPh.end ? cursor : lastPh.end;
+            if (fallbackStart < t1) {
+                uint256 dur = t1 - fallbackStart;
+                total += Math.mulDiv(poolStake, FALLBACK_EMISSION_BPS * dur, denom);
+            }
         }
     }
 
