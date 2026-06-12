@@ -39,6 +39,11 @@ ANNUAL_GOV_PROXY     = 0x...
 ANNUAL_GOV_IMPL      = 0x...
 LENS_PROXY           = 0x...
 LENS_IMPL            = 0x...
+
+# Recorded after Phase 6.0 fork rehearsal — both auditors must independently verify:
+V93_IMPL_CODEHASH     = <keccak256 of V93_IMPL bytecode>
+MIGRATE_CALLDATA_HASH = <keccak256 of MIGRATE_CALLDATA>
+OUTER_CALLDATA_HASH   = <keccak256 of OUTER_CALLDATA>
 ```
 
 The six permanent addresses above are confirmed against mainnet. Both auditors must independently verify each new deployment address before Phase 3 begins.
@@ -400,28 +405,141 @@ cast call $EXTENDING_OB_ADDR "governance()(address)"
 
 Calling `startAnnualCycle` before vault wiring is complete is safe in terms of fund exposure (the vaults won't recognize governance), but it will produce a cycle that can never be executed. Starting a cycle before nonprofit approvals are complete will cause `startAnnualCycle` to revert mid-ballot. Both are operational errors that waste a Timelock-delayed cancelCycle transaction to recover from.
 
+### 5.3 No-touch rule — AnnualGovernance between Phase 5 and Phase 6
+
+Between vault wiring (Phase 5.2) and the staking upgrade (Phase 6), the system is partially assembled: vaults are wired but staking still runs v9.2. During this window:
+
+- **Do not call `startAnnualCycle`.**
+- **Do not submit any other AnnualGovernance transaction.**
+- **Read-only verification calls only.**
+
+The only purpose of Phase 5 completing before Phase 6 is to have governance wired so that verification in Phase 6.3 can confirm it. No governance action is appropriate until the full upgrade is verified complete.
+
 ---
 
 ## Phase 6 — Atomic staking proxy upgrade (upgradeToAndCall)
 
 This is the single most critical transaction. It bundles the upgrade and `migrateV93` in one atomic call. Splitting them is not safe (see section 7 of V93ForkMigration.test.js).
 
-### 6.1 Encode migrateV93 calldata
+**The danger is not a revert** — a revert leaves the proxy on v9.2 with no state change. **The danger is silent success with wrong calldata**: specifically the two vault addresses transposed in `migrateV93`, or empty inner calldata that upgrades the implementation but skips migration entirely. The four-window approach below is designed to prevent both.
+
+### 6.0 Fork rehearsal — Window 0
+
+Before encoding anything for the Timelock, run the exact final bytes against a live mainnet fork. This is the highest-confidence check: it proves the bytes do what you think before they are queued.
 
 ```bash
-cast calldata "migrateV93(address,address,address)" \
+FORK_MAINNET=true \
+V93_IMPL=$V93_IMPL \
+OFFERING_ADDR=$OFFERING_ADDR \
+EXTENDING_OB_ADDR=$EXTENDING_OB_ADDR \
+OPERATOR_SAFE=$OPERATOR_SAFE \
+npx hardhat run scripts/governance/rehearse_upgrade.js
+```
+
+The script:
+1. Verifies on-chain identity of each address (anti-swap check: `OFFERING_ADDR.extendOliveBranch()` must return `EXTENDING_OB_ADDR`)
+2. Encodes `MIGRATE_CALLDATA` and `OUTER_CALLDATA`
+3. Immediately decodes both and prints every argument for auditor verification
+4. Prints `keccak256` hash of each — **record these in the Address Registry below before proceeding**
+5. Impersonates the Timelock on the fork and executes the exact `OUTER_CALLDATA`
+6. Verifies all 8 post-upgrade invariants
+
+**[HARD STOP]** The rehearsal script exits non-zero or any of the 8 post-upgrade checks fails. Do not queue until the script completes with `REHEARSAL PASSED`.
+
+Both auditors must run the script independently and compare their printed `keccak256` hashes before either queues anything.
+
+> **Record in Address Registry after rehearsal passes:**
+> ```
+> MIGRATE_CALLDATA_HASH = <keccak256 from script output>
+> OUTER_CALLDATA_HASH   = <keccak256 from script output>
+> ```
+
+### 6.1 Encode calldata and double-decode (Window 2)
+
+After the fork rehearsal, encode the final calldata for the Timelock queue and independently verify it by decoding back to addresses:
+
+```bash
+# Encode inner calldata
+MIGRATE_CALLDATA=$(cast calldata "migrateV93(address,address,address)" \
   $OFFERING_ADDR \
   $EXTENDING_OB_ADDR \
-  $OPERATOR_SAFE
+  $OPERATOR_SAFE)
+
+# Decode inner — verify every argument
+cast calldata-decode "migrateV93(address,address,address)" $MIGRATE_CALLDATA
+# Expected:
+#   arg[0] = OFFERING_ADDR     ← newTreasury (TheOffering)
+#   arg[1] = EXTENDING_OB_ADDR ← newCharityFund (ExtendOliveBranch)
+#   arg[2] = OPERATOR_SAFE
+
+# Encode outer calldata
+OUTER_CALLDATA=$(cast calldata "upgradeToAndCall(address,bytes)" \
+  $V93_IMPL \
+  $MIGRATE_CALLDATA)
+
+# Decode outer — verify impl address and that inner bytes are present
+cast calldata-decode "upgradeToAndCall(address,bytes)" $OUTER_CALLDATA
+# Expected:
+#   arg[0] = V93_IMPL
+#   arg[1] = $MIGRATE_CALLDATA  (decode this again to re-verify the three addresses)
 ```
+
+Both auditors independently run these decode commands and compare output to the address registry. Hash the resulting calldata and compare to the hashes recorded after Phase 6.0:
+
+```bash
+cast keccak $MIGRATE_CALLDATA
+# Must match MIGRATE_CALLDATA_HASH from Address Registry
+
+cast keccak $OUTER_CALLDATA
+# Must match OUTER_CALLDATA_HASH from Address Registry
+```
+
+**[HARD STOP]** Any decoded address does not match the address registry.
+
+**[HARD STOP]** Computed keccak256 does not match the hash recorded after the fork rehearsal. The bytes are not identical — investigate before queueing.
 
 ### 6.2 Queue upgradeToAndCall via Timelock
 
 ```
-staking.upgradeToAndCall(V93_IMPL, <migrateV93 calldata>)
+target: STAKING_PROXY
+value:  0
+data:   OUTER_CALLDATA
 ```
 
+After queueing, read the `CallScheduled` event emitted by the Timelock (Window 3). Both auditors independently fetch the on-chain event data and decode it — do not rely on what the Safe UI shows:
+
+```bash
+# Fetch the CallScheduled event and decode the payload field
+cast calldata-decode "upgradeToAndCall(address,bytes)" <payload from event>
+# arg[0] must be V93_IMPL
+# arg[1] decode again as migrateV93 — must show OFFERING_ADDR, EXTENDING_OB_ADDR, OPERATOR_SAFE
+
+# Hash the payload and compare to OUTER_CALLDATA_HASH
+cast keccak <payload from event>
+# Must match OUTER_CALLDATA_HASH
+```
+
+**[HARD STOP]** The on-chain event payload decodes to anything other than expected. Do not execute — cancel the Timelock operation.
+
 ### 6.3 After delay: execute and verify upgrade
+
+Before pressing execute, confirm the pre-conditions one final time:
+
+```bash
+cast call $STAKING_PROXY "version()(string)"
+# Expected: "9.2" — confirms proxy is still on v9.2 and is the right proxy
+
+cast call $STAKING_PROXY "owner()(address)"
+# Expected: TIMELOCK
+
+cast call $OFFERING_ADDR "governance()(address)"
+# Expected: ANNUAL_GOV_PROXY — vault wiring from Phase 5 is in place
+
+cast call $EXTENDING_OB_ADDR "governance()(address)"
+# Expected: ANNUAL_GOV_PROXY
+```
+
+Execute. Then immediately verify:
 
 ```bash
 cast call $STAKING_PROXY "version()(string)"
@@ -445,6 +563,19 @@ cast call $STAKING_PROXY "charityFundOperator()(address)"
 **[HARD STOP]** `staking.treasury()` equals OLD_TREASURY or `staking.charityFund()` equals OLD_CHARITY_FUND — migration did not redirect fund flows to the new vaults.
 
 **[HARD STOP]** `upgradeBlock()` is 0 after the upgrade (migrateV93 did not run).
+
+#### Emergency response if any Phase 6.3 hard stop triggers
+
+`setGovernance(address(0))` goes through the Timelock and has a mandatory delay — it cannot be used as an instant pause. If a hard stop fires after execution, the correct response is:
+
+1. Stop all further phases immediately. Do not run Phase 7, 8, 9, or 10.
+2. Do not deploy the frontend pointing to new contract addresses.
+3. Do not transfer reserves (Phase 10).
+4. Do not call `startAnnualCycle`.
+5. Do not run `batchBootstrap` unless the failure is confirmed unrelated to migration state.
+6. Diagnose the exact mismatch against the fork rehearsal output from Phase 6.0.
+7. If vault governance is already wired (Phase 5 complete) and there is active risk, queue `setGovernance(address(0))` for both vaults via Timelock as a precautionary measure — but accept that it will take at least 24 hours to execute.
+8. Prepare a corrective Timelock action only after the root cause is fully understood.
 
 ### 6.4 Verify ERC1967 slot points to v9.3 implementation
 
