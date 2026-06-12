@@ -783,6 +783,93 @@ function parseLogs(iface, receipt) {
         }
       });
     });
+
+    // ─── 9. Emission fallback — 3% perpetual rate after all phases exhaust ───────
+    //
+    // Verifies that FALLBACK_EMISSION_BPS (300 / 3%) fires once all defined phases
+    // are exhausted, that the rate differs from the final phase rate (125 / 1.25%),
+    // and that governance can override it at any time via addPhase().
+
+    describe("9. Emission fallback — 3% perpetual rate post-phase-exhaustion", function () {
+      it("currentRewardsPerSecond equals FALLBACK_EMISSION_BPS (300) after last phase ends", async function () {
+        const lastPhase = await staking.phases(4);
+        await time.increaseTo(Number(lastPhase.end) + 1);
+
+        const rps = await staking.currentRewardsPerSecond();
+        expect(rps).to.be.gt(0n, "rewards dropped to zero after phases — fallback not firing");
+
+        const globalStaked = await staking.globalTotalStaked();
+        const FALLBACK_BPS = await staking.FALLBACK_EMISSION_BPS();
+        const denom = 10000n * BigInt(365 * 24 * 3600);
+
+        // mulDiv exact: allow ±1 wei
+        const expectedFallback   = (globalStaked * FALLBACK_BPS) / denom;
+        const expectedLastPhase  = (globalStaked * 125n) / denom;
+
+        expect(rps).to.be.gte(expectedFallback  - 1n);
+        expect(rps).to.be.lte(expectedFallback  + 1n);
+        expect(rps).to.not.equal(expectedLastPhase, "rate matches last-phase BPS (125) — should use FALLBACK (300)");
+      });
+
+      it("sumRewardAcrossPhases accrues at 3% per year strictly within the fallback period", async function () {
+        const lastPhase  = await staking.phases(4);
+        const afterEnd   = lastPhase.end + 1n;
+        const oneYear    = BigInt(365 * 24 * 3600);
+        const poolStake  = (await staking.getPoolInfo(0))[1];
+
+        const reward = await staking.sumRewardAcrossPhases(afterEnd, afterEnd + oneYear, poolStake);
+
+        // mulDiv(poolStake, 300 * 365days, 10000 * 365days) = poolStake * 300 / 10000
+        const FALLBACK_BPS = await staking.FALLBACK_EMISSION_BPS();
+        const TOTAL_BPS    = await staking.TOTAL_BPS();
+        const expected     = (poolStake * FALLBACK_BPS) / TOTAL_BPS;
+
+        expect(reward).to.be.gt(0n, "no reward in fallback period");
+        expect(reward).to.be.gte(expected - 1n);
+        expect(reward).to.be.lte(expected + 1n);
+      });
+
+      it("sumRewardAcrossPhases for window spanning phase boundary: phase part + fallback part", async function () {
+        const lastPhase  = await staking.phases(4);
+        const thirtyDays = BigInt(30 * 24 * 3600);
+        const winStart   = lastPhase.end - thirtyDays;
+        const winEnd     = lastPhase.end + thirtyDays;
+        const poolStake  = (await staking.getPoolInfo(0))[1];
+
+        const reward = await staking.sumRewardAcrossPhases(winStart, winEnd, poolStake);
+
+        const denom       = 10000n * BigInt(365 * 24 * 3600);
+        const phasePart   = (poolStake * 125n * thirtyDays) / denom;   // last phase: 1.25%
+        const fallbackPart = (poolStake * 300n * thirtyDays) / denom;  // fallback:   3%
+        const expected    = phasePart + fallbackPart;
+
+        expect(reward).to.be.gt(phasePart,      "fallback segment not added");
+        expect(reward).to.be.gte(expected - 2n); // ±2 for two separate mulDiv ops
+        expect(reward).to.be.lte(expected + 2n);
+      });
+
+      it("addPhase after exhaustion immediately overrides the fallback rate", async function () {
+        const lastPhase = await staking.phases(4);
+        await time.increaseTo(Number(lastPhase.end) + 1);
+
+        const rpsAtFallback = await staking.currentRewardsPerSecond();
+
+        const nowTs  = BigInt(await time.latest());
+        const newEnd = nowTs + BigInt(365 * 24 * 3600);
+        await staking.connect(timelockSigner).addPhase(nowTs, newEnd, 500n); // 5%
+
+        await time.increase(1);
+        const rpsNewPhase = await staking.currentRewardsPerSecond();
+
+        const globalStaked   = await staking.globalTotalStaked();
+        const denom          = 10000n * BigInt(365 * 24 * 3600);
+        const expectedNewBps = (globalStaked * 500n) / denom;
+
+        expect(rpsNewPhase).to.not.equal(rpsAtFallback, "addPhase did not override fallback rate");
+        expect(rpsNewPhase).to.be.gte(expectedNewBps - 1n);
+        expect(rpsNewPhase).to.be.lte(expectedNewBps + 1n);
+      });
+    });
   }
 );
 
@@ -936,5 +1023,119 @@ describe("7. Non-atomic upgrade gap risk (always runs)", function () {
     await expect(
       stakingV93.connect(staker).withdraw(0, preAmount + gapAmount)
     ).to.be.reverted;
+  });
+});
+
+// ─── 10. Emission fallback — isolated unit tests (always runs — no fork required) ──
+//
+// Proves FALLBACK_EMISSION_BPS logic in isolation using a fresh minimal deployment.
+// Does not require BASE_MAINNET_URL. Runs in plain `npx hardhat test`.
+
+describe("10. Emission fallback — minimal fixture (no fork required)", function () {
+
+  async function fallbackMinimalFixture() {
+    const [owner, charity, treasury, charityFund, staker] = await ethers.getSigners();
+
+    const OBNTokenF = await ethers.getContractFactory("OBNToken");
+    const token = await upgrades.deployProxy(OBNTokenF, [
+      owner.address,
+      ethers.parseEther("1000000000"),
+      owner.address, owner.address, owner.address, owner.address, owner.address,
+    ], { kind: "uups" });
+    await token.waitForDeployment();
+
+    const PoolsV92 = await ethers.getContractFactory("contracts/StakingPools.sol:OBNStakingPools");
+    const proxy = await upgrades.deployProxy(PoolsV92, [
+      await token.getAddress(), treasury.address, charityFund.address,
+    ], { kind: "uups" });
+    await proxy.waitForDeployment();
+    await proxy.addPool(charity.address);
+
+    const stakeAmount = ethers.parseEther("10000");
+    await token.transfer(staker.address, stakeAmount);
+    await token.setMinterOnce(await proxy.getAddress());
+    await token.connect(staker).approve(await proxy.getAddress(), ethers.MaxUint256);
+    await proxy.connect(staker).deposit(0, stakeAmount);
+
+    const EOBFactory = await ethers.getContractFactory("ExtendOliveBranch");
+    const extendOB = await EOBFactory.deploy(await token.getAddress(), owner.address);
+    await extendOB.waitForDeployment();
+
+    const TOFactory = await ethers.getContractFactory("TheOffering");
+    const theOffering = await TOFactory.deploy(
+      await token.getAddress(), await extendOB.getAddress(), owner.address
+    );
+    await theOffering.waitForDeployment();
+
+    const PoolsV93 = await ethers.getContractFactory("contracts/StakingPoolsV93.sol:OBNStakingPools");
+    const v93Impl = await PoolsV93.deploy();
+    await v93Impl.waitForDeployment();
+
+    const stakingV93 = PoolsV93.attach(await proxy.getAddress());
+    const migrateCalldata = stakingV93.interface.encodeFunctionData("migrateV93", [
+      await theOffering.getAddress(),
+      await extendOB.getAddress(),
+      owner.address,
+    ]);
+    await proxy.upgradeToAndCall(await v93Impl.getAddress(), migrateCalldata);
+
+    const lastPhase = await stakingV93.phases(4);
+    const poolStake = (await stakingV93.getPoolInfo(0))[1];
+    return { stakingV93, token, staker, stakeAmount, poolStake, lastPhase, owner };
+  }
+
+  it("sumRewardAcrossPhases returns 3%-per-year in a window fully inside the fallback period", async function () {
+    const { stakingV93, poolStake, lastPhase } = await loadFixture(fallbackMinimalFixture);
+
+    const afterEnd = lastPhase.end + 1n;
+    const oneYear  = BigInt(365 * 24 * 3600);
+
+    const reward = await stakingV93.sumRewardAcrossPhases(afterEnd, afterEnd + oneYear, poolStake);
+
+    // mulDiv(poolStake, 300 * 365days, 10000 * 365days) = poolStake * 300 / 10000
+    const FALLBACK_BPS = await stakingV93.FALLBACK_EMISSION_BPS();
+    const TOTAL_BPS    = await stakingV93.TOTAL_BPS();
+    const expected     = (poolStake * FALLBACK_BPS) / TOTAL_BPS;
+
+    expect(reward).to.be.gt(0n, "no reward in fallback period");
+    expect(reward).to.be.gte(expected - 1n);
+    expect(reward).to.be.lte(expected + 1n);
+  });
+
+  it("sumRewardAcrossPhases returns correct phase rate for a window inside an active phase", async function () {
+    const { stakingV93, poolStake, lastPhase } = await loadFixture(fallbackMinimalFixture);
+
+    // Phase 0: 10% BPS, window = 30 days starting right at phase 0 start
+    const phase0    = await stakingV93.phases(0);
+    const thirtyDays = BigInt(30 * 24 * 3600);
+    const reward    = await stakingV93.sumRewardAcrossPhases(phase0.start, phase0.start + thirtyDays, poolStake);
+
+    const denom      = 10000n * BigInt(365 * 24 * 3600);
+    const expected   = (poolStake * 1000n * thirtyDays) / denom;
+
+    expect(reward).to.be.gt(0n);
+    expect(reward).to.be.gte(expected - 1n);
+    expect(reward).to.be.lte(expected + 1n);
+    // Confirm fallback (300 bps) is NOT used — phase 0 uses 1000 bps
+    const fallbackExpected = (poolStake * 300n * thirtyDays) / denom;
+    expect(reward).to.not.equal(fallbackExpected, "fallback BPS used inside an active phase");
+  });
+
+  it("currentRewardsPerSecond uses FALLBACK_EMISSION_BPS (not last-phase BPS) after 10 years", async function () {
+    const { stakingV93, lastPhase } = await loadFixture(fallbackMinimalFixture);
+
+    await time.increaseTo(Number(lastPhase.end) + 1);
+    const rps = await stakingV93.currentRewardsPerSecond();
+
+    expect(rps).to.be.gt(0n, "currentRewardsPerSecond dropped to 0 — fallback not firing");
+
+    const globalStaked     = await stakingV93.globalTotalStaked();
+    const denom            = 10000n * BigInt(365 * 24 * 3600);
+    const expectedFallback = (globalStaked * 300n) / denom;  // 3%
+    const expectedLast     = (globalStaked * 125n) / denom;  // 1.25%
+
+    expect(rps).to.be.gte(expectedFallback - 1n);
+    expect(rps).to.be.lte(expectedFallback + 1n);
+    expect(rps).to.not.equal(expectedLast, "rps matches last-phase BPS — FALLBACK_EMISSION_BPS not used");
   });
 });
