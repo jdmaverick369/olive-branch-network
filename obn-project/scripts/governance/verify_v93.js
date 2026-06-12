@@ -57,12 +57,15 @@ function run(label, cmd) {
 
 async function verifyProxy(label, proxyAddr) {
   console.log(`\n▶ ${label} — Basescan proxy registration`);
-  const url =
-    `https://api.basescan.org/api` +
-    `?module=contract&action=verifyproxycontract` +
-    `&address=${proxyAddr}&apikey=${BASESCAN_API_KEY}`;
+  const url = `https://api.etherscan.io/v2/api?chainid=8453`;
+  const body = new URLSearchParams({
+    module:   "contract",
+    action:   "verifyproxycontract",
+    address:  proxyAddr,
+    apikey:   BASESCAN_API_KEY,
+  });
   try {
-    const res = await fetch(url);
+    const res = await fetch(url, { method: "POST", body });
     const json = await res.json();
     if (json.status === "1" || json.message === "OK") {
       console.log(`  ✅ Proxy registration submitted for ${proxyAddr}`);
