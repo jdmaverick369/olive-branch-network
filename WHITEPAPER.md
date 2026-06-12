@@ -14,7 +14,7 @@ This paper covers the canonical contract suite, hard-coded guarantees, token eco
 
 **Core idea:** OBN is built around **Proof-of-Contribution**: a model where users prove participation not only by staking capital, but by continuously helping route value toward real-world nonprofit causes. Every stake, claim, and nonprofit reward flow becomes part of an on-chain contribution layer.
 
-**Mechanism:** Users stake OBN in nonprofit-specific pools. Emissions split is hard-coded: 88% stakers, 10% nonprofit, 1% Charity Fund, 1% Treasury.
+**Mechanism:** Users stake OBN in nonprofit-specific pools. Emissions split is hard-coded: 88% stakers, 10% nonprofit direct, 1% ExtendOliveBranch (annual nonprofit distribution), 1% TheOffering (annual burn-or-give vote).
 
 **Focused impact model:** OBN will intentionally cap the protocol at 99 nonprofit pools. This keeps contribution focused, prevents dilution across too many organizations, and gives the network a clear, curated structure for long-term impact.
 
@@ -95,7 +95,7 @@ This does not require users to sacrifice yield. The protocol is designed so earn
 
 - 40% Liquidity — for DEX pool bootstrapping
 - 30% Airdrop — early distribution to community
-- 10% Charity Fund — dedicated for nonprofit programs, including pool bootstraps
+- 10% Charity Genesis Reserve — dedicated for nonprofit programs, including pool bootstraps
 - 10% Treasury — for protocol governance and operations
 - 10% Team — to the TeamVesting contract with cliff and vesting schedule
 
@@ -120,11 +120,11 @@ One-time distribution removes ambiguity about initial supply. A sole minter elim
 **Hard-coded reward split (BPS):**
 
 - STAKER_BPS = 8_800 → 88% to users
-- CHARITY_BPS = 1_000 → 10% to charity wallet
-- CHARITY_FUND_BPS = 100 → 1% to Charity Fund
-- TREASURY_BPS = 100 → 1% to Treasury
+- CHARITY_BPS = 1_000 → 10% to charity wallet (direct, per-action)
+- CHARITY_FUND_BPS = 100 → 1% to ExtendOliveBranch (v9.3)
+- TREASURY_BPS = 100 → 1% to TheOffering (v9.3)
 
-The 1% Charity Fund remains contractually routed to the `charityFund` address. Its long-term purpose is currently being refined and will be governed through protocol policy. It may support nonprofit-related operations, contribution infrastructure, transparency tooling, ecosystem campaigns, future bootstrap needs, or other public-good functions approved by governance.
+In v9.3, the `charityFund` address routes to **ExtendOliveBranch** and the `treasury` address routes to **TheOffering**. Both accumulate OBN throughout each annual cycle. AnnualGovernance resolves both balances through community votes at the end of each cycle. See Sections 3.4–3.6 for contract details.
 
 **Emission phases (initialized at deploy):**
 
@@ -157,7 +157,8 @@ Governance may append future phases contiguously; prior phases remain immutable.
 **Charity mechanics:**
 
 - 10% of rewards is minted per user action (claim, deposit, withdraw) directly to that pool's charityWallet
-- 1% Charity Fund accrues continuously to a dedicated address; its future policy use is currently being brainstormed and should be governed transparently
+- 1% accrues continuously to ExtendOliveBranch; community votes each cycle which approved nonprofit receives the accumulated balance
+- 1% accrues continuously to TheOffering; community votes each cycle to burn the balance or donate it to ExtendOliveBranch
 - No global TVL buffer; splits happen per-action for atomic execution
 
 #### 3.2.2 Pool Lifecycle Management
@@ -242,16 +243,16 @@ Governance may append future phases contiguously; prior phases remain immutable.
 
 **Observability:**
 
+In v9.3, analytics reads are surfaced through **OBNStakingLens** (Section 3.7) — the canonical read layer for frontends and dashboards. Lock and balance reads remain on the staking contract directly:
+
 - `pendingRewards(pid, user)` — Returns GROSS pending amount
 - `pendingRewardsMultiple(pids[], user)` — Returns pending amounts for multiple pools plus total
 - `unlockedBalance(pid, user)` — Returns balance minus lock
-- `getPoolAPR(pid)` — Returns user portion APR (88% of pool APY)
-- `getGlobalStats()` — Pool count, total TVL, unique stakers, RPS
-- `getPoolStats(pid)` — Charity wallet, total staked, unique stakers, per-share accumulator, last accrual time, all-time stats
-- `getUserPoolView(pid, user)` — Staked, locked, unlocked, reward debt, pending, active status
 - `stakeElapsed(user)` — Total staking seconds (persists across unstakes)
 - `charityContributedByUserInPool(pid, user)` — Total charity minted attributable to user in a pool
 - `totalCharityContributedByUser(user)` — Total charity minted attributable to user across all pools
+
+See Section 3.7 for the full OBNStakingLens view surface (getGlobalStats, getPoolStats, getUserPoolView, getPoolAPR, pendingCharityFor).
 
 ### 3.3 TeamVesting (linear, cliffed; non-upgradeable)
 
@@ -263,6 +264,69 @@ Governance may append future phases contiguously; prior phases remain immutable.
 
 **Safety:** Cannot rescue the vested token; only stray ERC20s.
 
+### 3.4 TheOffering (non-upgradeable)
+
+TheOffering is the protocol's annual burn-or-give vault. The v9.3 staking contract routes the 1% treasury emission slot to this address. OBN accumulates continuously throughout each annual cycle.
+
+At the end of each cycle, AnnualGovernance executes the community's Phase 1 vote outcome:
+
+- **BURN:** The entire accumulated balance is permanently burned, reducing total OBN supply.
+- **GIVE:** The entire accumulated balance is transferred to ExtendOliveBranch, increasing that cycle's nonprofit distribution.
+
+**Access control:** `timelockOwner` (Timelock) controls admin functions including `emergencySweep`. `governance` (AnnualGovernance) is the only address authorized to call `executeBurn()` or `executeGive()`. The `governance` address is initialized to `address(0)` and wired to AnnualGovernance via `setGovernance()` through the Timelock as part of the v9.3 Phase 5 deployment.
+
+**Non-upgradeable:** TheOffering is deployed as a standard contract with no proxy. The constructor arguments (`obn` token address, `timelockOwner`) are immutable. If replacement is required, the Timelock must deploy a new contract and call `setTreasury(newAddress)` on the staking proxy to re-route emissions.
+
+### 3.5 ExtendOliveBranch (non-upgradeable)
+
+ExtendOliveBranch is the protocol's annual nonprofit distribution vault. The v9.3 staking contract routes the 1% charityFund emission slot to this address. OBN accumulates continuously and may also receive a donation from TheOffering when the community votes GIVE in Phase 1.
+
+At the end of each cycle, AnnualGovernance executes the community's Phase 2 vote: the winning nonprofit pool's charityWallet receives ExtendOliveBranch's full accumulated balance in a single transaction.
+
+**Approved nonprofit registry:** ExtendOliveBranch maintains a whitelist of approved recipient addresses. `setApprovedNonprofit(address, bool)` is callable by the Timelock. As part of the Phase 5 deployment, all existing pool charity wallets are approved atomically in a single Timelock batch. New pools added after v9.3 are approved atomically alongside `addPool` via `schedule_addPool.js`.
+
+**Distribution:** `distributeFromGovernance(to, amount)` is callable only by the `governance` address. Any `to` address is valid when called through governance, because a community vote constitutes explicit selection.
+
+**Non-upgradeable:** Same immutability guarantee as TheOffering. Constructor args (`obn`, `timelockOwner`) are immutable.
+
+### 3.6 AnnualGovernance (UUPS proxy)
+
+AnnualGovernance coordinates the annual decision cycles for both TheOffering and ExtendOliveBranch. It is a UUPS upgradeable proxy owned by the Timelock.
+
+**Cycle structure:** Each annual cycle runs two sequential phases:
+
+1. **Phase 1 — Burn or Give:** Stakers vote on TheOffering's accumulated balance. The winning outcome is executed atomically: BURN calls `TheOffering.executeBurn()`; GIVE calls `TheOffering.executeGive(ExtendOliveBranch)`.
+
+2. **Phase 2 — Nonprofit Selection:** Stakers vote to select which approved nonprofit receives ExtendOliveBranch's full accumulated balance. The ballot is curated by the `voteAdmin` to at most `maxBallotSize` nominees. The winning pool's charityWallet receives the distribution via `ExtendOliveBranch.distributeFromGovernance()`.
+
+**Vote integrity:**
+
+- Voting power uses checkpointed OBN balances at cycle start (`block.number - 1`) to prevent same-block stake-and-vote manipulation.
+- `maxBallotSize = 100` ensures the full 99-pool model can always be represented in a single ballot.
+- Phase transitions are controlled by the `voteAdmin` (OperatorSafe), making cycle timing deliberate.
+
+**Execution:** AnnualGovernance calls TheOffering and ExtendOliveBranch directly. No additional multisig approval is required once a vote concludes — outcomes are enforced by contract.
+
+**Upgradability:** AnnualGovernance is a UUPS proxy. More sophisticated voting mechanics (delegation, quorum requirements, time-weighted voting) can be added through Timelock-governed upgrades as the DAO matures.
+
+**Parameters:** `owner` = Timelock; `voteAdmin` = OperatorSafe; `maxBallotSize` = 100; `currentCycleId` starts at 0.
+
+### 3.7 OBNStakingLens (UUPS proxy)
+
+OBNStakingLens is a dedicated read-only analytics contract. It is the canonical read layer for frontends, dashboards, and off-chain analytics tools. Consolidating analytics reads into a separate upgradeable proxy keeps the staking contract's external surface minimal and stable while analytics capabilities can evolve independently.
+
+**Key views:**
+
+- `getGlobalStats()` — Pool count, total TVL, unique stakers, current rewards-per-second
+- `getPoolStats(pid)` — Per-pool statistics: charity wallet, staked amount, staker count, accumulator state
+- `getUserPoolView(pid, user)` — User-specific staking data: balance, lock, pending rewards, active status
+- `getPoolAPR(pid)` — Current APR for the staker share of a pool
+- `pendingCharityFor(pid, user)` — Estimated pending nonprofit contribution attributable to a user
+
+**Access control:** `owner` (Timelock) controls upgrades. The Lens reads from the staking proxy as a view-only caller and holds no mutable state of its own.
+
+**Initialization:** `initialize(stakingPools, timelock)` — sets the staking proxy address and Timelock owner.
+
 ---
 
 ## 4) Token Economics & Long-Term Profitability
@@ -273,7 +337,7 @@ Let the phase APR basis be B (in BPS), global TVL G, and pool TVL P.
 
 **Yearly gross to the pool:** YearlyPoolGross = P × (B / 10,000)
 
-**Stakers receive 88% of that;** the rest routes to charity (10%), Charity Fund (1%), Treasury (1%).
+**Stakers receive 88% of that;** the rest routes to the nonprofit charityWallet (10%), ExtendOliveBranch (1%), TheOffering (1%).
 
 **Per-token APR simplifies to** 0.88 × (B / 10,000), **equal across pools** — independent of supply size.
 
@@ -289,17 +353,25 @@ Let the phase APR basis be B (in BPS), global TVL G, and pool TVL P.
 
 **Contribution history:** Proof-of-Contribution adds another form of protocol value: transparent evidence of public-good funding generated through user participation.
 
-### 4.3 Treasury minimalism (1%)
+### 4.3 Emission split minimalism (1% + 1%)
 
-Users get 88%, charities get 10%, the Charity Fund gets 1%, and the Treasury gets 1%.
+Users get 88%, direct nonprofit funding accounts for 10%, and the remaining 2% accrues to ExtendOliveBranch and TheOffering — each resolved annually through community governance votes.
 
-Capping Treasury at 1% keeps the protocol lean, reduces rent extraction risk, and keeps yields user/charity-centric.
+Keeping the governance-accumulated streams at 1% each ensures the protocol remains lean and user/charity-centric. Neither stream can be silently redirected; both are governed transparently on-chain through AnnualGovernance.
 
-### 4.4 Charity Fund policy status (1%)
+### 4.4 Annual governance streams (1% + 1%)
 
-The 1% Charity Fund remains part of the hard-coded reward split. Its purpose is currently being brainstormed and should remain flexible while the protocol matures.
+Both 1% emission streams are now governed by AnnualGovernance. Their purposes are no longer undefined.
 
-The key distinction is that the **10% charity allocation** routes directly and automatically to the selected nonprofit pool, while the **1% Charity Fund** is a governance-controlled resource intended to strengthen the overall nonprofit and contribution layer of the protocol.
+**ExtendOliveBranch (1% of emissions):** Accumulates OBN continuously throughout each annual cycle. At the end of each cycle, stakers vote in Phase 2 of AnnualGovernance to select which approved nonprofit pool receives the full accumulated balance. This gives the community a transparent, recurring mechanism to direct protocol-level resources toward specific causes.
+
+**TheOffering (1% of emissions):** Accumulates OBN continuously. At the end of each cycle, stakers vote in Phase 1 of AnnualGovernance to choose between two outcomes: BURN the balance (permanently deflationary) or GIVE it to ExtendOliveBranch (additive to that cycle's nonprofit distribution). This vote gives the community ongoing control over supply policy — a decision that becomes more significant as protocol TVL and annual accumulation grow.
+
+The full reward structure:
+
+- The **10% per-action allocation** routes directly and atomically to the selected pool's charityWallet on every claim.
+- The **1% ExtendOliveBranch stream** accumulates and is redistributed annually to a governance-selected nonprofit.
+- The **1% TheOffering stream** accumulates and is either burned or added to that year's nonprofit distribution.
 
 ### 4.5 Burnability (optional sink)
 
@@ -319,17 +391,19 @@ OBN is inflationary via staking, but voluntary burns (e.g., future app fees) can
 
 **Proof-of-Contribution:** Because charity distribution is tied to user actions and pool selection, the protocol can attribute contribution to specific users and nonprofit pools.
 
-### 5.2 Charity Fund (1%) vs. Charity Genesis Reserve (10%)
+### 5.2 Annual governance streams vs. Charity Genesis Reserve
 
-**Charity Genesis Reserve (10%):** One-time genesis allocation held by governance for programmatic uses, primarily initial pool bootstraps.
+**Charity Genesis Reserve (10% of initial supply):** One-time genesis allocation held by governance. Primarily earmarked for 1,000,000 OBN bootstrap stakes per nonprofit pool, targeting up to 99 pools.
 
-**Charity Fund (1% emissions):** Ongoing stream to a governance-controlled address. Its final long-term policy is currently being brainstormed. It remains available for nonprofit-related support, transparency infrastructure, contribution tooling, public-good campaigns, future bootstrap needs, or other governance-approved purposes.
+**ExtendOliveBranch (1% of ongoing emissions):** Accumulates continuously. AnnualGovernance Phase 2 votes select which approved nonprofit receives the full cycle balance. The protocol's annual directed-giving mechanism.
 
-This distinction is important:
+**TheOffering (1% of ongoing emissions):** Accumulates continuously. AnnualGovernance Phase 1 votes choose between burning the balance or donating it to ExtendOliveBranch. The protocol's annual supply-policy mechanism.
 
-- The **10% nonprofit reward share** is automatic and pool-specific.
-- The **10% Charity Genesis Reserve** is a one-time allocation from the initial supply.
-- The **1% Charity Fund** is an ongoing emissions stream whose role can evolve through governance.
+This three-way distinction is important:
+
+- The **10% nonprofit reward share** is automatic, per-action, and pool-specific.
+- The **10% Charity Genesis Reserve** is a one-time initial supply allocation for bootstrapping.
+- The **1% + 1% annual governance streams** are ongoing emissions resolved annually through community votes.
 
 ### 5.3 Permanent locks (bootstrap-only; increase-only)
 
@@ -398,7 +472,7 @@ At 99 pools, a 1,000,000 OBN bootstrap per nonprofit would require 99,000,000 OB
 
 **Mechanism:**
 
-1. Governance or the authorized Charity Fund executor calls `charityFundBootstrap(pid, amount, beneficiary)` or uses `depositForWithLock(pid, amount, beneficiary)` where applicable.
+1. Governance or the authorized executor (the `charityFund` address, set to ExtendOliveBranch in v9.3) calls `charityFundBootstrap(pid, amount, beneficiary)` or uses `depositForWithLock(pid, amount, beneficiary)` where applicable.
 2. The bootstrap OBN is staked and permanently locked for that nonprofit's pool/beneficiary.
 3. The lock prevents withdrawal of the seeded principal, eliminating immediate dump risk while the position earns yield continuously.
 4. The nonprofit benefits from both the staker-share yield on its locked bootstrap position and the pool's 10% charity allocation routed to the charityWallet.
@@ -448,10 +522,10 @@ Upgrades require `_authorizeUpgrade` (owner).
 - Add pools (`addPool(charityWallet)`)
 - Maintain the 99-pool curation policy
 - Execute bootstrap stakes from the Charity Genesis Reserve or authorized funding source
-- Define long-term Charity Fund policy
+- Manage AnnualGovernance cycle timing and ballot curation (voteAdmin role)
 - Append future phases contiguously (`addPhase`)
 - Shutdown or remove pools
-- Spend policies for Treasury & Charity Fund (with transparency reports)
+- Spending and usage reporting for TheOffering and ExtendOliveBranch
 - Standards for nonprofit onboarding, delisting, replacement, and migration
 
 ### 7.3 Governance and the 99-pool cap
@@ -460,13 +534,30 @@ The 99-pool cap should be treated as a foundational policy commitment of the pro
 
 Governance may manage which nonprofits are included, but the default assumption should be that OBN remains capped at 99 nonprofit pools to preserve focused impact. If governance ever proposes expanding beyond 99, that decision should require clear public justification, community review, and a transparent vote.
 
-### 7.4 Governance and the Charity Fund
+### 7.4 AnnualGovernance
 
-The 1% Charity Fund's long-term purpose is intentionally not finalized in this version of the whitepaper.
+AnnualGovernance is the on-chain mechanism for OBN's recurring community decisions. It replaces the prior placeholder of undefined Charity Fund policy with defined, contract-enforced governance cycles.
 
-This gives the protocol room to learn from real-world usage before permanently defining the fund's role. Potential uses should be evaluated based on whether they strengthen the nonprofit layer, improve transparency, increase contribution visibility, support users, or advance OBN's Proof-of-Contribution mission.
+**Cycle structure:**
 
-Any Charity Fund policy should be disclosed publicly and eventually governed through the DAO.
+Each cycle begins when the voteAdmin opens it. Phase 1 and Phase 2 run sequentially.
+
+- **Phase 1 (Burn or Give):** Stakers vote on TheOffering's accumulated balance. BURN permanently reduces supply. GIVE transfers the balance to ExtendOliveBranch, increasing that cycle's nonprofit distribution.
+- **Phase 2 (Nonprofit selection):** Stakers vote to select which approved nonprofit pool receives ExtendOliveBranch's full accumulated balance. Nominees are drawn from the whitelist maintained in ExtendOliveBranch via `setApprovedNonprofit`.
+
+**Vote integrity:**
+
+- Voting power is derived from checkpointed OBN balances at cycle start, preventing same-block stake-then-vote manipulation.
+- The ballot is capped at `maxBallotSize = 100`, ensuring the full 99-pool model always fits.
+- Phase transitions are controlled by the voteAdmin so cycles are deliberate and not rushed.
+
+**Execution:**
+
+AnnualGovernance calls `TheOffering.executeBurn()`, `TheOffering.executeGive()`, or `ExtendOliveBranch.distributeFromGovernance()` directly. No additional multisig approval is required once a vote concludes — the outcome is enforced by the contract.
+
+**Upgradability:**
+
+AnnualGovernance is a UUPS proxy. The Timelock can upgrade it to support more sophisticated voting mechanics (delegation, quorum requirements, time-weighted power) as the DAO matures.
 
 ---
 
@@ -504,7 +595,7 @@ Appending phases centralizes some discretion; timelock + DAO voting mitigates.
 
 The 99-pool model limits breadth in favor of depth, focus, and measurable contribution.
 
-The Charity Fund remains flexible while its best long-term purpose is determined.
+AnnualGovernance resolves TheOffering and ExtendOliveBranch balances through transparent community votes each cycle, replacing undefined governance reserves with accountable on-chain decisions.
 
 ---
 
@@ -520,8 +611,12 @@ The Charity Fund remains flexible while its best long-term purpose is determined
 
 ### 9.2 Views
 
+**OBNStakingLens (canonical analytics read layer):**
 - getGlobalStats, getPoolStats, getUserPoolView
-- pendingRewards, pendingRewardsMultiple, getPoolAPR, pendingCharityFor
+- getPoolAPR, pendingCharityFor
+
+**OBNStakingPools:**
+- pendingRewards, pendingRewardsMultiple
 - unlockedBalance, stakeElapsed, isGloballyStaked
 - charityContributedByUserInPool, totalCharityContributedByUser
 
@@ -540,8 +635,9 @@ Future dashboards may show:
 - active stakers per pool
 - currently staked OBN per pool
 - charity emissions over time
-- Charity Fund inflows and outflows
-- Treasury inflows and outflows
+- TheOffering accumulation, burn history, and give history by cycle
+- ExtendOliveBranch accumulation and nonprofit distribution history by cycle
+- AnnualGovernance vote results by cycle
 
 These reports should help users understand not only what they earned, but what their participation helped generate.
 
@@ -554,7 +650,7 @@ OBN should publish periodic public reports covering:
 - nonprofit pool status
 - pool additions, removals, or migrations
 - direct charity distributions
-- Charity Fund balances and usage
+- TheOffering and ExtendOliveBranch balances, accumulation, and usage by cycle
 - Treasury balances and usage
 - Proof-of-Contribution metrics
 
@@ -592,8 +688,8 @@ OBN is designed so users do not need to choose between earning and giving. Both 
 
 - 88% stakers
 - 10% selected nonprofit pool
-- 1% Charity Fund
-- 1% Treasury
+- 1% ExtendOliveBranch (annual nonprofit distribution)
+- 1% TheOffering (annual burn-or-give vote)
 
 **Voluntary burn:** Available via burn for future sinks.
 
@@ -619,7 +715,7 @@ OBN is designed so users do not need to choose between earning and giving. Both 
 - Build Proof-of-Contribution dashboards
 - Improve nonprofit reporting pages
 - Continue curating toward the 99-pool model
-- Refine Charity Fund policy
+- Launch AnnualGovernance first cycle once DAO voting is live
 - Produce educational media
 - Onboard additional nonprofits
 - Explore partnerships
@@ -632,7 +728,7 @@ OBN is designed so users do not need to choose between earning and giving. Both 
 
 - Deploy DAO and pass governance to the community
 - Transfer upgrade authority through timelock governance
-- Ratify long-term Charity Fund policy
+- Transfer AnnualGovernance voteAdmin to DAO-controlled address as governance matures
 - Maintain the 99-pool nonprofit network
 - Update frontend with DAO features
 - Expand contribution reputation and reporting tools
@@ -725,7 +821,7 @@ OBN aligns self-interest with public good: compelling user yields, credible nonp
 
 With Proof-of-Contribution, OBN becomes more than a staking protocol. It becomes a transparent contribution network where every stake can help fund a real-world cause and every claim can leave an on-chain record of support.
 
-The 99-pool cap gives the protocol focus. The hard-coded reward split gives it credibility. The Charity Fund gives governance flexibility while its long-term purpose is refined. The contribution layer gives users something deeper than yield alone: a visible record of participation in a network designed to do well by doing good.
+The 99-pool cap gives the protocol focus. The hard-coded reward split gives it credibility. AnnualGovernance transforms the 2% governance streams from undefined reserves into recurring community decisions — annually choosing between deflationary burns and nonprofit distributions, and selecting which cause receives that year's accumulated resources. The contribution layer gives users something deeper than yield alone: a visible record of participation in a network designed to do well by doing good.
 
 ---
 
@@ -738,6 +834,11 @@ The 99-pool cap gives the protocol focus. The hard-coded reward split gives it c
 | **OBNStakingPools (v9.2 Impl)** | Implementation | [0xdbeFe63a1F0ca12EAeFCDF48f1ABf0ACf14EfB48](https://basescan.org/address/0xdbeFe63a1F0ca12EAeFCDF48f1ABf0ACf14EfB48#code) | [Verified ✅](https://basescan.org/address/0xdbeFe63a1F0ca12EAeFCDF48f1ABf0ACf14EfB48#code) |
 | **TeamVesting** | Vesting (non-upgradeable) | [0x9428Edd912224778d84D762ebCDA52e1c829aB8d](https://basescan.org/address/0x9428Edd912224778d84D762ebCDA52e1c829aB8d) | [View](https://basescan.org/address/0x9428Edd912224778d84D762ebCDA52e1c829aB8d) |
 | **OBN Impact NFT** | ERC-721 | [0xB66F67444b09f509D72d832567C2df84Edeb80F8](https://basescan.org/address/0xB66F67444b09f509D72d832567C2df84Edeb80F8) | [Verified ✅](https://basescan.org/address/0xB66F67444b09f509D72d832567C2df84Edeb80F8) |
+| **StakingPoolsV93 (v9.3 Impl)** | Implementation | Pending deployment | — |
+| **TheOffering** | Accumulator (non-upgradeable) | Pending deployment | — |
+| **ExtendOliveBranch** | Accumulator (non-upgradeable) | Pending deployment | — |
+| **AnnualGovernance** | Governance (UUPS Proxy) | Pending deployment | — |
+| **OBNStakingLens** | Analytics Read Layer (UUPS Proxy) | Pending deployment | — |
 
 **Network:** Base Mainnet (Chain ID: 8453)
 
@@ -745,12 +846,14 @@ The 99-pool cap gives the protocol focus. The hard-coded reward split gives it c
 
 - OBNToken and OBNStakingPools use UUPS proxy pattern for governance-controlled upgrades
 - TeamVesting is non-upgradeable (immutable schedule)
-- All proxy contracts use timelock for governance safety
+- TheOffering and ExtendOliveBranch are non-upgradeable by design
+- All proxy contracts use Timelock for governance safety
+- v9.3 contract addresses will be populated after deployment and Basescan verification
 
 ---
 
 **Version:** 9.3 Proof-of-Contribution  
 **Date:** May 2026  
-**Last Updated:** May 26, 2026  
+**Last Updated:** June 11, 2026  
 
 **Canonical Repository:** [github.com/jdmaverick369/olive-branch-network](https://github.com/jdmaverick369/olive-branch-network)

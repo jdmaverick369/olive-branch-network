@@ -30,8 +30,8 @@ When you stake OBN in a nonprofit pool, the protocol continuously mints rewards 
 |-----------|-------|---------|
 | You | 88% | Your yield for participating |
 | Nonprofit | 10% | Direct funding to the selected nonprofit wallet |
-| Charity Fund | 1% | Governance-controlled fund; long-term purpose under active review |
-| Treasury | 1% | Protocol development, operations, and sustainability |
+| ExtendOliveBranch | 1% | Accumulates throughout the year; AnnualGovernance votes each cycle which approved nonprofit receives the full balance |
+| TheOffering | 1% | Accumulates throughout the year; AnnualGovernance votes each cycle to burn the balance or donate it to ExtendOliveBranch |
 
 This is not a traditional donation flow. It is a programmable funding mechanism.
 
@@ -104,15 +104,19 @@ The 10% Charity Genesis Reserve equals **100,000,000 OBN** out of the initial 1,
 
 ---
 
-## Charity Fund Status
+## Annual Governance
 
-The protocol still routes **1% of staking emissions to the Charity Fund**.
+OBN's two 1% emission streams accumulate throughout each cycle and are resolved by community governance votes.
 
-The Charity Fund remains a governance-controlled address in the protocol's reward split. However, its long-term purpose is currently being refined.
+**TheOffering** receives 1% of all staking emissions. Each annual cycle, stakers vote on one outcome:
+- **Burn** — the accumulated OBN is permanently burned, reducing supply
+- **Give** — the accumulated OBN is transferred to ExtendOliveBranch for that cycle's nonprofit distribution
 
-The Charity Fund may eventually support activities such as nonprofit verification, onboarding support, transparency infrastructure, public-good campaigns, pool maintenance, contribution analytics, or other governance-approved uses that strengthen the Proof-of-Contribution ecosystem.
+**ExtendOliveBranch** receives 1% of all staking emissions, plus any donation from TheOffering when stakers vote to give. Each cycle, stakers vote to choose which approved nonprofit pool receives ExtendOliveBranch's full accumulated balance.
 
-Until finalized, the important point is simple: the 1% Charity Fund remains part of the protocol design, but its future role should be defined carefully so it supports the network without diluting the direct 10% nonprofit funding mechanism.
+Both votes run through **AnnualGovernance** — an on-chain governance contract owned by the Timelock that manages each annual cycle. Voting power is based on checkpointed OBN balances to prevent last-minute manipulation.
+
+This mechanism is fully on-chain and part of the v9.3 protocol upgrade.
 
 ---
 
@@ -173,6 +177,8 @@ Because rewards are split automatically, every emission phase supports three out
 | **OBN Impact NFT** | ERC-721 | [0xB66F67444b09f509D72d832567C2df84Edeb80F8](https://basescan.org/address/0xB66F67444b09f509D72d832567C2df84Edeb80F8) | [Verified](https://basescan.org/address/0xB66F67444b09f509D72d832567C2df84Edeb80F8) |
 
 OBNToken and OBNStakingPools use the UUPS proxy pattern with governance-controlled upgrades. TeamVesting is non-upgradeable by design.
+
+**v9.3 Upgrade (Pending Deployment):** StakingPoolsV93 (implementation), TheOffering, ExtendOliveBranch, AnnualGovernance, and OBNStakingLens are pending deployment. Addresses will be added to this table after deployment and Basescan verification.
 
 ---
 
