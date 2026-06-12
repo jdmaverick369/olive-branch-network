@@ -102,7 +102,7 @@ async function main() {
   console.log("  EXTENDING_OB_ADDR :", EXTENDING_OB_ADDR);
   console.log("  OPERATOR_SAFE     :", OPERATOR_SAFE);
 
-  const staking = await ethers.getContractAt("OBNStakingPools", STAKING_PROXY);
+  const staking = await ethers.getContractAt("contracts/StakingPoolsV93.sol:OBNStakingPools", STAKING_PROXY);
 
   // ── Section 1: On-chain contract identity ────────────────────────────────────
   console.log("\n─ 1. Contract identity verification (anti-swap) ─────────");
@@ -173,7 +173,7 @@ async function main() {
   // version is a storage variable set only by initialize() → "9.2" and migrateV93() → "9.3".
   // A bare implementation never calls either; its storage is empty. Expect "".
   // The real version check happens post-upgrade on the PROXY (section 3 below).
-  const implV93 = await ethers.getContractAt("OBNStakingPools", V93_IMPL);
+  const implV93 = await ethers.getContractAt("contracts/StakingPoolsV93.sol:OBNStakingPools", V93_IMPL);
   const implVersion = await implV93.version();
   identityOk &= check(implVersion === "", 'V93_IMPL.version() == "" (uninitialized bare impl)', implVersion);
 

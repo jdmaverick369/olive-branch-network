@@ -17,7 +17,7 @@ async function main() {
   console.log(`Deployer: ${deployer.address}`);
   console.log(`Network:  ${hre.network.name}\n`);
 
-  const Factory = await hre.ethers.getContractFactory("OBNStakingPools");
+  const Factory = await hre.ethers.getContractFactory("contracts/StakingPoolsV93.sol:OBNStakingPools");
   console.log("Deploying StakingPoolsV93...");
   const impl = await Factory.deploy();
   await impl.waitForDeployment();

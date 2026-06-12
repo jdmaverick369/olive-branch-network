@@ -23,8 +23,9 @@ const { ethers } = require("hardhat");
 const crypto = require("crypto");
 const minimist = require("minimist");
 
-const TIMELOCK = "0x86396526286769ace21982E798Df5eef2389f51c";
-const ZERO     = "0x0000000000000000000000000000000000000000";
+const TIMELOCK   = "0x86396526286769ace21982E798Df5eef2389f51c";
+const OBN_TOKEN  = "0x07e5efCD1B5fAE3f461bf913BBEE03a10A20C685";
+const ZERO       = "0x0000000000000000000000000000000000000000";
 
 const VAULT_ABI = [
   "function setGovernance(address newGovernance) external",
@@ -40,7 +41,10 @@ const EXTEND_ABI = [
   "function approvedNonprofit(address) view returns (bool)",
 ];
 
-const GOV_ABI = ["function owner() view returns (address)"];
+const GOV_ABI = [
+  "function owner() view returns (address)",
+  "function obn()   view returns (address)",
+];
 
 const STAKING_ABI = [
   "function poolLength() view returns (uint256)",
@@ -115,6 +119,11 @@ async function main() {
   const govOwner = await annualGov.owner();
   console.log(`  AnnualGovernance.owner()          = ${govOwner}`);
   if (!addrEq(govOwner, TIMELOCK)) hardStop(`AnnualGovernance.owner() is ${govOwner} — expected ${TIMELOCK}. Do not wire governance to a proxy not owned by Timelock.`);
+  console.log("                                    PASS");
+
+  const govObn = await annualGov.obn();
+  console.log(`  AnnualGovernance.obn()            = ${govObn}`);
+  if (!addrEq(govObn, OBN_TOKEN)) hardStop(`AnnualGovernance.obn() is ${govObn} — expected OBN_TOKEN ${OBN_TOKEN}. Wrong governance proxy or wrong OBN token wired.`);
   console.log("                                    PASS\n");
 
   // ── Collect nonprofit approvals ────────────────────────────────────────────

@@ -802,7 +802,7 @@ Both auditors independently verify each row. Mark only when both agree.
 | # | Condition |
 |---|---|
 | 1 | OZ upgrades validator does not pass on both UUPS contracts |
-| 2 | `V93_IMPL.version()` is not "9.3" |
+| 2 | `V93_IMPL.version()` returns any non-empty string (bare impl must return `""`) |
 | 3 | `V93_IMPL.owner()` returns a privileged address |
 | 4 | `AnnualGovernance` proxy owner is not Timelock |
 | 5 | AnnualGovernance ERC1967 slot does not contain ANNUAL_GOV_IMPL |
@@ -818,8 +818,10 @@ Both auditors independently verify each row. Mark only when both agree.
 | 14 | `NEXT_PUBLIC_LENS_CONTRACT` is set to LENS_IMPL instead of LENS_PROXY |
 | 14b | `NEXT_PUBLIC_GOVERNANCE_CONTRACT` is set to ANNUAL_GOV_IMPL instead of ANNUAL_GOV_PROXY |
 | 15 | `startAnnualCycle` is called before both vaults return `governance() == ANNUAL_GOV_PROXY` |
+| 15b | `startAnnualCycle` is called on the same day as the upgrade. Pre-upgrade stakers have no post-upgrade checkpoint at snapshotBlock = upgradeBlock - 1, so all pre-upgrade stakers will show zero voting power for that cycle. Do not start the first governance cycle until Package 4 PASS, `STAKING_PROXY.upgradeBlock()` is nonzero, and current block > upgradeBlock + 1. |
 | 16 | `startAnnualCycle` is called before all intended nonprofit addresses are approved in ExtendOliveBranch |
 | 17 | Either auditor cannot independently reproduce a required on-chain value |
+| 18 | Frontend displays `Lens.pendingCharityFor(pid)` as live pending charity. `charityAccrued` has not been incremented since v9.2; this value is a frozen snapshot. Use `totalCharityMintedByPool(pid)` for lifetime pool charity or the ExtendOliveBranch OBN balance for vault-level funds awaiting governance. |
 
 ---
 
@@ -917,6 +919,7 @@ ON-CHAIN READS:
   OFFERING_ADDR.timelockOwner()                = <value>
   OFFERING_ADDR.governance()                   = <value>
 
+  ANNUAL_GOV_PROXY.obn()                       = <value>
   ANNUAL_GOV_PROXY.owner()                     = <value>
   ANNUAL_GOV_PROXY.stakingPools()              = <value>
   ANNUAL_GOV_PROXY.theOffering()               = <value>
@@ -937,7 +940,7 @@ ON-CHAIN READS:
   STAKING_PROXY.owner()                        = <value>
 
 EXPECTED VALUES:
-  V93_IMPL.version()                   = "9.3"
+  V93_IMPL.version()                   = "" (empty string — bare impl; version is only set on the proxy after migrateV93 runs)
   V93_IMPL.owner()                     = address(0) or non-privileged
   EXTENDING_OB_ADDR.obn()              = OBN_TOKEN
   EXTENDING_OB_ADDR.timelockOwner()    = TIMELOCK
@@ -946,6 +949,7 @@ EXPECTED VALUES:
   OFFERING_ADDR.extendOliveBranch()    = EXTENDING_OB_ADDR
   OFFERING_ADDR.timelockOwner()        = TIMELOCK
   OFFERING_ADDR.governance()           = address(0)
+  ANNUAL_GOV_PROXY.obn()               = OBN_TOKEN
   ANNUAL_GOV_PROXY.owner()             = TIMELOCK
   ANNUAL_GOV_PROXY.stakingPools()      = STAKING_PROXY
   ANNUAL_GOV_PROXY.theOffering()       = OFFERING_ADDR
