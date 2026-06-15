@@ -175,16 +175,19 @@ Because rewards are split automatically, every emission phase supports three out
 | **OBNStakingPools (v9.2 Impl)** | Implementation | [0xdbeFe63a1F0ca12EAeFCDF48f1ABf0ACf14EfB48](https://basescan.org/address/0xdbeFe63a1F0ca12EAeFCDF48f1ABf0ACf14EfB48#code) | [Verified](https://basescan.org/address/0xdbeFe63a1F0ca12EAeFCDF48f1ABf0ACf14EfB48#code) |
 | **TeamVesting** | Vesting (non-upgradeable) | [0x9428Edd912224778d84D762ebCDA52e1c829aB8d](https://basescan.org/address/0x9428Edd912224778d84D762ebCDA52e1c829aB8d) | [View](https://basescan.org/address/0x9428Edd912224778d84D762ebCDA52e1c829aB8d) |
 | **OBN Impact NFT** | ERC-721 | [0xB66F67444b09f509D72d832567C2df84Edeb80F8](https://basescan.org/address/0xB66F67444b09f509D72d832567C2df84Edeb80F8) | [Verified](https://basescan.org/address/0xB66F67444b09f509D72d832567C2df84Edeb80F8) |
+| **StakingPoolsV93 (v9.3 Impl)** | Implementation | [0x8ae630a14254Fd9632C505fbdeB7f104f0b9844E](https://basescan.org/address/0x8ae630a14254Fd9632C505fbdeB7f104f0b9844E#code) | [Verified](https://basescan.org/address/0x8ae630a14254Fd9632C505fbdeB7f104f0b9844E#code) |
+| **TheOffering** | Accumulator (non-upgradeable) | [0xc75B2a5C7B8F88327D44C223769cFa19cc93E341](https://basescan.org/address/0xc75B2a5C7B8F88327D44C223769cFa19cc93E341) | [Verified](https://basescan.org/address/0xc75B2a5C7B8F88327D44C223769cFa19cc93E341) |
+| **ExtendOliveBranch** | Accumulator (non-upgradeable) | [0xE1BbfAf0552ACC183579a3D172e002adF0c66d8B](https://basescan.org/address/0xE1BbfAf0552ACC183579a3D172e002adF0c66d8B) | [Verified](https://basescan.org/address/0xE1BbfAf0552ACC183579a3D172e002adF0c66d8B) |
+| **AnnualGovernance** | Governance (UUPS Proxy) | [0x1135d5fEA8098b09b4ED3AFbfFDc7B248359D270](https://basescan.org/address/0x1135d5fEA8098b09b4ED3AFbfFDc7B248359D270) | [Verified](https://basescan.org/address/0x1135d5fEA8098b09b4ED3AFbfFDc7B248359D270) |
+| **OBNStakingLens** | Analytics Read Layer (UUPS Proxy) | [0x2ae4df523040c0245a6F84342E4B06850c5bdb9b](https://basescan.org/address/0x2ae4df523040c0245a6F84342E4B06850c5bdb9b) | [Verified](https://basescan.org/address/0x2ae4df523040c0245a6F84342E4B06850c5bdb9b) |
 
-OBNToken and OBNStakingPools use the UUPS proxy pattern with governance-controlled upgrades. TeamVesting is non-upgradeable by design.
-
-**v9.3 Upgrade (Pending Deployment):** StakingPoolsV93 (implementation), TheOffering, ExtendOliveBranch, AnnualGovernance, and OBNStakingLens are pending deployment. Addresses will be added to this table after deployment and Basescan verification.
+OBNToken and OBNStakingPools use the UUPS proxy pattern with governance-controlled upgrades. TeamVesting is non-upgradeable by design. TheOffering and ExtendOliveBranch are non-upgradeable by design. v9.3 upgrade completed June 14, 2026.
 
 ---
 
 ## Links
 
-- **Whitepaper:** [WHITEPAPER.md](WHITEPAPER.md)
+- **Whitepaper:** [whitepaper.md](whitepaper.md)
 - **Base Mainnet Contracts:** See Appendix B of the Whitepaper
 - **Website:** [olivebranch.network](https://olivebranch.network)
 

@@ -834,11 +834,11 @@ The 99-pool cap gives the protocol focus. The hard-coded reward split gives it c
 | **OBNStakingPools (v9.2 Impl)** | Implementation | [0xdbeFe63a1F0ca12EAeFCDF48f1ABf0ACf14EfB48](https://basescan.org/address/0xdbeFe63a1F0ca12EAeFCDF48f1ABf0ACf14EfB48#code) | [Verified ✅](https://basescan.org/address/0xdbeFe63a1F0ca12EAeFCDF48f1ABf0ACf14EfB48#code) |
 | **TeamVesting** | Vesting (non-upgradeable) | [0x9428Edd912224778d84D762ebCDA52e1c829aB8d](https://basescan.org/address/0x9428Edd912224778d84D762ebCDA52e1c829aB8d) | [View](https://basescan.org/address/0x9428Edd912224778d84D762ebCDA52e1c829aB8d) |
 | **OBN Impact NFT** | ERC-721 | [0xB66F67444b09f509D72d832567C2df84Edeb80F8](https://basescan.org/address/0xB66F67444b09f509D72d832567C2df84Edeb80F8) | [Verified ✅](https://basescan.org/address/0xB66F67444b09f509D72d832567C2df84Edeb80F8) |
-| **StakingPoolsV93 (v9.3 Impl)** | Implementation | Pending deployment | — |
-| **TheOffering** | Accumulator (non-upgradeable) | Pending deployment | — |
-| **ExtendOliveBranch** | Accumulator (non-upgradeable) | Pending deployment | — |
-| **AnnualGovernance** | Governance (UUPS Proxy) | Pending deployment | — |
-| **OBNStakingLens** | Analytics Read Layer (UUPS Proxy) | Pending deployment | — |
+| **StakingPoolsV93 (v9.3 Impl)** | Implementation | [0x8ae630a14254Fd9632C505fbdeB7f104f0b9844E](https://basescan.org/address/0x8ae630a14254Fd9632C505fbdeB7f104f0b9844E#code) | [Verified ✅](https://basescan.org/address/0x8ae630a14254Fd9632C505fbdeB7f104f0b9844E#code) |
+| **TheOffering** | Accumulator (non-upgradeable) | [0xc75B2a5C7B8F88327D44C223769cFa19cc93E341](https://basescan.org/address/0xc75B2a5C7B8F88327D44C223769cFa19cc93E341) | [Verified ✅](https://basescan.org/address/0xc75B2a5C7B8F88327D44C223769cFa19cc93E341) |
+| **ExtendOliveBranch** | Accumulator (non-upgradeable) | [0xE1BbfAf0552ACC183579a3D172e002adF0c66d8B](https://basescan.org/address/0xE1BbfAf0552ACC183579a3D172e002adF0c66d8B) | [Verified ✅](https://basescan.org/address/0xE1BbfAf0552ACC183579a3D172e002adF0c66d8B) |
+| **AnnualGovernance** | Governance (UUPS Proxy) | [0x1135d5fEA8098b09b4ED3AFbfFDc7B248359D270](https://basescan.org/address/0x1135d5fEA8098b09b4ED3AFbfFDc7B248359D270) | [Verified ✅](https://basescan.org/address/0x1135d5fEA8098b09b4ED3AFbfFDc7B248359D270) |
+| **OBNStakingLens** | Analytics Read Layer (UUPS Proxy) | [0x2ae4df523040c0245a6F84342E4B06850c5bdb9b](https://basescan.org/address/0x2ae4df523040c0245a6F84342E4B06850c5bdb9b) | [Verified ✅](https://basescan.org/address/0x2ae4df523040c0245a6F84342E4B06850c5bdb9b) |
 
 **Network:** Base Mainnet (Chain ID: 8453)
 
@@ -847,13 +847,13 @@ The 99-pool cap gives the protocol focus. The hard-coded reward split gives it c
 - OBNToken and OBNStakingPools use UUPS proxy pattern for governance-controlled upgrades
 - TeamVesting is non-upgradeable (immutable schedule)
 - TheOffering and ExtendOliveBranch are non-upgradeable by design
-- All proxy contracts use Timelock for governance safety
-- v9.3 contract addresses will be populated after deployment and Basescan verification
+- All proxy contracts use Timelock (`0x86396526286769ace21982E798Df5eef2389f51c`) for governance safety
+- v9.3 upgrade completed June 14, 2026; staking proxy now running StakingPoolsV93
 
 ---
 
 **Version:** 9.3 Proof-of-Contribution  
 **Date:** May 2026  
-**Last Updated:** June 11, 2026  
+**Last Updated:** June 14, 2026  
 
 **Canonical Repository:** [github.com/jdmaverick369/olive-branch-network](https://github.com/jdmaverick369/olive-branch-network)
