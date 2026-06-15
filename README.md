@@ -187,7 +187,7 @@ OBNToken and OBNStakingPools use the UUPS proxy pattern with governance-controll
 
 ## Links
 
-- **Whitepaper:** [whitepaper.md](whitepaper.md)
+- **Whitepaper:** [WHITEPAPER.md](WHITEPAPER.md)
 - **Base Mainnet Contracts:** See Appendix B of the Whitepaper
 - **Website:** [olivebranch.network](https://olivebranch.network)
 
