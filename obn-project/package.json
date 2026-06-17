@@ -1,4 +1,5 @@
 {
+  "type": "commonjs",
   "devDependencies": {
     "@nomicfoundation/hardhat-toolbox": "^6.1.0",
     "@openzeppelin/contracts-upgradeable": "^5.4.0",

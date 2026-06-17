@@ -1,13 +1,19 @@
 // scripts/governance/timelock_countdown.js
-// Live countdown to Phase 5 Timelock execution window.
-// Run: node scripts/governance/timelock_countdown.js
+// Live countdown to a Timelock execution window.
+// Run: OP_ID=0x... node scripts/governance/timelock_countdown.js
 "use strict";
 require("dotenv").config();
 const { ethers } = require("ethers");
 
 const RPC_URL  = process.env.BASE_MAINNET_URL || "https://mainnet.base.org";
-const TIMELOCK = "0x86396526286769ace21982E798Df5eef2389f51c";
-const OP_ID    = "0xfed7625b7bfd06132dc67b14ba1503c43a1e26c083882a13aa6be63c83edceb4";
+const TIMELOCK = process.env.TIMELOCK_ADDR    || "0x86396526286769ace21982E798Df5eef2389f51c";
+const OP_ID    = process.env.OP_ID;
+
+if (!OP_ID || !/^0x[a-fA-F0-9]{64}$/.test(OP_ID)) {
+  console.error("Usage: OP_ID=0x<64 hex chars> node scripts/governance/timelock_countdown.js");
+  console.error("Tip:   gen_safe_addPool.js prints the OP_ID after generating the Safe JSON.");
+  process.exit(1);
+}
 
 const TIMELOCK_ABI = [
   "function getTimestamp(bytes32 id) view returns (uint256)",
@@ -51,7 +57,7 @@ async function main() {
 
   console.clear();
   console.log("═".repeat(60));
-  console.log("  OBN v9.3 Phase 6 — Upgrade Timelock Countdown");
+  console.log("  OBN Timelock Countdown");
   console.log("═".repeat(60));
   console.log(`  opId:     ${OP_ID}`);
   console.log(`  Unlocks:  ${formatTs(readyAt)}`);
