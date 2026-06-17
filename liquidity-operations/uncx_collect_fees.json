@@ -1,0 +1,22 @@
+{
+  "version": "1.0",
+  "chainId": "8453",
+  "createdAt": 1750197600000,
+  "meta": {
+    "name": "UNCX Lock 29 — Collect Fees",
+    "description": "Collects accumulated Uniswap V4 fees from UNCX lock ID 29. Fees sent to the liquidity Safe (0x6936...C09). Run whenever fees have accumulated.",
+    "txBuilderVersion": "1.16.5",
+    "createdFromSafeAddress": "0x69361fe9C14fF0a337FA44d2d1bC2CcCCb088C09",
+    "createdFromOwnerAddress": "",
+    "checksum": ""
+  },
+  "transactions": [
+    {
+      "to": "0x610b43e981960b45f818a71cd14c91d35cda8502",
+      "value": "0",
+      "data": "0x8d3c100a000000000000000000000000000000000000000000000000000000000000001d00000000000000000000000069361fe9c14ff0a337fa44d2d1bc2ccccb088c09",
+      "contractMethod": null,
+      "contractInputsValues": null
+    }
+  ]
+}
