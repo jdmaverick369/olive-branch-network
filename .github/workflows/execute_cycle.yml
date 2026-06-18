@@ -1,0 +1,21 @@
+name: OBN Execute Governance Cycle
+
+on:
+  schedule:
+    - cron: '*/15 * * * *'
+  workflow_dispatch: # allow manual trigger from GitHub UI
+
+jobs:
+  execute:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - run: npm ci
+        working-directory: obn-project
+      - run: node scripts/governance/execute_cycle.js
+        working-directory: obn-project
+        env:
+          PRIVATE_KEY: ${{ secrets.PRIVATE_KEY }}
