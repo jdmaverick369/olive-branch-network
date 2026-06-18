@@ -24,7 +24,7 @@ const RPC_URL           = process.env.BASE_RPC_URL || "https://mainnet.base.org"
 const ABI = [
   "function currentCycleId() view returns (uint256)",
   "function getCycleState(uint256 cycleId) view returns (uint8)",
-  "function executeCurrentCycle() nonpayable",
+  "function executeCurrentCycle()",
 ];
 
 const PHASE1_READY = 2;
