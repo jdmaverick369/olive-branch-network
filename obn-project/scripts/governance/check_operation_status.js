@@ -101,7 +101,7 @@ async function main() {
     console.log("⏳ Wait for the delay period to pass.");
   } else if (stateNum === 2) {
     console.log("✅ Ready to execute!");
-    console.log("Run: npx hardhat run scripts/governance/2_execute_by_hash.js --network <network>");
+    console.log("Run: cast send with the TARGETS_CSV/VALUES_CSV/DATAS_HEX_CSV/PREDECESSOR/SALT exported from gen_safe_addPool.js");
   } else if (stateNum === 3) {
     console.log("✅ Already executed.");
   } else if (stateNum === 4) {
