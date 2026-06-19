@@ -12,8 +12,8 @@
 //   node scripts/governance/execute_cycle.js
 //
 // Automate:
-//   cron:           */15 * * * * cd /path/to/obn-project && node scripts/governance/execute_cycle.js
-//   GitHub Actions: schedule: - cron: '*/15 * * * *'
+//   cron:           */5 * * * * cd /path/to/obn-project && node scripts/governance/execute_cycle.js
+//   GitHub Actions: schedule: - cron: '*/5 * * * *'  (GitHub's actual floor, regardless of cron string)
 "use strict";
 require("dotenv").config();
 const { ethers } = require("ethers");

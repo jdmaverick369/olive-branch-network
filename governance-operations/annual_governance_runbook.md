@@ -25,19 +25,25 @@ OPERATOR_SAFE calls startAnnualCycle()
 Phase 1 OPEN — stakers vote: Burn TheOffering balance or Give it to ExtendOliveBranch
         │  (duration = phase1Duration set at cycle start)
         ▼
-anyone calls executePhase1() after phase1End
+executePhase1() fires automatically after phase1End (GitHub Actions bot)
         │  GIVE wins only if giveVotes > burnVotes (strictly greater)
         │  Zero participation → BURN
         ▼
 Phase 2 OPEN — stakers vote: which nonprofit receives ExtendOliveBranch balance
         │  (duration = phase2Duration, clock starts at executePhase1 call time)
         ▼
-anyone calls executePhase2() after phase2End
+executePhase2() fires automatically after phase2End (GitHub Actions bot)
         │  Winner = most votes; tie → lowest ballot index
         │  Zero participation → rollover (funds stay for next cycle)
         ▼
 Cycle COMPLETED — new cycle may now be started
 ```
+
+**Automation:** Once a cycle is started, `.github/workflows/execute_cycle.yml` polls
+`getCycleState()` every 5 minutes and calls the permissionless `executeCurrentCycle()`
+the moment a phase becomes ready — no manual execution needed for Steps 3 and 5 below.
+Those steps are kept as a manual fallback only (bot outage, or wanting to force execution
+sooner than the next poll).
 
 ---
 
@@ -90,15 +96,17 @@ No Safe required. Stakers interact via the frontend or directly via Basescan.
 Pre-upgrade stakers with no checkpoint are lazy-bootstrapped automatically on their
 first vote — their voting power will be correct.
 
-Monitor live totals:
-- `getBurnVotes(cycleId)` — total OBN voting power on BURN side
-- `getGiveVotes(cycleId)` — total OBN voting power on GIVE side
+Monitor live totals via `getCycleSummary(cycleId)` — returns a tuple including
+`burnVotes` and `giveVotes` (there is no standalone `getBurnVotes`/`getGiveVotes` getter).
 
 ---
 
-## Step 3 — Execute Phase 1 (permissionless)
+## Step 3 — Execute Phase 1 (automatic — manual fallback below)
 
-Callable by anyone after `phase1End`. No Safe or private key required.
+Normally fires on its own: the GitHub Actions bot detects `PHASE1_READY` and calls
+`executeCurrentCycle()` within ~5 minutes of `phase1End`. No action needed.
+
+Manual fallback (permissionless — anyone can call, no Safe required):
 
 ```bash
 cast send 0x1135d5fEA8098b09b4ED3AFbfFDc7B248359D270 \
@@ -138,9 +146,12 @@ Monitor live totals:
 
 ---
 
-## Step 5 — Execute Phase 2 (permissionless)
+## Step 5 — Execute Phase 2 (automatic — manual fallback below)
 
-Callable by anyone after `phase2End` and after Phase 1 is executed.
+Normally fires on its own: the GitHub Actions bot detects `PHASE2_READY` and calls
+`executeCurrentCycle()` within ~5 minutes of `phase2End`. No action needed.
+
+Manual fallback (permissionless — anyone can call, no Safe required):
 
 ```bash
 cast send 0x1135d5fEA8098b09b4ED3AFbfFDc7B248359D270 \
