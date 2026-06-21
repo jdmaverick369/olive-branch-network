@@ -2,9 +2,17 @@
 
 ## Purpose
 
-Olive Branch Network (OBN) is a Proof-of-Contribution staking protocol that turns on-chain participation into continuous funding for nonprofits while rewarding users for participating. OBN allows users to stake into nonprofit-specific pools, earn staking emissions, and generate transparent on-chain contribution records tied to the causes they support.
+Olive Branch Network exists to answer a simple question:
 
-This paper covers the canonical contract suite, hard-coded guarantees, token economics, governance/upgradeability, security model, and the end-to-end process for onboarding and supporting nonprofits. It also introduces the protocol-level framing of **Proof-of-Contribution**.
+If crypto allows us to code behavior into money, can we code money to do good?
+
+OBN is a Proof-of-Contribution staking protocol designed to turn ordinary on-chain participation into continuous nonprofit funding while still rewarding users for participating. Users stake OBN into nonprofit-specific pools, earn staking emissions, and help route a defined portion of those emissions toward real-world causes.
+
+The goal is not to ask users to choose between earning and giving. The goal is to make both happen through the same protocol action.
+
+OBN introduces a contribution layer where staking activity creates transparent, on-chain records tied to the causes users support. Every stake, claim, nonprofit distribution, governance vote, burn, and annual allocation becomes part of a public system that can be tracked, verified, and built upon.
+
+This paper defines the canonical OBN contract suite, token economics, nonprofit pool model, governance structure, upgradeability path, security assumptions, and the end-to-end process for supporting nonprofits. It also establishes the protocol-level framing of Proof-of-Contribution: a model where digital assets are not only used for speculation, yield, or governance, but also for measurable contribution.
 
 ---
 
