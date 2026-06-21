@@ -1,4 +1,4 @@
-# Olive Branch Network Whitepaper v9.3 — Proof-of-Contribution
+# Olive Branch Network Whitepaper — Proof-of-Contribution
 
 ## Purpose
 
@@ -12,19 +12,21 @@ The goal is not to ask users to choose between earning and giving. The goal is t
 
 OBN introduces a contribution layer where staking activity creates transparent, on-chain records tied to the causes users support. Every stake, claim, nonprofit distribution, governance vote, burn, and annual allocation becomes part of a public system that can be tracked, verified, and built upon.
 
-This paper defines the canonical OBN contract suite, token economics, nonprofit pool model, governance structure, upgradeability path, security assumptions, and the end-to-end process for supporting nonprofits. It also establishes the protocol-level framing of Proof-of-Contribution: a model where digital assets are not only used for speculation, yield, or governance, but also for measurable contribution.
+This is the foundation of Proof-of-Contribution: a model where digital assets are not only used for speculation, yield, or governance, but also for measurable contribution.
+
+This paper defines the protocol architecture, token economics, nonprofit pool model, governance structure, upgradeability path, security assumptions, and the end-to-end process for supporting nonprofits through OBN.
 
 ---
 
 ## 1) Executive Summary
 
-**Mission:** Make donating the path of least resistance by routing a fixed portion of staking emissions to verified nonprofit wallets—automatically, transparently, and forever on-chain.
+**Mission:** Make contributing the path of least resistance by routing a fixed portion of staking emissions to approved nonprofit pool wallets—automatically, transparently, and verifiably on-chain.
 
 **Core idea:** OBN is built around **Proof-of-Contribution**: a model where users prove participation not only by staking capital, but by continuously helping route value toward real-world nonprofit causes. Every stake, claim, and nonprofit reward flow becomes part of an on-chain contribution layer.
 
 **Mechanism:** Users stake OBN in nonprofit-specific pools. Emissions split is hard-coded: 88% stakers, 10% nonprofit direct, 1% ExtendOliveBranch (annual nonprofit distribution), 1% TheOffering (annual burn-or-give vote).
 
-**Focused impact model:** OBN will intentionally cap the protocol at 99 nonprofit pools. This keeps contribution focused, prevents dilution across too many organizations, and gives the network a clear, curated structure for long-term impact.
+**Focused impact model:** OBN will operate around a 99 nonprofit pool model. This keeps contribution focused, prevents dilution across too many organizations, and gives the network a clear, curated structure for long-term impact.
 
 **Design guarantees:**
 
@@ -38,7 +40,7 @@ This paper defines the canonical OBN contract suite, token economics, nonprofit 
 - Timestamp-based emission phases with a 10-year declining schedule
 - Nonprofit self-stake protection, pool lifecycle management, atomic bootstrap migration, emergency force-exit controls
 
-**Governance & Upgradability:** UUPS proxies for Token & Staking; ownership migrates to a DAO + timelock.
+**Governance & Upgradability:** UUPS proxies for the Token, Staking, AnnualGovernance, and Lens contracts; ownership is intended to migrate progressively toward DAO + timelock control.
 
 ---
 
@@ -315,7 +317,7 @@ AnnualGovernance coordinates the annual decision cycles for both TheOffering and
 **Vote integrity:**
 
 - Voting power uses checkpointed OBN balances at cycle start (`block.number - 1`) to prevent same-block stake-and-vote manipulation.
-- `maxBallotSize = 100` ensures the full 99-pool model can always be represented in a single ballot.
+- `maxBallotSize = 100` ensures the 99-pool model can be represented in a single ballot.
 - Phase transitions are controlled by the `voteAdmin` (OperatorSafe), making cycle timing deliberate.
 
 **Execution:** AnnualGovernance calls TheOffering and ExtendOliveBranch directly. No additional multisig approval is required once a vote concludes — outcomes are enforced by contract.
@@ -342,7 +344,7 @@ OBNStakingLens is a dedicated read-only analytics contract. It is the canonical 
 
 ---
 
-## 4) Token Economics & Long-Term Profitability
+## 4) Token Economics & Long-Term Sustainability
 
 ### 4.1 Emission math (intuition)
 
@@ -354,7 +356,7 @@ Let the phase APR basis be B (in BPS), global TVL G, and pool TVL P.
 
 **Per-token APR simplifies to** 0.88 × (B / 10,000), **equal across pools** — independent of supply size.
 
-### 4.2 Declining emissions support value
+### 4.2 Declining emissions support sustainability
 
 **Sell-pressure decay:** Lower issuance over time reduces structural sell pressure.
 
@@ -430,11 +432,11 @@ This three-way distinction is important:
 
 Phases fully specify issuance; there's no external "rate knob." DAO may append future phases contiguously with notice (timelock).
 
-### 5.5 Why cap nonprofit pools at 99?
+### 5.5 Why operate around 99 nonprofit pools?
 
 OBN will intentionally target a maximum of **99 nonprofit pools**.
 
-This cap is a strategic design choice, not a technical limitation. The goal is to prevent impact dilution. If the protocol supports too many nonprofits at once, emissions and attention can become spread too thin. By capping the network at 99 pools, OBN can focus contribution around a curated set of organizations and make funding more visible, meaningful, and measurable.
+This 99-pool model is a strategic design choice, not merely a technical parameter. The goal is to prevent impact dilution. If the protocol supports too many nonprofits at once, emissions and attention can become spread too thin. By operating around 99 pools, OBN can focus contribution around a curated set of organizations and make funding more visible, meaningful, and measurable.
 
 The 99-pool model also gives OBN a clear public identity:
 
@@ -490,11 +492,11 @@ At 99 pools, a 1,000,000 OBN bootstrap per nonprofit would require 99,000,000 OB
 3. The lock prevents withdrawal of the seeded principal, eliminating immediate dump risk while the position earns yield continuously.
 4. The nonprofit benefits from both the staker-share yield on its locked bootstrap position and the pool's 10% charity allocation routed to the charityWallet.
 
-**Expansion policy after 99:** OBN should not continue expanding indefinitely. Once the protocol reaches the 99-pool target, governance may replace, migrate, or remove pools according to clear standards, but the network should maintain the 99-pool cap unless governance explicitly changes the model.
+**Expansion policy after 99:** OBN should not continue expanding indefinitely. Once the protocol reaches the 99-pool target, governance may replace, migrate, or remove pools according to clear standards, but the network should maintain the 99-pool model unless governance explicitly changes that policy.
 
 **Reporting:** Each bootstrap is transparent on-chain and included in periodic public disclosures.
 
-**Protection:** The `_enforceCharitySelfStakePolicy` ensures each charity can only receive one bootstrap position; future stakes must come from the charity itself or external users.
+**Protection:** The `_enforceCharitySelfStakePolicy` ensures each nonprofit can only receive one locked bootstrap position. Future ordinary stakes must come from external users, while nonprofit wallet migrations must follow the protocol's governance-controlled migration process.
 
 ### 6.5 Delisting policy
 
@@ -541,15 +543,15 @@ Upgrades require `_authorizeUpgrade` (owner).
 - Spending and usage reporting for TheOffering and ExtendOliveBranch
 - Standards for nonprofit onboarding, delisting, replacement, and migration
 
-### 7.3 Governance and the 99-pool cap
+### 7.3 Governance and the 99-pool model
 
-The 99-pool cap should be treated as a foundational policy commitment of the protocol.
+The 99-pool model should be treated as a foundational policy commitment of the protocol.
 
-Governance may manage which nonprofits are included, but the default assumption should be that OBN remains capped at 99 nonprofit pools to preserve focused impact. If governance ever proposes expanding beyond 99, that decision should require clear public justification, community review, and a transparent vote.
+Governance may manage which nonprofits are included, but the default assumption should be that OBN remains centered around 99 nonprofit pools to preserve focused impact. If governance ever proposes expanding beyond 99, that decision should require clear public justification, community review, and a transparent vote.
 
 ### 7.4 AnnualGovernance
 
-AnnualGovernance is the on-chain mechanism for OBN's recurring community decisions, providing defined, contract-enforced governance cycles for the protocol's Charity Fund policy.
+AnnualGovernance is the on-chain mechanism for OBN's recurring community decisions, providing defined, contract-enforced cycles for TheOffering and ExtendOliveBranch.
 
 **Cycle structure:**
 
@@ -566,7 +568,7 @@ Each cycle begins when the voteAdmin opens it. Phase 1 and Phase 2 run sequentia
 **Vote integrity:**
 
 - Voting power is derived from checkpointed OBN balances at cycle start, preventing same-block stake-then-vote manipulation.
-- The ballot is capped at `maxBallotSize = 100`, ensuring the full 99-pool model always fits.
+- The ballot is capped at `maxBallotSize = 100`, ensuring the 99-pool model can fit within a single annual ballot.
 - Phase transitions are controlled by the voteAdmin so cycles are deliberate and not rushed.
 
 **Execution:**
@@ -601,7 +603,7 @@ AnnualGovernance is a UUPS proxy. The Timelock can upgrade it to support more so
 
 **Emergency controls:** Force exit enables governance to recover users in emergencies.
 
-**Focused pool surface:** A 99-pool cap reduces governance complexity and makes nonprofit monitoring more manageable.
+**Focused pool surface:** The 99-pool model reduces governance complexity and makes nonprofit monitoring more manageable.
 
 ### 8.3 Design trade-offs
 
@@ -669,7 +671,7 @@ OBN should publish periodic public reports covering:
 - pool additions, removals, or migrations
 - direct charity distributions
 - TheOffering and ExtendOliveBranch balances, accumulation, and usage by cycle
-- Treasury balances and usage
+- TheOffering and ExtendOliveBranch balances and usage
 - Proof-of-Contribution metrics
 
 ---
@@ -789,16 +791,13 @@ OBN is designed so users do not need to choose between earning and giving. Both 
 
 - `pendingRewards(pid, user)` — GROSS pending amount
 - `pendingRewardsMultiple(pids[], user)` — Pending amounts for multiple pools plus total
-- `getPoolAPR(pid)` — User portion APR
-- `getGlobalStats()` — Global TVL, unique stakers, RPS
-- `getPoolStats(pid)` — Per-pool statistics
-- `getUserPoolView(pid, user)` — User-specific view
 - `unlockedBalance(pid, user)` — Available to withdraw
 - `stakeElapsed(user)` — Total staking seconds
-- `getUserStats(user)` — Aggregated user data
 - `poolLength()` — Number of pools
 - `charityContributedByUserInPool(pid, user)` — User's charity contributions in a pool
 - `totalCharityContributedByUser(user)` — User's total charity contributions across all pools
+
+Display and analytics views such as `getGlobalStats`, `getPoolStats`, `getUserPoolView`, `getUserStats`, and `getPoolAPR` are surfaced through **OBNStakingLens** as the canonical frontend read layer.
 
 ### OBNToken
 
@@ -939,7 +938,7 @@ It is a contribution engine.
 
 It is a public-good layer.
 
-It is an honest attempt to answer a question crypto has avoided for too long:
+It is a serious attempt to answer a question crypto has avoided for too long:
 
 If we can code money to do almost anything, why not code it to do good?
 
@@ -980,7 +979,6 @@ And every year, the community decides how far to extend the olive branch.
 ---
 
 **Version:** 9.3 Proof-of-Contribution  
-**Date:** May 2026  
-**Last Updated:** June 14, 2026  
+**Date:** June 21, 2026  
 
 **Canonical Repository:** [github.com/jdmaverick369/olive-branch-network](https://github.com/jdmaverick369/olive-branch-network)
