@@ -273,7 +273,7 @@ At the end of each cycle, AnnualGovernance executes the community's Phase 1 vote
 - **BURN:** The entire accumulated balance is permanently burned, reducing total OBN supply.
 - **GIVE:** The entire accumulated balance is transferred to ExtendOliveBranch, increasing that cycle's nonprofit distribution.
 
-**Access control:** `timelockOwner` (Timelock) controls admin functions including `emergencySweep`. `governance` (AnnualGovernance) is the only address authorized to call `executeBurn()` or `executeGive()`. The `governance` address is initialized to `address(0)` and wired to AnnualGovernance via `setGovernance()` through the Timelock as part of the v9.3 Phase 5 deployment.
+**Access control:** `timelockOwner` (Timelock) controls admin functions including `emergencySweep`. `governance` (AnnualGovernance) is the only address authorized to call `burn()` or `sendToExtend()`. The `governance` address is initialized to `address(0)` and wired to AnnualGovernance via `setGovernance()` through the Timelock as part of the v9.3 Phase 5 deployment.
 
 **Non-upgradeable:** TheOffering is deployed as a standard contract with no proxy. The constructor arguments (`obn` token address, `timelockOwner`) are immutable. If replacement is required, the Timelock must deploy a new contract and call `setTreasury(newAddress)` on the staking proxy to re-route emissions.
 
@@ -295,9 +295,14 @@ AnnualGovernance coordinates the annual decision cycles for both TheOffering and
 
 **Cycle structure:** Each annual cycle runs two sequential phases:
 
-1. **Phase 1 — Burn or Give:** Stakers vote on TheOffering's accumulated balance. The winning outcome is executed atomically: BURN calls `TheOffering.executeBurn()`; GIVE calls `TheOffering.executeGive(ExtendOliveBranch)`.
+1. **Phase 1 — Burn or Give:** Stakers vote on TheOffering's accumulated balance. The winning outcome is executed atomically: BURN calls `TheOffering.burn()`; GIVE calls `TheOffering.sendToExtend()`.
 
 2. **Phase 2 — Nonprofit Selection:** Stakers vote to select which approved nonprofit receives ExtendOliveBranch's full accumulated balance. The ballot is curated by the `voteAdmin` to at most `maxBallotSize` nominees. The winning pool's charityWallet receives the distribution via `ExtendOliveBranch.distributeFromGovernance()`.
+
+**Tie-breaking:**
+
+- Phase 1: GIVE only wins if its vote total strictly exceeds BURN's. An exact tie — or zero participation — resolves to BURN.
+- Phase 2: the nonprofit with the highest vote total wins; a tie goes to whichever tied nonprofit appears earliest on the ballot. If no votes are cast at all, the balance rolls over to the next cycle instead of being distributed.
 
 **Vote integrity:**
 
@@ -545,6 +550,11 @@ Each cycle begins when the voteAdmin opens it. Phase 1 and Phase 2 run sequentia
 - **Phase 1 (Burn or Give):** Stakers vote on TheOffering's accumulated balance. BURN permanently reduces supply. GIVE transfers the balance to ExtendOliveBranch, increasing that cycle's nonprofit distribution.
 - **Phase 2 (Nonprofit selection):** Stakers vote to select which approved nonprofit pool receives ExtendOliveBranch's full accumulated balance. Nominees are drawn from the whitelist maintained in ExtendOliveBranch via `setApprovedNonprofit`.
 
+**Tie-breaking:**
+
+- Phase 1: BURN wins by default — GIVE must strictly exceed BURN's vote total to win. A tie (or no votes at all) resolves to BURN.
+- Phase 2: the nonprofit with the most votes wins; ties go to whichever tied nonprofit has the lowest ballot index. If no votes are cast, the balance rolls over to the next cycle rather than being distributed.
+
 **Vote integrity:**
 
 - Voting power is derived from checkpointed OBN balances at cycle start, preventing same-block stake-then-vote manipulation.
@@ -553,7 +563,7 @@ Each cycle begins when the voteAdmin opens it. Phase 1 and Phase 2 run sequentia
 
 **Execution:**
 
-AnnualGovernance calls `TheOffering.executeBurn()`, `TheOffering.executeGive()`, or `ExtendOliveBranch.distributeFromGovernance()` directly. No additional multisig approval is required once a vote concludes — the outcome is enforced by the contract.
+AnnualGovernance calls `TheOffering.burn()`, `TheOffering.sendToExtend()`, or `ExtendOliveBranch.distributeFromGovernance()` directly. No additional multisig approval is required once a vote concludes — the outcome is enforced by the contract.
 
 **Upgradability:**
 
