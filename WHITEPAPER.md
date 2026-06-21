@@ -903,11 +903,45 @@ Read-only analytics layer; holds no funds. Recreates display/analytics views rem
 
 ## 14) Final Word
 
-OBN aligns self-interest with public good: compelling user yields, credible nonprofit funding, and a governance path that minimizes rent extraction.
+If we are designing the financial rails for future generations, then we should be willing to ask a better question:
 
-With Proof-of-Contribution, OBN becomes more than a staking protocol. It becomes a transparent contribution network where every stake can help fund a real-world cause and every claim can leave an on-chain record of support.
+Can those rails help create a better world?
 
-The 99-pool cap gives the protocol focus. The hard-coded reward split gives it credibility. AnnualGovernance turns the 2% governance streams into recurring community decisions — annually choosing between deflationary burns and nonprofit distributions, and selecting which cause receives that year's accumulated resources. The contribution layer gives users something deeper than yield alone: a visible record of participation in a network designed to do well by doing good.
+Crypto gave us something that did not exist before: the ability to code behavior into money. A digital asset no longer has to sit still. It can move by rule. It can reward by rule. It can route value by rule. It can become more than something people buy, sell, and speculate on.
+
+That should matter.
+
+Olive Branch Network was built from the belief that programmable money should not be indifferent. If we can design tokens to reward liquidity, secure networks, fund treasuries, and power governance, then we can also design them to support organizations doing verifiable good in the world.
+
+OBN is an attempt to prove that contribution can be built directly into the asset itself.
+
+Users do not need to give up their principal to participate. They do not need to make a separate donation. They do not need to choose between earning and helping. When users stake, they earn. When they claim, nonprofits receive. When the network grows, the contribution layer grows with it.
+
+That is Proof-of-Contribution.
+
+The protocol is intentionally simple at its core: users stake into nonprofit pools, rewards are split by contract, and a portion of emissions is routed toward real-world causes. The 99-pool model keeps the network focused. The hard-coded reward split keeps the system honest. ExtendOliveBranch gives the community a recurring way to direct additional nonprofit funding. TheOffering gives stakers a yearly choice between burning supply or extending more value toward nonprofits.
+
+OBN is not built around extraction. It is built around alignment.
+
+Users are rewarded for participating. Nonprofits receive ongoing support. Governance decides how the annual protocol streams are resolved. Every action leaves a transparent on-chain record.
+
+This is not just a staking protocol.
+
+It is a contribution engine.
+
+It is a public-good layer.
+
+It is an honest attempt to answer a question crypto has avoided for too long:
+
+If we can code money to do almost anything, why not code it to do good?
+
+Every stake becomes proof.
+
+Every claim creates a record.
+
+Every pool represents a cause.
+
+And every year, the community decides how far to extend the olive branch.
 
 ---
 
