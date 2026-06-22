@@ -2,11 +2,7 @@
 
 ## Purpose
 
-Olive Branch Network exists to answer a simple question:
-
-If crypto allows us to code behavior into money, can we code money to do good?
-
-OBN is a Proof-of-Contribution staking protocol designed to turn ordinary on-chain participation into continuous nonprofit funding while still rewarding users for participating. Users stake OBN into nonprofit-specific pools, earn staking emissions, and help route a defined portion of those emissions toward real-world causes.
+The Olive Branch Network is a Proof-of-Contribution staking protocol designed to turn ordinary on-chain participation into continuous nonprofit funding while still rewarding users for participating. Users stake OBN into nonprofit-specific pools, earn staking emissions, and help route a defined portion of those emissions toward real-world causes.
 
 The goal is not to ask users to choose between earning and giving. The goal is to make both happen through the same protocol action.
 
