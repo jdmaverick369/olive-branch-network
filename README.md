@@ -60,27 +60,6 @@ Proof-of-Contribution makes OBN more than a yield protocol. It makes OBN a publi
 
 ---
 
-## The 99 Nonprofit Pool Cap
-
-OBN will intentionally cap the network at **99 nonprofit pools**.
-
-This cap keeps the protocol focused. Instead of spreading emissions across an unlimited number of organizations, OBN concentrates funding around a curated set of nonprofit pools where contribution can become meaningful, visible, and measurable.
-
-The 99-pool model is designed to:
-
-- prevent impact dilution
-- strengthen each nonprofit's earning potential
-- simplify discovery for users
-- improve transparency and reporting
-- keep onboarding selective and intentional
-- make each pool matter
-
-Once the 99-pool limit is reached, future changes should focus on maintaining quality rather than expanding endlessly. Governance may replace inactive, compromised, or delisted nonprofit pools, but the default structure remains capped and focused.
-
-**99 nonprofit pools. One contribution network. Every stake becomes proof.**
-
----
-
 ## The Bootstrap Model
 
 Each approved nonprofit pool may receive **1,000,000 OBN permanently staked** in its pool from the Charity Genesis Reserve.
