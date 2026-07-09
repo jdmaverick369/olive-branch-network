@@ -428,18 +428,6 @@ This three-way distinction is important:
 
 Phases fully specify issuance; there's no external "rate knob." DAO may append future phases contiguously with notice (timelock).
 
-### 5.5 Why operate around 99 nonprofit pools?
-
-OBN will intentionally target a maximum of **99 nonprofit pools**.
-
-This 99-pool model is a strategic design choice, not merely a technical parameter. The goal is to prevent impact dilution. If the protocol supports too many nonprofits at once, emissions and attention can become spread too thin. By operating around 99 pools, OBN can focus contribution around a curated set of organizations and make funding more visible, meaningful, and measurable.
-
-The 99-pool model also gives OBN a clear public identity:
-
-**99 nonprofit pools. One Proof-of-Contribution network. Every stake becomes proof.**
-
-Once the 99-pool target is reached, governance should prioritize quality, transparency, and pool maintenance rather than endless expansion. New nonprofits may be considered only when a pool is removed, replaced, or migrated according to protocol policy.
-
 ---
 
 ## 6) Nonprofits: Wallets, Onboarding & Display
