@@ -22,14 +22,11 @@ This paper defines the protocol architecture, token economics, nonprofit pool mo
 
 **Mechanism:** Users stake OBN in nonprofit-specific pools. Emissions split is hard-coded: 88% stakers, 10% nonprofit direct, 1% ExtendOliveBranch (annual nonprofit distribution), 1% TheOffering (annual burn-or-give vote).
 
-**Focused impact model:** OBN will operate around a 99 nonprofit pool model. This keeps contribution focused, prevents dilution across too many organizations, and gives the network a clear, curated structure for long-term impact.
-
 **Design guarantees:**
 
 - Fixed four-way split (88/10/1/1) at the contract level
 - Equal APR per token across all pools at a given time (pool APRs normalize by design)
 - Proof-of-Contribution accounting through on-chain nonprofit funding flows and user contribution views
-- Maximum nonprofit pool target of 99 pools for focused impact
 - One charityWallet per pool; no "retire/active" flags on pools
 - Admin locks are increase-only and auto-shrink if balance falls; intended only for bootstrap
 - Single minter: Only the staking contract can mint OBN after setMinterOnce
@@ -313,7 +310,6 @@ AnnualGovernance coordinates the annual decision cycles for both TheOffering and
 **Vote integrity:**
 
 - Voting power uses checkpointed OBN balances at cycle start (`block.number - 1`) to prevent same-block stake-and-vote manipulation.
-- `maxBallotSize = 100` ensures the 99-pool model can be represented in a single ballot.
 - Phase transitions are controlled by the `voteAdmin` (OperatorSafe), making cycle timing deliberate.
 
 **Execution:** AnnualGovernance calls TheOffering and ExtendOliveBranch directly. No additional multisig approval is required once a vote concludes — outcomes are enforced by contract.
@@ -404,7 +400,7 @@ OBN is inflationary via staking, but voluntary burns (e.g., future app fees) can
 
 ### 5.2 Annual governance streams vs. Charity Genesis Reserve
 
-**Charity Genesis Reserve (10% of initial supply):** One-time genesis allocation held by governance. Primarily earmarked for 1,000,000 OBN bootstrap stakes per nonprofit pool, targeting up to 99 pools.
+**Charity Genesis Reserve (10% of initial supply):** One-time genesis allocation held by governance. Primarily earmarked for 1,000,000 OBN bootstrap stakes per nonprofit pool, targeting up to 100 pools.
 
 **ExtendOliveBranch (1% of ongoing emissions):** Accumulates continuously. AnnualGovernance Phase 2 votes select which approved nonprofit receives the full cycle balance. The protocol's annual directed-giving mechanism.
 
@@ -444,30 +440,12 @@ In addition, we are reaching out to organizations through email and phone to let
 
 Every charity page shows a clear "No Affiliation / Not Endorsed" banner by default unless a direct relationship or formal acknowledgment exists.
 
-### 6.3 The 99 Nonprofit Pool Model
 
-OBN will limit the protocol to a maximum target of 99 nonprofit pools.
-
-This creates a focused contribution network rather than an unlimited directory. The purpose is to support a curated group of nonprofits with enough concentration that the protocol's funding can become meaningful over time.
-
-The 99-pool model supports:
-
-- stronger nonprofit visibility
-- more focused protocol reporting
-- reduced contribution dilution
-- clearer public communication
-- easier governance oversight
-- better long-term user understanding
-
-OBN is not trying to list every nonprofit in the world. It is trying to build a focused, transparent, on-chain contribution system around a limited group of trusted public-good organizations.
-
-### 6.4 Bootstrap Program
+### 6.3 Bootstrap Program
 
 **Objective:** Ensure each newly onboarded charity earns from day one and that pools start with credible TVL.
 
-**Source of funds:** The 10% Charity Genesis Reserve is earmarked to bootstrap up to 99 nonprofits. The intended bootstrap target is 1,000,000 OBN per nonprofit, subject to governance and available reserves.
-
-At 99 pools, a 1,000,000 OBN bootstrap per nonprofit would require 99,000,000 OBN, leaving 1,000,000 OBN from the 100,000,000 OBN Charity Genesis Reserve for governance-approved nonprofit-related uses, reserves, operational flexibility, or future policy decisions.
+**Source of funds:** The 10% Charity Genesis Reserve is earmarked to bootstrap up to 100 nonprofits. The intended bootstrap target is 1,000,000 OBN per nonprofit, subject to governance and available reserves.
 
 **Mechanism:**
 
@@ -476,13 +454,11 @@ At 99 pools, a 1,000,000 OBN bootstrap per nonprofit would require 99,000,000 OB
 3. The lock prevents withdrawal of the seeded principal, eliminating immediate dump risk while the position earns yield continuously.
 4. The nonprofit benefits from both the staker-share yield on its locked bootstrap position and the pool's 10% charity allocation routed to the charityWallet.
 
-**Expansion policy after 99:** OBN should not continue expanding indefinitely. Once the protocol reaches the 99-pool target, governance may replace, migrate, or remove pools according to clear standards, but the network should maintain the 99-pool model unless governance explicitly changes that policy.
-
 **Reporting:** Each bootstrap is transparent on-chain and included in periodic public disclosures.
 
 **Protection:** The `_enforceCharitySelfStakePolicy` ensures each nonprofit can only receive one locked bootstrap position. Future ordinary stakes must come from external users, while nonprofit wallet migrations must follow the protocol's governance-controlled migration process.
 
-### 6.5 Delisting policy
+### 6.4 Delisting policy
 
 If standards aren't met, we remove the nonprofit from our frontend and stop promoting that pool.
 
@@ -519,7 +495,6 @@ Upgrades require `_authorizeUpgrade` (owner).
 **Governed (no upgrade needed unless a specific implementation requires it):**
 
 - Add pools (`addPool(charityWallet)`)
-- Maintain the 99-pool curation policy
 - Execute bootstrap stakes from the Charity Genesis Reserve or authorized funding source
 - Manage AnnualGovernance cycle timing and ballot curation (voteAdmin role)
 - Append future phases contiguously (`addPhase`)
@@ -527,11 +502,9 @@ Upgrades require `_authorizeUpgrade` (owner).
 - Spending and usage reporting for TheOffering and ExtendOliveBranch
 - Standards for nonprofit onboarding, delisting, replacement, and migration
 
-### 7.3 Governance and the 99-pool model
+### 7.3 Governance
 
-The 99-pool model should be treated as a foundational policy commitment of the protocol.
-
-Governance may manage which nonprofits are included, but the default assumption should be that OBN remains centered around 99 nonprofit pools to preserve focused impact. If governance ever proposes expanding beyond 99, that decision should require clear public justification, community review, and a transparent vote.
+Governance may manage which nonprofits are included, but the default assumption should be that OBN remains centered around nonprofit pools.
 
 ### 7.4 AnnualGovernance
 
@@ -552,7 +525,7 @@ Each cycle begins when the voteAdmin opens it. Phase 1 and Phase 2 run sequentia
 **Vote integrity:**
 
 - Voting power is derived from checkpointed OBN balances at cycle start, preventing same-block stake-then-vote manipulation.
-- The ballot is capped at `maxBallotSize = 100`, ensuring the 99-pool model can fit within a single annual ballot.
+- The ballot is capped at `maxBallotSize = 100`.
 - Phase transitions are controlled by the voteAdmin so cycles are deliberate and not rushed.
 
 **Execution:**
@@ -587,8 +560,6 @@ AnnualGovernance is a UUPS proxy. The Timelock can upgrade it to support more so
 
 **Emergency controls:** Force exit enables governance to recover users in emergencies.
 
-**Focused pool surface:** The 99-pool model reduces governance complexity and makes nonprofit monitoring more manageable.
-
 ### 8.3 Design trade-offs
 
 Equal APR keeps focus on impact, not APR gaming.
@@ -596,8 +567,6 @@ Equal APR keeps focus on impact, not APR gaming.
 Per-action charity minting is atomic but requires every action to mint (gas trade-off).
 
 Appending phases centralizes some discretion; timelock + DAO voting mitigates.
-
-The 99-pool model limits breadth in favor of depth, focus, and measurable contribution.
 
 AnnualGovernance resolves TheOffering and ExtendOliveBranch balances through transparent, accountable community votes each cycle.
 
@@ -684,7 +653,7 @@ OBN is designed so users do not need to choose between earning and giving. Both 
 
 - 40% Liquidity
 - 30% Airdrop
-- 10% Charity Genesis Reserve — used chiefly for 1,000,000 OBN bootstrap stakes per charity, targeting up to 99 nonprofit pools
+- 10% Charity Genesis Reserve — used chiefly for 1,000,000 OBN bootstrap stakes per charity, targeting up to 100 nonprofit pools
 - 10% Treasury
 - 10% Team (to TeamVesting; ~4-month cliff, ~20-month linear vest)
 
@@ -720,7 +689,6 @@ OBN is designed so users do not need to choose between earning and giving. Both 
 - Implement expanded contribution tracking in the frontend
 - Build Proof-of-Contribution dashboards
 - Improve nonprofit reporting pages
-- Continue curating toward the 99-pool model
 - Launch AnnualGovernance first cycle once DAO voting is live
 - Produce educational media
 - Onboard additional nonprofits
@@ -735,7 +703,7 @@ OBN is designed so users do not need to choose between earning and giving. Both 
 - Deploy DAO and pass governance to the community
 - Transfer upgrade authority through timelock governance
 - Transfer AnnualGovernance voteAdmin to DAO-controlled address as governance matures
-- Maintain the 99-pool nonprofit network
+- Maintain the nonprofit network
 - Update frontend with DAO features
 - Expand contribution reputation and reporting tools
 - Maintain and adapt protocol as public-good needs evolve
@@ -910,7 +878,7 @@ Users do not need to give up their principal to participate. They do not need to
 
 That is Proof-of-Contribution.
 
-The protocol is intentionally simple at its core: users stake into nonprofit pools, rewards are split by contract, and a portion of emissions is routed toward real-world causes. The 99-pool model keeps the network focused. The hard-coded reward split keeps the system honest. ExtendOliveBranch gives the community a recurring way to direct additional nonprofit funding. TheOffering gives stakers a yearly choice between burning supply or extending more value toward nonprofits.
+The protocol is intentionally simple at its core: users stake into nonprofit pools, rewards are split by contract, and a portion of emissions is routed toward real-world causes. The hard-coded reward split keeps the system honest. ExtendOliveBranch gives the community a recurring way to direct additional nonprofit funding. TheOffering gives stakers a yearly choice between burning supply or extending more value toward nonprofits.
 
 OBN is not built around extraction. It is built around alignment.
 
