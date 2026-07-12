@@ -4,7 +4,7 @@
 
 The Olive Branch Network is a Proof-of-Contribution staking protocol designed to turn ordinary on-chain participation into continuous nonprofit funding while still rewarding users for participating. Users stake OBN into nonprofit-specific pools, earn staking emissions, and help route a defined portion of those emissions toward real-world causes.
 
-The goal is not to ask users to choose between earning and giving. The goal is to make both happen through the same protocol action.
+The goal is not to ask users to choose between earning and contributing. The goal is to make both happen through the same protocol action.
 
 OBN introduces a contribution layer where staking activity creates transparent, on-chain records tied to the causes users support. Every stake, claim, nonprofit distribution, governance vote, burn, and annual allocation becomes part of a public system that can be tracked, verified, and built upon.
 
@@ -75,7 +75,7 @@ OBN can track contribution through existing and future protocol views, including
 
 These metrics allow the protocol to build future contribution dashboards, user impact profiles, nonprofit reporting pages, and governance tools. Over time, Proof-of-Contribution can become an identity layer showing how users participated in the network and which causes they helped support.
 
-This does not require users to sacrifice yield. The protocol is designed so earning and giving occur in the same action.
+This does not require users to sacrifice yield. The protocol is designed so earning and contributing occur in the same action.
 
 ---
 
@@ -370,9 +370,9 @@ Keeping the governance-accumulated streams at 1% each ensures the protocol remai
 
 Both 1% emission streams are governed by AnnualGovernance, each with a clearly defined purpose.
 
-**ExtendOliveBranch (1% of emissions):** Accumulates OBN continuously throughout each annual cycle. At the end of each cycle, stakers vote in Phase 2 of AnnualGovernance to select which approved nonprofit pool receives the full accumulated balance. This gives the community a transparent, recurring mechanism to direct protocol-level resources toward specific causes.
+**ExtendOliveBranch (1% of emissions):** Accumulates OBN continuously throughout each annual cycle. At the end of each cycle, stakers vote in Phase 2 of AnnualGovernance to select which approved nonprofit pool receives the full accumulated balance. This provides the community a transparent, recurring mechanism to direct protocol-level resources toward specific causes.
 
-**TheOffering (1% of emissions):** Accumulates OBN continuously. At the end of each cycle, stakers vote in Phase 1 of AnnualGovernance to choose between two outcomes: BURN the balance (permanently deflationary) or GIVE it to ExtendOliveBranch (additive to that cycle's nonprofit distribution). This vote gives the community ongoing control over supply policy — a decision that becomes more significant as protocol TVL and annual accumulation grow.
+**TheOffering (1% of emissions):** Accumulates OBN continuously. At the end of each cycle, stakers vote in Phase 1 of AnnualGovernance to choose between two outcomes: BURN the balance (permanently deflationary) or GIVE it to ExtendOliveBranch (additive to that cycle's nonprofit distribution). This vote grants the community ongoing control over supply policy — a decision that becomes more significant as protocol TVL and annual accumulation grow.
 
 The full reward structure:
 
@@ -400,9 +400,9 @@ OBN is inflationary via staking, but voluntary burns (e.g., future app fees) can
 
 ### 5.2 Annual governance streams vs. Charity Genesis Reserve
 
-**Charity Genesis Reserve (10% of initial supply):** One-time genesis allocation held by governance. Primarily earmarked for 1,000,000 OBN bootstrap stakes per nonprofit pool, targeting up to 100 pools.
+**Charity Genesis Reserve (10% of initial supply):** One-time genesis allocation of 100,000,000 OBN held by governance, reserved for bootstrapping nonprofits. Primarily earmarked for 1,000,000 OBN bootstrap stakes per nonprofit pool — enough for 100 pools at this rate.
 
-**ExtendOliveBranch (1% of ongoing emissions):** Accumulates continuously. AnnualGovernance Phase 2 votes select which approved nonprofit receives the full cycle balance. The protocol's annual directed-giving mechanism.
+**ExtendOliveBranch (1% of ongoing emissions):** Accumulates continuously. AnnualGovernance Phase 2 votes select which approved nonprofit receives the full cycle balance. The protocol's annual directed-contribution mechanism.
 
 **TheOffering (1% of ongoing emissions):** Accumulates continuously. AnnualGovernance Phase 1 votes choose between burning the balance or donating it to ExtendOliveBranch. The protocol's annual supply-policy mechanism.
 
@@ -445,7 +445,7 @@ Every charity page shows a clear "No Affiliation / Not Endorsed" banner by defau
 
 **Objective:** Ensure each newly onboarded charity earns from day one and that pools start with credible TVL.
 
-**Source of funds:** The 10% Charity Genesis Reserve is earmarked to bootstrap up to 100 nonprofits. The intended bootstrap target is 1,000,000 OBN per nonprofit, subject to governance and available reserves.
+**Source of funds:** The 10% Charity Genesis Reserve (100,000,000 OBN) was reserved for bootstrapping nonprofits. The intended bootstrap is 1,000,000 OBN per nonprofit — enough for 100 nonprofits — subject to governance and available reserves.
 
 **Mechanism:**
 
@@ -641,7 +641,7 @@ OBN should publish periodic public reports covering:
 8. **Vote on TheOffering** — Once per year, stakers vote whether TheOffering's accumulated balance is burned or sent to ExtendOliveBranch.
 9. **Vote on ExtendOliveBranch** — Stakers then vote on which approved nonprofit receives ExtendOliveBranch's full accumulated balance.
 
-OBN is designed so users do not need to choose between earning and giving. Both happen through the same protocol action.
+OBN is designed so users do not need to choose between earning and contributing. Both happen through the same protocol action.
 
 ---
 
@@ -653,7 +653,7 @@ OBN is designed so users do not need to choose between earning and giving. Both 
 
 - 40% Liquidity
 - 30% Airdrop
-- 10% Charity Genesis Reserve — used chiefly for 1,000,000 OBN bootstrap stakes per charity, targeting up to 100 nonprofit pools
+- 10% Charity Genesis Reserve — 100,000,000 OBN reserved for bootstrapping nonprofits, used chiefly for 1,000,000 OBN bootstrap stakes per charity
 - 10% Treasury
 - 10% Team (to TeamVesting; ~4-month cliff, ~20-month linear vest)
 
@@ -874,11 +874,11 @@ Olive Branch Network was built from the belief that programmable money should no
 
 OBN is an attempt to prove that contribution can be built directly into the asset itself.
 
-Users do not need to give up their principal to participate. They do not need to make a separate donation. They do not need to choose between earning and helping. When users stake, they earn. When they claim, nonprofits receive. When the network grows, the contribution layer grows with it.
+Users do not need to sacrifice their principal to participate. They do not need to make a separate donation. They do not need to choose between earning and helping. When users stake, they earn. When they claim, nonprofits receive. When the network grows, the contribution layer grows with it.
 
 That is Proof-of-Contribution.
 
-The protocol is intentionally simple at its core: users stake into nonprofit pools, rewards are split by contract, and a portion of emissions is routed toward real-world causes. The hard-coded reward split keeps the system honest. ExtendOliveBranch gives the community a recurring way to direct additional nonprofit funding. TheOffering gives stakers a yearly choice between burning supply or extending more value toward nonprofits.
+The protocol is intentionally simple at its core: users stake into nonprofit pools, rewards are split by contract, and a portion of emissions is routed toward real-world causes. The hard-coded reward split keeps the system honest. ExtendOliveBranch provides the community a recurring way to direct additional nonprofit funding. TheOffering offers stakers a yearly choice between burning supply or extending more value toward nonprofits.
 
 OBN is not built around extraction. It is built around alignment.
 

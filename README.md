@@ -4,13 +4,13 @@ The Olive Branch network is a staking protocol on Base that turns onchain partic
 
 Every claim creates a transparent onchain contribution event: the user earns, the nonprofit receives funding, and the network records that participation as part of OBN's broader Proof-of-Contribution model.
 
-OBN is not only a staking app. It is a contribution layer for crypto — a system where earning and giving become one action.
+OBN is not only a staking app. It is a contribution layer for crypto — a system where earning and contributing become one action.
 
 ---
 
 ## Core Idea
 
-**Stake. Earn. Give. Prove it onchain.**
+**Stake. Earn. Contribute. Prove it onchain.**
 
 Traditional staking proves participation by locking capital and earning rewards. OBN expands that idea through **Proof-of-Contribution**: participation is measured not only by the tokens users stake, but by the value their activity helps route toward real-world causes.
 
@@ -62,9 +62,9 @@ Proof-of-Contribution makes OBN more than a yield protocol. It makes OBN a publi
 
 ## The Bootstrap Model
 
-Each approved nonprofit pool may receive **1,000,000 OBN permanently staked** in its pool from the Charity Genesis Reserve.
+Each approved nonprofit pool may receive **1,000,000 OBN permanently staked** in its pool from the Charity Genesis Reserve — 10% of initial supply (100,000,000 OBN) reserved for bootstrapping nonprofits, enough for 100 pools at this rate.
 
-This bootstrap gives each nonprofit:
+This bootstrap provides each nonprofit:
 
 - reward generation from day one, before any user stakes in its pool
 - a permanently locked position that cannot be withdrawn as ordinary liquid supply
@@ -83,7 +83,7 @@ OBN's two 1% emission streams accumulate throughout each cycle and are resolved 
 - **Burn** — the accumulated OBN is permanently burned, reducing supply
 - **Give** — the accumulated OBN is transferred to ExtendOliveBranch for that cycle's nonprofit distribution
 
-**ExtendOliveBranch** receives 1% of all staking emissions, plus any donation from TheOffering when stakers vote to give. Each cycle, stakers vote to choose which approved nonprofit pool receives ExtendOliveBranch's full accumulated balance.
+**ExtendOliveBranch** receives 1% of all staking emissions, plus any donation from TheOffering when stakers vote Give. Each cycle, stakers vote to choose which approved nonprofit pool receives ExtendOliveBranch's full accumulated balance.
 
 Both votes run through **AnnualGovernance** — an on-chain governance contract owned by the Timelock that manages each annual cycle. Voting power is based on checkpointed OBN balances to prevent last-minute manipulation.
 
@@ -117,7 +117,7 @@ Because rewards are split automatically, every emission phase supports three out
 
 **For stakers:** Your capital works for you and for the causes you care about. You do not have to choose between earning yield and supporting nonprofits.
 
-**For nonprofits:** OBN creates passive, verifiable funding that scales with community participation. The model reduces dependence on one-time fundraising campaigns and gives each pool a transparent funding stream.
+**For nonprofits:** OBN creates passive, verifiable funding that scales with community participation. The model reduces dependence on one-time fundraising campaigns and provides each pool a transparent funding stream.
 
 **For crypto:** OBN proves that DeFi can do more than move value between traders. It can route value toward real-world organizations while preserving user incentives.
 
@@ -131,7 +131,7 @@ Because rewards are split automatically, every emission phase supports three out
 |------------|---|---------|
 | Exchange Liquidity | 40% | Market access and trading |
 | Airdrop/Community | 30% | Growth, engagement, and security incentives |
-| Charity Genesis Reserve | 10% | Nonprofit bootstraps, primarily 99 locked pool positions |
+| Charity Genesis Reserve | 10% | 100,000,000 OBN reserved for nonprofit bootstraps (1,000,000 OBN permanently staked per pool) |
 | Treasury | 10% | Development and operations |
 | Team (Vested) | 10% | Long-term aligned incentives with cliff + linear release |
 
@@ -178,4 +178,4 @@ npx hardhat test
 
 ---
 
-*Make giving the path of least resistance.*
+*Make contributing the path of least resistance.*
