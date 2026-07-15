@@ -12,9 +12,9 @@
 
 Charitable giving in the United States presents a paradox: total dollars donated reach record highs nearly every year, while the number of people who give at all has been falling for a quarter century. The share of American households making any charitable contribution fell from 66.2% in 2000 to 49.6% in 2018, and donor counts have declined every year since 2021 even as total revenue grew. Philanthropy is consolidating into a smaller, wealthier donor class, hollowing out the mass participation on which the civic legitimacy of the nonprofit sector rests.
 
-This thesis argues that the root of the participation collapse is structural, not moral: under every historical form of money — commodity, fiat, and early digital — giving is *sacrificial*. A donation permanently transfers principal from donor to recipient, so the threshold for participation is disposable surplus, a bar that stagnant real incomes push out of reach for a growing share of households. Programmable money removes this constraint for the first time in monetary history. Because a smart contract can separate *ownership of an asset* from *direction of the yield that asset generates*, it becomes possible to design **non-sacrificial giving**: a donor retains their principal permanently while continuously routing a protocol-enforced share of its productivity to independently verifiable public benefit.
+This thesis argues that the root of the participation collapse is structural, not moral: under every historical form of money — commodity, fiat, and early digital — giving is *sacrificial*. A donation permanently transfers principal from donor to recipient, so the threshold for participation is disposable surplus — a bar that a growing share of households can no longer clear as real income gains concentrate at the top of the distribution. Programmable money removes this constraint for the first time in monetary history. Because a smart contract can separate *ownership of an asset* from *direction of the yield that asset generates*, it becomes possible to design **non-sacrificial giving**: a donor retains their principal permanently while continuously routing a protocol-enforced share of its productivity to independently verifiable public benefit.
 
-The Olive Branch Network (OBN) protocol is presented as a reference implementation of this design. The thesis (i) situates OBN within the long history of monetary technology; (ii) documents, with cited empirical data, the decline in charitable participation that motivates it; (iii) formalizes the protocol's participation–lock feedback loop, in which each additional participant transfers OBN tokens out of the circulating float and into non-custodial contract escrow, contracting effective supply as adoption grows; and (iv) provides a complete technical description of every core smart contract — `OBNToken`, `OBNStakingPools`, `TheOffering`, `ExtendOliveBranch`, `AnnualGovernance`, `OBNTimeLock`, `TeamVesting`, `OliveNFT`, and `OBNStakingLens` — including storage layouts, invariants, access-control lattices, and upgrade-safety mechanics, as deployed on Base mainnet.
+The Olive Branch Network (OBN) protocol is presented as a reference implementation of this design. The thesis (i) situates OBN within the long history of monetary technology; (ii) documents, with cited empirical data, the decline in charitable participation that motivates it; (iii) formalizes the protocol's participation–lock feedback loop, in which each additional participant transfers OBN tokens out of the circulating float and into non-custodial contract escrow, contracting effective supply as adoption grows; and (iv) provides a complete technical description of every core smart contract — `OBNToken`, `OBNStakingPools`, `TheOffering`, `ExtendOliveBranch`, `AnnualGovernance`, `OBNTimeLock`, `TeamVesting`, `OliveNFT`, and `OBNStakingLens` — including storage layouts, invariants, access-control structure, and upgrade-safety mechanics, as deployed on Base mainnet.
 
 ---
 
@@ -89,7 +89,7 @@ For giving, the fiat-banking era changed scale but not structure. Charitable ded
 
 ### 2.4 Digital settlement and electronic fiat (1971–2008)
 
-Between the Nixon shock and 2008, money dematerialized operationally — Fedwire, SWIFT (1973), card networks, and internet payments made most money bank-database entries — without changing its logic. Electronic fiat is still an IOU whose rules are enforced by regulated intermediaries. Chaum (1983) showed cryptography could create digital bearer cash, but his DigiCash centralized issuance and failed commercially; Szabo's "bit gold" and Dai's "b-money" (1998) sketched decentralized issuance without solving double-spending.
+Between the Nixon shock and 2008, money dematerialized operationally — Fedwire, SWIFT (1973), card networks, and internet payments made most money bank-database entries — without changing its logic. Electronic fiat is still an IOU whose rules are enforced by regulated intermediaries. Chaum (1983) showed cryptography could create digital bearer cash, but his DigiCash centralized issuance and failed commercially; Dai's "b-money" (1998) and Szabo's "bit gold" (conceived in the late 1990s, published 2005) sketched decentralized issuance without solving double-spending.
 
 ### 2.5 Bitcoin: scarcity without a sovereign (2008)
 
@@ -250,7 +250,7 @@ where *e* is the current emission rate, *r* the fraction of staker rewards resta
 
 ### 4.7 Non-sacrificial giving, restated
 
-The economic design resolves the Chapter 3 problem directly. The participation threshold is no longer "surplus I can afford to lose" but "capital I am willing to park." The household that could never donate $500 can stake $500, keep it, withdraw it in an emergency, and meanwhile continuously direct 10% of a 10%-APR stream — real, protocol-enforced, publicly recorded contributions — to a verified nonprofit. Giving becomes an *asset-allocation decision* rather than a *consumption sacrifice*. That is the design's answer to the participation collapse: not exhorting people to give more, but removing the structural reason they stopped.
+The economic design resolves the Chapter 3 problem directly. The participation threshold is no longer "surplus I can afford to lose" but "capital I am willing to park." The household that could never donate $500 can stake $500, keep it, withdraw it in an emergency, and meanwhile continuously direct 10% of the yield its stake generates — real, protocol-enforced, publicly recorded contributions — to a verified nonprofit. Giving becomes an *asset-allocation decision* rather than a *consumption sacrifice*. That is the design's answer to the participation collapse: not exhorting people to give more, but removing the structural reason they stopped.
 
 ---
 
@@ -274,7 +274,7 @@ All contracts target Solidity ^0.8.28, build on OpenZeppelin v5, and are deploye
 
 **Security properties.** No pausability, no blacklist, no transfer tax: the token is maximally neutral. Burning is available to any holder via `ERC20Burnable` — the hook `TheOffering` uses to destroy the commons.
 
-### 5.2 `OBNStakingPools` — the engine (StakingPoolsV93.sol, ~1,100 lines; version string "9.3")
+### 5.2 `OBNStakingPools` — the engine (StakingPoolsV93.sol; version string "9.3")
 
 The staking contract is the largest and most consequential contract in the system: it is the sole OBN minter, the custodian of all staked principal (K in §4.2), and the voting-power oracle for governance. It runs behind a UUPS proxy at a stable address.
 
@@ -463,7 +463,7 @@ Money has always been an enforcement technology; the question in every era is wh
 
 That collapse arrives at the precise historical moment it is needed. The data are unambiguous: American giving participation fell from two-thirds of households to under half in a generation, donor counts decline every year while record dollars concentrate in ever-fewer hands, and the small donor — the civic backbone of the sector — is the fastest-vanishing cohort. The cause defended here is structural: giving has always demanded the sacrifice of principal, and the population able to afford that sacrifice has narrowed.
 
-Olive Branch Network answers with a mechanism rather than an exhortation. A participant stakes and keeps their capital; the protocol mints declining, participation-proportional emissions and irrevocably splits every realized reward 88/10/1/1 among staker, chosen nonprofit, and the two governance vaults; the commons defaults to fire unless the community affirmatively votes it into a gift; and every additional participant tightens the circulating float by moving principal into inert escrow — so the act of joining is simultaneously an act of giving and an act of supply contraction. The contracts specified in Chapter 5 implement this with a security architecture whose theme is the *one-way ratchet*: minters set once, locks that only grow, votes that cannot be cancelled after execution, and an admin that can return funds to users but never take them.
+Olive Branch Network answers with a mechanism rather than an exhortation. A participant stakes and keeps their capital; the protocol mints declining, participation-proportional emissions and irrevocably splits every realized reward 88/10/1/1 among staker, chosen nonprofit, and the two governance vaults; the commons burns by default unless the community affirmatively votes it into a gift; and every additional participant tightens the circulating float by moving principal into inert escrow — so the act of joining is simultaneously an act of giving and an act of supply contraction. The contracts specified in Chapter 5 implement this with a security architecture whose theme is the *one-way ratchet*: minters set once, locks that only grow, votes that cannot be cancelled after execution, and an admin that can return funds to users but never take them.
 
 The deepest claim of this thesis is the simplest: generosity should not require sacrifice, and for the first time in the history of money, it doesn't have to.
 
@@ -516,11 +516,11 @@ The deepest claim of this thesis is the simplest: generosity should not require 
 - Nonprofit Quarterly. ["Donor Base Continues to Decline, FEP Report Says."](https://nonprofitquarterly.org/donor-base-continues-to-decline-fep-report-says/)
 - National Philanthropic Trust. ["Charitable Giving Statistics."](https://www.nptrust.org/philanthropic-resources/charitable-giving-statistics/)
 
-### Protocol sources (this repository)
+### Protocol sources
 
-- OBN Charter v0.1 — `docs/charter/CHARTER.md`
-- The Philosophy of Olive Branch Network — `docs/philosophy/README.md`
-- Core contracts — `obn-project/contracts/`: `OBNToken.sol`, `StakingPoolsV93.sol`, `TheOffering.sol`, `ExtendOliveBranch.sol`, `AnnualGovernance.sol`, `OBNTimeLock.sol`, `TeamVesting.sol`, `OliveNFT.sol`, `OBNStakingLens.sol`
+- OBN Whitepaper — [WHITEPAPER.md](WHITEPAPER.md)
+- Core contracts — [`obn-project/contracts/`](obn-project/contracts/): `OBNToken.sol`, `StakingPoolsV93.sol`, `TheOffering.sol`, `ExtendOliveBranch.sol`, `AnnualGovernance.sol`, `OBNTimeLock.sol`, `TeamVesting.sol`, `OliveNFT.sol`, `OBNStakingLens.sol`
+- OBN Charter v0.1 and *The Philosophy of Olive Branch Network* — protocol governance documents
 
 ---
 
