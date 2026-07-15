@@ -242,7 +242,7 @@ The loop: **more participants → more tokens locked → smaller float and large
 
 ### 4.6 Honest accounting: the emission counterweight
 
-A doctoral treatment must state the opposing force. Emissions are inflationary: at the initial 10% rate, S grows in proportion to K. Whether net float *shrinks* depends on the realized flows. Differentiating the float identity, the emission flow entering the float is:
+The mechanism has an opposing force. Emissions are inflationary: at the initial 10% rate, S grows in proportion to K. Whether net float *shrinks* depends on the realized flows. Differentiating the float identity, the emission flow entering the float is:
 
 > **dF/dt ≈ e·K·[0.88·(1−r) + 0.10 + 0.02·(1−β)·δ] − dK/dt**
 
