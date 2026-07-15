@@ -1,4 +1,4 @@
-# Non-Sacrificial Giving: Programmable Money, the Collapse of Mass Charitable Participation, and the Supply-Lock Economics of the Olive Branch Network Protocol
+# Non-Sacrificial Giving: A Protocol Answer to the Decline of Mass Charitable Participation
 
 **Olive Branch Network Thesis**
 
