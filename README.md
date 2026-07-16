@@ -165,6 +165,18 @@ OBNToken and OBNStakingPools use the UUPS proxy pattern with governance-controll
 
 ---
 
+## Repository Layout
+
+- [`obn-project/`](obn-project/) contains the protocol contracts, deployment records, tests, and supporting project tooling.
+- [`obn-frontend/`](obn-frontend/) contains a sanitized, open-source reference implementation of the Olive Branch Network interface.
+- [`governance-operations/`](governance-operations/) contains governance procedures and operational materials.
+- [`liquidity-operations/`](liquidity-operations/) contains liquidity procedures and operational materials.
+- [`.archive/`](.archive/) contains superseded or historical project materials retained for reference.
+
+The production frontend is maintained separately in a private repository and deployed independently. Nothing in `obn-frontend/` is automatically connected to or deployed by the production Vercel project. The copy here exists for transparency, education, auditing, and community contribution.
+
+---
+
 ## For Developers
 
 ```bash

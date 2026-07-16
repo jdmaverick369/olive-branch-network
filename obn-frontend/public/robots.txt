@@ -1,0 +1,22 @@
+User-agent: *
+Allow: /
+
+# The pools page (and the legacy route that redirects to it) must stay
+# crawlable: "/" redirects there, and social scrapers (LinkedIn etc.)
+# refuse to read og: tags when the redirect target is disallowed.
+# Remaining disallows are wallet-specific or live-data pages with nothing
+# useful to index.
+Disallow: /profile
+Disallow: /governance/
+Disallow: /protocol-funds
+Disallow: /trade
+Disallow: /faq
+Disallow: /analytics
+Disallow: /terms-of-service
+
+# Embed widget — meant to be embedded on external pages, not indexed as its
+# own standalone destination.
+Disallow: /embed/
+
+# Server-only routes, no content to index.
+Disallow: /api/

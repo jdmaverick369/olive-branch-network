@@ -1,0 +1,289 @@
+/* src/app/globals.css */
+@import "tailwindcss";
+@import "@rainbow-me/rainbowkit/styles.css";
+
+/* 🌍 Theme tokens (Light by default) */
+:root {
+  --color-background: #f0fdf4; /* light */
+  --color-foreground: #1a1a1a;
+  --color-primary:    #3B7A57;
+  --color-secondary:  #5D8AA8;
+  --color-accent:     #A0522D;
+  --color-link:       #2563eb;
+
+  /* ✅ Card Surface — Light Mode */
+  --card-bg: #ffffff;
+  --card-border: #86efac;      /* green-200 */
+  --card-text: #111827;        /* gray-900 */
+  --card-subtext: #1f2937;     /* gray-800 */
+  --card-badge-bg: #ffffff;    /* white */
+  --card-badge-text: #0D9921;  /* dark green */
+  --card-badge-ring: #4ade80;  /* green-400 - darker border */
+
+  /* ✅ Page gradient (Light) */
+  --page-bg-from: #ffffff;   /* white */
+  --page-bg-to:   #ffffff;   /* white */
+}
+
+/* 🌚 Dark overrides — Applies when <html class="dark"> or data-theme="dark" */
+:root.dark,
+.dark,
+:root[data-theme="dark"],
+[data-theme="dark"] {
+  --color-background: #0b1110; /* deep near-black */
+  --color-foreground: #f8fafc; /* near-white */
+  --color-primary:    #65c18c; /* softened green for dark */
+  --color-secondary:  #8fb9d9;
+  --color-accent:     #d39a72;
+  --color-link:       #93c5fd;
+
+  /* ✅ Card Surface — Dark Mode */
+  --card-bg: #0f172a;          /* slate-900-ish */
+  --card-border: #374151;      /* gray-700 */
+  --card-text: #f3f4f6;        /* gray-100 */
+  --card-subtext: #d1d5db;     /* gray-300 */
+  --card-badge-bg: rgba(20,83,45,.3); /* green-900/30 */
+  --card-badge-text: #86efac;  /* green-300 */
+  --card-badge-ring: #065f46;  /* green-800 */
+
+  /* ✅ Page gradient (Dark) */
+  --page-bg-from: #0b1110;   /* near-black teal */
+  --page-bg-to:   #0a0f14;   /* ~gray-950 */
+}
+
+/* =========================================================
+   ✅ BOOT PAINT FIX (kills intermittent white flash)
+   ---------------------------------------------------------
+   Keep body as the green canvas so overscroll/short pages
+   don't reveal html green at the bottom.
+   ========================================================= */
+html {
+  background-color: transparent; /* IMPORTANT: prevents bottom green peeking on short routes */
+  scroll-behavior: smooth;       /* Keep Next.js warning happy */
+}
+
+body {
+  padding: 0;
+  margin: 0;
+  min-height: 100%;
+  min-height: 100dvh;
+  overflow-x: hidden;
+
+  /* Base canvas — match the page gradient's bottom color so first paint has
+     no green flash (theme class is set pre-paint by ThemeInitScript) */
+  background-color: var(--page-bg-to);
+
+  color: var(--color-foreground);
+  font-family: var(--font-inter), ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
+    "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  line-height: 1.5;
+
+  /* Helps some webviews that briefly show page background during bounce/restore */
+  overscroll-behavior: none;
+}
+
+img,
+video {
+  max-width: 100%;
+  height: auto;
+}
+
+a {
+  color: var(--color-link);
+  text-decoration: none;
+}
+a:hover {
+  text-decoration: underline;
+}
+
+/* ✅ This is what your dashboard wrapper expects */
+.page-bg {
+  background: linear-gradient(180deg, var(--page-bg-from), var(--page-bg-to));
+  min-height: 100vh;
+  min-height: 100dvh;
+}
+
+.main-content h1,
+.main-content h2,
+.main-content h3,
+.main-content h4,
+.main-content h5,
+.main-content h6 {
+  font-weight: 700;
+  color: var(--color-foreground);
+  margin-top: 0;
+}
+
+button {
+  font-family: inherit;
+  cursor: pointer;
+}
+button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* Optional custom animation */
+@keyframes bounce-slow {
+  0%,
+  100% { transform: translateY(0); }
+  50% { transform: translateY(-10%); }
+}
+.animate-bounce-slow {
+  animation: bounce-slow 2s infinite;
+}
+
+/* ============================= */
+/* 🌟 NFT Overlay Effects        */
+/* ============================= */
+
+/* --- White Glossy Sheen --- */
+@keyframes sheenSweep {
+  0%   { transform: translateX(-120%) rotate(20deg); opacity: 0; }
+  10%  { opacity: 0.35; }
+  50%  { opacity: 0.5; }
+  100% { transform: translateX(140%) rotate(20deg); opacity: 0; }
+}
+
+.sheen-band {
+  position: absolute;
+  top: -30%;
+  left: -30%;
+  width: 60%;
+  height: 160%;
+  transform: translateX(-120%) rotate(20deg);
+  background: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0) 0%,
+    rgba(255, 255, 255, 0.12) 35%,
+    rgba(255, 255, 255, 0.6) 50%,
+    rgba(255, 255, 255, 0.12) 65%,
+    rgba(255, 255, 255, 0) 100%
+  );
+  mix-blend-mode: screen;
+  filter: blur(1px);
+  animation: sheenSweep 2.2s ease-in-out infinite;
+  animation-delay: 0.4s;
+}
+
+.sheen-mask { border-radius: inherit; }
+
+@media (prefers-reduced-motion: reduce) {
+  .sheen-band {
+    animation: none;
+    opacity: 0.25;
+    transform: rotate(20deg);
+  }
+}
+
+/* --- Gold Glossy Sheen --- */
+@keyframes goldSheenSweep {
+  0%   { transform: translateX(-120%) rotate(20deg); opacity: 0; }
+  10%  { opacity: 0.28; }
+  50%  { opacity: 0.85; }
+  100% { transform: translateX(140%) rotate(20deg); opacity: 0; }
+}
+
+.gold-sheen-band {
+  position: absolute;
+  top: -30%;
+  left: -30%;
+  width: 60%;
+  height: 160%;
+  transform: translateX(-120%) rotate(20deg);
+  background: linear-gradient(
+    90deg,
+    rgba(255, 215, 0, 0) 0%,
+    rgba(255, 215, 0, 0.18) 30%,
+    rgba(255, 215, 0, 0.6) 50%,
+    rgba(255, 215, 0, 0.18) 70%,
+    rgba(255, 215, 0, 0) 100%
+  );
+  box-shadow: 0 0 12px rgba(255, 200, 0, 0.25),
+              inset 0 0 6px rgba(255, 220, 100, 0.2);
+  mix-blend-mode: screen;
+  filter: blur(0.8px);
+  animation: goldSheenSweep 2.2s ease-in-out infinite;
+  animation-delay: 0.25s;
+}
+
+.gold-sheen-mask { border-radius: inherit; }
+
+@media (prefers-reduced-motion: reduce) {
+  .gold-sheen-band {
+    animation: none;
+    opacity: 0.35;
+    transform: rotate(20deg);
+  }
+}
+
+/* --- Rainbow Glossy Sheen --- */
+@keyframes rainbowSheenSweep {
+  0%   { transform: translateX(-120%) rotate(20deg); opacity: 0; filter: hue-rotate(0deg); }
+  10%  { opacity: 0.35; }
+  50%  { opacity: 0.9;  filter: hue-rotate(180deg); }
+  100% { transform: translateX(140%) rotate(20deg); opacity: 0; filter: hue-rotate(360deg); }
+}
+
+.rainbow-sheen-band {
+  position: absolute;
+  top: -30%;
+  left: -30%;
+  width: 60%;
+  height: 160%;
+  transform: translateX(-120%) rotate(20deg);
+  background: linear-gradient(
+    90deg,
+    rgba(255,255,255,0) 0%,
+    rgba(255,  59,  48, 0.30) 18%,
+    rgba(255, 149,   0, 0.35) 32%,
+    rgba(255, 204,   0, 0.40) 46%,
+    rgba( 52, 199,  89, 0.40) 58%,
+    rgba( 50, 173, 230, 0.40) 70%,
+    rgba( 88,  86, 214, 0.35) 82%,
+    rgba(255,  59,  48, 0.30) 92%,
+    rgba(255,255,255,0) 100%
+  );
+  mix-blend-mode: screen;
+  filter: blur(0.8px);
+  animation: rainbowSheenSweep 2.6s ease-in-out infinite;
+  animation-delay: 0.15s;
+}
+
+.rainbow-sheen-mask { border-radius: inherit; }
+
+@media (prefers-reduced-motion: reduce) {
+  .rainbow-sheen-band {
+    animation: none;
+    opacity: 0.4;
+    transform: rotate(20deg);
+  }
+}
+
+/* ===== Animations & utilities for the popup ===== */
+@layer utilities {
+  @keyframes fade-in {
+    from { opacity: 0; }
+    to   { opacity: 1; }
+  }
+
+  @keyframes fade-in-up {
+    from { opacity: 0; transform: translateY(8px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  @keyframes scale-in {
+    from { opacity: 0; transform: scale(0.975); }
+    to   { opacity: 1; transform: scale(1); }
+  }
+
+  .animate-fade-in { animation: fade-in 180ms ease-out both; }
+  .animate-fade-in-up { animation: fade-in-up 280ms ease-out both; }
+  .animate-scale-in { animation: scale-in 220ms ease-out both; }
+
+  /* Olive NFT Frame — consistent wrapper styling across all pages */
+  .olive-nft-frame {
+    border: 1px solid #000 !important;
+    border-radius: 0.375rem;
+  }
+}

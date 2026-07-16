@@ -1,0 +1,43 @@
+{
+  "frame": {
+    "name": "Olive Branch Network",
+    "version": "1",
+    "iconUrl": "https://dapp.olivebranch.network/icon.png",
+    "homeUrl": "https://dapp.olivebranch.network",
+    "imageUrl": "https://dapp.olivebranch.network/og/frame-obn.png",
+    "buttonTitle": "Connect to OBN App",
+    "splashImageUrl": "https://dapp.olivebranch.network/splash.png",
+    "splashBackgroundColor": "#0D9921",
+    "webhookUrl": "https://api.neynar.com/f/app/6fbb7a64-73e7-4f7f-9f46-f26dc8ed201f/event",
+    "subtitle": "Stake, Earn, Contribute",
+    "description": "Stake OBN to earn rewards while supporting good causes. Make a positive impact with the Olive Branch Network.",
+    "primaryCategory": "finance",
+    "heroImageUrl": "https://dapp.olivebranch.network/og/frame-obn-191.png",
+    "screenshotUrls": [
+      "https://dapp.olivebranch.network/screenshot_01.jpg",
+      "https://dapp.olivebranch.network/screenshot_02.jpg",
+      "https://dapp.olivebranch.network/screenshot_03.jpg"
+    ],
+    "tags": [
+      "community",
+      "staking",
+      "defi",
+      "finance",
+      "crypto"
+    ],
+    "tagline": "Stake, Earn, Contribute",
+    "ogTitle": "Olive Branch Network",
+    "ogDescription": "Support nonprofits that resonate with you and earn rewards for doing so.",
+    "ogImageUrl": "https://dapp.olivebranch.network/social-share-obn.png"
+  },
+  "accountAssociation": {
+    "header": "eyJmaWQiOjExNzg4NjQsInR5cGUiOiJhdXRoIiwia2V5IjoiMHhkOTNBN0M1ZDlhQjQyZDMzNzIzMzJFZDk5ZTRDMjU0RUY0M0E1YWZjIn0",
+    "payload": "eyJkb21haW4iOiJkYXBwLm9saXZlYnJhbmNoLm5ldHdvcmsifQ",
+    "signature": "8nIUPtzctpQXJPgGYEb8lkJZ0jaaztruKksyCcm+XS4aPFlgZdVYtHlHFmIjZvYuflArXK0dJEyYxcBXlToCjxw="
+  },
+  "baseBuilder": {
+    "allowedAddresses": [
+      "0x42b2Dfbd39724BC5ae400DF64bE785BC00edDF39"
+    ]
+  }
+}
