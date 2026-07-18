@@ -1,40 +1,32 @@
 import { useEffect, useState } from 'react';
-import { useReadContract } from 'wagmi';
-import { lensAbi } from '@/lib/lensAbi';
-
-const LENS_CONTRACT = (process.env.NEXT_PUBLIC_LENS_CONTRACT || undefined) as `0x${string}` | undefined;
 
 // Phase values come back from /api as numbers
 type Phase = {
   start: number; // unix seconds
   end: number;   // unix seconds
   bps: number;   // contract (gross) BPS
+  contractPct: number;
+  stakerPct: number;
 };
 
 function isFiniteNumber(n: unknown): n is number {
   return typeof n === 'number' && Number.isFinite(n);
 }
 
-function isPhaseApi(x: unknown): x is { start: number; end: number; bps: number } {
+function isPhaseApi(x: unknown): x is Phase {
   if (typeof x !== 'object' || x === null) return false;
   const obj = x as Record<string, unknown>;
-  return isFiniteNumber(obj.start) && isFiniteNumber(obj.end) && isFiniteNumber(obj.bps);
+  return isFiniteNumber(obj.start) &&
+    isFiniteNumber(obj.end) &&
+    isFiniteNumber(obj.bps) &&
+    isFiniteNumber(obj.contractPct) &&
+    isFiniteNumber(obj.stakerPct);
 }
 
 export function useStakingPhase() {
   const [currentPhase, setCurrentPhase] = useState<number>(0);
   const [daysUntilNext, setDaysUntilNext] = useState<number>(0);
-  const [apy, setApy] = useState<string>('');
   const [phases, setPhases] = useState<Phase[]>([]);
-
-  // Staker APR (BPS) from the contract helper; we show this as APY%
-  const { data: aprBps } = useReadContract({
-    address: LENS_CONTRACT,
-    abi: lensAbi,
-    functionName: 'getPoolAPR',
-    args: [0n],
-    query: { refetchInterval: 30_000 },
-  });
 
   // Fetch all 5 phases in one request (multicall on the server)
   useEffect(() => {
@@ -48,8 +40,8 @@ export function useStakingPhase() {
 
         const normalized: Phase[] = raw.map((p) =>
           isPhaseApi(p)
-            ? { start: p.start, end: p.end, bps: p.bps }
-            : { start: 0, end: 0, bps: 0 }
+            ? p
+            : { start: 0, end: 0, bps: 0, contractPct: 0, stakerPct: 0 }
         );
 
         if (!cancelled) setPhases(normalized);
@@ -89,18 +81,11 @@ export function useStakingPhase() {
     return () => clearInterval(t);
   }, [phases]);
 
-  // Convert staker APR BPS -> percentage string with 2 decimals
-  useEffect(() => {
-    if (typeof aprBps !== 'undefined' && aprBps !== null) {
-      const apyValue = Number(aprBps) / 100; // bps -> %
-      setApy(apyValue.toFixed(2));
-    }
-  }, [aprBps]);
-
   return {
     currentPhase,
     daysUntilNext,
-    apy, // staker APY % (e.g., "8.80")
     phaseBps: phases[currentPhase]?.bps, // number (contract/gross BPS for current phase)
+    contractPct: phases[currentPhase]?.contractPct,
+    stakerPct: phases[currentPhase]?.stakerPct,
   };
 }

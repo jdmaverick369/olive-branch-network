@@ -14,19 +14,6 @@ import { useAddMiniAppPrompt } from "@/hooks/useAddMiniAppPrompt";
 import { usePublicClient } from "wagmi";
 import { stakingAbi } from "@/lib/stakingAbi";
 import { isMiniAppRuntime } from "@/lib/miniapp";
-
-
-
-// Clear NFT cache on hard refresh/initial load only
-if (typeof window !== 'undefined') {
-  const navigationEntries = window.performance?.getEntriesByType?.('navigation') as PerformanceNavigationTiming[] | undefined;
-  const isHardRefresh = !navigationEntries || navigationEntries.length === 0 || navigationEntries[0]?.type === 'reload' || navigationEntries[0]?.type === 'navigate';
-  if (isHardRefresh) {
-    sessionStorage.removeItem('obn_nft_cache');
-    sessionStorage.removeItem('obn_nft_fetching');
-  }
-}
-
 const STAKING_CONTRACT = process.env.NEXT_PUBLIC_STAKING_CONTRACT as `0x${string}`;
 const ZERO_ADDR = "0x0000000000000000000000000000000000000000" as const;
 
@@ -51,15 +38,11 @@ export default function DashboardPage() {
   const { address } = useAccount();
   const publicClient = usePublicClient();
 
-  const { apy, currentPhase } = useStakingPhase();
-
-  // Initialize with default APY values so card appears immediately
-  const [contractPct, setContractPct] = useState<number | null>(10.0); // Default to 10% gross APY
-  const [stakerPct, setStakerPct] = useState<number | null>(8.8); // Default to 8.8% staker APY (88% of gross)
-  const [apyError, setApyError] = useState<string | null>(null);
-
-  /** ❄️ Freeze the first *positive* value we get so the number doesn't "tick" later */
-  const [displayPct, setDisplayPct] = useState<number | null>(null);
+  const phase = useStakingPhase();
+  // Keep the current published rates visible immediately while the single
+  // cached phase request resolves.
+  const contractPct = phase.contractPct ?? 10.0;
+  const displayPct = phase.stakerPct ?? 8.8;
 
   const EXIT_URL = "https://www.olivebranch.network";
 
@@ -316,64 +299,6 @@ export default function DashboardPage() {
     scrollMargin: poolListOffsetRef.current,
   });
 
-  // Fetch on-chain APY from API for all phases in parallel (don't wait for currentPhase)
-  useEffect(() => {
-    let cancelled = false;
-
-    async function loadAllPhases() {
-      setApyError(null);
-      // Don't reset contractPct/stakerPct to null - keep the default values showing
-      // until the API data arrives, so both columns appear simultaneously
-
-      try {
-        const responses = await fetch("/api/phases", { cache: "no-store" }).then((r) => r.json());
-
-        if (!Array.isArray(responses)) throw new Error("Invalid phases response");
-
-        const idx = currentPhase >= 0 && currentPhase < responses.length ? currentPhase : 0;
-        const data = responses[idx];
-
-        if (data && typeof data.contractPct === "number") {
-          if (!cancelled) {
-            setContractPct(data.contractPct);
-            setStakerPct(typeof data.stakerPct === "number" ? data.stakerPct : null);
-          }
-        }
-      } catch (err: unknown) {
-        const message =
-          err instanceof Error ? err.message : typeof err === "string" ? err : "Failed to load APY";
-        if (!cancelled) setApyError(message);
-      }
-    }
-
-    loadAllPhases();
-    return () => {
-      cancelled = true;
-    };
-  }, [currentPhase]);
-
-  /**
-   * ❄️ Freeze logic:
-   * Prefer stakerPct if it's already available; otherwise use APY*0.88.
-   * Only set once and only if the value is a finite positive number (> 0).
-   */
-  useEffect(() => {
-    if (displayPct !== null) return;
-
-    const fromApi =
-      typeof stakerPct === "number" && Number.isFinite(stakerPct) && stakerPct > 0
-        ? stakerPct
-        : null;
-
-    const fromHook =
-      typeof apy === "number" && Number.isFinite(apy) && apy > 0
-        ? Number(apy) * 0.88
-        : null;
-
-    const candidate = fromApi ?? fromHook;
-    if (candidate !== null) setDisplayPct(candidate);
-  }, [stakerPct, apy, displayPct]);
-
   // Prefer the authoritative async result once it resolves; until then, use
   // the synchronous best-guess so first paint picks the right layout instead
   // of always assuming "web" and flashing/reflowing for real MiniApp users.
@@ -507,37 +432,28 @@ export default function DashboardPage() {
                 </div>
 
                 {/* Right: APY */}
-                {((displayPct !== null || apyError) || contractPct !== null) && (
-                  <div className="rounded-xl border" style={{ padding: "12px", backgroundColor: "transparent", borderColor: "var(--card-border)" }}>
-                    <div className="grid grid-cols-2 gap-2 pb-1 mb-2">
-                      {(displayPct !== null || apyError) && (
-                        <div className="flex flex-col items-center">
-                          <p className="text-[min(2vw,7px)] font-bold uppercase mb-1 whitespace-nowrap" style={{ color: "var(--card-subtext)" }}>User APY</p>
-                          <p className="text-sm font-bold" style={{ color: theme === "dark" ? "#86efac" : "#0D9921" }}>
-                            {`${(displayPct ?? 8.8).toFixed(2)}%`}
-                          </p>
-                          {apyError && <p className="text-[7px] text-red-600 dark:text-red-400 mt-1">Error</p>}
-                        </div>
-                      )}
-                      {contractPct !== null && (
-                        <div className="flex flex-col items-center">
-                          <p className="text-[min(2vw,7px)] font-bold uppercase mb-1 whitespace-nowrap" style={{ color: "var(--card-subtext)" }}>Contract APY</p>
-                          <p className="text-sm font-bold" style={{ color: theme === "dark" ? "#86efac" : "#0D9921" }}>
-                            {contractPct.toFixed(2)}%
-                          </p>
-                        </div>
-                      )}
+                <div className="rounded-xl border" style={{ padding: "12px", backgroundColor: "transparent", borderColor: "var(--card-border)" }}>
+                  <div className="grid grid-cols-2 gap-2 pb-1 mb-2">
+                    <div className="flex flex-col items-center">
+                      <p className="text-[min(2vw,7px)] font-bold uppercase mb-1 whitespace-nowrap" style={{ color: "var(--card-subtext)" }}>User APY</p>
+                      <p className="text-sm font-bold" style={{ color: theme === "dark" ? "#86efac" : "#0D9921" }}>
+                        {displayPct.toFixed(2)}%
+                      </p>
                     </div>
-                    {contractPct !== null && (
-                      <div className="space-y-1.5 text-center">
-                        <p className="text-[min(2.5vw,9px)] px-1.5 py-0.5 rounded font-semibold whitespace-nowrap" style={{ backgroundColor: "#16a34a", color: "white" }}>88% to Stakers</p>
-                        <p className="text-[min(2.5vw,9px)] px-1.5 py-0.5 rounded font-semibold whitespace-nowrap" style={{ backgroundColor: "#2563eb", color: "white" }}>10% to Nonprofits</p>
-                        <p className="text-[min(2.5vw,9px)] px-1.5 py-0.5 rounded font-semibold whitespace-nowrap" style={{ backgroundColor: "#a855f7", color: "white" }}>1% to ExtendOliveBranch</p>
-                        <p className="text-[min(2.5vw,9px)] px-1.5 py-0.5 rounded font-semibold whitespace-nowrap" style={{ backgroundColor: "#6b7280", color: "white" }}>1% to TheOffering</p>
-                      </div>
-                    )}
+                    <div className="flex flex-col items-center">
+                      <p className="text-[min(2vw,7px)] font-bold uppercase mb-1 whitespace-nowrap" style={{ color: "var(--card-subtext)" }}>Contract APY</p>
+                      <p className="text-sm font-bold" style={{ color: theme === "dark" ? "#86efac" : "#0D9921" }}>
+                        {contractPct.toFixed(2)}%
+                      </p>
+                    </div>
                   </div>
-                )}
+                  <div className="space-y-1.5 text-center">
+                    <p className="text-[min(2.5vw,9px)] px-1.5 py-0.5 rounded font-semibold whitespace-nowrap" style={{ backgroundColor: "#16a34a", color: "white" }}>88% to Stakers</p>
+                    <p className="text-[min(2.5vw,9px)] px-1.5 py-0.5 rounded font-semibold whitespace-nowrap" style={{ backgroundColor: "#2563eb", color: "white" }}>10% to Nonprofits</p>
+                    <p className="text-[min(2.5vw,9px)] px-1.5 py-0.5 rounded font-semibold whitespace-nowrap" style={{ backgroundColor: "#a855f7", color: "white" }}>1% to ExtendOliveBranch</p>
+                    <p className="text-[min(2.5vw,9px)] px-1.5 py-0.5 rounded font-semibold whitespace-nowrap" style={{ backgroundColor: "#6b7280", color: "white" }}>1% to TheOffering</p>
+                  </div>
+                </div>
               </div>
             </div>
 

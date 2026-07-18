@@ -15,15 +15,8 @@ const nextConfig: NextConfig = {
     removeConsole: process.env.NODE_ENV === "production" ? { exclude: ["error"] } : false,
   },
 
-  // The app no longer has a landing page — the domain root (also the
-  // Farcaster manifest homeUrl) goes straight to the dashboard.
   async redirects() {
     return [
-      {
-        source: "/",
-        destination: "/stake-earn-contribute",
-        permanent: false,
-      },
       // Legacy route name — keep old shared links, casts, and bookmarks alive
       {
         source: "/stake-earn-give",
@@ -38,6 +31,23 @@ const nextConfig: NextConfig = {
     ];
   },
 
+  // The impact widget is embedded by Squarespace. Serve it as a standalone
+  // document so it does not load the wallet providers and application shell.
+  // beforeFiles preserves the existing public URL while taking precedence
+  // over the legacy App Router page at the same path.
+  async rewrites() {
+    return {
+      beforeFiles: [
+        {
+          source: "/embed/impact",
+          destination: "/widgets/impact.html",
+        },
+      ],
+      afterFiles: [],
+      fallback: [],
+    };
+  },
+
   async headers() {
     return [
       {
@@ -46,9 +56,6 @@ const nextConfig: NextConfig = {
           // Required for Base Account popup (keys.coinbase.com).
           // Must NOT be "same-origin" — that blocks the popup.
           { key: "Cross-Origin-Opener-Policy", value: "same-origin-allow-popups" },
-          { key: "X-Content-Type-Options", value: "nosniff" },
-          { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
-          { key: "Permissions-Policy", value: "camera=(), microphone=(), geolocation=()" },
         ],
       },
     ];

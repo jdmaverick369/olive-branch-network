@@ -894,7 +894,10 @@ export default function UserPage() {
   };
 
   return (
-    <div className="flex flex-col relative page-bg" style={!isMobileBrowser && !isInMiniApp ? { height: "calc(100dvh - var(--obn-header-h))", minHeight: 0, overflowY: 'auto', overflowX: 'hidden' } : { minHeight: "calc(100dvh - var(--obn-header-h))" }}>
+    <div
+      className="flex flex-col relative page-bg"
+      style={{ minHeight: "calc(100dvh - var(--obn-header-h))" }}
+    >
       <main
         className="flex flex-col items-center px-4"
         style={

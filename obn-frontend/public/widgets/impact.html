@@ -1,0 +1,235 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <meta name="color-scheme" content="light" />
+    <title>Olive Branch Network impact</title>
+    <script
+      defer
+      src="/_vercel/speed-insights/script.js"
+      data-sdkn="@vercel/speed-insights"
+      data-sdkv="2.0.0"
+      data-route="/embed/impact"
+    ></script>
+    <style>
+      :root {
+        color-scheme: light;
+        font-family: Arial, Helvetica, sans-serif;
+        background: #fff;
+        color: #111827;
+      }
+
+      * { box-sizing: border-box; }
+
+      html, body { margin: 0; background: #fff; }
+
+      body { min-width: 240px; }
+
+      main {
+        padding: 40px 24px;
+        text-align: center;
+      }
+
+      h1 {
+        margin: 0 0 8px;
+        color: #0d9921;
+        font-family: Georgia, "Times New Roman", serif;
+        font-size: clamp(1.75rem, 9vw, 7rem);
+        line-height: 1.05;
+      }
+
+      .subtitle {
+        margin: 0 0 32px;
+        color: #6b7280;
+        font-size: 0.95rem;
+      }
+
+      .stats {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 16px;
+      }
+
+      .card {
+        flex: 1 1 160px;
+        max-width: 380px;
+        padding: 24px 28px;
+        border: 1px solid #111;
+        border-radius: 12px;
+        background: #fff;
+      }
+
+      .label {
+        margin: 0 0 8px;
+        color: #6b7280;
+        font-size: 0.7rem;
+        font-weight: 700;
+        letter-spacing: 0.05em;
+        text-transform: uppercase;
+      }
+
+      .value {
+        min-height: 1.1em;
+        margin: 0 0 4px;
+        color: #0d9921;
+        font-size: 2rem;
+        font-weight: 700;
+        line-height: 1.1;
+        font-variant-numeric: tabular-nums;
+      }
+
+      .sub {
+        min-height: 1em;
+        margin: 0;
+        color: #6b7280;
+        font-size: 0.75rem;
+      }
+
+      .status {
+        min-height: 1.25rem;
+        margin: 18px 0 0;
+        color: #6b7280;
+        font-size: 0.7rem;
+      }
+
+      @media (min-width: 640px) {
+        .card { min-width: 260px; padding: 28px 40px; }
+        .value { font-size: 2.25rem; }
+      }
+
+      @media (max-width: 480px) {
+        main { padding: 32px 18px; }
+        .stats { flex-direction: column; }
+        .card { width: 100%; max-width: none; }
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>Big Ideas, Real Impact</h1>
+      <p class="subtitle">Live protocol stats from the Olive Branch Network</p>
+
+      <section class="stats" aria-label="Olive Branch Network protocol statistics">
+        <article class="card">
+          <p class="label">Active Stakers</p>
+          <p class="value" id="stakers" aria-live="polite">&mdash;</p>
+          <p class="sub">&nbsp;</p>
+        </article>
+
+        <article class="card">
+          <p class="label">Total Staked</p>
+          <p class="value" id="staked" aria-live="polite">&mdash;</p>
+          <p class="sub" id="supply-share">&nbsp;</p>
+        </article>
+
+        <article class="card">
+          <p class="label">Total Contributed</p>
+          <p class="value" id="contributed" aria-live="polite">&mdash;</p>
+          <p class="sub">to nonprofits</p>
+        </article>
+      </section>
+
+      <p class="status" id="status" role="status">Loading live statistics&hellip;</p>
+    </main>
+
+    <script>
+      (() => {
+        "use strict";
+
+        const REFRESH_MS = 5 * 60 * 1000;
+        const endpoints = {
+          stakers: "/api/dune?queryId=5887886",
+          staked: "/api/dune?queryId=6172584",
+          contributed: "/api/dune?queryId=6798005",
+          supply: "/api/supply/total",
+        };
+
+        const elements = {
+          stakers: document.getElementById("stakers"),
+          staked: document.getElementById("staked"),
+          contributed: document.getElementById("contributed"),
+          supplyShare: document.getElementById("supply-share"),
+          status: document.getElementById("status"),
+        };
+
+        const numberFormat = new Intl.NumberFormat();
+
+        function compact(value) {
+          if (value >= 1e9) return `${(value / 1e9).toFixed(2)}B`;
+          if (value >= 1e6) return `${(value / 1e6).toFixed(2)}M`;
+          if (value >= 1e3) return `${(value / 1e3).toFixed(2)}K`;
+          return numberFormat.format(value);
+        }
+
+        function latestValue(data) {
+          const rows = data && data.result && data.result.rows;
+          if (!Array.isArray(rows) || rows.length === 0) return null;
+
+          const row = rows[rows.length - 1];
+          const key = Object.keys(row).find(
+            (name) => !["day", "date", "timestamp"].includes(name),
+          );
+          const value = key ? row[key] : null;
+          return typeof value === "number" && Number.isFinite(value) ? value : null;
+        }
+
+        async function fetchJson(url) {
+          const response = await fetch(url, { cache: "no-store" });
+          if (!response.ok) throw new Error(`Request failed: ${response.status}`);
+          return response.json();
+        }
+
+        async function fetchText(url) {
+          const response = await fetch(url, { cache: "no-store" });
+          if (!response.ok) throw new Error(`Request failed: ${response.status}`);
+          return response.text();
+        }
+
+        async function refresh() {
+          const results = await Promise.allSettled([
+            fetchJson(endpoints.stakers),
+            fetchJson(endpoints.staked),
+            fetchJson(endpoints.contributed),
+            fetchText(endpoints.supply),
+          ]);
+
+          const stakers = results[0].status === "fulfilled" ? latestValue(results[0].value) : null;
+          const staked = results[1].status === "fulfilled" ? latestValue(results[1].value) : null;
+          const contributed = results[2].status === "fulfilled" ? latestValue(results[2].value) : null;
+          const supply = results[3].status === "fulfilled" ? Number.parseFloat(results[3].value) : null;
+
+          let updated = 0;
+          if (stakers !== null) {
+            elements.stakers.textContent = numberFormat.format(stakers);
+            updated += 1;
+          }
+          if (staked !== null) {
+            elements.staked.textContent = `${compact(staked)} OBN`;
+            updated += 1;
+          }
+          if (contributed !== null) {
+            elements.contributed.textContent = `${compact(contributed)} OBN`;
+            updated += 1;
+          }
+          if (staked !== null && Number.isFinite(supply) && supply > 0) {
+            elements.supplyShare.textContent = `${((staked / supply) * 100).toFixed(2)}% of total supply`;
+          }
+
+          if (updated > 0) {
+            elements.status.textContent = `Live data updated ${new Date().toLocaleTimeString([], {
+              hour: "numeric",
+              minute: "2-digit",
+            })}`;
+          } else {
+            elements.status.textContent = "Live data is temporarily unavailable. Retrying automatically.";
+          }
+        }
+
+        refresh();
+        window.setInterval(refresh, REFRESH_MS);
+      })();
+    </script>
+  </body>
+</html>

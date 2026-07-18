@@ -135,7 +135,7 @@ export default function HeaderBar() {
     };
   }, []);
 
-  const showHeader = mounted && pathname !== "/" && !isEmbed;
+  const showHeader = mounted && !isEmbed;
 
   const MenuItem = ({
     href,
@@ -211,7 +211,12 @@ export default function HeaderBar() {
             <button
               ref={btnRef}
               type="button"
-              onClick={() => setOpen((v) => !v)}
+              onClick={(event) => {
+                // Hover controls the menu on desktop. Keep click/tap for
+                // touch layouts and keyboard activation for accessibility.
+                if (isDesktopHover() && event.detail > 0) return;
+                setOpen((value) => !value);
+              }}
               aria-haspopup="menu"
               aria-expanded={open}
               aria-controls="obn-header-menu"
