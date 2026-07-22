@@ -557,7 +557,7 @@ export default function UserPage() {
       if (canBatch) {
         tookBatchPath = true;
         const { id } = await sendCallsAsync({
-          calls: [{ to: OLIVE_NFT, data: encodeFunctionData({ abi: oliveAbi, functionName: "mint" }), value: price, dataSuffix: DATA_SUFFIX }],
+          calls: [{ to: OLIVE_NFT, data: encodeFunctionData({ abi: oliveAbi, functionName: "mint" }), value: price }],
           capabilities: { paymasterService: { url: PAYMASTER_URL }, dataSuffix: { value: DATA_SUFFIX, optional: true } },
         });
         setPendingCallsId(id);
@@ -678,8 +678,8 @@ export default function UserPage() {
       if (canBatch) {
         tookBatchPath = true;
         const calls = pids.length === 1
-          ? [{ to: STAKING_CONTRACT, data: encodeFunctionData({ abi: stakingAbi, functionName: "claim", args: [pids[0]] }), dataSuffix: DATA_SUFFIX }]
-          : [{ to: STAKING_CONTRACT, data: encodeFunctionData({ abi: stakingAbi, functionName: "claimMultiple", args: [pids] }), dataSuffix: DATA_SUFFIX }];
+          ? [{ to: STAKING_CONTRACT, data: encodeFunctionData({ abi: stakingAbi, functionName: "claim", args: [pids[0]] }) }]
+          : [{ to: STAKING_CONTRACT, data: encodeFunctionData({ abi: stakingAbi, functionName: "claimMultiple", args: [pids] }) }];
         const { id } = await sendCallsAsync({
           calls,
           capabilities: { paymasterService: { url: PAYMASTER_URL }, dataSuffix: { value: DATA_SUFFIX, optional: true } },
@@ -777,7 +777,7 @@ export default function UserPage() {
       if (canBatch) {
         tookBatchPath = true;
         const { id } = await sendCallsAsync({
-          calls: [{ to: STAKING_CONTRACT, data: encodeFunctionData({ abi: stakingAbi, functionName: "claim", args: [BigInt(pid)] }), dataSuffix: DATA_SUFFIX }],
+          calls: [{ to: STAKING_CONTRACT, data: encodeFunctionData({ abi: stakingAbi, functionName: "claim", args: [BigInt(pid)] }) }],
           capabilities: { paymasterService: { url: PAYMASTER_URL }, dataSuffix: { value: DATA_SUFFIX, optional: true } },
         });
         setPendingCallsId(id);
@@ -818,7 +818,7 @@ export default function UserPage() {
       if (canBatch) {
         tookBatchPath = true;
         const { id } = await sendCallsAsync({
-          calls: [{ to: STAKING_CONTRACT, data: encodeFunctionData({ abi: stakingAbi, functionName: "claim", args: [BigInt(nonprofitPool.pid)] }), dataSuffix: DATA_SUFFIX }],
+          calls: [{ to: STAKING_CONTRACT, data: encodeFunctionData({ abi: stakingAbi, functionName: "claim", args: [BigInt(nonprofitPool.pid)] }) }],
           capabilities: { paymasterService: { url: PAYMASTER_URL }, dataSuffix: { value: DATA_SUFFIX, optional: true } },
         });
         setPendingCallsId(id);
