@@ -433,12 +433,10 @@ export default function PoolDetailPage() {
             {
               to: OBN_TOKEN_ADDRESS,
               data: encodeFunctionData({ abi: approveAbi, functionName: "approve", args: [STAKING_CONTRACT, amt] }),
-              dataSuffix: DATA_SUFFIX,
             },
             {
               to: STAKING_CONTRACT,
               data: encodeFunctionData({ abi: stakingAbi, functionName: "deposit", args: [effectivePid, amt] }),
-              dataSuffix: DATA_SUFFIX,
             },
           ],
           capabilities: { paymasterService: { url: PAYMASTER_URL }, dataSuffix: { value: DATA_SUFFIX, optional: true } },
@@ -516,7 +514,7 @@ export default function PoolDetailPage() {
       if (canBatch) {
         tookBatchPath = true;
         const { id } = await sendCallsAsync({
-          calls: [{ to: STAKING_CONTRACT, data: encodeFunctionData({ abi: stakingAbi, functionName: "withdraw", args: [effectivePid, amt] }), dataSuffix: DATA_SUFFIX }],
+          calls: [{ to: STAKING_CONTRACT, data: encodeFunctionData({ abi: stakingAbi, functionName: "withdraw", args: [effectivePid, amt] }) }],
           capabilities: { paymasterService: { url: PAYMASTER_URL }, dataSuffix: { value: DATA_SUFFIX, optional: true } },
         });
         setPendingCallsId(id);
@@ -550,7 +548,7 @@ export default function PoolDetailPage() {
       if (canBatch) {
         tookBatchPath = true;
         const { id } = await sendCallsAsync({
-          calls: [{ to: STAKING_CONTRACT, data: encodeFunctionData({ abi: stakingAbi, functionName: "claim", args: [effectivePid] }), dataSuffix: DATA_SUFFIX }],
+          calls: [{ to: STAKING_CONTRACT, data: encodeFunctionData({ abi: stakingAbi, functionName: "claim", args: [effectivePid] }) }],
           capabilities: { paymasterService: { url: PAYMASTER_URL }, dataSuffix: { value: DATA_SUFFIX, optional: true } },
         });
         setPendingCallsId(id);
