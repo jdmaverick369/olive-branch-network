@@ -19,3 +19,4 @@ jobs:
         working-directory: obn-project
         env:
           PRIVATE_KEY: ${{ secrets.PRIVATE_KEY }}
+          BASE_RPC_URL: ${{ secrets.BASE_RPC_URL }}
