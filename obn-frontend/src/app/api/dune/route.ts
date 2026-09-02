@@ -16,6 +16,8 @@ export async function GET(request: NextRequest) {
     );
   }
 
+  const latestOnly = request.nextUrl.searchParams.get("latest") === "true";
+
   if (!DUNE_API_KEY) {
     console.error("DUNE_API_KEY environment variable is not configured");
     return NextResponse.json(
@@ -29,9 +31,16 @@ export async function GET(request: NextRequest) {
 
   try {
     const dune = new DuneClient(DUNE_API_KEY);
-    const result = await dune.getLatestResult({ queryId: parsedQueryId });
+    const result = await dune.getLatestResult({
+      queryId: parsedQueryId,
+      ...(latestOnly ? { limit: 1, sort_by: "day desc" } : {}),
+    });
+    const cacheControl = latestOnly
+      ? "public, s-maxage=600"
+      : "public, s-maxage=3600, stale-while-revalidate=3600";
+
     return NextResponse.json(result, {
-      headers: { "Cache-Control": "public, s-maxage=3600, stale-while-revalidate=3600" },
+      headers: { "Cache-Control": cacheControl },
     });
   } catch {
     console.error(`Error fetching configured Dune query ${parsedQueryId}`);

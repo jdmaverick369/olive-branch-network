@@ -22,11 +22,17 @@
 
       * { box-sizing: border-box; }
 
-      html, body { margin: 0; background: #fff; }
+      html, body { margin: 0; min-height: 100%; background: #fff; }
 
-      body { min-width: 240px; }
+      body {
+        display: flex;
+        min-width: 240px;
+        min-height: 100vh;
+      }
 
       main {
+        width: 100%;
+        margin: auto 0;
         padding: 40px 24px;
         text-align: center;
       }
@@ -53,12 +59,16 @@
       }
 
       .card {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
         flex: 1 1 160px;
         max-width: 380px;
         padding: 24px 28px;
         border: 1px solid #111;
         border-radius: 12px;
         background: #fff;
+        text-align: center;
       }
 
       .label {
@@ -94,15 +104,33 @@
         font-size: 0.7rem;
       }
 
-      @media (min-width: 640px) {
+      @media (min-width: 768px) {
         .card { min-width: 260px; padding: 28px 40px; }
         .value { font-size: 2.25rem; }
       }
 
-      @media (max-width: 480px) {
-        main { padding: 32px 18px; }
-        .stats { flex-direction: column; }
-        .card { width: 100%; max-width: none; }
+      @media (max-width: 767px) {
+        main { padding: clamp(16px, 4vw, 24px) clamp(10px, 3.5vw, 18px); }
+        h1 { font-size: clamp(1.65rem, 8vw, 2.25rem); }
+        .subtitle { margin-bottom: 18px; }
+        .stats {
+          flex-direction: column;
+          align-items: center;
+          gap: 10px;
+        }
+        .card {
+          flex: 0 0 auto;
+          width: 100%;
+          max-width: 520px;
+          min-width: 0;
+          padding: clamp(12px, 3.5vw, 16px) clamp(12px, 4vw, 20px);
+        }
+        .value {
+          max-width: 100%;
+          font-size: clamp(1.35rem, 6vw, 1.65rem);
+          overflow-wrap: anywhere;
+        }
+        .status { margin-top: 10px; }
       }
     </style>
   </head>
@@ -140,9 +168,9 @@
 
         const REFRESH_MS = 5 * 60 * 1000;
         const endpoints = {
-          stakers: "/api/dune?queryId=5887886",
-          staked: "/api/dune?queryId=6172584",
-          contributed: "/api/dune?queryId=6798005",
+          stakers: "/api/dune?queryId=5887886&latest=true",
+          staked: "/api/dune?queryId=6172584&latest=true",
+          contributed: "/api/dune?queryId=6798005&latest=true",
           supply: "/api/supply/total",
         };
 
@@ -155,6 +183,10 @@
         };
 
         const numberFormat = new Intl.NumberFormat();
+        const dateTimeFormat = new Intl.DateTimeFormat([], {
+          dateStyle: "medium",
+          timeStyle: "short",
+        });
 
         function compact(value) {
           if (value >= 1e9) return `${(value / 1e9).toFixed(2)}B`;
@@ -173,6 +205,14 @@
           );
           const value = key ? row[key] : null;
           return typeof value === "number" && Number.isFinite(value) ? value : null;
+        }
+
+        function executionTime(data) {
+          const value = data && data.execution_ended_at;
+          if (typeof value !== "string") return null;
+
+          const timestamp = Date.parse(value);
+          return Number.isFinite(timestamp) ? timestamp : null;
         }
 
         async function fetchJson(url) {
@@ -218,10 +258,15 @@
           }
 
           if (updated > 0) {
-            elements.status.textContent = `Live data updated ${new Date().toLocaleTimeString([], {
-              hour: "numeric",
-              minute: "2-digit",
-            })}`;
+            const duneRefreshTimes = results.slice(0, 3).flatMap((result) => {
+              if (result.status !== "fulfilled") return [];
+              const timestamp = executionTime(result.value);
+              return timestamp === null ? [] : [timestamp];
+            });
+
+            elements.status.textContent = duneRefreshTimes.length > 0
+              ? `Dune data refreshed ${dateTimeFormat.format(Math.min(...duneRefreshTimes))}`
+              : "Showing the latest available Dune data";
           } else {
             elements.status.textContent = "Live data is temporarily unavailable. Retrying automatically.";
           }
