@@ -463,8 +463,8 @@ export default function DashboardPage() {
               {([
                 { label: "All", value: null },
                 { label: "Humanitarian", value: "humanitarian" as PoolCategory },
-                { label: "Environment", value: "environment" as PoolCategory },
-                { label: "Animals", value: "animals" as PoolCategory },
+                { label: "Animal Welfare", value: "animals" as PoolCategory },
+                { label: "Environmental", value: "environment" as PoolCategory },
               ] as const).map(({ label, value }) => {
                 const isActive = value === null ? activeCategory === null : activeCategory === value;
                 return (
