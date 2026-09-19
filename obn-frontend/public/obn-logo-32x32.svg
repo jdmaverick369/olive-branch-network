@@ -1,0 +1,100 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg"
+     width="32" height="32"
+     viewBox="0 0 1254 1254"
+     preserveAspectRatio="xMidYMid meet">
+
+  <defs>
+    <!-- Pure SVG gradients: no embedded raster image -->
+    <linearGradient id="rimGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#E9FF68"/>
+      <stop offset="16%" stop-color="#B8FF34"/>
+      <stop offset="48%" stop-color="#95F51E"/>
+      <stop offset="76%" stop-color="#71D716"/>
+      <stop offset="100%" stop-color="#4CA90D"/>
+    </linearGradient>
+
+    <radialGradient id="fieldGrad" cx="31%" cy="24%" r="86%">
+      <stop offset="0%" stop-color="#11945B"/>
+      <stop offset="38%" stop-color="#087B4A"/>
+      <stop offset="72%" stop-color="#00653D"/>
+      <stop offset="100%" stop-color="#004E31"/>
+    </radialGradient>
+
+    <linearGradient id="goldGrad" x1="15%" y1="5%" x2="85%" y2="95%">
+      <stop offset="0%" stop-color="#FFF49B"/>
+      <stop offset="18%" stop-color="#FFE65A"/>
+      <stop offset="52%" stop-color="#FFD035"/>
+      <stop offset="82%" stop-color="#F1B71F"/>
+      <stop offset="100%" stop-color="#C98C08"/>
+    </linearGradient>
+
+    <linearGradient id="goldEdge" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FFF9B6"/>
+      <stop offset="50%" stop-color="#FFD83B"/>
+      <stop offset="100%" stop-color="#B87A00"/>
+    </linearGradient>
+
+    <filter id="plantShadow" x="-20%" y="-20%" width="140%" height="150%">
+      <feDropShadow dx="5" dy="8" stdDeviation="5"
+                    flood-color="#382300" flood-opacity="0.68"/>
+    </filter>
+
+    <filter id="badgeShadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="4" stdDeviation="5"
+                    flood-color="#17451C" flood-opacity="0.32"/>
+    </filter>
+
+    <clipPath id="plantClip">
+      <path d="M 630 193 L 622 201 L 603 226 L 589 248 L 576 273 L 564 308 L 559 344 L 560 370 L 568 407 L 573 420 L 586 445 L 597 461 L 614 480 L 623 522 L 625 544 L 623 585 L 616 625 L 609 651 L 606 650 L 600 637 L 583 611 L 583 582 L 577 543 L 567 514 L 559 498 L 545 477 L 516 448 L 485 427 L 446 409 L 415 399 L 409 399 L 408 401 L 412 438 L 419 470 L 435 512 L 453 542 L 468 561 L 484 577 L 502 591 L 529 607 L 565 621 L 583 652 L 593 679 L 599 719 L 599 780 L 597 824 L 594 823 L 584 806 L 574 794 L 575 783 L 571 755 L 565 732 L 557 712 L 541 685 L 519 659 L 490 636 L 454 617 L 411 603 L 384 598 L 373 598 L 373 604 L 380 634 L 395 676 L 410 704 L 436 739 L 463 764 L 497 786 L 525 798 L 558 807 L 574 832 L 586 861 L 593 897 L 592 1049 L 605 1050 L 633 1049 L 631 961 L 644 940 L 658 926 L 700 923 L 738 913 L 772 897 L 796 881 L 822 857 L 845 828 L 863 797 L 875 768 L 876 761 L 835 764 L 791 773 L 751 788 L 726 802 L 697 824 L 679 843 L 661 869 L 651 889 L 646 904 L 631 920 L 629 920 L 627 904 L 626 829 L 628 818 L 636 802 L 651 781 L 666 765 L 703 762 L 736 754 L 775 736 L 796 722 L 808 712 L 834 685 L 855 654 L 872 617 L 878 599 L 884 572 L 884 567 L 864 570 L 834 577 L 803 587 L 762 606 L 728 629 L 700 656 L 691 667 L 679 685 L 667 708 L 655 744 L 630 773 L 626 773 L 627 697 L 629 678 L 635 654 L 648 626 L 664 602 L 681 582 L 698 580 L 718 575 L 735 569 L 757 558 L 785 538 L 806 517 L 823 494 L 840 461 L 852 423 L 858 384 L 858 370 L 844 373 L 804 388 L 773 404 L 737 430 L 716 451 L 693 484 L 676 524 L 670 547 L 668 563 L 649 588 L 646 589 L 645 532 L 636 482 L 653 463 L 664 448 L 673 433 L 684 408 L 692 375 L 693 336 L 688 304 L 675 266 L 655 229 Z"/>
+    </clipPath>
+
+    <radialGradient id="plantShine" cx="28%" cy="18%" r="78%">
+      <stop offset="0%" stop-color="#FFFFFF" stop-opacity="0.45"/>
+      <stop offset="40%" stop-color="#FFFFFF" stop-opacity="0.10"/>
+      <stop offset="100%" stop-color="#FFFFFF" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+
+  <!-- Scaled up ~8% so the badge fills the canvas edge-to-edge like leading token icons (e.g. USDC), instead of leaving a wide margin -->
+  <g transform="translate(627,627) scale(1.082) translate(-627,-627)">
+
+  <!-- Circular badge, preserving the proportions of the supplied logo -->
+  <g filter="url(#badgeShadow)">
+    <circle cx="625" cy="610" r="562" fill="url(#rimGrad)"/>
+
+    <!-- subtle outer edge -->
+    <circle cx="625" cy="610" r="558"
+            fill="none" stroke="#49B509" stroke-width="7"/>
+
+    <!-- bright upper-left rim highlight -->
+    <circle cx="625" cy="610" r="548"
+            fill="none" stroke="#F0FF79" stroke-width="8" stroke-opacity="0.45"/>
+
+    <!-- inner dark bevel -->
+    <circle cx="625" cy="610" r="521" fill="#003C27"/>
+
+    <!-- emerald field -->
+    <circle cx="625" cy="610" r="511" fill="url(#fieldGrad)"/>
+
+    <!-- inner rim highlight -->
+    <circle cx="625" cy="610" r="507"
+            fill="none" stroke="#16A365" stroke-width="5" stroke-opacity="0.40"/>
+  </g>
+
+  <!-- Exact traced plant silhouette from the user's reference image -->
+  <g filter="url(#plantShadow)">
+    <path d="M 630 193 L 622 201 L 603 226 L 589 248 L 576 273 L 564 308 L 559 344 L 560 370 L 568 407 L 573 420 L 586 445 L 597 461 L 614 480 L 623 522 L 625 544 L 623 585 L 616 625 L 609 651 L 606 650 L 600 637 L 583 611 L 583 582 L 577 543 L 567 514 L 559 498 L 545 477 L 516 448 L 485 427 L 446 409 L 415 399 L 409 399 L 408 401 L 412 438 L 419 470 L 435 512 L 453 542 L 468 561 L 484 577 L 502 591 L 529 607 L 565 621 L 583 652 L 593 679 L 599 719 L 599 780 L 597 824 L 594 823 L 584 806 L 574 794 L 575 783 L 571 755 L 565 732 L 557 712 L 541 685 L 519 659 L 490 636 L 454 617 L 411 603 L 384 598 L 373 598 L 373 604 L 380 634 L 395 676 L 410 704 L 436 739 L 463 764 L 497 786 L 525 798 L 558 807 L 574 832 L 586 861 L 593 897 L 592 1049 L 605 1050 L 633 1049 L 631 961 L 644 940 L 658 926 L 700 923 L 738 913 L 772 897 L 796 881 L 822 857 L 845 828 L 863 797 L 875 768 L 876 761 L 835 764 L 791 773 L 751 788 L 726 802 L 697 824 L 679 843 L 661 869 L 651 889 L 646 904 L 631 920 L 629 920 L 627 904 L 626 829 L 628 818 L 636 802 L 651 781 L 666 765 L 703 762 L 736 754 L 775 736 L 796 722 L 808 712 L 834 685 L 855 654 L 872 617 L 878 599 L 884 572 L 884 567 L 864 570 L 834 577 L 803 587 L 762 606 L 728 629 L 700 656 L 691 667 L 679 685 L 667 708 L 655 744 L 630 773 L 626 773 L 627 697 L 629 678 L 635 654 L 648 626 L 664 602 L 681 582 L 698 580 L 718 575 L 735 569 L 757 558 L 785 538 L 806 517 L 823 494 L 840 461 L 852 423 L 858 384 L 858 370 L 844 373 L 804 388 L 773 404 L 737 430 L 716 451 L 693 484 L 676 524 L 670 547 L 668 563 L 649 588 L 646 589 L 645 532 L 636 482 L 653 463 L 664 448 L 673 433 L 684 408 L 692 375 L 693 336 L 688 304 L 675 266 L 655 229 Z"
+          fill="url(#goldGrad)"
+          stroke="url(#goldEdge)"
+          stroke-width="3.2"
+          stroke-linejoin="round"/>
+  </g>
+
+  <!-- soft vector shine clipped to the real plant silhouette -->
+  <ellipse cx="500" cy="390" rx="360" ry="470"
+           fill="url(#plantShine)"
+           clip-path="url(#plantClip)"/>
+
+  </g>
+</svg>

@@ -586,8 +586,8 @@ export default function PoolDetailPage() {
   const isMiniAppLayout = isInMiniApp ?? isLikelyMiniApp;
 
   return (
-    <div className="page-bg flex flex-col relative" style={{ ...(!isMiniAppLayout && !isMobileBrowser ? { minHeight: "calc(100dvh - var(--obn-header-h))", overflowX: 'hidden' } : { height: "calc(100dvh - var(--obn-header-h))", minHeight: 0, overflow: 'hidden' }) }}>
-      <main className="flex flex-col items-center" style={!isMiniAppLayout && !isMobileBrowser ? { paddingLeft: "32px", paddingRight: "32px", transform: 'scale(1.25)', transformOrigin: 'top center', paddingTop: '32px', paddingBottom: '16px' } : { padding: "8px 16px", flex: 1, minHeight: 0, width: "100%" }}>
+    <div className="page-bg flex flex-col relative" style={{ minHeight: "calc(100dvh - var(--obn-header-h))", ...(!isMiniAppLayout && !isMobileBrowser ? { overflowX: 'hidden' } : {}) }}>
+      <main className="flex flex-col items-center" style={!isMiniAppLayout && !isMobileBrowser ? { paddingLeft: "32px", paddingRight: "32px", transform: 'scale(1.25)', transformOrigin: 'top center', paddingTop: '32px', paddingBottom: '16px' } : { padding: "8px 16px", flex: "1 0 auto", width: "100%" }}>
         {invalid ? (
           <section
             className="rounded-xl shadow-lg p-6 max-w-sm w-full text-center border"
@@ -621,11 +621,11 @@ export default function PoolDetailPage() {
               style={{
                 width: "100%",
                 maxWidth: !isMiniAppLayout && !isMobileBrowser ? "500px" : "448px",
-                ...(!isMiniAppLayout && !isMobileBrowser ? { marginBottom: "8px" } : { display: "flex", flexDirection: "column", flex: 1, minHeight: 0 })
+                ...(!isMiniAppLayout && !isMobileBrowser ? { marginBottom: "8px" } : { display: "flex", flexDirection: "column", flex: "1 0 auto" })
               }}
             >
-              {/* Nonprofit info — flex-1 on mobile so bottom section stays fixed */}
-              <div style={!isMiniAppLayout && !isMobileBrowser ? {} : { flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+              {/* Fill spare mobile height, but keep content tall enough to scroll in short webviews. */}
+              <div style={!isMiniAppLayout && !isMobileBrowser ? {} : { flex: "1 0 auto", display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
                 {/* Title - centered at top */}
                 <h2 className="text-lg font-bold text-center" style={{ color: "var(--card-text)", marginBottom: !isMiniAppLayout && !isMobileBrowser ? "20px" : "16px" }}>
                   {title}
@@ -722,7 +722,7 @@ export default function PoolDetailPage() {
             </section>
 
             {/* Controls */}
-            <div className="flex flex-col items-center w-full" style={{ maxWidth: !isMiniAppLayout && !isMobileBrowser ? "400px" : "448px", marginTop: !isMiniAppLayout && !isMobileBrowser ? "32px" : "16px" }}>
+            <div className="flex flex-col items-center w-full shrink-0" style={{ maxWidth: !isMiniAppLayout && !isMobileBrowser ? "400px" : "448px", marginTop: !isMiniAppLayout && !isMobileBrowser ? "32px" : "16px" }}>
               <input
                 type="number"
                 inputMode="decimal"
@@ -846,7 +846,7 @@ export default function PoolDetailPage() {
         )}
 
         <footer
-          className="main-content mt-0 py-2 px-1 text-center text-[9px] italic"
+          className="main-content mt-0 py-2 px-1 text-center text-[9px] italic shrink-0"
           style={{ color: "var(--card-subtext)" }}
         >
           Olive Branch Network is a decentralized application and does not have any direct
