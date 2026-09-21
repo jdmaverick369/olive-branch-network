@@ -3,6 +3,10 @@
 Full lifecycle for an annual governance cycle: from starting the cycle through both
 phases of voting to final execution. The first cycle is planned for **9 September 2027**.
 
+The fixed-allocation behavior below applies after the
+[Phase 2 allocation upgrade](annual_allocation_upgrade_runbook.md) is executed.
+Before that upgrade, Phase 2 distributes the live vault balance at execution.
+
 ---
 
 ## Addresses
@@ -127,10 +131,14 @@ cast send 0x1135d5fEA8098b09b4ED3AFbfFDc7B248359D270 \
 - If BURN: `TheOffering.burn(balance)` — OBN is permanently destroyed
 - If GIVE: `TheOffering.sendToExtend(balance)` — OBN transferred to ExtendOliveBranch
 - Phase 2 clock starts now (not at cycle start)
+- ExtendOliveBranch's balance is fixed as this cycle's Phase 2 allocation after
+  the Burn/Give action, including any Give transfer. Later contributions to both
+  funds accumulate for the next cycle; claims continue normally.
 
 **Verify:**
 - `getCycleState(cycleId)` == `PHASE2_OPEN`
 - Check `Phase1Executed` event for outcome and amount
+- Check `Phase2AllocationFixed` and `getPhase2Allocation(cycleId)` for the Phase 2 amount
 
 ---
 
@@ -139,7 +147,8 @@ cast send 0x1135d5fEA8098b09b4ED3AFbfFDc7B248359D270 \
 Stakers call `castNonprofitVote(cycleId, nonprofitAddress)` on AnnualGovernance.
 
 The ballot is the list of active nonprofit charity wallets set at cycle start.
-Stakers vote for which nonprofit receives ExtendOliveBranch's full accumulated balance.
+Stakers vote for which nonprofit receives the allocation fixed when Phase 1 executed.
+The live vault balance may be larger because later contributions stay for the next cycle.
 
 Monitor live totals:
 - `getNonprofitVotes(cycleId, nonprofitAddress)` — votes for a specific nonprofit
@@ -163,7 +172,10 @@ cast send 0x1135d5fEA8098b09b4ED3AFbfFDc7B248359D270 \
 - Winner = nonprofit with the most votes
 - Tie → lowest index on the ballot wins
 - Zero participation → rollover (ExtendOliveBranch balance stays for next cycle)
-- If winner found: `ExtendOliveBranch.distributeFromGovernance(winner, balance)`
+- If winner found: `ExtendOliveBranch.distributeFromGovernance(winner, fixedAllocation)`
+- A zero allocation completes without a transfer; later receipts stay in the vault.
+- If an admin withdrawal leaves less than the fixed allocation, execution reverts.
+  Replenish the shortfall before retrying; the cycle is not marked complete on failure.
 
 **Verify:**
 - `getCycleState(cycleId)` == `COMPLETED`
