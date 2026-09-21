@@ -176,6 +176,7 @@ export default function ExtendVotePage() {
     cycleId: effectiveCycleId,
     state: effectiveState,
     summary: effectiveSummary,
+    phase2Allocation,
     isLoading: cycleLoading,
   } = useGovernanceCycle();
 
@@ -187,6 +188,7 @@ export default function ExtendVotePage() {
   const isPhase2Open  = effectiveState === CycleState.PHASE2_OPEN;
   const isPhase2Ready = effectiveState === CycleState.PHASE2_READY;
   const isCompleted   = effectiveState === CycleState.COMPLETED;
+  const showFixedAllocation = (isPhase2Open || isPhase2Ready) && phase2Allocation !== undefined;
 
   // Awaiting the next cycle: either the most recent one finished/was
   // cancelled, or none has ever run.
@@ -483,7 +485,7 @@ export default function ExtendVotePage() {
                   className="text-xs font-medium mb-1 flex items-center justify-center gap-1.5"
                   style={{ color: "var(--card-subtext)" }}
                 >
-                  Balance in
+                  {showFixedAllocation ? "This cycle's allocation from" : "Balance in"}
                   <span
                     className="text-[9px] px-1.5 py-0.5 rounded font-semibold"
                     style={{ backgroundColor: "#a855f7", color: "white" }}
@@ -495,7 +497,7 @@ export default function ExtendVotePage() {
                   className="text-3xl font-bold tabular-nums"
                   style={{ color: "var(--card-text)" }}
                 >
-                  {formatObn(extendBalance)}
+                  {formatObn(showFixedAllocation ? phase2Allocation : extendBalance)}
                   <span
                     className="text-base font-semibold ml-1"
                     style={{ color: "var(--card-subtext)" }}
@@ -503,6 +505,16 @@ export default function ExtendVotePage() {
                     OBN
                   </span>
                 </p>
+                {showFixedAllocation && (
+                  <p className="text-xs mt-2" style={{ color: "var(--card-subtext)" }}>
+                    Fixed when Phase 1 executed, including any Give transfer. Later contributions stay for the next cycle.
+                  </p>
+                )}
+                {(isPhase2Open || isPhase2Ready) && phase2Allocation === undefined && (
+                  <p className="text-xs mt-2" style={{ color: "var(--card-subtext)" }}>
+                    Showing the vault balance. A fixed cycle allocation is not available.
+                  </p>
+                )}
               </div>
             )}
 

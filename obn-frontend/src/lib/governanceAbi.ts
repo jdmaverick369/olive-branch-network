@@ -1,5 +1,5 @@
 // src/lib/governanceAbi.ts
-// ABI for AnnualGovernance proxy (v9.3).
+// ABI for AnnualGovernance proxy, including the fixed Phase 2 allocation upgrade.
 // All calls must target NEXT_PUBLIC_GOVERNANCE_CONTRACT (the proxy, not the implementation).
 import type { Abi } from "viem";
 
@@ -28,6 +28,14 @@ export const governanceAbi = [
       { type: "bool", name: "phase1Executed" },
       { type: "bool", name: "phase2Executed" },
       { type: "bool", name: "cancelled" },
+    ],
+  },
+  {
+    type: "function", stateMutability: "view", name: "getPhase2Allocation",
+    inputs: [{ type: "uint256", name: "cycleId" }],
+    outputs: [
+      { type: "uint256", name: "amount" },
+      { type: "bool", name: "isFixed" },
     ],
   },
   {
@@ -95,6 +103,13 @@ export const governanceAbi = [
   },
   // ── Events (used to recover a voter's choice when it's not in localStorage,
   //    e.g. a vote cast on another device, or before that vote was tracked) ──
+  {
+    type: "event", name: "Phase2AllocationFixed",
+    inputs: [
+      { type: "uint256", name: "cycleId", indexed: true },
+      { type: "uint256", name: "amount", indexed: false },
+    ],
+  },
   {
     type: "event", name: "Phase1Executed",
     inputs: [

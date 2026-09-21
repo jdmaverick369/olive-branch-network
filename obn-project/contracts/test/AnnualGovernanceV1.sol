@@ -33,11 +33,10 @@ interface IExtendOliveBranch {
 ///   Zero participation → BURN.
 ///
 /// Phase 2 (Nonprofit): stakers vote which approved nonprofit receives ExtendOliveBranch's
-///   OBN balance fixed immediately after Phase 1 executes (including any GIVE transfer).
-///   Later receipts stay for the next cycle. Zero participation → rollover (funds stay for next cycle).
+///   OBN balance. Zero participation → rollover (funds stay for next cycle).
 ///   Tie → first in ballot (lowest index) wins.
 ///
-/// Both phases share a single voting-power snapshot taken at cycle start. Phase 2 always runs after
+/// Both phases share a single snapshot taken at cycle start. Phase 2 always runs after
 /// Phase 1 regardless of the Phase 1 outcome.
 ///
 /// Roles:
@@ -59,7 +58,7 @@ interface IExtendOliveBranch {
 /// Upgrade safety: do not upgrade while a cycle is in PHASE1_OPEN, PHASE1_READY,
 ///   PHASE2_OPEN, or PHASE2_READY state. _authorizeUpgrade enforces this on-chain;
 ///   the Timelock's 24h delay provides a second layer.
-contract AnnualGovernance is Initializable, OwnableUpgradeable, UUPSUpgradeable {
+contract AnnualGovernanceV1 is Initializable, OwnableUpgradeable, UUPSUpgradeable {
 
     // ─── Enums ──────────────────────────────────────────────────────────────────
 
@@ -112,11 +111,6 @@ contract AnnualGovernance is Initializable, OwnableUpgradeable, UUPSUpgradeable 
         bool phase1Executed;
         bool phase2Executed;
         bool cancelled;
-
-        // Appended for the fixed-allocation upgrade. Existing Cycle fields stay in place.
-        uint256 phase2Allocation;
-        // Distinguishes a legitimate zero allocation from historical, pre-upgrade cycles.
-        bool phase2AllocationFixed;
     }
 
     // ─── Storage ─────────────────────────────────────────────────────────────────
@@ -173,7 +167,6 @@ contract AnnualGovernance is Initializable, OwnableUpgradeable, UUPSUpgradeable 
         uint256         votingPower
     );
     event Phase1Executed(uint256 indexed cycleId, Phase1Outcome outcome, uint256 amount, uint64 phase2End);
-    event Phase2AllocationFixed(uint256 indexed cycleId, uint256 amount);
     event Phase2Started(uint256 indexed cycleId, uint64 phase2End);
     event Phase2Executed(uint256 indexed cycleId, address indexed winner, uint256 amount);
     event Phase2RolledOver(uint256 indexed cycleId);
@@ -385,19 +378,11 @@ contract AnnualGovernance is Initializable, OwnableUpgradeable, UUPSUpgradeable 
             }
         }
 
-        // Snapshot AFTER GIVE transfers, in the same transaction. Claim contributions
-        // received after this point belong to the next cycle, even if execution is late.
-        c.phase2Allocation = obn.balanceOf(address(extendOliveBranch));
-        c.phase2AllocationFixed = true;
-        emit Phase2AllocationFixed(cycleId, c.phase2Allocation);
-
         emit Phase1Executed(cycleId, c.phase1Outcome, bal, c.phase2End);
         emit Phase2Started(cycleId, c.phase2End);
     }
 
     /// @notice Execute Phase 2. Callable by anyone after phase2End and after phase1 is executed.
-    ///         Pays only the fixed allocation; subsequent receipts remain for the next cycle.
-    ///         If an administrative withdrawal causes a shortfall, replenish before retrying.
     ///         Winner is the nonprofit with the most votes; ties go to the lowest ballot index.
     ///         Zero participation → rollover (ExtendOliveBranch balance stays for next cycle).
     function executePhase2(uint256 cycleId) public {
@@ -422,12 +407,8 @@ contract AnnualGovernance is Initializable, OwnableUpgradeable, UUPSUpgradeable 
         if (maxVotes == 0) {
             emit Phase2RolledOver(cycleId);
         } else {
-            // No live-balance fallback: zero is a valid fixed allocation. Upgrades are
-            // forbidden mid-cycle, so every executable cycle must have this snapshot.
-            require(c.phase2AllocationFixed, "phase2 allocation not fixed");
-            uint256 bal = c.phase2Allocation;
+            uint256 bal = obn.balanceOf(address(extendOliveBranch));
             if (bal > 0) {
-                require(obn.balanceOf(address(extendOliveBranch)) >= bal, "phase2 allocation underfunded");
                 extendOliveBranch.distributeFromGovernance(winner, bal);
             }
             emit Phase2Executed(cycleId, winner, bal);
@@ -525,15 +506,6 @@ contract AnnualGovernance is Initializable, OwnableUpgradeable, UUPSUpgradeable 
             c.phase2Executed,
             c.cancelled
         );
-    }
-
-    /// @notice Fixed Phase 2 allocation, including any Phase 1 GIVE transfer.
-    /// @return amount Amount reserved by governance accounting (not segregated in the vault).
-    /// @return isFixed False before Phase 1 execution and for cycles executed before this upgrade.
-    ///         Historical allocations must be read from Phase2Executed events, not inferred as zero.
-    function getPhase2Allocation(uint256 cycleId) external view returns (uint256 amount, bool isFixed) {
-        Cycle storage c = _cycles[cycleId];
-        return (c.phase2Allocation, c.phase2AllocationFixed);
     }
 
     function getNonprofitVotes(uint256 cycleId, address nonprofit) external view returns (uint256) {

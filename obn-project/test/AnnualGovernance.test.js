@@ -377,10 +377,11 @@ describe("AnnualGovernance", function () {
   describe("7. Phase 2 — rollover on zero participation", function () {
     it("emits Phase2RolledOver and does not call distribute when no votes cast", async function () {
       await startCycle();
-      await executePhase1();
 
       // Fund ExtendOliveBranch but cast no votes
       await obn.mint(await mockExtend.getAddress(), ethers.parseEther("500"));
+      // Fund this cycle before Phase 1 fixes its allocation.
+      await executePhase1();
 
       const tx = await executePhase2();
       await expect(tx).to.emit(governance, "Phase2RolledOver").withArgs(1n);
@@ -414,12 +415,13 @@ describe("AnnualGovernance", function () {
   // ─── 8. Winner receives ExtendOliveBranch balance ────────────────────────────
 
   describe("8. Phase 2 — winner distribution", function () {
-    it("distributes the full ExtendOliveBranch balance to the nonprofit with the most votes", async function () {
+    it("distributes the fixed ExtendOliveBranch allocation to the nonprofit with the most votes", async function () {
       await startCycle();
-      await executePhase1();
 
       const balance = ethers.parseEther("1000");
       await obn.mint(await mockExtend.getAddress(), balance);
+      // Fund this cycle before Phase 1 fixes its allocation.
+      await executePhase1();
 
       // staker2 (200) → nonprofit2, staker1 (100) → nonprofit1: nonprofit2 wins
       await governance.connect(staker2).castNonprofitVote(1, nonprofit2.address);
@@ -453,10 +455,11 @@ describe("AnnualGovernance", function () {
       await startCycle();
       // Phase 1 vote
       await governance.connect(staker1).castOfferingVote(1, true);
-      await executePhase1();
 
       // Same staker now votes phase 2 — independent mapping, should succeed
       await obn.mint(await mockExtend.getAddress(), ethers.parseEther("50"));
+      // Fund this cycle before Phase 1 fixes its allocation.
+      await executePhase1();
       await governance.connect(staker1).castNonprofitVote(1, nonprofit3.address);
 
       const tx = await executePhase2();
@@ -471,9 +474,10 @@ describe("AnnualGovernance", function () {
   describe("9. Phase 2 — tie-breaking", function () {
     it("first ballot entry (lowest pool index) wins when two nonprofits tie", async function () {
       await startCycle();
-      await executePhase1();
 
       await obn.mint(await mockExtend.getAddress(), ethers.parseEther("1"));
+      // Fund this cycle before Phase 1 fixes its allocation.
+      await executePhase1();
 
       // staker1 (100) → nonprofit1 (ballot[0])
       // staker3 (100) → nonprofit2 (ballot[1])
@@ -489,9 +493,10 @@ describe("AnnualGovernance", function () {
 
     it("a nonprofit at a higher ballot index wins if it has strictly more votes", async function () {
       await startCycle();
-      await executePhase1();
 
       await obn.mint(await mockExtend.getAddress(), ethers.parseEther("1"));
+      // Fund this cycle before Phase 1 fixes its allocation.
+      await executePhase1();
 
       // staker2 (200) → nonprofit2 (ballot[1]) beats staker1 (100) → nonprofit1 (ballot[0])
       await governance.connect(staker2).castNonprofitVote(1, nonprofit2.address);
@@ -505,9 +510,10 @@ describe("AnnualGovernance", function () {
 
     it("three-way split: nonprofit with most votes wins; no tie-break needed", async function () {
       await startCycle();
-      await executePhase1();
 
       await obn.mint(await mockExtend.getAddress(), ethers.parseEther("1"));
+      // Fund this cycle before Phase 1 fixes its allocation.
+      await executePhase1();
 
       // staker1 (100) → nonprofit1, staker3 (100) → nonprofit2, staker2 (200) → nonprofit3
       await governance.connect(staker1).castNonprofitVote(1, nonprofit1.address);
@@ -602,10 +608,11 @@ describe("AnnualGovernance", function () {
     it("executePhase2 succeeds even if the winner's approval is revoked after cycle start", async function () {
       // Cycle starts with all nonprofits approved
       await startCycle();
-      await executePhase1();
 
       const balance = ethers.parseEther("500");
       await obn.mint(await mockExtend.getAddress(), balance);
+      // Fund this cycle before Phase 1 fixes its allocation.
+      await executePhase1();
 
       // nonprofit2 wins the vote
       await governance.connect(staker2).castNonprofitVote(1, nonprofit2.address);
@@ -635,8 +642,9 @@ describe("AnnualGovernance", function () {
       // This simulates the exact R2 scenario: timelockOwner acts after voting is done.
       await mockExtend.setApproved(nonprofit1.address, false);
 
-      await executePhase1();
       await obn.mint(await mockExtend.getAddress(), ethers.parseEther("100"));
+      // Fund this cycle before Phase 1 fixes its allocation.
+      await executePhase1();
       await governance.connect(staker1).castNonprofitVote(1, nonprofit1.address);
 
       // nonprofit1 won the vote. Its approval was revoked post-vote.
