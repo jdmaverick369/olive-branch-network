@@ -1,9 +1,17 @@
 # Annual governance upgrade: 21 September 2026
 
-The new implementation is deployed and verified. The upgrade operation is confirmed
-scheduled on-chain and is eligible for execution on **22 September 2026 at 12:18:19 PM
-CDT (17:18:19 UTC)**. Scheduling does not change the proxy implementation; a separate
-execution transaction is required after the delay.
+The upgrade was executed and verified on **23 September 2026**, at Base block
+51703926. [Execution transaction](https://basescan.org/tx/0x8ea174ccdd9c12d8c3168c3c620f88e2b811403ca052eac862bdcef434a9f0a2).
+The proxy now uses the new implementation, and the Timelock operation is complete.
+Owner, voteAdmin, and cycle ID were preserved; the new allocation getter returned
+`(0, false)` for cycle 0, as expected before a cycle starts.
+
+The live Timelock had open execution enabled, allowing the configured deployment
+wallet to execute the exact previously scheduled operation without another Safe
+signature round. The preflight, candidate bytecode/storage checks, operation-ID
+comparison, and read-only execution simulation passed before submission.
+See [execution record](2026-09-23-annual-fixed-allocation-execution-record.json).
+The scheduling instructions below are retained as historical documentation.
 
 ## Verified deployment
 

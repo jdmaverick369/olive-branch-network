@@ -3,9 +3,9 @@
 Full lifecycle for an annual governance cycle: from starting the cycle through both
 phases of voting to final execution. The first cycle is planned for **9 September 2027**.
 
-The fixed-allocation behavior below applies after the
-[Phase 2 allocation upgrade](annual_allocation_upgrade_runbook.md) is executed.
-Before that upgrade, Phase 2 distributes the live vault balance at execution.
+The fixed-allocation behavior below is live following the
+[Phase 2 allocation upgrade](annual_allocation_upgrade_runbook.md), executed on
+23 September 2026. The proxy address is unchanged; use it for all governance calls.
 
 ---
 
@@ -14,6 +14,7 @@ Before that upgrade, Phase 2 distributes the live vault balance at execution.
 | Contract | Address |
 |---|---|
 | AnnualGovernance (proxy) | `0x1135d5fEA8098b09b4ED3AFbfFDc7B248359D270` |
+| AnnualGovernance (implementation; upgraded 23 September 2026) | [`0xA6F3A7988ca98313e8aE5401b29CdEb830Fdd6B3`](https://basescan.org/address/0xA6F3A7988ca98313e8aE5401b29CdEb830Fdd6B3#code) |
 | TheOffering | `0xc75B2a5C7B8F88327D44C223769cFa19cc93E341` |
 | ExtendOliveBranch | `0xE1BbfAf0552ACC183579a3D172e002adF0c66d8B` |
 | OPERATOR_SAFE (voteAdmin) | `0x066e2FABb036deab7DC58bAde428F819AC3542DD` |

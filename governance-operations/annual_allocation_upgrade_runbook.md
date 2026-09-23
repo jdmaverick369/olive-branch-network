@@ -1,8 +1,9 @@
 # Annual governance: fixed Phase 2 allocation upgrade
 
-Status (21 September 2026): new implementation deployed on Base and verified on
-BaseScan. Scheduling is confirmed; the upgrade becomes executable on 22 September
-2026 at 12:18:19 PM CDT (17:18:19 UTC). The proxy has not yet been upgraded.
+Status (23 September 2026): upgrade executed and verified on Base at block 51703926.
+The proxy now uses implementation `0xA6F3A7988ca98313e8aE5401b29CdEb830Fdd6B3`.
+The Timelock operation is complete; owner, voteAdmin, and cycle ID were preserved.
+See [execution record](2026-09-23-annual-fixed-allocation-execution-record.json).
 See [deployment and scheduling instructions](2026-09-21-annual-fixed-allocation.md).
 
 ## Resulting behavior
@@ -126,6 +127,10 @@ new getter and displays the fixed allocation. Older implementations or failed
 reads show an explicitly labeled vault balance, never a fabricated zero allocation.
 
 ## Deploy and prepare unsigned Safe transactions
+
+Historical procedure for the completed September 2026 upgrade. The V1 baseline
+address below is the previous implementation, not the current implementation.
+Do not rerun this operation; use the execution record above for current status.
 
 Use the existing Base RPC, funded deployer configuration, and Timelock/Safe
 configuration. Set these environment variables in PowerShell from `obn-project`:

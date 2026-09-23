@@ -1,0 +1,29 @@
+{
+  "chainId": 8453,
+  "operationId": "0xbaa0a9f445e24f4e4e8e98a371609be2307700bfc9bdadd5ab1d425a63aafb9c",
+  "proxy": "0x1135d5fEA8098b09b4ED3AFbfFDc7B248359D270",
+  "implementation": "0xA6F3A7988ca98313e8aE5401b29CdEb830Fdd6B3",
+  "transactionHash": "0x8ea174ccdd9c12d8c3168c3c620f88e2b811403ca052eac862bdcef434a9f0a2",
+  "executor": "0x64C9c9cEDc94e58EA9C98f92DAF65F19383C5118",
+  "before": {
+    "implementation": "0x4721Cc867084fD656E2B45A4b0937fE32245A553",
+    "owner": "0x86396526286769ace21982E798Df5eef2389f51c",
+    "voteAdmin": "0x066e2FABb036deab7DC58bAde428F819AC3542DD",
+    "cycleId": "0"
+  },
+  "status": "EXECUTED_AND_VERIFIED",
+  "blockNumber": 51703926,
+  "receiptStatus": 1,
+  "after": {
+    "implementation": "0xA6F3A7988ca98313e8aE5401b29CdEb830Fdd6B3",
+    "owner": "0x86396526286769ace21982E798Df5eef2389f51c",
+    "voteAdmin": "0x066e2FABb036deab7DC58bAde428F819AC3542DD",
+    "cycleId": "0",
+    "operationDone": true,
+    "allocation": [
+      "0",
+      "false"
+    ]
+  },
+  "checkedAt": "2026-09-23T21:00:02.944Z"
+}
