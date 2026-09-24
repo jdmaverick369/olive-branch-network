@@ -24,7 +24,7 @@ The result is a self-sustaining funding model: as participation grows, so does t
 
 **Stake once. Fund continuously.**
 
-When you stake OBN in a nonprofit pool, the protocol continuously mints rewards and splits them:
+When you stake OBN in a nonprofit pool, rewards accrue over time and are minted when a claim, deposit, or withdrawal settles them:
 
 | Recipient | Share | Purpose |
 |-----------|-------|---------|
@@ -36,6 +36,8 @@ When you stake OBN in a nonprofit pool, the protocol continuously mints rewards 
 This is not a traditional donation flow. It is a programmable funding mechanism.
 
 Your stake generates rewards. The nonprofit receives funding. The protocol records contribution onchain. Everyone can verify the flow.
+
+Stakers can opt in on-chain to sponsored monthly autoclaim for all current and future pools held by their wallet. The automation account batches pools with positive claimable user rewards, up to 32 pools per transaction, and pays gas through the configured paymaster. The contract permits one successful automatic claim per pool per UTC calendar month. Rewards follow the same 88% / 10% / 1% / 1% split and go to the same recipients as manual claims. Users can disable consent at any time; deposits, withdrawals, and manual claims remain available. Autoclaim does not transfer principal, compound rewards, or change voting power.
 
 ---
 
@@ -87,7 +89,7 @@ OBN's two 1% emission streams accumulate throughout each cycle and are resolved 
 
 Both votes run through **AnnualGovernance** — an on-chain governance contract owned by the Timelock that manages each annual cycle. Voting power is based on checkpointed OBN balances to prevent last-minute manipulation.
 
-This mechanism is fully on-chain and part of the v9.3 protocol upgrade.
+Both voting phases and their allocations are recorded on-chain.
 
 ---
 
@@ -139,11 +141,16 @@ Because rewards are split automatically, every emission phase supports three out
 
 ## Deployed Contracts (Base Mainnet)
 
+This reference describes V9.3.1 staking behavior. Deployment transactions, proxy activation, and service activation are tracked in the [operational release record](governance-operations/2026-09-24-staking-v931-autoclaim-record.json).
+
+Always interact with the staking proxy; implementation addresses identify the deployed code, not a separate staking destination.
+
 | Contract | Type | Address | BaseScan |
 |----------|------|---------|----------|
 | **OBNToken** | ERC20 (UUPS Proxy) | [0x07e5efCD1B5fAE3f461bf913BBEE03a10A20C685](https://basescan.org/address/0x07e5efCD1B5fAE3f461bf913BBEE03a10A20C685) | [Verified ✅](https://basescan.org/address/0x07e5efCD1B5fAE3f461bf913BBEE03a10A20C685) |
 | **OBNStakingPools** | Staking (UUPS Proxy) | [0x2C4Bd5B2a48a76f288d7F2DB23aFD3a03b9E7cD2](https://basescan.org/address/0x2C4Bd5B2a48a76f288d7F2DB23aFD3a03b9E7cD2) | [Verified ✅](https://basescan.org/address/0x2C4Bd5B2a48a76f288d7F2DB23aFD3a03b9E7cD2) |
-| **StakingPoolsV93 (v9.3 Impl)** | Implementation | [0x8ae630a14254Fd9632C505fbdeB7f104f0b9844E](https://basescan.org/address/0x8ae630a14254Fd9632C505fbdeB7f104f0b9844E#code) | [Verified ✅](https://basescan.org/address/0x8ae630a14254Fd9632C505fbdeB7f104f0b9844E#code) |
+| **StakingPoolsV93 (v9.3 Impl)** | V9.3 implementation | [0x8ae630a14254Fd9632C505fbdeB7f104f0b9844E](https://basescan.org/address/0x8ae630a14254Fd9632C505fbdeB7f104f0b9844E#code) | [Verified ✅](https://basescan.org/address/0x8ae630a14254Fd9632C505fbdeB7f104f0b9844E#code) |
+| **StakingPoolsV931 (v9.3.1 Impl)** | V9.3.1 implementation | [0x416dfFfDc4245a9f4C38f05d203AEcaC5E24908f](https://basescan.org/address/0x416dfFfDc4245a9f4C38f05d203AEcaC5E24908f#code) | [Verified](https://basescan.org/address/0x416dfFfDc4245a9f4C38f05d203AEcaC5E24908f#code) |
 | **OBNStakingLens** | Analytics Read Layer (UUPS Proxy) | [0x2ae4df523040c0245a6F84342E4B06850c5bdb9b](https://basescan.org/address/0x2ae4df523040c0245a6F84342E4B06850c5bdb9b) | [Verified ✅](https://basescan.org/address/0x2ae4df523040c0245a6F84342E4B06850c5bdb9b) |
 | **OBNTimeLock** | Timelock (non-upgradeable) | [0x86396526286769ace21982E798Df5eef2389f51c](https://basescan.org/address/0x86396526286769ace21982E798Df5eef2389f51c) | [Verified ✅](https://basescan.org/address/0x86396526286769ace21982E798Df5eef2389f51c) |
 | **AnnualGovernance** | Governance (UUPS Proxy) | [0x1135d5fEA8098b09b4ED3AFbfFDc7B248359D270](https://basescan.org/address/0x1135d5fEA8098b09b4ED3AFbfFDc7B248359D270) | [Verified ✅](https://basescan.org/address/0x1135d5fEA8098b09b4ED3AFbfFDc7B248359D270) |
@@ -153,7 +160,7 @@ Because rewards are split automatically, every emission phase supports three out
 | **TeamVesting** | Vesting (non-upgradeable) | [0x9428Edd912224778d84D762ebCDA52e1c829aB8d](https://basescan.org/address/0x9428Edd912224778d84D762ebCDA52e1c829aB8d) | [Verified ✅](https://basescan.org/address/0x9428Edd912224778d84D762ebCDA52e1c829aB8d) |
 | **OBN Impact NFT** | ERC-721 | [0xB66F67444b09f509D72d832567C2df84Edeb80F8](https://basescan.org/address/0xB66F67444b09f509D72d832567C2df84Edeb80F8) | [Verified ✅](https://basescan.org/address/0xB66F67444b09f509D72d832567C2df84Edeb80F8) |
 
-OBNToken and OBNStakingPools use the UUPS proxy pattern with governance-controlled upgrades. TeamVesting and OBNTimeLock are non-upgradeable by design. TheOffering and ExtendOliveBranch are non-upgradeable by design. All admin functions route through OBNTimeLock (24-hour delay) via the 2-of-3 OPERATOR_SAFE. v9.3 upgrade completed June 14, 2026.
+OBNToken and OBNStakingPools use the UUPS proxy pattern with governance-controlled upgrades. TeamVesting and OBNTimeLock are non-upgradeable by design. TheOffering and ExtendOliveBranch are non-upgradeable by design. All admin functions route through OBNTimeLock (24-hour delay) via the 2-of-3 OPERATOR_SAFE.
 
 ---
 

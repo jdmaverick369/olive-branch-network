@@ -154,8 +154,16 @@ Governance may append future phases contiguously; prior phases remain immutable.
 - `depositWithPermit(...)` — Stake with ERC20 Permit (no separate approval)
 - `withdraw(pid, amount)` — Withdraw unlocked balance
 - `claim(pid)` — Claim pending rewards
-- `claimFor(pid, user)` — Claim rewards for another address
+- `claimFor(pid, user)` — Owner-only claim on behalf of another address
 - `claimMultiple(pids[])` — Claim pending rewards from multiple pools in one transaction
+- `setAutoClaimEnabled(bool)` — Set the calling wallet's consent for all its pools
+- `autoClaimFor(pids[], user, month, consentNonce)` — Dedicated executor submits an authorized monthly batch
+
+Stakers can opt in on-chain to sponsored monthly autoclaim for all current and future pools held by their wallet. The automation account batches pools with positive claimable user rewards, up to 32 pools per transaction, and pays gas through the configured paymaster. The contract permits one successful automatic claim per pool per UTC calendar month. Rewards follow the same 88% / 10% / 1% / 1% split and go to the same recipients as manual claims. Users can disable consent at any time; deposits, withdrawals, and manual claims remain available. Autoclaim does not transfer principal, compound rewards, or change voting power.
+
+Consent changes invalidate previously queued requests. Re-enabling does not reset monthly limits. A UTC calendar month is not a rolling 30-day interval; manual claims do not consume the automatic allowance. A pool is eligible when the user share after integer rounding is positive, with no service-level minimum reward threshold. Sponsorship of the opt-in or opt-out transaction depends on wallet support. The owner-only `claimFor` remains independent of autoclaim consent. Deployment and activation status are recorded in Appendix B.
+
+Autoclaim preferences are attached to staking addresses and kept separate from any future identity or voting eligibility system. The executor cannot redirect rewards, withdraw a user's stake, or change their consent.
 
 **Charity mechanics:**
 
@@ -577,6 +585,7 @@ AnnualGovernance resolves TheOffering and ExtendOliveBranch balances through tra
 ### 9.1 Events
 
 - Deposit, Withdraw, Claim
+- AutoClaimPreferenceChanged, AutoClaimExecutorChanged, MonthlyAutoClaimed
 - CharityDistributed, CharityFundDistributed, TreasuryDistributed
 - LockedAmountSet, CharityWalletUpdated
 - PoolAdded, PoolShutdown, PoolRemoved
@@ -723,11 +732,18 @@ OBN is designed so users do not need to choose between earning and contributing.
 - `charityFundBootstrap(pid, amount, beneficiary)` (charityFund-only)
 - `withdraw(pid, amount)`
 - `claim(pid)`
-- `claimFor(pid, user)`
 - `claimMultiple(pids[])`
+- `setAutoClaimEnabled(bool)` — Calling wallet only
+
+**Delegated execution:**
+
+- `autoClaimFor(uint256[] pids, address user, uint256 month, uint256 consentNonce)` — Executor-only; requires current consent and month; 1–32 strictly ascending pool IDs
 
 **Admin mutations:**
 
+- `claimFor(pid, user)` (owner-only; independent of autoclaim consent)
+- `setAutoClaimExecutor(executor)` (owner-only; zero pauses automation)
+- `initializeV931(executor)` (owner-only, one-time reinitializer during upgrade)
 - `addPool(charityWallet)`
 - `shutdownPool(pid)`
 - `removePool(pid)`
@@ -743,6 +759,10 @@ OBN is designed so users do not need to choose between earning and contributing.
 
 - `pendingRewards(pid, user)` — GROSS pending amount
 - `pendingRewardsMultiple(pids[], user)` — Pending amounts for multiple pools plus total
+- `autoClaimExecutor()` — Authorized automation smart account
+- `autoClaimPreference(user)` — Consent and consent nonce
+- `currentAutoClaimMonth()` — UTC year × 12 + month (January = 1)
+- `lastAutoClaimMonth(pid, user)` — Last successful automatic claim month
 - `unlockedBalance(pid, user)` — Available to withdraw
 - `stakeElapsed(user)` — Total staking seconds
 - `poolLength()` — Number of pools
@@ -906,11 +926,16 @@ And every year, the community decides how far to extend the olive branch.
 
 ## Appendix B — Deployed Contracts (Base Mainnet)
 
+This reference describes V9.3.1 staking behavior. Deployment transactions, proxy activation, and service activation are tracked in the [operational release record](governance-operations/2026-09-24-staking-v931-autoclaim-record.json).
+
+Use the staking proxy for deposits, claims, withdrawals, and consent changes. `MonthlyAutoClaimUpgradeable` is compiled into the V9.3.1 implementation and is not separately deployed.
+
 | Contract | Type | Address | BaseScan |
 |----------|------|---------|----------|
 | **OBNToken** | ERC20 (UUPS Proxy) | [0x07e5efCD1B5fAE3f461bf913BBEE03a10A20C685](https://basescan.org/address/0x07e5efCD1B5fAE3f461bf913BBEE03a10A20C685) | [Verified ✅](https://basescan.org/address/0x07e5efCD1B5fAE3f461bf913BBEE03a10A20C685) |
 | **OBNStakingPools** | Staking (UUPS Proxy) | [0x2C4Bd5B2a48a76f288d7F2DB23aFD3a03b9E7cD2](https://basescan.org/address/0x2C4Bd5B2a48a76f288d7F2DB23aFD3a03b9E7cD2) | [Verified ✅](https://basescan.org/address/0x2C4Bd5B2a48a76f288d7F2DB23aFD3a03b9E7cD2) |
-| **StakingPoolsV93 (v9.3 Impl)** | Implementation | [0x8ae630a14254Fd9632C505fbdeB7f104f0b9844E](https://basescan.org/address/0x8ae630a14254Fd9632C505fbdeB7f104f0b9844E#code) | [Verified ✅](https://basescan.org/address/0x8ae630a14254Fd9632C505fbdeB7f104f0b9844E#code) |
+| **StakingPoolsV93 (v9.3 Impl)** | V9.3 implementation | [0x8ae630a14254Fd9632C505fbdeB7f104f0b9844E](https://basescan.org/address/0x8ae630a14254Fd9632C505fbdeB7f104f0b9844E#code) | [Verified ✅](https://basescan.org/address/0x8ae630a14254Fd9632C505fbdeB7f104f0b9844E#code) |
+| **StakingPoolsV931 (v9.3.1 Impl)** | V9.3.1 implementation | [0x416dfFfDc4245a9f4C38f05d203AEcaC5E24908f](https://basescan.org/address/0x416dfFfDc4245a9f4C38f05d203AEcaC5E24908f#code) | [Verified](https://basescan.org/address/0x416dfFfDc4245a9f4C38f05d203AEcaC5E24908f#code) |
 | **OBNStakingLens** | Analytics Read Layer (UUPS Proxy) | [0x2ae4df523040c0245a6F84342E4B06850c5bdb9b](https://basescan.org/address/0x2ae4df523040c0245a6F84342E4B06850c5bdb9b) | [Verified ✅](https://basescan.org/address/0x2ae4df523040c0245a6F84342E4B06850c5bdb9b) |
 | **OBNTimeLock** | Timelock (non-upgradeable) | [0x86396526286769ace21982E798Df5eef2389f51c](https://basescan.org/address/0x86396526286769ace21982E798Df5eef2389f51c) | [Verified ✅](https://basescan.org/address/0x86396526286769ace21982E798Df5eef2389f51c) |
 | **AnnualGovernance** | Governance (UUPS Proxy) | [0x1135d5fEA8098b09b4ED3AFbfFDc7B248359D270](https://basescan.org/address/0x1135d5fEA8098b09b4ED3AFbfFDc7B248359D270) | [Verified ✅](https://basescan.org/address/0x1135d5fEA8098b09b4ED3AFbfFDc7B248359D270) |
@@ -931,7 +956,8 @@ And every year, the community decides how far to extend the olive branch.
 
 ---
 
-**Version:** 9.3 Proof-of-Contribution  
-**Date:** June 21, 2026  
+**Version:** 9.3.1 Proof-of-Contribution
+
+**Date:** September 24, 2026
 
 **Canonical Repository:** [github.com/jdmaverick369/olive-branch-network](https://github.com/jdmaverick369/olive-branch-network)

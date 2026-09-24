@@ -6,6 +6,16 @@ The production frontend is maintained in a separate private repository and deplo
 
 The frontend is not the protocol's security boundary. Contract permissions and backend authorization must protect every privileged operation regardless of whether a route or button is visible here. Contract source and deployment procedures are maintained separately from this repository.
 
+## Staking and reward claims
+
+Stakers can opt in on-chain to sponsored monthly autoclaim for all current and future pools held by their wallet. The automation account batches pools with positive claimable user rewards, up to 32 pools per transaction, and pays gas through the configured paymaster. The contract permits one successful automatic claim per pool per UTC calendar month. Rewards follow the same 88% / 10% / 1% / 1% split and go to the same recipients as manual claims. Users can disable consent at any time; deposits, withdrawals, and manual claims remain available. Autoclaim does not transfer principal, compound rewards, or change voting power.
+
+Use the staking proxy `0x2C4Bd5B2a48a76f288d7F2DB23aFD3a03b9E7cD2` for transactions. The verified V9.3.1 implementation is [`0x416dfFfDc4245a9f4C38f05d203AEcaC5E24908f`](https://basescan.org/address/0x416dfFfDc4245a9f4C38f05d203AEcaC5E24908f#code); it is not a replacement wallet approval or deposit address.
+
+The contract interface described here is V9.3.1. Deployment and activation are recorded separately in the [operational release record](../governance-operations/2026-09-24-staking-v931-autoclaim-record.json).
+
+`NEXT_PUBLIC_AUTOCLAIM_ENABLED` controls the opt-in interface, while the worker's separate `AUTOCLAIM_ENABLED` switch controls automated submissions. Operators verify the proxy version, executor, and sponsored claim receipts before enabling these services. Existing connected wallets use the same proxy and staking positions.
+
 ## Network and contracts
 
 The production interface targets **Base mainnet (chain ID `8453`)**. Development can also target **Base Sepolia (chain ID `84532`)** by changing the environment configuration. The configured chain must match the deployed addresses.
@@ -62,7 +72,7 @@ npm run build        # optimized production build
 npm run start        # serve the production build
 ```
 
-There is currently no committed automated test suite. Contributions that change transaction preparation or wallet behavior should include focused tests where practical and must pass type checking, linting, and a production build.
+Contributions that change transaction preparation or wallet behavior should include focused tests and pass type checking, linting, and a production build. The contract release includes regression tests for autoclaim behavior and wallet consent; worker verification is maintained with the automation service.
 
 ## Building locally
 

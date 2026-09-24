@@ -33,7 +33,13 @@
     "threshold": 2,
     "ownerCount": 3,
     "simulationPassed": true,
-    "scheduledOnChain": false
+    "scheduledOnChain": true,
+    "transactionHash": "0x92b6902c0c5b3939f6db052e2ee9d30f367dc1b2b763861e6db735c4f42155ef",
+    "blockNumber": 51738479,
+    "confirmedAt": "2026-09-24T16:11:45.000Z",
+    "executableAt": "2026-09-25T16:11:45.000Z",
+    "executableChicago": "Friday, September 25, 2026 at 11:11:45 AM CDT",
+    "proxyVersion": "9.3"
   },
   "activation": {
     "proxyVersion": "9.3",
