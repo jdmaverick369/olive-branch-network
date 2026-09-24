@@ -1,0 +1,52 @@
+{
+  "chainId": 84532,
+  "staking": "0x94c1ca0eD9bEeb7C65C8E45f4bfd438de57De087",
+  "executor": "0x8cc01b1EA8a1Bb480456AEF2B91B7cBA81A21d27",
+  "proofs": [
+    {
+      "transactionHash": "0x5d734dac4b305b484e0ed4145ddb204f083d408a95636bb62a18a1b003db7d28",
+      "userOpHash": "0x58ab76b25437b8ad37ca83a5c88cb9618d9dd2ad4a7c824f332dd04dfc6d4d09",
+      "paymaster": "0x709A4bae3DB73a8E717AEfca13E88512f738b27f",
+      "pools": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11,
+        12,
+        13,
+        14,
+        15,
+        16,
+        17,
+        18,
+        19,
+        20,
+        21,
+        22,
+        23,
+        24,
+        25,
+        26,
+        27,
+        28,
+        29,
+        30,
+        31
+      ],
+      "user": "0x006204423823C348471c2385400f6e209009CcCf",
+      "actualGasCost": "36123444500000",
+      "actualGasUsed": "5557453"
+    }
+  ],
+  "duplicateSimulation": "NoClaimableRewards",
+  "optOutTransaction": "0x815c8646d29e1b8ce12315c495594613f854701518948b821da3ef1d0e41c29e",
+  "optOutSimulation": "AutoClaimDisabled"
+}

@@ -44,6 +44,10 @@ module.exports = {
     ],
     // Force IR pipeline on the heaviest files even if another compiler version is picked
     overrides: {
+      "contracts/StakingPoolsV931.sol": {
+        version: "0.8.28",
+        settings: { optimizer: { enabled: true, runs: 1 }, viaIR: true, evmVersion: "cancun" },
+      },
       "contracts/StakingPools.sol": {
         version: "0.8.28",
         settings: { optimizer: { enabled: true, runs: 500 }, viaIR: true },

@@ -1,0 +1,33 @@
+{
+  "chainId": 84532,
+  "staking": "0x94c1ca0eD9bEeb7C65C8E45f4bfd438de57De087",
+  "executor": "0x8cc01b1EA8a1Bb480456AEF2B91B7cBA81A21d27",
+  "proofs": [
+    {
+      "transactionHash": "0x1da77b29ff84194a2ea4db5340f512d5cbbaf20ce082dae4e6cc82980e852fa4",
+      "userOpHash": "0x2114d59f2638039e65df9b2b20be683dd044b6265841f1e96a1d7b70099c15a6",
+      "paymaster": "0x709A4bae3DB73a8E717AEfca13E88512f738b27f",
+      "pools": [
+        0
+      ],
+      "user": "0xdD563EEDd8c932630858f0934E0DbAE418052872",
+      "actualGasCost": "4384146000000",
+      "actualGasUsed": "674484"
+    },
+    {
+      "transactionHash": "0x8a09c16f4e91c26d7608902c8b830ae2f9234d822cf56c9b0f03998a6b04d0b0",
+      "userOpHash": "0xb2295a3ed0a403d761940b9a3061afe10542856ced207c9a394f29d24b59443a",
+      "paymaster": "0x709A4bae3DB73a8E717AEfca13E88512f738b27f",
+      "pools": [
+        0,
+        1
+      ],
+      "user": "0xB299D584E9a7185AeF4E0b07c537c9eB10Bb2842",
+      "actualGasCost": "4117750000000",
+      "actualGasUsed": "633500"
+    }
+  ],
+  "duplicateSimulation": "NoClaimableRewards",
+  "optOutTransaction": "0x38f18ad305f0db3cf3a5a0c13a97958613943cd2b3538e259311fb49112c6f7d",
+  "optOutSimulation": "AutoClaimDisabled"
+}
