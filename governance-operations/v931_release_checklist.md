@@ -1,6 +1,15 @@
 # V9.3.1 final review and upgrade checklist
 
-Reviewed 2026-09-24. Mainnet deployment/upgrade has NOT been executed.
+Reviewed and implementation deployed 2026-09-24. The proxy upgrade has NOT been executed.
+Release source commit: `047b40d6598563e9203b7b5abfe01f0771010f70`.
+Verified implementation: `0x416dfFfDc4245a9f4C38f05d203AEcaC5E24908f`.
+[BaseScan verified source](https://basescan.org/address/0x416dfFfDc4245a9f4C38f05d203AEcaC5E24908f#code).
+Deployment receipt block: 51737196 (NOT the future autoclaim indexing start block).
+The unsigned `2026-09-24-staking-v931-autoclaim-schedule.json` is ready to import.
+Its decoded payload, operation ID and read-only simulation from the Safe passed.
+See `2026-09-24-staking-v931-autoclaim-record.json` for the saved salt and operation ID.
+Deployment and schedule-file generation below are historical/reproduction steps:
+do not deploy again or regenerate the schedule. Start by importing the existing file.
 Scope: MonthlyAutoClaimUpgradeable, V9.3.1's delta from V9.3, upgrade preparation,
 and the deployed GitHub worker. This is an engineering review and testing record,
 not an independent audit or a guarantee that no vulnerabilities exist.

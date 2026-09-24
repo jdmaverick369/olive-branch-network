@@ -1,0 +1,53 @@
+{
+  "recordedAt": "2026-09-24T15:31:20.287Z",
+  "chainId": 8453,
+  "sourceCommit": "047b40d6598563e9203b7b5abfe01f0771010f70",
+  "implementation": "0x416dfFfDc4245a9f4C38f05d203AEcaC5E24908f",
+  "proxy": "0x2C4Bd5B2a48a76f288d7F2DB23aFD3a03b9E7cD2",
+  "baselineImplementation": "0x8ae630a14254Fd9632C505fbdeB7f104f0b9844E",
+  "timelock": "0x86396526286769ace21982E798Df5eef2389f51c",
+  "safe": "0x066e2FABb036deab7DC58bAde428F819AC3542DD",
+  "executor": "0x8cc01b1EA8a1Bb480456AEF2B91B7cBA81A21d27",
+  "deployment": {
+    "transactionHash": "0xc3ffd722862c331cb1786041a16c53c7ada8a93d224e679dbd134422fe783cd5",
+    "blockNumber": 51737196,
+    "from": "0x64C9c9cEDc94e58EA9C98f92DAF65F19383C5118",
+    "gasUsed": "5196143",
+    "status": 1
+  },
+  "verification": {
+    "baseScanVerified": true,
+    "url": "https://basescan.org/address/0x416dfFfDc4245a9f4C38f05d203AEcaC5E24908f#code",
+    "compiler": "v0.8.28+commit.7893614a",
+    "runtimeBytes": 23660,
+    "runtimeCodeHash": "0x5c626fa674f0c1c3a1e2f08f2a282c03ce70e9ed9a0d1ad2cd4cb3b241f0e596",
+    "localBytecodeMatch": true,
+    "sourcify": "Optional service request failed; BaseScan verified successfully"
+  },
+  "schedule": {
+    "file": "2026-09-24-staking-v931-autoclaim-schedule.json",
+    "salt": "0xb0af7ce6c94b82cd5079e2cfd1a425bf047b51ce9de599f0ea05528ae7c17a1d",
+    "operationId": "0xef6f6aa72fa93747a7bda001c37a7649c94edf8e040af552ce294e0150352e58",
+    "predecessor": "0x0000000000000000000000000000000000000000000000000000000000000000",
+    "delaySeconds": 86400,
+    "threshold": 2,
+    "ownerCount": 3,
+    "simulationPassed": true,
+    "scheduledOnChain": false
+  },
+  "activation": {
+    "proxyVersion": "9.3",
+    "upgradeExecuted": false,
+    "workerEnabled": false,
+    "startBlock": "Set only after actual upgrade execution receipt"
+  },
+  "tests": {
+    "isolatedReleasePassing": 141,
+    "forkPassedAtBlock": 51736334,
+    "sponsoredSepoliaPoolCounts": [
+      1,
+      2,
+      32
+    ]
+  }
+}
