@@ -6,6 +6,7 @@ import { encodeFunctionData, zeroAddress, type Address } from "viem";
 import { waitForCallsStatus } from "viem/actions";
 import { autoClaimAbi } from "@/lib/autoClaimAbi";
 import { STAKING_PROXY } from "@/lib/contracts";
+import { useMiniAppWallet } from "@/components/MiniAppWalletProvider";
 
 const CHAIN_ID = 8453;
 const dismissedInSession = new Set<string>();
@@ -28,6 +29,10 @@ export function useMonthlyAutoClaim() {
   const { sendCallsAsync } = useSendCalls();
   const { data: walletClient } = useWalletClient();
   const { data: capabilities } = useCapabilities();
+  // In the mini app a user may view a verified wallet that is not the signer.
+  const miniWallet = useMiniAppWallet();
+  const viewed = (miniWallet.viewAddress ?? address) as Address | undefined;
+  const viewOnly = miniWallet.viewOnly;
   const currentWallet = useRef(address);
   useEffect(() => { currentWallet.current = address; }, [address]);
   const [busy, setBusy] = useState(false);
@@ -38,22 +43,22 @@ export function useMonthlyAutoClaim() {
     && Number(process.env.NEXT_PUBLIC_CHAIN_ID || CHAIN_ID) === CHAIN_ID;
   const preference = useReadContract({
     address: STAKING_PROXY, abi: autoClaimAbi, functionName: "autoClaimPreference",
-    args: [address ?? zeroAddress], chainId: CHAIN_ID,
-    query: { enabled: released && !!address, refetchInterval: 15_000 },
+    args: [viewed ?? zeroAddress], chainId: CHAIN_ID,
+    query: { enabled: released && !!viewed, refetchInterval: 15_000 },
   });
   const executor = useReadContract({
     address: STAKING_PROXY, abi: autoClaimAbi, functionName: "autoClaimExecutor", chainId: CHAIN_ID,
-    query: { enabled: released && !!address, refetchInterval: 15_000 },
+    query: { enabled: released && !!viewed, refetchInterval: 15_000 },
   });
   const enabled = preference.data?.[0] === true;
   const known = !!preference.data && !preference.isError;
   const available = !!executor.data && executor.data !== zeroAddress && !executor.isError;
-  const visible = released && !!address;
-  const ready = visible && chainId === CHAIN_ID && known;
-  const activePrompt = visible && prompt?.wallet === address ? prompt : null;
+  const visible = released && !!viewed;
+  const ready = visible && !viewOnly && chainId === CHAIN_ID && known;
+  const activePrompt = visible && !viewOnly && prompt?.wallet === address ? prompt : null;
 
   async function promptAfterSuccess(wallet: string) {
-    if (!released || !address || wallet.toLowerCase() !== address.toLowerCase() || suppressed(address)) return;
+    if (!released || !address || viewOnly || wallet.toLowerCase() !== address.toLowerCase() || suppressed(address)) return;
     try {
       const [pref, account] = await Promise.all([preference.refetch(), executor.refetch()]);
       if (currentWallet.current !== address || pref.error || account.error || !pref.data || pref.data[0]
@@ -64,6 +69,7 @@ export function useMonthlyAutoClaim() {
   }
 
   function open() {
+    if (viewOnly) { void miniWallet.connectViewed(); return; }
     if (!ready || busy || (!enabled && !available) || !address) return;
     setMessage("");
     setPrompt({ wallet: address, desired: !enabled, automatic: false });
@@ -107,16 +113,17 @@ export function useMonthlyAutoClaim() {
       }
     } finally { submitting.current = false; setBusy(false); }
   }
-  return { visible, enabled, known, ready, available, busy, message, prompt: activePrompt, open, close, confirm, promptAfterSuccess };
+  return { visible, viewOnly, enabled, known, ready, available, busy, message, prompt: activePrompt, open, close, confirm, promptAfterSuccess };
 }
 
 type Control = ReturnType<typeof useMonthlyAutoClaim>;
 export function AutoClaimButton({ control, className = "", style, disabled = false }: { control: Control; className?: string; style?: CSSProperties; disabled?: boolean }) {
   if (!control.visible) return null;
-  const blocked = disabled || !control.ready || control.busy || (!control.enabled && !control.available);
+  // A view-only wallet stays tappable: the tap starts connecting that wallet.
+  const blocked = disabled || control.busy || (!control.viewOnly && (!control.ready || (!control.enabled && !control.available)));
   return <button type="button" onClick={control.open} disabled={blocked}
-    aria-label={control.known ? `Monthly autoclaim ${control.enabled ? "on" : "off"}; ${control.enabled ? "disable" : "enable"} for all pools` : "Monthly autoclaim status unavailable"}
-    title={!control.known ? "Checking autoclaim status" : !control.ready ? "Switch your wallet to Base" : !control.enabled && !control.available ? "Autoclaim is currently unavailable" : "Manage monthly autoclaim for all pools"}
+    aria-label={control.known ? `Monthly autoclaim ${control.enabled ? "on" : "off"}; ${control.viewOnly ? "connect this wallet to change" : `${control.enabled ? "disable" : "enable"} for all pools`}` : "Monthly autoclaim status unavailable"}
+    title={!control.known ? "Checking autoclaim status" : control.viewOnly ? "Connect this wallet to change autoclaim" : !control.ready ? "Switch your wallet to Base" : !control.enabled && !control.available ? "Autoclaim is currently unavailable" : "Manage monthly autoclaim for all pools"}
     className={`rounded-lg font-semibold border border-purple-600 text-purple-600 transition text-xs whitespace-nowrap hover:bg-purple-600 hover:text-white disabled:opacity-50 disabled:cursor-not-allowed ${className}`}
     style={style}>{control.known ? control.enabled ? "Auto On" : "Auto Off" : "Auto …"}</button>;
 }

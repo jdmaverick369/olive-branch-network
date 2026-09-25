@@ -18,6 +18,7 @@ import { Loader } from "lucide-react";
 import { POOLS, PoolMeta } from "@/lib/pools";
 import { stakingAbi } from "@/lib/stakingAbi";
 import { useMonthlyAutoClaim, AutoClaimButton, AutoClaimDialog } from "@/components/MonthlyAutoClaim";
+import { useMiniAppWallet } from "@/components/MiniAppWalletProvider";
 import { lensAbi } from "@/lib/lensAbi";
 import { oliveAbi } from "@/lib/oliveAbi";
 import { formatUnits, parseUnits, encodeFunctionData, type PublicClient } from "viem";
@@ -204,6 +205,7 @@ export default function UserPage() {
   }, []);
 
   const { address, connector } = useAccount();
+  const miniWallet = useMiniAppWallet();
   const { openConnectModal } = useConnectModal();
   const publicClient = usePublicClient();
   const { writeContractAsync } = useWriteContract();
@@ -249,7 +251,14 @@ export default function UserPage() {
     pendingRewards: number;
   } | null>(null);
 
-  const currentAddress = miniAppAddress ?? address;
+  const currentAddress = miniWallet.viewAddress ?? miniAppAddress ?? address;
+
+  // Mini app: a viewed verified wallet must be connected before it can sign.
+  const needsConnect = () => {
+    if (!miniWallet.viewOnly) return false;
+    void miniWallet.connectViewed();
+    return true;
+  };
   const userAddr = (currentAddress ?? ZERO_ADDR) as `0x${string}`;
   const autoClaim = useMonthlyAutoClaim();
 
@@ -558,6 +567,7 @@ export default function UserPage() {
       if (!isInMiniApp) openConnectModal?.();
       return;
     }
+    if (needsConnect()) return;
     if (!OLIVE_NFT) return;
     setMintingNft(true);
     const price = (mintPriceBN as bigint) ?? parseUnits("0.005", 18);
@@ -682,6 +692,7 @@ export default function UserPage() {
   // Handle claim all - batch claim from all pools with pending rewards
   const handleClaimAll = async () => {
     if (claimingAll || !currentAddress || !publicClient) return;
+    if (needsConnect()) return;
 
     // Get all pool IDs with pending rewards
     const poolsWithPending = contributions.filter((c) => c.pending > 0.0001);
@@ -789,6 +800,7 @@ export default function UserPage() {
 
   const handleClaim = async (pid: number) => {
     if (claimingPid !== null || !currentAddress || !publicClient) return;
+    if (needsConnect()) return;
     setClaimingPid(pid);
     let tookBatchPath = false;
     try {
@@ -831,6 +843,7 @@ export default function UserPage() {
 
   const handleNonprofitClaim = async () => {
     if (claimingPid !== null || !currentAddress || !publicClient || !nonprofitPool) return;
+    if (needsConnect()) return;
     setClaimingPid(nonprofitPool.pid);
     let tookBatchPath = false;
     try {

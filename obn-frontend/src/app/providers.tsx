@@ -8,6 +8,7 @@ import { OnchainKitProvider } from "@coinbase/onchainkit";
 import { targetChain } from "@/wagmiConfig";
 import { AutoConnectWrapper } from "@/components/AutoConnectWrapper";
 import { FarcasterConfigProvider } from "@/components/FarcasterConfigProvider";
+import { MiniAppWalletProvider } from "@/components/MiniAppWalletProvider";
 
 export function Providers({ children }: { children: ReactNode }) {
   return (
@@ -18,7 +19,9 @@ export function Providers({ children }: { children: ReactNode }) {
         chain={targetChain}
       >
         <RainbowKitProvider>
-          <AutoConnectWrapper>{children}</AutoConnectWrapper>
+          <AutoConnectWrapper>
+            <MiniAppWalletProvider>{children}</MiniAppWalletProvider>
+          </AutoConnectWrapper>
         </RainbowKitProvider>
       </OnchainKitProvider>
     </FarcasterConfigProvider>

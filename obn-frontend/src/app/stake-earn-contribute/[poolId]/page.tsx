@@ -4,6 +4,7 @@ import { ObnPrimary, ObnUsd } from "@/components/ObnUsd";
 
 import Image from "next/image";
 import { useMonthlyAutoClaim, AutoClaimButton, AutoClaimDialog } from "@/components/MonthlyAutoClaim";
+import { useMiniAppWallet } from "@/components/MiniAppWalletProvider";
 
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState, useMemo, type CSSProperties } from "react";
@@ -128,6 +129,7 @@ export default function PoolDetailPage() {
   const pid = Number(poolId);
   const router = useRouter();
   const { address: wagmiAddress, connector } = useAccount();
+  const miniWallet = useMiniAppWallet();
   const publicClient = usePublicClient();
   const { openConnectModal } = useConnectModal();
 
@@ -143,7 +145,14 @@ export default function PoolDetailPage() {
   const [isMobileBrowser, setIsMobileBrowser] = useState(false);
 
   // Unified address: use wagmi if available, otherwise MiniApp address
-  const currentAddress = wagmiAddress ?? miniAppAddress;
+  const currentAddress = miniWallet.viewAddress ?? wagmiAddress ?? miniAppAddress;
+
+  // Mini app: a viewed verified wallet must be connected before it can sign.
+  const needsConnect = () => {
+    if (!miniWallet.viewOnly) return false;
+    void miniWallet.connectViewed();
+    return true;
+  };
   const userAddr = (currentAddress ?? ZERO_ADDR) as `0x${string}`;
   const autoClaim = useMonthlyAutoClaim();
 
@@ -418,6 +427,7 @@ export default function PoolDetailPage() {
       if (!isMiniAppLayout) openConnectModal?.();
       return;
     }
+    if (needsConnect()) return;
     if (!Number.isFinite(pid) || !publicClient) return;
     if (!amount) return;
 
@@ -510,6 +520,7 @@ export default function PoolDetailPage() {
       if (!isMiniAppLayout) openConnectModal?.();
       return;
     }
+    if (needsConnect()) return;
     if (!Number.isFinite(pid) || !publicClient) return;
     if (!amount) return;
 
@@ -551,6 +562,7 @@ export default function PoolDetailPage() {
       if (!isMiniAppLayout) openConnectModal?.();
       return;
     }
+    if (needsConnect()) return;
     if (!Number.isFinite(pid) || !publicClient) return;
     setProcessingAction('claim');
     let tookBatchPath = false;

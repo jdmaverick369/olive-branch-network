@@ -47,7 +47,8 @@ export function makeMiniAppConfig(): Config {
 
   const wc = walletConnect({
     projectId,
-    showQrModal: false,
+    // Only opened when a user explicitly connects a verified wallet.
+    showQrModal: true,
     metadata: {
       name: "Olive Branch Network",
       description: "Stake OBN to support verified nonprofits.",
