@@ -5,6 +5,7 @@ import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { sdk } from "@farcaster/miniapp-sdk";
 import type { Address } from "viem";
+import { Eye } from "lucide-react";
 import { useMiniAppWallet, shortAddress } from "@/components/MiniAppWalletProvider";
 
 type MiniAppUser = {
@@ -83,7 +84,8 @@ export function FarcasterHeaderUser({ onMiniAppDetected }: Props) {
         onClick={() => setOpen((v) => !v)}
         aria-haspopup="menu"
         aria-expanded={open}
-        className="flex items-center gap-2 hover:opacity-80 transition-opacity cursor-pointer"
+        aria-label={viewOnly && viewAddress ? `Viewing ${shortAddress(viewAddress)} (view only). Open wallet menu` : undefined}
+        className="relative flex items-center gap-2 hover:opacity-80 transition-opacity cursor-pointer"
       >
         {user.pfpUrl && (
           <div className="flex items-center justify-center rounded-md p-0.5 border border-white/70 bg-white dark:border-white/60">
@@ -104,8 +106,15 @@ export function FarcasterHeaderUser({ onMiniAppDetected }: Props) {
         <span className="max-w-24.5 sm:max-w-37.5 truncate text-sm text-white">
           {viewAddress ? shortAddress(viewAddress) : user.username ? `@${user.username}` : `FID ${user.fid}`}
         </span>
+        {/* Overlaid on the avatar corner so it adds no width to the header row. */}
         {viewOnly && (
-          <span className="rounded bg-white/90 px-1 text-[10px] font-semibold leading-4 text-green-800">View</span>
+          <span
+            aria-hidden="true"
+            title="View only"
+            className="pointer-events-none absolute -left-1.5 -top-1.5 flex h-3.5 w-3.5 items-center justify-center rounded-full bg-amber-400 text-green-900 ring-2 ring-white"
+          >
+            <Eye className="h-2.5 w-2.5" strokeWidth={3} />
+          </span>
         )}
       </button>
 
