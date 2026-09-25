@@ -1,3 +1,5 @@
+import { sdk } from "@farcaster/miniapp-sdk";
+
 export type MiniAppSession = {
   fid: number;
   username?: string;
@@ -38,6 +40,19 @@ export function isMiniAppRuntime(): boolean {
   if (typeof window === "undefined") return false;
   const w = window as WindowMaybeFarcaster;
   return Boolean(w.farcaster || w.__FRAMEWORK?.farcaster);
+}
+
+/**
+ * Authoritative mini-app detection. Farcaster clients don't reliably expose
+ * window.farcaster, so fall back to the SDK's own host handshake.
+ */
+export async function detectMiniApp(): Promise<boolean> {
+  if (isMiniAppRuntime()) return true;
+  try {
+    return await sdk.isInMiniApp();
+  } catch {
+    return false;
+  }
 }
 
 /**

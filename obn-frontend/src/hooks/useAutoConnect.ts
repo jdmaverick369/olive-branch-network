@@ -1,7 +1,7 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useConnect } from "wagmi";
 import { useAccount } from "wagmi";
-import { isMiniAppRuntime } from "@/lib/miniapp";
+import { isMiniAppRuntime, detectMiniApp } from "@/lib/miniapp";
 
 function isCoinbaseWalletBrowser(): boolean {
   if (typeof window === "undefined") return false;
@@ -25,9 +25,17 @@ export function useAutoConnect() {
   const { connectors, connect } = useConnect();
   const attemptedRef = useRef(false);
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [inFarcaster, setInFarcaster] = useState(() => isMiniAppRuntime());
 
   useEffect(() => {
-    const inFarcaster = isMiniAppRuntime();
+    let cancelled = false;
+    void detectMiniApp().then((inMini) => {
+      if (!cancelled && inMini) setInFarcaster(true);
+    });
+    return () => { cancelled = true; };
+  }, []);
+
+  useEffect(() => {
     const inBaseApp = !inFarcaster && isCoinbaseWalletBrowser();
 
     // Only auto-connect in known wallet-injected environments
@@ -81,5 +89,5 @@ export function useAutoConnect() {
         clearTimeout(timeoutRef.current);
       }
     };
-  }, [isConnected, connectors, connect]);
+  }, [isConnected, connectors, connect, inFarcaster]);
 }

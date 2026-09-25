@@ -4,8 +4,6 @@ import { createConfig, createStorage, http, fallback, type Config } from "wagmi"
 import { walletConnect, baseAccount } from "@wagmi/connectors";
 import { base, baseSepolia, type Chain } from "wagmi/chains";
 
-import { isFarcasterHost } from "./isFarcasterHost";
-
 // NOTE: This package likely exports a factory function
 import { farcasterMiniApp } from "@farcaster/miniapp-wagmi-connector";
 
@@ -49,7 +47,7 @@ export function makeMiniAppConfig(): Config {
 
   const wc = walletConnect({
     projectId,
-    showQrModal: !isFarcasterHost,
+    showQrModal: false,
     metadata: {
       name: "Olive Branch Network",
       description: "Stake OBN to support verified nonprofits.",
@@ -61,12 +59,7 @@ export function makeMiniAppConfig(): Config {
   return createConfig({
     chains: [targetChain],
     transports: { [targetChain.id]: transport },
-    connectors: isFarcasterHost ? [farcaster, wc] : [wc],
+    connectors: [farcaster, wc],
     ssr: true,
   });
-}
-
-// Helper for runtime config
-export function getRuntimeWagmiConfig(): Config {
-  return isFarcasterHost ? makeMiniAppConfig() : wagmiWebConfig;
 }

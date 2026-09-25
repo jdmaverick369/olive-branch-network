@@ -7,7 +7,7 @@ import { useEffect, useState, type ReactNode } from "react";
 import { WagmiProvider } from "wagmi";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { wagmiWebConfig, makeMiniAppConfig } from "@/wagmiConfig";
-import { isMiniAppRuntime } from "@/lib/miniapp";
+import { isMiniAppRuntime, detectMiniApp } from "@/lib/miniapp";
 
 const enableByEnv = process.env.NEXT_PUBLIC_ENABLE_MINIKIT === "1";
 
@@ -20,7 +20,12 @@ export function FarcasterConfigProvider({
 }) {
   const [isMiniRuntime, setIsMiniRuntime] = useState(false);
   useEffect(() => {
+    let cancelled = false;
     setIsMiniRuntime(isMiniAppRuntime());
+    void detectMiniApp().then((inMini) => {
+      if (!cancelled && inMini) setIsMiniRuntime(true);
+    });
+    return () => { cancelled = true; };
   }, []);
 
   const [wagmiConfig, setWagmiConfig] = useState(wagmiWebConfig);
