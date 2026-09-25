@@ -46,7 +46,7 @@ export const metadata: Metadata = {
       { url: "/favicon.ico", sizes: "any" },
       { url: "/icon.png", type: "image/png" },
     ],
-    apple: [{ url: "/olive-branch-network-192.png", type: "image/png" }],
+    apple: [{ url: "/apple-touch-icon.png" }],
   },
 
   other: {
@@ -221,7 +221,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           <NFTPrefetch />
 
           <FarcasterMiniAppReady />
-          {process.env.NODE_ENV === "development" && <XDebugOverlay />}
+          <XDebugOverlay />
           <HeaderBar />
 
           {/* ✅ THIS replaces pt-16 but stays correct across devices */}

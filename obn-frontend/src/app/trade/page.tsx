@@ -1,4 +1,5 @@
 "use client";
+import { ObnUsd } from "@/components/ObnUsd";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import {
@@ -424,7 +425,7 @@ export default function TradePage() {
                     <p className="text-xs" style={{ color: "var(--card-subtext)" }}>You pay</p>
                     {selectedBalance !== undefined && (
                       <div className="flex items-center gap-2">
-                        <span className="text-xs" style={{ color: "var(--card-subtext)" }}>{formatTokenAmount(selectedBalance, fromToken.decimals)} {fromToken.symbol}</span>
+                        <span className="text-xs" style={{ color: "var(--card-subtext)" }}>{formatTokenAmount(selectedBalance, fromToken.decimals)} {fromToken.symbol} {fromToken.symbol === "OBN" && <ObnUsd amount={selectedBalance} />}</span>
                         <button onClick={() => setFromAmount(maxAmount)} className="text-xs font-semibold hover:opacity-70" style={{ color: "#16a34a" }}>Max</button>
                       </div>
                     )}
@@ -445,6 +446,7 @@ export default function TradePage() {
                   </div>
                 </div>
 
+                {fromToken.symbol === "OBN" && fromAmount && <ObnUsd amount={fromAmount} />}
                 {showGasWarning && <p className="text-xs text-yellow-500 px-1 mb-1 -mt-0.5">Leave enough ETH to cover the network fee.</p>}
 
                 <div className="flex justify-center my-1">
@@ -458,6 +460,7 @@ export default function TradePage() {
                   <div className="flex items-center gap-2">
                     <div className="flex-1 text-2xl font-semibold min-w-0" style={{ color: isLoadingPrice ? "var(--card-subtext)" : "var(--card-text)" }}>
                       {isLoadingPrice ? <Loader2 className="w-5 h-5 animate-spin" /> : estimatedOut || "0.0"}
+                      {toToken.symbol === "OBN" && quote?.toAmount && !isLoadingPrice && <ObnUsd amount={BigInt(quote.toAmount)} />}
                     </div>
                     {toToken.symbol === "OBN" ? (
                       <div className="flex items-center gap-2 pl-1.5 pr-3 py-1.5 rounded-full font-semibold text-sm shrink-0" style={{ backgroundColor: "var(--card-bg)", color: "var(--card-text)", border: "1px solid var(--card-border)" }}>
@@ -475,7 +478,7 @@ export default function TradePage() {
 
                 {quote && (
                   <div className="rounded-xl px-4 py-3 mb-4 flex flex-col gap-1.5" style={{ backgroundColor: "var(--page-bg-to)" }}>
-                    <div className="flex justify-between text-xs"><span style={{ color: "var(--card-subtext)" }}>Minimum received</span><span style={{ color: "var(--card-text)" }}>{minimumOut} {toToken.symbol}</span></div>
+                    <div className="flex justify-between text-xs"><span style={{ color: "var(--card-subtext)" }}>Minimum received</span><span style={{ color: "var(--card-text)" }}>{minimumOut} {toToken.symbol} {toToken.symbol === "OBN" && quote.minToAmount && <ObnUsd amount={BigInt(quote.minToAmount)} />}</span></div>
                     <div className="flex justify-between text-xs"><span style={{ color: "var(--card-subtext)" }}>Max slippage</span><span style={{ color: "var(--card-text)" }}>1.00%</span></div>
                     {priceImpact !== null && <div className="flex justify-between text-xs"><span style={{ color: "var(--card-subtext)" }}>Price impact</span><span className={priceImpact < 1 ? "text-green-500" : priceImpact < 5 ? "text-yellow-500" : "text-red-500"}>{priceImpact < 0.01 ? "<0.01" : priceImpact.toFixed(2)}%</span></div>}
                     {priceImpact !== null && priceImpact >= 5 && <p className="text-xs text-red-500 pt-1">High price impact — you may receive significantly less than expected.</p>}

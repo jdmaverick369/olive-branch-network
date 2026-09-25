@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 
-const RPC_URL = process.env.NEXT_PUBLIC_RPC_URL || "https://mainnet.base.org";
+const RPC_URL = process.env.BASE_RPC_URL || process.env.RPC_URL || "https://mainnet.base.org";
 const OBN_TOKEN = (process.env.NEXT_PUBLIC_OBN_TOKEN || "").toLowerCase();
 
 function rpc(id: number, method: string, params: unknown[]) {
@@ -15,8 +15,8 @@ export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
   const address = searchParams.get("address");
 
-  if (!address || !/^0x[a-fA-F0-9]{40}$/.test(address)) {
-    return NextResponse.json({ error: "Invalid address" }, { status: 400 });
+  if (!address) {
+    return NextResponse.json({ error: "Missing address" }, { status: 400 });
   }
 
   try {

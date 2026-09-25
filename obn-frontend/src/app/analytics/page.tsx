@@ -1,5 +1,7 @@
 // src/app/analytics/page.tsx
 "use client";
+import { useDisplayText } from "@/hooks/useDisplayText";
+import { ObnPrimary, ObnUsd } from "@/components/ObnUsd";
 
 import { useEffect, useLayoutEffect, useState } from "react";
 import { useRouter } from "next/navigation";
@@ -55,6 +57,7 @@ function usePageBackground() {
 }
 
 export default function AnalyticsPage() {
+  const displayText = useDisplayText();
   // Override body background to match page gradient
   usePageBackground();
 
@@ -134,21 +137,21 @@ export default function AnalyticsPage() {
   const metrics: CombinedMetric[] = [
     {
       title: "OBN Network Analytics",
-      description: "Live protocol stats for active stakers, total staked, and total OBN contributed — plus total staked and active stakers by nonprofit pool.",
+      description: displayText("Live protocol stats for active stakers, total staked, and total OBN contributed — plus total staked and active stakers by nonprofit pool."),
       data: null,
       loading: false,
       error: null,
     },
     {
       title: "Active Stakers",
-      description: "Number of active users staking OBN tokens",
+      description: displayText("Number of active users staking OBN tokens"),
       data: activeStakersQuery?.data || null,
       loading: activeStakersQuery?.loading || false,
       error: activeStakersQuery?.error || null,
     },
     {
       title: "Total Staked",
-      description: "Total amount of OBN tokens currently staked",
+      description: displayText("Total amount of OBN tokens currently staked"),
       data: totalStakedQuery?.data || null,
       loading: totalStakedQuery?.loading || false,
       error: totalStakedQuery?.error || null,
@@ -172,19 +175,17 @@ export default function AnalyticsPage() {
 
   function renderGraphCard(metric: CombinedMetric) {
     return (
-      <div className="w-full rounded-lg border p-6 shadow-md text-center mb-2.5" style={graphCardStyle}>
+      <div className="w-full rounded-lg border p-4 md:p-6 shadow-md text-center mb-2.5" style={graphCardStyle}>
         {metric.error ? (
           <>
-            <h2 className="text-lg font-bold mb-1 text-center" style={{ color: "var(--card-text)" }}>{metric.title}</h2>
-            <p className="text-sm mb-4 text-center" style={{ color: "var(--card-subtext)" }}>{metric.description}</p>
+            <h2 className="text-[min(3vw,0.75rem)] md:text-lg font-bold mb-4 text-center" style={{ color: "var(--card-text)" }}>{displayText(metric.title)}</h2>
             <p className="text-red-600 dark:text-red-400 text-sm py-8">{metric.error}</p>
           </>
         ) : metric.data ? (
-          renderLineChartWithTitle(metric.title, metric.description, metric.data, theme, isMobileBrowser)
+          renderLineChartWithTitle(metric.title, metric.data, theme, displayText, isMobileBrowser)
         ) : (
           <>
-            <h2 className="text-lg font-bold mb-1 text-center" style={{ color: "var(--card-text)" }}>{metric.title}</h2>
-            <p className="text-sm mb-4 text-center" style={{ color: "var(--card-subtext)" }}>{metric.description}</p>
+            <h2 className="text-[min(3vw,0.75rem)] md:text-lg font-bold mb-4 text-center" style={{ color: "var(--card-text)" }}>{displayText(metric.title)}</h2>
             <p className="py-8" style={{ color: "var(--card-subtext)" }}>No data available</p>
           </>
         )}
@@ -204,7 +205,7 @@ export default function AnalyticsPage() {
             {/* Desktop: title + subtitle */}
             {!isMobileBrowser && (
               <div className="w-full text-center mb-6 mx-auto" style={{ maxWidth: '600px' }}>
-                <h1 className="font-bold mb-2 text-center" style={{ color: "var(--card-text)", fontSize: "min(7vw, 2.25rem)", whiteSpace: "nowrap" }}>{metrics[0].title}</h1>
+                <h1 className="font-bold mb-2 text-center" style={{ color: "var(--card-text)", fontSize: "min(7vw, 2.25rem)", whiteSpace: "normal" }}>{metrics[0].title}</h1>
                 <p className="mb-4 text-center" style={{ color: "var(--card-subtext)" }}>{metrics[0].description}</p>
               </div>
             )}
@@ -283,7 +284,7 @@ export default function AnalyticsPage() {
   );
 }
 
-function renderLineChartWithTitle(title: string, description: string, data: Record<string, unknown>, theme: "light" | "dark", isMobileBrowser: boolean = false) {
+function renderLineChartWithTitle(title: string, data: Record<string, unknown>, theme: "light" | "dark", displayText: (text: string) => string, isMobileBrowser: boolean = false) {
   // Extract rows from result
   let rows: Record<string, unknown>[] = [];
   if ("result" in data && data.result && typeof data.result === "object") {
@@ -342,17 +343,17 @@ function renderLineChartWithTitle(title: string, description: string, data: Reco
   const formattedValue = title === "Active Stakers" && typeof metricValue === "number"
     ? Number(metricValue).toLocaleString()
     : formatValue(metricValue);
-  const titleWithValue = `${title}: ${formattedValue}`;
+
 
   return (
     <>
       {/* Title with value */}
-      <h2 className="font-bold mb-1 text-center" style={{ color: "var(--card-text)", fontSize: "min(5vw, 1.125rem)", whiteSpace: "nowrap" }}>
-        {titleWithValue}
+      <h2 className="text-[min(3vw,0.75rem)] md:text-lg font-bold mb-4 text-center" style={{ color: "var(--card-text)", overflowWrap: "anywhere" }}>
+        {displayText(title)}: {title !== "Active Stakers" && typeof metricValue === "number" ? <>
+          <ObnPrimary amount={metricValue}>{formattedValue}</ObnPrimary>
+          <ObnUsd amount={metricValue} tokenLabel={<>{formattedValue} OBN</>} />
+        </> : formattedValue}
       </h2>
-      <p className="text-sm mb-4 text-center" style={{ color: "var(--card-subtext)" }}>
-        {description}
-      </p>
 
       {/* Line chart with historical data */}
       <div
@@ -401,7 +402,10 @@ function renderLineChartWithTitle(title: string, description: string, data: Reco
                 color: "var(--card-text)",
                 fontSize: 12,
               }}
-              formatter={(value) => formatValue(value)}
+              formatter={(value) => title !== "Active Stakers" && typeof value === "number" ? <>
+                <ObnPrimary amount={value}>{formatValue(value)}</ObnPrimary>
+                <ObnUsd amount={value} tokenLabel={<>{formatValue(value)} OBN</>} />
+              </> : formatValue(value)}
               labelFormatter={(label, payload) => {
                 const fullDate = payload?.[0]?.payload?.fullDate || label;
                 return `Date: ${fullDate}`;
@@ -448,6 +452,7 @@ function NonprofitStatRow({
   cardStyle: React.CSSProperties;
   large?: boolean;
 }) {
+  const displayText = useDisplayText();
   const router = useRouter();
 
   // `large` mirrors the ~1.25x scale the profile page applies to its whole
@@ -488,13 +493,12 @@ function NonprofitStatRow({
               className={large ? "text-[11px] font-medium whitespace-nowrap" : "text-[9px] font-medium whitespace-nowrap"}
               style={{ color: "var(--card-subtext)" }}
             >
-              Total Staked
-            </p>
+              {displayText("Total Staked ")}</p>
             <p
               className={large ? "text-sm font-bold" : "text-xs font-bold"}
               style={{ color: "var(--card-text)", fontVariantNumeric: "tabular-nums" }}
             >
-              {formatValue(stat.totalStaked)}
+              <ObnPrimary amount={stat.totalStaked}>{formatValue(stat.totalStaked)} OBN</ObnPrimary> <ObnUsd amount={stat.totalStaked} tokenLabel={<>{formatValue(stat.totalStaked)} OBN</>} />
             </p>
           </div>
           <div className="text-center" style={{ width: statWidth }}>
@@ -502,8 +506,7 @@ function NonprofitStatRow({
               className={large ? "text-[11px] font-medium whitespace-nowrap" : "text-[9px] font-medium whitespace-nowrap"}
               style={{ color: "var(--card-subtext)" }}
             >
-              Active Stakers
-            </p>
+              {displayText("Active Stakers ")}</p>
             <p
               className={large ? "text-sm font-bold" : "text-xs font-bold"}
               style={{ color: "var(--card-text)", fontVariantNumeric: "tabular-nums" }}

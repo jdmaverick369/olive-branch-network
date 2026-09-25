@@ -4,7 +4,7 @@ import { NextResponse } from 'next/server';
 import { createPublicClient, fallback, http } from 'viem';
 import { base } from 'viem/chains';
 
-const PRIMARY   = process.env.BASE_RPC_URL || 'https://mainnet.base.org';
+const PRIMARY = process.env.BASE_RPC_URL || process.env.RPC_URL || 'https://mainnet.base.org';
 const SECONDARY = process.env.BASE_RPC_URL_ALT;
 const STAKING_CONTRACT = process.env.NEXT_PUBLIC_STAKING_CONTRACT as `0x${string}` | undefined;
 

@@ -1,5 +1,6 @@
 "use client";
 
+import { useDisplayText } from "@/hooks/useDisplayText";
 import { useEffect } from "react";
 import Link from "next/link";
 
@@ -19,6 +20,7 @@ function usePageBackground() {
 }
 
 export default function TermsOfServicePage() {
+  const displayText = useDisplayText();
   // Override body background to match page gradient
   usePageBackground();
   return (
@@ -69,21 +71,12 @@ export default function TermsOfServicePage() {
               className="text-sm leading-relaxed mb-4"
               style={{ color: "var(--card-subtext)" }}
             >
-              Olive Branch Network is a decentralized application built on
-              Base, an L2 solution for Ethereum. The platform allows users to
-              stake $OBN tokens to earn rewards while supporting nonprofit
-              organizations. The service is provided &quot;as is&quot; without
-              warranties of any kind.
-            </p>
+              {displayText("Olive Branch Network is a decentralized application built on Base, an L2 solution for Ethereum. The platform allows users to stake $OBN tokens to earn rewards while supporting nonprofit organizations. The service is provided \"as is\" without warranties of any kind. ")}</p>
             <p
               className="text-sm leading-relaxed"
               style={{ color: "var(--card-subtext)" }}
             >
-              Key features include: staking and unstaking tokens, earning
-              rewards based on Annual Percentage Yield (APY), minting Olive
-              NFTs to represent staking activity, and viewing real-time rewards
-              and pool information.
-            </p>
+              {displayText("Key features include: staking and unstaking tokens, earning rewards based on Annual Percentage Yield (APY), minting Olive NFTs to represent staking activity, and viewing real-time rewards and pool information. ")}</p>
           </div>
 
           {/* Section 3 */}
@@ -113,9 +106,7 @@ export default function TermsOfServicePage() {
                 jurisdiction
               </li>
               <li>
-                Not be a resident of a jurisdiction where blockchain staking is
-                prohibited
-              </li>
+                {displayText("Not be a resident of a jurisdiction where blockchain staking is prohibited ")}</li>
               <li>
                 Not be subject to sanctions by any government or regulatory
                 body
@@ -129,14 +120,12 @@ export default function TermsOfServicePage() {
               className="text-base font-semibold mb-3"
               style={{ color: "var(--card-text)" }}
             >
-              4. Staking and Rewards
-            </h2>
+              {displayText("4. Staking and Rewards ")}</h2>
             <p
               className="text-sm leading-relaxed mb-4"
               style={{ color: "var(--card-subtext)" }}
             >
-              When you stake tokens on the OBN platform:
-            </p>
+              {displayText("When you stake tokens on the OBN platform: ")}</p>
             <ul
               className="list-disc list-inside space-y-3 ml-4 text-sm"
               style={{ color: "var(--card-subtext)" }}
@@ -149,17 +138,14 @@ export default function TermsOfServicePage() {
                 Rewards accrue based on the current APY, which may change over
                 time
               </li>
-              <li>You can unstake your tokens at any time without penalty</li>
+              <li>{displayText("You can unstake your tokens at any time without penalty")}</li>
               <li>
                 Rewards can be claimed at any time and will be transferred to
                 your wallet
               </li>
               <li>APY is subject to change and is not guaranteed</li>
               <li>
-                There are no minimum or maximum staking amounts, but all staking
-                is subject to applicable blockchain network conditions and gas
-                fees
-              </li>
+                {displayText("There are no minimum or maximum staking amounts, but all staking is subject to applicable blockchain network conditions and gas fees ")}</li>
             </ul>
           </div>
 
@@ -182,7 +168,7 @@ export default function TermsOfServicePage() {
               className="list-disc list-inside space-y-3 ml-4 text-sm"
               style={{ color: "var(--card-subtext)" }}
             >
-              <li>88% to stakers who contributed to the pool</li>
+              <li>{displayText("88% to stakers who contributed to the pool")}</li>
               <li>10% to the nonprofit organization supported by the pool</li>
               <li>1% to ExtendOliveBranch</li>
               <li>1% to TheOffering</li>
@@ -191,10 +177,7 @@ export default function TermsOfServicePage() {
               className="text-sm leading-relaxed mt-4"
               style={{ color: "var(--card-subtext)" }}
             >
-              This distribution is the same across all pools. Rewards are
-              calculated based on your proportional stake in each pool and the
-              current APY schedule.
-            </p>
+              {displayText("This distribution is the same across all pools. Rewards are calculated based on your proportional stake in each pool and the current APY schedule. ")}</p>
           </div>
 
           {/* Section 6 */}
@@ -209,9 +192,7 @@ export default function TermsOfServicePage() {
               className="text-sm leading-relaxed mb-4"
               style={{ color: "var(--card-subtext)" }}
             >
-              The Olive NFT is an optional collectible that represents your
-              staking activity on the OBN platform. Key points:
-            </p>
+              {displayText("The Olive NFT is an optional collectible that represents your staking activity on the OBN platform. Key points: ")}</p>
             <ul
               className="list-disc list-inside space-y-3 ml-4 text-sm"
               style={{ color: "var(--card-subtext)" }}
@@ -225,9 +206,7 @@ export default function TermsOfServicePage() {
                 not affect the underlying smart contract
               </li>
               <li>
-                The NFT will evolve visually as you maintain your stake over
-                time
-              </li>
+                {displayText("The NFT will evolve visually as you maintain your stake over time ")}</li>
               <li>Maximum supply is capped at 20,000 NFTs</li>
               <li>NFTs can be viewed and traded on secondary markets like OpenSea</li>
             </ul>
@@ -245,13 +224,7 @@ export default function TermsOfServicePage() {
               className="text-sm leading-relaxed"
               style={{ color: "var(--card-subtext)" }}
             >
-              When using the OBN platform, you may incur Ethereum network fees
-              (gas fees) for transactions such as staking, unstaking, claiming
-              rewards, and minting NFTs. These fees are paid to Ethereum network
-              validators and are not controlled by OBN. You are responsible for
-              understanding and accepting these costs before making transactions.
-              Gas fees are variable and depend on current network conditions.
-            </p>
+              {displayText("When using the OBN platform, you may incur Ethereum network fees (gas fees) for transactions such as staking, unstaking, claiming rewards, and minting NFTs. These fees are paid to Ethereum network validators and are not controlled by OBN. You are responsible for understanding and accepting these costs before making transactions. Gas fees are variable and depend on current network conditions. ")}</p>
           </div>
 
           {/* Section 8 */}
@@ -279,10 +252,7 @@ export default function TermsOfServicePage() {
                 completely error-free.
               </li>
               <li>
-                <strong>Market Risk:</strong> Cryptocurrency values are highly
-                volatile. The value of your staked tokens may increase or
-                decrease substantially.
-              </li>
+                <strong>Market Risk:</strong> {displayText("Cryptocurrency values are highly volatile. The value of your staked tokens may increase or decrease substantially. ")}</li>
               <li>
                 <strong>Regulatory Risk:</strong> Cryptocurrency regulations are
                 evolving. Your use of OBN may be subject to future regulatory
@@ -294,10 +264,7 @@ export default function TermsOfServicePage() {
                 congestion, downtime, or other technical issues.
               </li>
               <li>
-                <strong>Loss of Funds:</strong> If you lose access to your wallet
-                private keys or seed phrase, you may permanently lose access to
-                your staked tokens and rewards.
-              </li>
+                <strong>Loss of Funds:</strong> {displayText("If you lose access to your wallet private keys or seed phrase, you may permanently lose access to your staked tokens and rewards. ")}</li>
               <li>
                 <strong>APY Risk:</strong> Rewards are not guaranteed. APY may
                 change at any time and may decrease to zero.
@@ -317,13 +284,7 @@ export default function TermsOfServicePage() {
               className="text-sm leading-relaxed"
               style={{ color: "var(--card-subtext)" }}
             >
-              OBN does not provide investment, financial, or legal advice. The
-              information provided on our platform is for informational purposes
-              only. You should conduct your own research and consult with
-              qualified financial and legal advisors before using the OBN
-              platform or making any investment decisions. Only stake funds that
-              you can afford to lose.
-            </p>
+              {displayText("OBN does not provide investment, financial, or legal advice. The information provided on our platform is for informational purposes only. You should conduct your own research and consult with qualified financial and legal advisors before using the OBN platform or making any investment decisions. Only stake funds that you can afford to lose. ")}</p>
           </div>
 
           {/* Section 10 */}
@@ -380,14 +341,7 @@ export default function TermsOfServicePage() {
               className="text-sm leading-relaxed"
               style={{ color: "var(--card-subtext)" }}
             >
-              To the fullest extent permitted by law, OBN and its developers,
-              operators, and affiliates shall not be liable for any indirect,
-              incidental, special, consequential, or punitive damages, including
-              but not limited to loss of profits, data, or use, even if advised
-              of the possibility of such damages. In no event shall OBN&apos;s
-              total liability exceed the amount of funds you have staked on the
-              platform in the past 12 months.
-            </p>
+              {displayText("To the fullest extent permitted by law, OBN and its developers, operators, and affiliates shall not be liable for any indirect, incidental, special, consequential, or punitive damages, including but not limited to loss of profits, data, or use, even if advised of the possibility of such damages. In no event shall OBN's total liability exceed the amount of funds you have staked on the platform in the past 12 months. ")}</p>
           </div>
 
           {/* Section 12 */}

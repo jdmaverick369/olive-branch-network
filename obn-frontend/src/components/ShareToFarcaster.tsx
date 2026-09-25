@@ -2,6 +2,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { useDisplayText } from "@/hooks/useDisplayText";
 import { usePathname } from "next/navigation";
 import sdk from "@farcaster/miniapp-sdk";
 
@@ -27,10 +28,12 @@ const ENV_CAST_URL =
 const WARPCAST_COMPOSE_BASE = "https://warpcast.com/~/compose"; // reliable composer URL
 
 export function ShareToFarcaster({
-  text = "Staking OBN to support the Olive Branch Network 🌱",
+  text: originalText = "Staking OBN to support the Olive Branch Network 🌱",
   url,
   className,
 }: Props) {
+  const displayText = useDisplayText();
+  const text = displayText(originalText);
   const pathname = usePathname();
   const [pageUrl, setPageUrl] = useState("");
 

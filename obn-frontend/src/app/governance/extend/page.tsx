@@ -1,4 +1,6 @@
 "use client";
+import { useDisplayText } from "@/hooks/useDisplayText";
+import { ObnUsd } from "@/components/ObnUsd";
 
 import { useEffect, useLayoutEffect, useRef, useState, useMemo } from "react";
 import { useRouter } from "next/navigation";
@@ -159,6 +161,7 @@ function storeVote(cycleId: string, voter: string, nonprofit: string) {
 }
 
 export default function ExtendVotePage() {
+  const displayText = useDisplayText();
   usePageBackground();
   const router = useRouter();
   const { address } = useAccount();
@@ -176,7 +179,6 @@ export default function ExtendVotePage() {
     cycleId: effectiveCycleId,
     state: effectiveState,
     summary: effectiveSummary,
-    phase2Allocation,
     isLoading: cycleLoading,
   } = useGovernanceCycle();
 
@@ -188,7 +190,6 @@ export default function ExtendVotePage() {
   const isPhase2Open  = effectiveState === CycleState.PHASE2_OPEN;
   const isPhase2Ready = effectiveState === CycleState.PHASE2_READY;
   const isCompleted   = effectiveState === CycleState.COMPLETED;
-  const showFixedAllocation = (isPhase2Open || isPhase2Ready) && phase2Allocation !== undefined;
 
   // Awaiting the next cycle: either the most recent one finished/was
   // cancelled, or none has ever run.
@@ -485,7 +486,7 @@ export default function ExtendVotePage() {
                   className="text-xs font-medium mb-1 flex items-center justify-center gap-1.5"
                   style={{ color: "var(--card-subtext)" }}
                 >
-                  {showFixedAllocation ? "This cycle's allocation from" : "Balance in"}
+                  Balance in
                   <span
                     className="text-[9px] px-1.5 py-0.5 rounded font-semibold"
                     style={{ backgroundColor: "#a855f7", color: "white" }}
@@ -497,24 +498,14 @@ export default function ExtendVotePage() {
                   className="text-3xl font-bold tabular-nums"
                   style={{ color: "var(--card-text)" }}
                 >
-                  {formatObn(showFixedAllocation ? phase2Allocation : extendBalance)}
+                  {formatObn(extendBalance)}
                   <span
                     className="text-base font-semibold ml-1"
                     style={{ color: "var(--card-subtext)" }}
                   >
                     OBN
-                  </span>
+                  </span> <ObnUsd amount={extendBalance} />
                 </p>
-                {showFixedAllocation && (
-                  <p className="text-xs mt-2" style={{ color: "var(--card-subtext)" }}>
-                    Fixed when Phase 1 executed, including any Give transfer. Later contributions stay for the next cycle.
-                  </p>
-                )}
-                {(isPhase2Open || isPhase2Ready) && phase2Allocation === undefined && (
-                  <p className="text-xs mt-2" style={{ color: "var(--card-subtext)" }}>
-                    Showing the vault balance. A fixed cycle allocation is not available.
-                  </p>
-                )}
               </div>
             )}
 
@@ -581,7 +572,7 @@ export default function ExtendVotePage() {
                         </p>
                       </div>
                       <p className="text-xl font-bold" style={{ color: "var(--card-text)" }}>
-                        {votedDisplay.amount}
+                        {votedDisplay.amount} <ObnUsd amount={votingPower?.power} />
                       </p>
                     </div>
                   ) : needsActivation ? (
@@ -594,9 +585,7 @@ export default function ExtendVotePage() {
                         style={{ backgroundColor: "#f59e0b14", border: "1px solid #f59e0b44" }}
                       >
                         <p className="text-xs leading-relaxed" style={{ color: "var(--card-text)" }}>
-                          Staking, unstaking, or claiming rewards will activate your voting power.
-                          Visit your profile to interact with the protocol.
-                        </p>
+                          {displayText("Staking, unstaking, or claiming rewards will activate your voting power. Visit your profile to interact with the protocol. ")}</p>
                         <Link
                           href="/profile"
                           className="text-xs font-semibold hover:opacity-80 transition-opacity w-fit"
@@ -609,7 +598,7 @@ export default function ExtendVotePage() {
                   ) : powerDisplay ? (
                     <div>
                       <p className="text-xl font-bold" style={{ color: "var(--card-text)" }}>
-                        {powerDisplay.label}
+                        {powerDisplay.label} <ObnUsd amount={votingPower?.power} />
                       </p>
                       {powerDisplay.sub && (
                         <p className="text-xs mt-0.5" style={{ color: "var(--card-subtext)" }}>
@@ -660,7 +649,7 @@ export default function ExtendVotePage() {
                       🌿 {winner?.meta?.name ?? winner?.address}
                     </p>
                     <p className="text-sm" style={{ color: "var(--card-subtext)" }}>
-                      {formatObn(winner?.votes)} OBN in votes
+                      {formatObn(winner?.votes)} OBN <ObnUsd amount={winner?.votes} /> in votes
                     </p>
                   </div>
                 );
@@ -696,7 +685,7 @@ export default function ExtendVotePage() {
                 <div className="flex items-center gap-2">
                   {hasAnyVotes && (
                     <p className="text-xs tabular-nums" style={{ color: "var(--card-subtext)" }}>
-                      {formatObnCompact(totalVotes)} OBN total
+                      {formatObnCompact(totalVotes)} OBN <ObnUsd amount={totalVotes} /> total
                     </p>
                   )}
                   {isPhase2Open && (
@@ -834,7 +823,7 @@ export default function ExtendVotePage() {
                               style={{ color: "var(--card-subtext)" }}
                             >
                               {hasAnyVotes
-                                ? `${formatObnCompact(votes)} OBN`
+                                ? <>{formatObnCompact(votes)} OBN <ObnUsd amount={votes} /></>
                                 : "No votes yet"}
                             </p>
                           </div>

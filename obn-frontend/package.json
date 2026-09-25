@@ -2,20 +2,19 @@
   "name": "obn-frontend",
   "version": "0.1.0",
   "private": true,
-  "packageManager": "npm@11.18.0",
   "scripts": {
-    "validate:env": "node --env-file-if-exists=.env.local scripts/validate-env.mjs",
-    "predev": "npm run validate:env",
-    "prebuild": "npm run validate:env",
     "dev": "next dev --turbopack",
     "dev:mainnet": "node scripts/dev-mainnet.js",
     "build": "next build",
     "start": "next start",
     "lint": "eslint .",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "validate:env": "node --env-file-if-exists=.env.local scripts/validate-env.mjs",
+    "autoclaim": "node --env-file-if-exists=.env.local scripts/autoclaim/run.mjs",
+    "test:autoclaim": "node --test scripts/autoclaim/*.test.mjs"
   },
   "dependencies": {
-    "@coinbase/cdp-sdk": "^1.52.0",
+    "@coinbase/cdp-sdk": "1.52.0",
     "@coinbase/onchainkit": "^1.1.2",
     "@duneanalytics/client-sdk": "^0.3.4",
     "@farcaster/miniapp-sdk": "^0.2.3",
@@ -29,7 +28,7 @@
     "@wagmi/core": "^2.16.7",
     "ethers": "^6.15.0",
     "lucide-react": "^0.545.0",
-    "next": "^16.2.10",
+    "next": "^16.0.8",
     "ox": "^0.14.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
@@ -39,13 +38,17 @@
     "wagmi": "^2.14.0"
   },
   "devDependencies": {
+    "@eslint/eslintrc": "^3",
     "@tailwindcss/postcss": "^4.1.11",
     "@types/node": "^22",
     "@types/react": "^19.0.0",
     "@types/react-dom": "^19.0.0",
+    "autoprefixer": "^10.4.21",
+    "baseline-browser-mapping": "^2.10.0",
     "eslint": "^9",
-    "eslint-config-next": "^16.2.10",
+    "eslint-config-next": "^16.0.8",
     "pino-pretty": "^13.1.1",
+    "playwright": "^1.61.0",
     "postcss": "^8.5.6",
     "tailwindcss": "^4.1.11",
     "typescript": "^5"

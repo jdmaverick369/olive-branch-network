@@ -1,0 +1,13 @@
+{
+  "checkedAt": "2026-09-23T20:59:05.898Z",
+  "chainId": "8453",
+  "operationId": "0xbaa0a9f445e24f4e4e8e98a371609be2307700bfc9bdadd5ab1d425a63aafb9c",
+  "ready": true,
+  "done": false,
+  "timestamp": "1790097499",
+  "safeThreshold": "2",
+  "safeExecutor": false,
+  "openExecutor": true,
+  "simulation": "0x",
+  "simulationStatus": "eth_call from authorized Safe succeeded"
+}

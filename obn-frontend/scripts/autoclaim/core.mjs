@@ -94,3 +94,8 @@ export function applyPreferences(users, events) {
   }
   return users;
 }
+
+// Schedule uses UTC, matching the contract calendar. Check again before signing.
+export function isAutoClaimDay(date = new Date()) {
+  return date.getUTCDate() === 14;
+}

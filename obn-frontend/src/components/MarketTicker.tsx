@@ -1,12 +1,9 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useMarketPrices, type TickerItem } from "@/hooks/useMarketPrices";
 
-type TickerItem = {
-  symbol: "OBN" | "ETH" | "BTC";
-  priceUsd: number;
-  change24h: number;
-};
+
 
 function formatPrice(symbol: TickerItem["symbol"], value: number) {
   if (symbol === "OBN") {
@@ -28,29 +25,10 @@ function formatCompactPrice(symbol: TickerItem["symbol"], value: number) {
 }
 
 export default function MarketTicker() {
-  const [items, setItems] = useState<TickerItem[]>([]);
+  const { data: items = [] } = useMarketPrices();
   const [activeIndex, setActiveIndex] = useState(0);
   const [visible, setVisible] = useState(true);
 
-  useEffect(() => {
-    let cancelled = false;
-
-    const load = async () => {
-      try {
-        const response = await fetch("/api/market-ticker");
-        if (!response.ok) return;
-        const data = await response.json();
-        if (!cancelled && Array.isArray(data.items)) setItems(data.items);
-      } catch {}
-    };
-
-    void load();
-    const refresh = window.setInterval(load, 60_000);
-    return () => {
-      cancelled = true;
-      window.clearInterval(refresh);
-    };
-  }, []);
 
   useEffect(() => {
     if (items.length < 2) return;

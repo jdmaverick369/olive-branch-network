@@ -4,7 +4,7 @@ Status (23 September 2026): upgrade executed and verified on Base at block 51703
 The proxy now uses implementation `0xA6F3A7988ca98313e8aE5401b29CdEb830Fdd6B3`.
 The Timelock operation is complete; owner, voteAdmin, and cycle ID were preserved.
 See [execution record](2026-09-23-annual-fixed-allocation-execution-record.json).
-See [deployment and scheduling instructions](2026-09-21-annual-fixed-allocation.md).
+See [archived deployment and scheduling instructions](../.archive/annual-governance-2026-09/2026-09-21-annual-fixed-allocation.md).
 
 ## Resulting behavior
 

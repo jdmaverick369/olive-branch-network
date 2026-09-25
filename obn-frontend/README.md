@@ -1,118 +1,52 @@
-# Olive Branch Network frontend reference implementation
+# Olive Branch Network frontend
 
-This directory contains a sanitized, open-source reference implementation of the Olive Branch Network (OBN) Next.js interface. It is published for transparency, education, security review, and community contribution. The interface demonstrates wallet connections, reads from deployed smart contracts, and staking, nonprofit contribution, governance, portfolio, analytics, and token-swap workflows.
-
-The production frontend is maintained in a separate private repository and deployed independently. This directory is not connected to the production Vercel project and changes here are not automatically deployed. Community users should treat it as reference code, not as an official hosted service or deployment source.
-
-The frontend is not the protocol's security boundary. Contract permissions and backend authorization must protect every privileged operation regardless of whether a route or button is visible here. Contract source and deployment procedures are maintained separately from this repository.
+The production dApp provides staking, reward claims, nonprofit contribution views, and governance on Base.
 
 ## Staking and reward claims
 
-Stakers can opt in on-chain to sponsored monthly autoclaim for all current and future pools held by their wallet. The automation account batches pools with positive claimable user rewards, up to 32 pools per transaction, and pays gas through the configured paymaster. The contract permits one successful automatic claim per pool per UTC calendar month. Rewards follow the same 88% / 10% / 1% / 1% split and go to the same recipients as manual claims. Users can disable consent at any time; deposits, withdrawals, and manual claims remain available. Autoclaim does not transfer principal, compound rewards, or change voting power.
+Stakers can opt in on-chain to sponsored monthly autoclaim for all current and future pools held by their wallet. The worker submits on the 14th of each month, starting at 09:23 UTC with hourly retries through 23:23 UTC. The automation account batches pools with positive claimable user rewards, up to 32 pools per transaction, and pays gas through the configured paymaster. The contract permits one successful automatic claim per pool per UTC calendar month. Rewards follow the same 88% / 10% / 1% / 1% split and go to the same recipients as manual claims. Users can disable consent at any time; deposits, withdrawals, and manual claims remain available. Autoclaim does not transfer principal, compound rewards, or change voting power.
 
 Use the staking proxy `0x2C4Bd5B2a48a76f288d7F2DB23aFD3a03b9E7cD2` for transactions. The verified V9.3.1 implementation is [`0x416dfFfDc4245a9f4C38f05d203AEcaC5E24908f`](https://basescan.org/address/0x416dfFfDc4245a9f4C38f05d203AEcaC5E24908f#code); it is not a replacement wallet approval or deposit address.
 
-The contract interface described here is V9.3.1. Deployment and activation are recorded separately in the [operational release record](../governance-operations/2026-09-24-staking-v931-autoclaim-record.json).
+The contract interface described here is V9.3.1. Deployment and activation are recorded separately in the [operational release record](docs/v931-release-record.json).
 
 `NEXT_PUBLIC_AUTOCLAIM_ENABLED` controls the opt-in interface, while the worker's separate `AUTOCLAIM_ENABLED` switch controls automated submissions. Operators verify the proxy version, executor, and sponsored claim receipts before enabling these services. Existing connected wallets use the same proxy and staking positions.
 
-## Network and contracts
+See [the autoclaim runbook](docs/v931_autoclaim_runbook.md) and [worker operations](scripts/autoclaim/README.md) for configuration and activation.
 
-The production interface targets **Base mainnet (chain ID `8453`)**. Development can also target **Base Sepolia (chain ID `84532`)** by changing the environment configuration. The configured chain must match the deployed addresses.
+This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
 
-The CDP swap API routes, embedded market chart, and current BaseScan links are production-mainnet integrations. A Base Sepolia configuration is suitable for core wallet and contract-flow testing, but those mainnet-specific integrations require separate test handling.
+## Getting Started
 
-Contract addresses are supplied through `NEXT_PUBLIC_*` environment variables. Canonical production proxy and token addresses currently used by protocol-specific views are also documented in `src/lib/contracts.ts`. Proxy addresses—not implementation addresses—must be used for upgradeable contracts. Verify every address against an official deployment record before operating a community deployment.
-
-## Prerequisites
-
-- Node.js 22 or a compatible current LTS release
-- npm 11 (the repository records the expected package-manager version)
-- A WalletConnect project ID
-- Base RPC access
-- Appropriate provider credentials for optional analytics, swaps, notifications, and sponsorship
-
-## Local setup
+First, run the development server:
 
 ```bash
-git clone https://github.com/jdmaverick369/olive-branch-network.git
-cd olive-branch-network/obn-frontend
-npm ci
-cp .env.example .env.local
 npm run dev
+# or
+yarn dev
+# or
+pnpm dev
+# or
+bun dev
 ```
 
-On Windows PowerShell, copy the template with:
+Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
 
-```powershell
-Copy-Item .env.example .env.local
-```
+You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
 
-Then open <http://localhost:3000>. Do not commit `.env.local` or any credential-bearing environment file.
+This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
 
-## Environment configuration
+## Learn More
 
-`.env.example` documents all known settings, separates required and optional values, and marks browser-visible variables. Any variable beginning with `NEXT_PUBLIC_` is included in client bundles and **must not contain secrets**.
+To learn more about Next.js, take a look at the following resources:
 
-At minimum, configure the chain, site URL, RPC endpoint, WalletConnect project ID, and deployed token/staking/lens/governance/NFT addresses. Server routes additionally require the provider credentials for the features they serve. The notification broadcast endpoint deliberately returns `503` when `NOTIFICATION_API_KEY` is absent.
+- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
+- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
 
-`NEXT_PUBLIC_RPC_URL` is intentionally consumed by the browser through Wagmi. Any credential embedded in that URL is public and must be browser-safe, origin-restricted, rate-limited, and monitored at the RPC provider. Use the server-only `RPC_URL` and `BASE_RPC_URL` variables for server routes where possible.
+You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
 
-For side-by-side testing against a separate mainnet endpoint, create an ignored `.env.mainnet.local` containing `NEXT_PUBLIC_RPC_URL` and `BASE_RPC_URL`, then run `npm run dev:mainnet`.
+## Deploy on Vercel
 
-## Commands
+The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
 
-```bash
-npm run dev          # development server
-npm run dev:mainnet  # development server on port 3001 using .env.mainnet.local
-npm run validate:env # required environment and Base chain/address validation
-npm run typecheck    # TypeScript validation
-npm run lint         # ESLint
-npm run build        # optimized production build
-npm run start        # serve the production build
-```
-
-Contributions that change transaction preparation or wallet behavior should include focused tests and pass type checking, linting, and a production build. The contract release includes regression tests for autoclaim behavior and wallet consent; worker verification is maintained with the automation service.
-
-## Building locally
-
-To produce and inspect a local optimized build:
-
-```bash
-npm run validate:env
-npm run typecheck
-npm run build
-```
-
-Confirm `NEXT_PUBLIC_CHAIN_ID` and every configured contract address refer to the same network before exercising wallet or transaction flows. A successful local build does not make this directory a production deployment.
-
-## Relationship to the protocol
-
-The frontend is an interface to the protocol; it is not the protocol's security boundary. Canonical contract behavior, permissions, and deployed state are defined by the contracts and governance materials in [`../obn-project/`](../obn-project/), not by client-side controls. Verify deployment addresses against authoritative project records before using this implementation with any network.
-
-This repository does not configure or operate an official frontend deployment. Anyone independently deploying this reference implementation is responsible for environment security, provider restrictions, legal compliance, transaction testing, and clear disclosure that their deployment is independent.
-
-Community deployments are independent interfaces and must not claim to be an official Olive Branch Network deployment without authorization.
-
-## Repository structure
-
-```text
-public/              Static images, social cards, and nonprofit logos
-scripts/             Local operational helpers
-src/app/             Next.js routes, pages, layouts, and server endpoints
-src/components/      Shared interface components
-src/hooks/           Wallet and protocol React hooks
-src/lib/             ABIs, contract metadata, provider helpers, and utilities
-```
-
-## Security
-
-Do not report exploitable vulnerabilities in a public issue. Follow [SECURITY.md](SECURITY.md) for responsible-disclosure instructions. Never treat client-side route or component visibility as authorization.
-
-## Contributing
-
-See [CONTRIBUTING.md](CONTRIBUTING.md) and [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md). By contributing, you agree that your contribution is licensed under this repository's license.
-
-## License
-
-Licensed under the [MIT License](LICENSE).
+Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.

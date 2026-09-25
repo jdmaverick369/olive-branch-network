@@ -47,12 +47,6 @@ export function useGovernanceCycle() {
         functionName: "getCycleSummary",
         args: [cycleId!],
       },
-      {
-        address: GOV_ADDRESS,
-        abi: governanceAbi,
-        functionName: "getPhase2Allocation",
-        args: [cycleId!],
-      },
     ],
     query: {
       enabled: hasCycle,
@@ -62,9 +56,6 @@ export function useGovernanceCycle() {
   });
 
   const state = (cycleData?.[0]?.result ?? undefined) as CycleStateValue | undefined;
-  // A failed read on an older implementation must not masquerade as a zero allocation.
-  const allocation = cycleData?.[2]?.result;
-  const phase2Allocation = allocation?.[1] ? allocation[0] : undefined;
 
   // getCycleSummary returns a tuple: [snapshotBlock, phase1End, phase2End, burnVotes, giveVotes, phase1Outcome, phase1Executed, phase2Executed, cancelled]
   const raw = cycleData?.[1]?.result as
@@ -89,7 +80,6 @@ export function useGovernanceCycle() {
     cycleId,
     state,
     summary,
-    phase2Allocation,
     isLoading: idLoading || (hasCycle && dataLoading),
   };
 }

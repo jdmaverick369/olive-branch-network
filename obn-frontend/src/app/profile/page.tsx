@@ -1,5 +1,9 @@
 // src/app/profile/page.tsx
 "use client";
+import { useDisplayText } from "@/hooks/useDisplayText";
+import { ObnPrimary, ObnUsd } from "@/components/ObnUsd";
+import { FitAmountGroup, FitAmountLine } from "@/components/FitAmountLine";
+import { EthUsd } from "@/components/EthUsd";
 
 import { useEffect, useMemo, useState, useRef, type CSSProperties } from "react";
 import { useRouter } from "next/navigation";
@@ -13,6 +17,7 @@ import Image from "next/image";
 import { Loader } from "lucide-react";
 import { POOLS, PoolMeta } from "@/lib/pools";
 import { stakingAbi } from "@/lib/stakingAbi";
+import { useMonthlyAutoClaim, AutoClaimButton, AutoClaimDialog } from "@/components/MonthlyAutoClaim";
 import { lensAbi } from "@/lib/lensAbi";
 import { oliveAbi } from "@/lib/oliveAbi";
 import { formatUnits, parseUnits, encodeFunctionData, type PublicClient } from "viem";
@@ -188,6 +193,7 @@ function usePageBackground() {
 const DEV_MODE = process.env.NODE_ENV === "development";
 
 export default function UserPage() {
+  const displayText = useDisplayText();
   usePageBackground();
   const [devNonprofitPid, setDevNonprofitPid] = useState<number | null>(null);
 
@@ -206,6 +212,7 @@ export default function UserPage() {
   const canBatch = !!(walletCapabilities?.[CHAIN_ID]?.paymasterService?.supported && PAYMASTER_URL);
   const { sendCallsAsync } = useSendCalls();
   const [pendingCallsId, setPendingCallsId] = useState<string | null>(null);
+  const [pendingCallsWallet, setPendingCallsWallet] = useState<string | null>(null);
   const [pendingCallsAction, setPendingCallsAction] = useState<'claimAll' | 'claim' | 'nonprofitClaim' | 'mint' | null>(null);
   const { status: callsStatus } = useWaitForCallsStatus({
     id: pendingCallsId ?? undefined,
@@ -244,6 +251,7 @@ export default function UserPage() {
 
   const currentAddress = miniAppAddress ?? address;
   const userAddr = (currentAddress ?? ZERO_ADDR) as `0x${string}`;
+  const autoClaim = useMonthlyAutoClaim();
 
   // Once the user has been connected and the page rendered, keep showing it
   // until the redirect fires — prevents flashing blank/stale states on disconnect
@@ -288,6 +296,7 @@ export default function UserPage() {
       } else {
         const msg = pendingCallsAction === 'claimAll' ? 'All rewards claimed!' : 'Rewards claimed!';
         toast.success(msg);
+        if (pendingCallsWallet) void autoClaim.promptAfterSuccess(pendingCallsWallet);
         if (pendingCallsAction === 'claimAll') setClaimingAll(false);
         else setClaimingPid(null);
         setTimeout(() => {
@@ -560,6 +569,7 @@ export default function UserPage() {
           calls: [{ to: OLIVE_NFT, data: encodeFunctionData({ abi: oliveAbi, functionName: "mint" }), value: price }],
           capabilities: { paymasterService: { url: PAYMASTER_URL }, dataSuffix: { value: DATA_SUFFIX, optional: true } },
         });
+        setPendingCallsWallet(userAddr);
         setPendingCallsId(id);
         setPendingCallsAction('mint');
         return;
@@ -662,6 +672,13 @@ export default function UserPage() {
     setTotalPendingContribution(totalPending * (10 / 88));
   };
 
+  async function confirmClaim(hashPromise: Promise<`0x${string}`>) {
+    const hash = await hashPromise;
+    if (!publicClient) throw new Error("Wallet unavailable");
+    const receipt = await publicClient.waitForTransactionReceipt({ hash });
+    if (receipt.status !== "success") throw new Error("Claim reverted");
+  }
+
   // Handle claim all - batch claim from all pools with pending rewards
   const handleClaimAll = async () => {
     if (claimingAll || !currentAddress || !publicClient) return;
@@ -684,6 +701,7 @@ export default function UserPage() {
           calls,
           capabilities: { paymasterService: { url: PAYMASTER_URL }, dataSuffix: { value: DATA_SUFFIX, optional: true } },
         });
+        setPendingCallsWallet(userAddr);
         setPendingCallsId(id);
         setPendingCallsAction('claimAll');
         return;
@@ -692,21 +710,21 @@ export default function UserPage() {
       // Sequential path (MiniApp / standard wallets)
       // Use single claim for 1 pool (cheaper gas), claimMultiple for 2+ pools
       if (pids.length === 1) {
-        await withTxTimeout(writeContractAsync({
+        await confirmClaim(withTxTimeout(writeContractAsync({
           address: STAKING_CONTRACT,
           abi: stakingAbi,
           functionName: "claim",
           args: [pids[0]],
           dataSuffix: DATA_SUFFIX,
-        }));
+        })));
       } else {
-        await withTxTimeout(writeContractAsync({
+        await confirmClaim(withTxTimeout(writeContractAsync({
           address: STAKING_CONTRACT,
           abi: stakingAbi,
           functionName: "claimMultiple",
           args: [pids],
           dataSuffix: DATA_SUFFIX,
-        }));
+        })));
       }
 
       await new Promise<void>((r) => setTimeout(r, 1_250));
@@ -726,7 +744,7 @@ export default function UserPage() {
 
       // Refetch OBN balance (user received claimed tokens)
       await refetchObnBalance();
-      toast.success("All rewards claimed!");
+      toast.success("All rewards claimed!"); void autoClaim.promptAfterSuccess(userAddr);
     } catch (err) {
       console.error("Claim all failed:", err);
       const msg = err instanceof Error ? err.message : String(err);
@@ -780,18 +798,19 @@ export default function UserPage() {
           calls: [{ to: STAKING_CONTRACT, data: encodeFunctionData({ abi: stakingAbi, functionName: "claim", args: [BigInt(pid)] }) }],
           capabilities: { paymasterService: { url: PAYMASTER_URL }, dataSuffix: { value: DATA_SUFFIX, optional: true } },
         });
+        setPendingCallsWallet(userAddr);
         setPendingCallsId(id);
         setPendingCallsAction('claim');
         return;
       }
 
-      await withTxTimeout(writeContractAsync({
+      await confirmClaim(withTxTimeout(writeContractAsync({
         address: STAKING_CONTRACT,
         abi: stakingAbi,
         functionName: "claim",
         args: [BigInt(pid)],
         dataSuffix: DATA_SUFFIX,
-      }));
+      })));
 
       await new Promise<void>((r) => setTimeout(r, 1_250));
       // Refetch all data after claim
@@ -799,7 +818,7 @@ export default function UserPage() {
       await refetchTotalClaimed();
       await refetchTotalCharity();
       await refetchObnBalance();
-      toast.success("Rewards claimed!");
+      toast.success("Rewards claimed!"); void autoClaim.promptAfterSuccess(userAddr);
     } catch (err) {
       console.error("Claim failed:", err);
       const msg = err instanceof Error ? err.message : String(err);
@@ -821,18 +840,19 @@ export default function UserPage() {
           calls: [{ to: STAKING_CONTRACT, data: encodeFunctionData({ abi: stakingAbi, functionName: "claim", args: [BigInt(nonprofitPool.pid)] }) }],
           capabilities: { paymasterService: { url: PAYMASTER_URL }, dataSuffix: { value: DATA_SUFFIX, optional: true } },
         });
+        setPendingCallsWallet(userAddr);
         setPendingCallsId(id);
         setPendingCallsAction('nonprofitClaim');
         return;
       }
 
-      await withTxTimeout(writeContractAsync({
+      await confirmClaim(withTxTimeout(writeContractAsync({
         address: STAKING_CONTRACT,
         abi: stakingAbi,
         functionName: "claim",
         args: [BigInt(nonprofitPool.pid)],
         dataSuffix: DATA_SUFFIX,
-      }));
+      })));
 
       await new Promise<void>((r) => setTimeout(r, 1_250));
       // Refetch pending rewards
@@ -852,7 +872,7 @@ export default function UserPage() {
       // Refetch total claimed and charity data
       await refetchTotalClaimed();
       await refetchTotalCharity();
-      toast.success("Rewards claimed!");
+      toast.success("Rewards claimed!"); void autoClaim.promptAfterSuccess(userAddr);
     } catch (err) {
       console.error("Claim failed:", err);
       const msg = err instanceof Error ? err.message : String(err);
@@ -906,6 +926,7 @@ export default function UserPage() {
             : { paddingTop: "18px", paddingBottom: "16px" }
         }
       >
+        <AutoClaimDialog control={autoClaim} />
         {loading ? (
           <div className="flex items-center justify-center py-12">
             <Loader className="w-6 h-6 animate-spin" style={{ color: "#16a34a" }} />
@@ -921,7 +942,7 @@ export default function UserPage() {
             {contributions.length > 0 && (
               <>
                 {/* Summary Card */}
-                <div className="mt-4 rounded-xl border p-4 sm:max-w-md sm:mx-auto" style={{ ...cardStyle, backgroundColor: "var(--page-bg-to)" }}>
+                <FitAmountGroup className="mt-4 rounded-xl border p-4 sm:max-w-md sm:mx-auto" style={{ ...cardStyle, backgroundColor: "var(--page-bg-to)" }}>
                   {/* NFT + Core Stats */}
                   <div className="flex items-center gap-2">
                     {/* NFT */}
@@ -1006,6 +1027,7 @@ export default function UserPage() {
                             >
                               {mintingNft ? "Minting…" : `Mint (${mintPriceEth} ETH)`}
                             </button>
+                            <EthUsd amount={mintPriceEth} />
                             {!saleOn && (
                               <p className="text-[10px] mt-1" style={{ color: "var(--card-subtext)" }}>
                                 Sale not active
@@ -1021,27 +1043,39 @@ export default function UserPage() {
                     </div>
 
                     {/* Stats wrapper - title centered over both columns */}
-                    <div className="flex-2 flex flex-col">
+                    <div className="flex-2 min-w-0 flex flex-col">
                       <p className="text-sm font-semibold text-center mb-4" style={{ color: "var(--card-subtext)" }}>OBN Impact Card</p>
                       <div className="flex gap-2">
-                        <div className="flex-1 text-center">
+                        <div className="flex-1 min-w-0 text-center">
                           <div className="mb-3">
                             <p className="text-[min(2.6vw,0.625rem)] font-medium mb-0.5 whitespace-nowrap" style={{ color: "var(--card-subtext)" }}>Balance</p>
-                            <p className="text-sm font-bold whitespace-nowrap" style={{ color: "var(--card-text)", fontVariantNumeric: "tabular-nums", fontSize: "min(3.4vw, 0.875rem)" }}>{formatUniform(obnBalance).replace(/\u00A0/g, '')} OBN</p>
+                            <FitAmountLine>
+                              <p className="text-sm font-bold whitespace-nowrap" style={{ color: "var(--card-text)", fontVariantNumeric: "tabular-nums", fontSize: "min(3.4vw, 0.875rem)" }}><ObnPrimary amount={obnBalance}>{formatUniform(obnBalance).replace(/\u00A0/g, '')} OBN</ObnPrimary></p>
+                              <ObnUsd amount={obnBalance} tokenLabel={<>{formatUniform(obnBalance).replace(/\u00A0/g, '')} OBN</>} />
+                            </FitAmountLine>
                           </div>
                           <div>
                             <p className="text-[min(2.6vw,0.625rem)] font-medium mb-0.5 whitespace-nowrap" style={{ color: "var(--card-subtext)" }}>Total Earned</p>
-                            <p className="text-sm font-bold whitespace-nowrap" style={{ color: theme === "dark" ? "#60a5fa" : "#2563eb", fontVariantNumeric: "tabular-nums", fontSize: "min(3.4vw, 0.875rem)" }}>{formatUniform(totalClaimed).replace(/\u00A0/g, '')} OBN</p>
+                            <FitAmountLine>
+                              <p className="text-sm font-bold whitespace-nowrap" style={{ color: theme === "dark" ? "#60a5fa" : "#2563eb", fontVariantNumeric: "tabular-nums", fontSize: "min(3.4vw, 0.875rem)" }}><ObnPrimary amount={totalClaimed}>{formatUniform(totalClaimed).replace(/\u00A0/g, '')} OBN</ObnPrimary></p>
+                              <ObnUsd amount={totalClaimed} tokenLabel={<>{formatUniform(totalClaimed).replace(/\u00A0/g, '')} OBN</>} />
+                            </FitAmountLine>
                           </div>
                         </div>
-                        <div className="flex-1 text-center">
+                        <div className="flex-1 min-w-0 text-center">
                           <div className="mb-3">
-                            <p className="text-[min(2.6vw,0.625rem)] font-medium mb-0.5 whitespace-nowrap" style={{ color: "var(--card-subtext)" }}>Total Active Stake</p>
-                            <p className="text-sm font-bold whitespace-nowrap" style={{ color: "var(--card-text)", fontVariantNumeric: "tabular-nums", fontSize: "min(3.4vw, 0.875rem)" }}>{formatUniform(Number.parseFloat(formatUnits(totalStaked, 18))).replace(/\u00A0/g, '')} OBN</p>
+                            <p className="text-[min(2.6vw,0.625rem)] font-medium mb-0.5 whitespace-nowrap" style={{ color: "var(--card-subtext)" }}>{displayText("Total Active Stake")}</p>
+                            <FitAmountLine>
+                              <p className="text-sm font-bold whitespace-nowrap" style={{ color: "var(--card-text)", fontVariantNumeric: "tabular-nums", fontSize: "min(3.4vw, 0.875rem)" }}><ObnPrimary amount={Number.parseFloat(formatUnits(totalStaked, 18))}>{formatUniform(Number.parseFloat(formatUnits(totalStaked, 18))).replace(/\u00A0/g, '')} OBN</ObnPrimary></p>
+                              <ObnUsd amount={Number.parseFloat(formatUnits(totalStaked, 18))} tokenLabel={<>{formatUniform(Number.parseFloat(formatUnits(totalStaked, 18))).replace(/\u00A0/g, '')} OBN</>} />
+                            </FitAmountLine>
                           </div>
                           <div>
                             <p className="text-[min(2.6vw,0.625rem)] font-medium mb-0.5 whitespace-nowrap" style={{ color: "var(--card-subtext)" }}>Total Contributed</p>
-                            <p className="text-sm font-bold whitespace-nowrap" style={{ color: theme === "dark" ? "#86efac" : "#16a34a", fontVariantNumeric: "tabular-nums", fontSize: "min(3.4vw, 0.875rem)" }}>{formatUniform(totalCharityContributed).replace(/\u00A0/g, '')} OBN</p>
+                            <FitAmountLine>
+                              <p className="text-sm font-bold whitespace-nowrap" style={{ color: theme === "dark" ? "#86efac" : "#16a34a", fontVariantNumeric: "tabular-nums", fontSize: "min(3.4vw, 0.875rem)" }}><ObnPrimary amount={totalCharityContributed}>{formatUniform(totalCharityContributed).replace(/\u00A0/g, '')} OBN</ObnPrimary></p>
+                              <ObnUsd amount={totalCharityContributed} tokenLabel={<>{formatUniform(totalCharityContributed).replace(/\u00A0/g, '')} OBN</>} />
+                            </FitAmountLine>
                           </div>
                         </div>
                       </div>
@@ -1050,41 +1084,50 @@ export default function UserPage() {
 
                   {/* Pending section */}
                   <div className="flex items-center gap-2 mt-3.5 pt-3.5" style={{ borderTop: `1px solid ${theme === "dark" ? "rgba(255,255,255,0.1)" : "rgba(0,0,0,0.1)"}` }}>
-                    <div className="flex-1 text-center">
+                    <div className="flex-1 min-w-0 text-center">
                       <p className="text-[min(2.6vw,0.625rem)] font-medium mb-0.5 whitespace-nowrap" style={{ color: "var(--card-subtext)" }}>Pending Rewards</p>
-                      <p className="text-sm font-bold whitespace-nowrap" style={{ color: theme === "dark" ? "#60a5fa" : "#2563eb", fontVariantNumeric: "tabular-nums", fontSize: "min(3.4vw, 0.875rem)" }}>{formatUniform(totalPendingRewards).replace(/\u00A0/g, '')} OBN</p>
+                      <FitAmountLine>
+                        <p className="text-sm font-bold whitespace-nowrap" style={{ color: theme === "dark" ? "#60a5fa" : "#2563eb", fontVariantNumeric: "tabular-nums", fontSize: "min(3.4vw, 0.875rem)" }}><ObnPrimary amount={totalPendingRewards}>{formatUniform(totalPendingRewards).replace(/\u00A0/g, '')} OBN</ObnPrimary></p>
+                        <ObnUsd amount={totalPendingRewards} tokenLabel={<>{formatUniform(totalPendingRewards).replace(/\u00A0/g, '')} OBN</>} />
+                      </FitAmountLine>
                     </div>
-                    <div className="flex-1 text-center">
+                    <div className="flex-1 min-w-0 text-center">
                       <p className="text-[min(2.6vw,0.625rem)] font-medium mb-0.5 whitespace-nowrap" style={{ color: "var(--card-subtext)" }}>Pending Contribution</p>
-                      <p className="text-sm font-bold whitespace-nowrap" style={{ color: theme === "dark" ? "#86efac" : "#16a34a", fontVariantNumeric: "tabular-nums", fontSize: "min(3.4vw, 0.875rem)" }}>{formatUniform(totalPendingContribution).replace(/\u00A0/g, '')} OBN</p>
+                      <FitAmountLine>
+                        <p className="text-sm font-bold whitespace-nowrap" style={{ color: theme === "dark" ? "#86efac" : "#16a34a", fontVariantNumeric: "tabular-nums", fontSize: "min(3.4vw, 0.875rem)" }}><ObnPrimary amount={totalPendingContribution}>{formatUniform(totalPendingContribution).replace(/\u00A0/g, '')} OBN</ObnPrimary></p>
+                        <ObnUsd amount={totalPendingContribution} tokenLabel={<>{formatUniform(totalPendingContribution).replace(/\u00A0/g, '')} OBN</>} />
+                      </FitAmountLine>
                     </div>
-                    {totalPendingRewards > 0.0001 && (
-                      <button
-                        disabled={claimingAll || claimingPid !== null}
-                        onClick={handleClaimAll}
-                        className="px-3 py-1.5 rounded-lg font-semibold border transition text-xs shrink-0"
-                        style={{
-                          borderColor: "#2563eb",
-                          color: "#2563eb",
-                          opacity: claimingAll || claimingPid !== null ? 0.6 : 1,
-                          cursor: claimingAll || claimingPid !== null ? "not-allowed" : "pointer",
-                        }}
-                        onMouseEnter={(e) => {
-                          if (!(claimingAll || claimingPid !== null)) {
-                            (e.currentTarget as HTMLButtonElement).style.backgroundColor = "#2563eb";
-                            (e.currentTarget as HTMLButtonElement).style.color = "white";
-                          }
-                        }}
-                        onMouseLeave={(e) => {
-                          (e.currentTarget as HTMLButtonElement).style.backgroundColor = "transparent";
-                          (e.currentTarget as HTMLButtonElement).style.color = "#2563eb";
-                        }}
-                      >
-                        {claimingAll ? "Claiming..." : "Claim All"}
-                      </button>
-                    )}
+                    <div className="flex flex-col gap-2 shrink-0 items-stretch">
+                      {totalPendingRewards > 0.0001 && (
+                        <button
+                          disabled={claimingAll || claimingPid !== null}
+                          onClick={handleClaimAll}
+                          className="px-3 py-1.5 rounded-lg font-semibold border transition text-xs shrink-0"
+                          style={{
+                            borderColor: "#2563eb",
+                            color: "#2563eb",
+                            opacity: claimingAll || claimingPid !== null ? 0.6 : 1,
+                            cursor: claimingAll || claimingPid !== null ? "not-allowed" : "pointer",
+                          }}
+                          onMouseEnter={(e) => {
+                            if (!(claimingAll || claimingPid !== null)) {
+                              (e.currentTarget as HTMLButtonElement).style.backgroundColor = "#2563eb";
+                              (e.currentTarget as HTMLButtonElement).style.color = "white";
+                            }
+                          }}
+                          onMouseLeave={(e) => {
+                            (e.currentTarget as HTMLButtonElement).style.backgroundColor = "transparent";
+                            (e.currentTarget as HTMLButtonElement).style.color = "#2563eb";
+                          }}
+                        >
+                          {claimingAll ? "Claiming..." : "Claim All"}
+                        </button>
+                      )}
+                      <AutoClaimButton control={autoClaim} disabled={claimingAll || claimingPid !== null} className="px-3 py-1.5" />
+                    </div>
                   </div>
-                </div>
+                </FitAmountGroup>
               </>
             )}
 
@@ -1094,11 +1137,11 @@ export default function UserPage() {
                 Total Received from User Contributions
               </p>
               <p className="text-3xl font-bold text-center" style={{ color: theme === "dark" ? "#86efac" : "#16a34a" }}>
-                {formatNumber(nonprofitPoolStats?.totalCharityReceived ?? 0)} OBN
+                <ObnPrimary amount={nonprofitPoolStats?.totalCharityReceived ?? 0}>{formatNumber(nonprofitPoolStats?.totalCharityReceived ?? 0)} OBN</ObnPrimary>
               </p>
+              <ObnUsd amount={nonprofitPoolStats?.totalCharityReceived ?? 0} tokenLabel={<>{formatNumber(nonprofitPoolStats?.totalCharityReceived ?? 0)} OBN</>} block size="text-lg" />
               <p className="text-xs mt-2 text-center" style={{ color: "var(--card-subtext)" }}>
-                All-time earnings from staker rewards
-              </p>
+                {displayText("All-time earnings from staker rewards ")}</p>
             </div>
 
             {/* Pool Stats Card */}
@@ -1112,32 +1155,32 @@ export default function UserPage() {
               <div className="grid grid-cols-3 gap-3">
                 <div className="text-center p-3 rounded-lg" style={{ backgroundColor: theme === "dark" ? "rgba(0,0,0,0.2)" : "rgba(255,255,255,0.5)" }}>
                   <p className="text-xs font-medium mb-1" style={{ color: "var(--card-subtext)" }}>
-                    Active Stakers
-                  </p>
+                    {displayText("Active Stakers ")}</p>
                   <p className="text-base font-bold" style={{ color: "var(--card-text)" }}>
                     {nonprofitPoolStats?.uniqueStakers ?? "—"}
                   </p>
                 </div>
                 <div className="text-center p-3 rounded-lg" style={{ backgroundColor: theme === "dark" ? "rgba(0,0,0,0.2)" : "rgba(255,255,255,0.5)" }}>
                   <p className="text-xs font-medium mb-1" style={{ color: "var(--card-subtext)" }}>
-                    Total Active Stake
-                  </p>
+                    {displayText("Total Active Stake ")}</p>
                   <p className="text-sm font-bold whitespace-nowrap" style={{ color: "var(--card-text)" }}>
-                    {formatNumber(nonprofitPoolStats?.totalStaked ?? 0)} OBN
+                    <ObnPrimary amount={nonprofitPoolStats?.totalStaked ?? 0}>{formatNumber(nonprofitPoolStats?.totalStaked ?? 0)} OBN</ObnPrimary>
                   </p>
+                  <ObnUsd amount={nonprofitPoolStats?.totalStaked ?? 0} tokenLabel={<>{formatNumber(nonprofitPoolStats?.totalStaked ?? 0)} OBN</>} block />
                 </div>
                 <div className="text-center p-3 rounded-lg" style={{ backgroundColor: theme === "dark" ? "rgba(0,0,0,0.2)" : "rgba(255,255,255,0.5)" }}>
                   <p className="text-xs font-medium mb-1" style={{ color: "var(--card-subtext)" }}>
                     Pending Rewards
                   </p>
                   <p className="text-sm font-bold whitespace-nowrap" style={{ color: theme === "dark" ? "#60a5fa" : "#2563eb" }}>
-                    {formatNumber(nonprofitPoolStats?.pendingRewards ?? 0)} OBN
+                    <ObnPrimary amount={nonprofitPoolStats?.pendingRewards ?? 0}>{formatNumber(nonprofitPoolStats?.pendingRewards ?? 0)} OBN</ObnPrimary>
                   </p>
+                  <ObnUsd amount={nonprofitPoolStats?.pendingRewards ?? 0} tokenLabel={<>{formatNumber(nonprofitPoolStats?.pendingRewards ?? 0)} OBN</>} block />
                 </div>
               </div>
 
               {/* Claim Button for Nonprofit */}
-              <div className="mt-5 flex justify-center">
+              <div className="mt-5 flex items-center justify-center gap-2">
                 <button
                   disabled={
                     claimingPid !== null ||
@@ -1168,6 +1211,7 @@ export default function UserPage() {
                 >
                   {claimingPid === nonprofitPool.pid ? "Claiming..." : "Claim Rewards"}
                 </button>
+                <AutoClaimButton control={autoClaim} disabled={claimingPid !== null} className="px-6 py-2.5 text-sm" />
               </div>
             </div>
 
@@ -1222,7 +1266,7 @@ export default function UserPage() {
           /* Regular User View */
           <div className="w-full max-w-150 space-y-4">
             {/* Summary Card */}
-            <div className="mt-4 rounded-xl border p-4 sm:max-w-md sm:mx-auto" style={{ ...cardStyle, backgroundColor: "var(--page-bg-to)" }}>
+            <FitAmountGroup className="mt-4 rounded-xl border p-4 sm:max-w-md sm:mx-auto" style={{ ...cardStyle, backgroundColor: "var(--page-bg-to)" }}>
               {/* NFT + Core Stats */}
               <div className="flex items-center gap-2">
                 {/* NFT */}
@@ -1307,6 +1351,7 @@ export default function UserPage() {
                         >
                           {mintingNft ? "Minting…" : `Mint (${mintPriceEth} ETH)`}
                         </button>
+                        <EthUsd amount={mintPriceEth} />
                         {!saleOn && (
                           <p className="text-[10px] mt-1" style={{ color: "var(--card-subtext)" }}>
                             Sale not active
@@ -1322,27 +1367,39 @@ export default function UserPage() {
                 </div>
 
                 {/* Stats wrapper - title centered over both columns */}
-                <div className="flex-2 flex flex-col">
+                <div className="flex-2 min-w-0 flex flex-col">
                   <p className="text-sm font-semibold text-center mb-4" style={{ color: "var(--card-subtext)" }}>OBN Impact Card</p>
                   <div className="flex gap-2">
-                    <div className="flex-1 text-center">
+                    <div className="flex-1 min-w-0 text-center">
                       <div className="mb-3">
                         <p className="text-[min(2.6vw,0.625rem)] font-medium mb-0.5 whitespace-nowrap" style={{ color: "var(--card-subtext)" }}>Balance</p>
-                        <p className="text-sm font-bold whitespace-nowrap" style={{ color: "var(--card-text)", fontVariantNumeric: "tabular-nums", fontSize: "min(3.4vw, 0.875rem)" }}>{formatUniform(obnBalance).replace(/\u00A0/g, '')} OBN</p>
+                        <FitAmountLine>
+                          <p className="text-sm font-bold whitespace-nowrap" style={{ color: "var(--card-text)", fontVariantNumeric: "tabular-nums", fontSize: "min(3.4vw, 0.875rem)" }}><ObnPrimary amount={obnBalance}>{formatUniform(obnBalance).replace(/\u00A0/g, '')} OBN</ObnPrimary></p>
+                          <ObnUsd amount={obnBalance} tokenLabel={<>{formatUniform(obnBalance).replace(/\u00A0/g, '')} OBN</>} />
+                        </FitAmountLine>
                       </div>
                       <div>
                         <p className="text-[min(2.6vw,0.625rem)] font-medium mb-0.5 whitespace-nowrap" style={{ color: "var(--card-subtext)" }}>Total Earned</p>
-                        <p className="text-sm font-bold whitespace-nowrap" style={{ color: theme === "dark" ? "#60a5fa" : "#2563eb", fontVariantNumeric: "tabular-nums", fontSize: "min(3.4vw, 0.875rem)" }}>{formatUniform(totalClaimed).replace(/\u00A0/g, '')} OBN</p>
+                        <FitAmountLine>
+                          <p className="text-sm font-bold whitespace-nowrap" style={{ color: theme === "dark" ? "#60a5fa" : "#2563eb", fontVariantNumeric: "tabular-nums", fontSize: "min(3.4vw, 0.875rem)" }}><ObnPrimary amount={totalClaimed}>{formatUniform(totalClaimed).replace(/\u00A0/g, '')} OBN</ObnPrimary></p>
+                          <ObnUsd amount={totalClaimed} tokenLabel={<>{formatUniform(totalClaimed).replace(/\u00A0/g, '')} OBN</>} />
+                        </FitAmountLine>
                       </div>
                     </div>
-                    <div className="flex-1 text-center">
+                    <div className="flex-1 min-w-0 text-center">
                       <div className="mb-3">
-                        <p className="text-[min(2.6vw,0.625rem)] font-medium mb-0.5 whitespace-nowrap" style={{ color: "var(--card-subtext)" }}>Total Active Stake</p>
-                        <p className="text-sm font-bold whitespace-nowrap" style={{ color: "var(--card-text)", fontVariantNumeric: "tabular-nums", fontSize: "min(3.4vw, 0.875rem)" }}>{formatUniform(Number.parseFloat(formatUnits(totalStaked, 18))).replace(/\u00A0/g, '')} OBN</p>
+                        <p className="text-[min(2.6vw,0.625rem)] font-medium mb-0.5 whitespace-nowrap" style={{ color: "var(--card-subtext)" }}>{displayText("Total Active Stake")}</p>
+                        <FitAmountLine>
+                          <p className="text-sm font-bold whitespace-nowrap" style={{ color: "var(--card-text)", fontVariantNumeric: "tabular-nums", fontSize: "min(3.4vw, 0.875rem)" }}><ObnPrimary amount={Number.parseFloat(formatUnits(totalStaked, 18))}>{formatUniform(Number.parseFloat(formatUnits(totalStaked, 18))).replace(/\u00A0/g, '')} OBN</ObnPrimary></p>
+                          <ObnUsd amount={Number.parseFloat(formatUnits(totalStaked, 18))} tokenLabel={<>{formatUniform(Number.parseFloat(formatUnits(totalStaked, 18))).replace(/\u00A0/g, '')} OBN</>} />
+                        </FitAmountLine>
                       </div>
                       <div>
                         <p className="text-[min(2.6vw,0.625rem)] font-medium mb-0.5 whitespace-nowrap" style={{ color: "var(--card-subtext)" }}>Total Contributed</p>
-                        <p className="text-sm font-bold whitespace-nowrap" style={{ color: theme === "dark" ? "#86efac" : "#16a34a", fontVariantNumeric: "tabular-nums", fontSize: "min(3.4vw, 0.875rem)" }}>{formatUniform(totalCharityContributed).replace(/\u00A0/g, '')} OBN</p>
+                        <FitAmountLine>
+                          <p className="text-sm font-bold whitespace-nowrap" style={{ color: theme === "dark" ? "#86efac" : "#16a34a", fontVariantNumeric: "tabular-nums", fontSize: "min(3.4vw, 0.875rem)" }}><ObnPrimary amount={totalCharityContributed}>{formatUniform(totalCharityContributed).replace(/\u00A0/g, '')} OBN</ObnPrimary></p>
+                          <ObnUsd amount={totalCharityContributed} tokenLabel={<>{formatUniform(totalCharityContributed).replace(/\u00A0/g, '')} OBN</>} />
+                        </FitAmountLine>
                       </div>
                     </div>
                   </div>
@@ -1351,41 +1408,50 @@ export default function UserPage() {
 
               {/* Pending section */}
               <div className="flex items-center gap-2 mt-3.5 pt-3.5" style={{ borderTop: `1px solid ${theme === "dark" ? "rgba(255,255,255,0.1)" : "rgba(0,0,0,0.1)"}` }}>
-                <div className="flex-1 text-center">
+                <div className="flex-1 min-w-0 text-center">
                   <p className="text-[min(2.6vw,0.625rem)] font-medium mb-0.5 whitespace-nowrap" style={{ color: "var(--card-subtext)" }}>Pending Rewards</p>
-                  <p className="text-sm font-bold whitespace-nowrap" style={{ color: theme === "dark" ? "#60a5fa" : "#2563eb", fontVariantNumeric: "tabular-nums", fontSize: "min(3.4vw, 0.875rem)" }}>{formatUniform(totalPendingRewards).replace(/\u00A0/g, '')} OBN</p>
+                  <FitAmountLine>
+                    <p className="text-sm font-bold whitespace-nowrap" style={{ color: theme === "dark" ? "#60a5fa" : "#2563eb", fontVariantNumeric: "tabular-nums", fontSize: "min(3.4vw, 0.875rem)" }}><ObnPrimary amount={totalPendingRewards}>{formatUniform(totalPendingRewards).replace(/\u00A0/g, '')} OBN</ObnPrimary></p>
+                    <ObnUsd amount={totalPendingRewards} tokenLabel={<>{formatUniform(totalPendingRewards).replace(/\u00A0/g, '')} OBN</>} />
+                  </FitAmountLine>
                 </div>
-                <div className="flex-1 text-center">
+                <div className="flex-1 min-w-0 text-center">
                   <p className="text-[min(2.6vw,0.625rem)] font-medium mb-0.5 whitespace-nowrap" style={{ color: "var(--card-subtext)" }}>Pending Contribution</p>
-                  <p className="text-sm font-bold whitespace-nowrap" style={{ color: theme === "dark" ? "#86efac" : "#16a34a", fontVariantNumeric: "tabular-nums", fontSize: "min(3.4vw, 0.875rem)" }}>{formatUniform(totalPendingContribution).replace(/\u00A0/g, '')} OBN</p>
+                  <FitAmountLine>
+                    <p className="text-sm font-bold whitespace-nowrap" style={{ color: theme === "dark" ? "#86efac" : "#16a34a", fontVariantNumeric: "tabular-nums", fontSize: "min(3.4vw, 0.875rem)" }}><ObnPrimary amount={totalPendingContribution}>{formatUniform(totalPendingContribution).replace(/\u00A0/g, '')} OBN</ObnPrimary></p>
+                    <ObnUsd amount={totalPendingContribution} tokenLabel={<>{formatUniform(totalPendingContribution).replace(/\u00A0/g, '')} OBN</>} />
+                  </FitAmountLine>
                 </div>
-                {totalPendingRewards > 0.0001 && (
-                  <button
-                    disabled={claimingAll || claimingPid !== null}
-                    onClick={handleClaimAll}
-                    className="px-3 py-1.5 rounded-lg font-semibold border transition text-xs shrink-0"
-                    style={{
-                      borderColor: "#2563eb",
-                      color: "#2563eb",
-                      opacity: claimingAll || claimingPid !== null ? 0.6 : 1,
-                      cursor: claimingAll || claimingPid !== null ? "not-allowed" : "pointer",
-                    }}
-                    onMouseEnter={(e) => {
-                      if (!(claimingAll || claimingPid !== null)) {
-                        (e.currentTarget as HTMLButtonElement).style.backgroundColor = "#2563eb";
-                        (e.currentTarget as HTMLButtonElement).style.color = "white";
-                      }
-                    }}
-                    onMouseLeave={(e) => {
-                      (e.currentTarget as HTMLButtonElement).style.backgroundColor = "transparent";
-                      (e.currentTarget as HTMLButtonElement).style.color = "#2563eb";
-                    }}
-                  >
-                    {claimingAll ? "Claiming..." : "Claim All"}
-                  </button>
-                )}
+                <div className="flex flex-col gap-2 shrink-0 items-stretch">
+                  {totalPendingRewards > 0.0001 && (
+                    <button
+                      disabled={claimingAll || claimingPid !== null}
+                      onClick={handleClaimAll}
+                      className="px-3 py-1.5 rounded-lg font-semibold border transition text-xs shrink-0"
+                      style={{
+                        borderColor: "#2563eb",
+                        color: "#2563eb",
+                        opacity: claimingAll || claimingPid !== null ? 0.6 : 1,
+                        cursor: claimingAll || claimingPid !== null ? "not-allowed" : "pointer",
+                      }}
+                      onMouseEnter={(e) => {
+                        if (!(claimingAll || claimingPid !== null)) {
+                          (e.currentTarget as HTMLButtonElement).style.backgroundColor = "#2563eb";
+                          (e.currentTarget as HTMLButtonElement).style.color = "white";
+                        }
+                      }}
+                      onMouseLeave={(e) => {
+                        (e.currentTarget as HTMLButtonElement).style.backgroundColor = "transparent";
+                        (e.currentTarget as HTMLButtonElement).style.color = "#2563eb";
+                      }}
+                    >
+                      {claimingAll ? "Claiming..." : "Claim All"}
+                    </button>
+                  )}
+                  <AutoClaimButton control={autoClaim} disabled={claimingAll || claimingPid !== null} className="px-3 py-1.5" />
+                </div>
               </div>
-            </div>
+            </FitAmountGroup>
 
             {/* No history CTA */}
             {!hasAnyHistory && (contributions.length > 0 || !currentAddress) && (
@@ -1393,8 +1459,7 @@ export default function UserPage() {
                 {/* Left: Start Staking */}
                 <div className="flex-1 flex flex-col items-center gap-3 text-center rounded-xl border p-4" style={{ borderColor: "var(--card-border)" }}>
                   <p className="text-sm whitespace-nowrap" style={{ color: "var(--card-subtext)", fontSize: "min(3.6vw, 0.875rem)" }}>
-                    No staking history.
-                  </p>
+                    {displayText("No staking history. ")}</p>
                   <Link
                     href="/stake-earn-contribute"
                     className="w-full mt-auto py-2 rounded-xl font-semibold text-center whitespace-nowrap border transition"
@@ -1408,8 +1473,7 @@ export default function UserPage() {
                       (e.currentTarget as HTMLAnchorElement).style.color = "#ffffff";
                     }}
                   >
-                    Start Staking
-                  </Link>
+                    {displayText("Start Staking ")}</Link>
                 </div>
                 {/* Right: Trade */}
                 <div className="flex-1 flex flex-col items-center gap-3 text-center rounded-xl border p-4" style={{ borderColor: "var(--card-border)" }}>
@@ -1510,6 +1574,7 @@ function ContributionRow({
   formatUniform: (num: number, targetLength?: number) => string;
   inactive?: boolean;
 }) {
+  const displayText = useDisplayText();
   const router = useRouter();
   const hasPending = contribution.pending > 0.0001;
 
@@ -1548,27 +1613,29 @@ function ContributionRow({
         <div className="flex items-center gap-1 shrink-0">
           <div className="text-center" style={{ width: "68px" }}>
             <p className="text-[9px] font-medium whitespace-nowrap" style={{ color: "var(--card-subtext)" }}>
-              Active Stake
+              {displayText("Active Stake ")}</p>
+            <p className="text-[10px] font-bold" style={{ color: "var(--card-text)", fontVariantNumeric: "tabular-nums" }}>
+              <ObnPrimary amount={contribution.staked}>{formatUniform(contribution.staked).replace(/\u00A0/g, '')} OBN</ObnPrimary>
             </p>
-            <p className="text-xs font-bold" style={{ color: "var(--card-text)", fontVariantNumeric: "tabular-nums" }}>
-              {formatUniform(contribution.staked).replace(/\u00A0/g, '')}
-            </p>
+            <ObnUsd amount={contribution.staked} tokenLabel={<>{formatUniform(contribution.staked).replace(/\u00A0/g, '')} OBN</>} block size="text-[8px]" />
           </div>
           <div className="text-center" style={{ width: "68px" }}>
             <p className="text-[9px] font-medium whitespace-nowrap" style={{ color: "var(--card-subtext)" }}>
               Contributed
             </p>
-            <p className="text-xs font-bold" style={{ color: theme === "dark" ? "#86efac" : "#16a34a", fontVariantNumeric: "tabular-nums" }}>
-              {formatUniform(contribution.charityContributed).replace(/\u00A0/g, '')}
+            <p className="text-[10px] font-bold" style={{ color: theme === "dark" ? "#86efac" : "#16a34a", fontVariantNumeric: "tabular-nums" }}>
+              <ObnPrimary amount={contribution.charityContributed}>{formatUniform(contribution.charityContributed).replace(/\u00A0/g, '')} OBN</ObnPrimary>
             </p>
+            <ObnUsd amount={contribution.charityContributed} tokenLabel={<>{formatUniform(contribution.charityContributed).replace(/\u00A0/g, '')} OBN</>} block size="text-[8px]" />
           </div>
           <div className="text-center" style={{ width: "68px" }}>
             <p className="text-[9px] font-medium whitespace-nowrap" style={{ color: "var(--card-subtext)" }}>
               Pending
             </p>
-            <p className="text-xs font-bold" style={{ color: hasPending ? (theme === "dark" ? "#60a5fa" : "#2563eb") : "var(--card-text)", fontVariantNumeric: "tabular-nums" }}>
-              {formatUniform(contribution.pending).replace(/\u00A0/g, '')}
+            <p className="text-[10px] font-bold" style={{ color: hasPending ? (theme === "dark" ? "#60a5fa" : "#2563eb") : "var(--card-text)", fontVariantNumeric: "tabular-nums" }}>
+              <ObnPrimary amount={contribution.pending}>{formatUniform(contribution.pending).replace(/\u00A0/g, '')} OBN</ObnPrimary>
             </p>
+            <ObnUsd amount={contribution.pending} tokenLabel={<>{formatUniform(contribution.pending).replace(/\u00A0/g, '')} OBN</>} block size="text-[8px]" />
           </div>
         </div>
       </div>

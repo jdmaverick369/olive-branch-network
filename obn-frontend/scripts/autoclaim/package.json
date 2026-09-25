@@ -1,0 +1,16 @@
+{
+  "name": "obn-monthly-autoclaim-worker",
+  "version": "9.3.1",
+  "private": true,
+  "type": "module",
+  "engines": { "node": ">=22" },
+  "scripts": {
+    "test": "node --test *.test.mjs",
+    "check": "node check.mjs",
+    "start": "node run.mjs"
+  },
+  "dependencies": {
+    "@coinbase/cdp-sdk": "1.52.0",
+    "ethers": "6.16.0"
+  }
+}

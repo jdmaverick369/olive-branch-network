@@ -1,5 +1,6 @@
 "use client";
 
+import { useDisplayText } from "@/hooks/useDisplayText";
 import Link from "next/link";
 import Image from "next/image";
 import { ChevronDown, ExternalLink, ArrowUpDown, Zap } from "lucide-react";
@@ -58,6 +59,7 @@ function usePageBackground() {
 }
 
 export default function FAQPage() {
+  const displayText = useDisplayText();
   // Override body background to match page gradient
   usePageBackground();
   const { connector } = useAccount();
@@ -155,11 +157,9 @@ export default function FAQPage() {
             answer={
               <>
                 <p className="mb-4">
-                  The Olive Branch Network is a staking protocol that lets you earn rewards while supporting nonprofit organizations.
-                </p>
+                  {displayText("The Olive Branch Network is a staking protocol that lets you earn rewards while supporting nonprofit organizations. ")}</p>
                 <p className="mb-4">
-                  By staking $OBN tokens into nonprofit pools, you generate yield that is shared between you and the causes you choose to support.
-                </p>
+                  {displayText("By staking $OBN tokens into nonprofit pools, you generate yield that is shared between you and the causes you choose to support. ")}</p>
                 <p className="mb-4">
                   It&apos;s a new way to grow your crypto while contributing at the same time.
                 </p>
@@ -176,7 +176,7 @@ export default function FAQPage() {
                     >0x07e5efCD1B5fAE3f461bf913BBEE03a10A20C685</a>
                   </div>
                   <div className="px-3 py-2 rounded-lg border shadow-md" style={{ backgroundColor: theme === "dark" ? "var(--card-bg)" : "#ecfdf5", borderColor: theme === "dark" ? "var(--card-border)" : "#10b981", boxShadow: theme === "dark" ? undefined : "0 0 0 1px rgba(16, 185, 129, 0.6)" }}>
-                    <p className="text-xs font-medium mb-0.5" style={{ color: "var(--card-subtext)" }}>Staking Contract</p>
+                    <p className="text-xs font-medium mb-0.5" style={{ color: "var(--card-subtext)" }}>{displayText("Staking Contract")}</p>
                     <a
                       href={isInMiniApp ? undefined : "https://basescan.org/address/0x2C4Bd5B2a48a76f288d7F2DB23aFD3a03b9E7cD2"}
                       target={isInMiniApp ? undefined : "_blank"}
@@ -196,7 +196,7 @@ export default function FAQPage() {
             question="What blockchain is Olive Branch Network on?"
             answer={
               <>
-                Olive Branch Network operates on Base, an L2 solution for Ethereum. You&apos;ll need a Base-compatible wallet and $OBN tokens to stake. You can buy or sell OBN with ETH or USDC on the{" "}
+                {displayText("Olive Branch Network operates on Base, an L2 solution for Ethereum. You'll need a Base-compatible wallet and $OBN tokens to stake. You can buy or sell OBN with ETH or USDC on the")}{" "}
                 <Link href="/trade" className="font-semibold hover:underline" style={{ color: "#16a34a" }}>
                   Trade OBN
                 </Link>{" "}
@@ -207,7 +207,7 @@ export default function FAQPage() {
 
           <FAQItem
             index={2}
-            question="How do I start staking?"
+            question={displayText("How do I start staking?")}
             answer={
               <>
                 <p className="mb-3">
@@ -227,12 +227,11 @@ export default function FAQPage() {
                       className="font-semibold hover:underline"
                       style={{ color: "#16a34a" }}
                     >
-                      &quot;Stake, Earn, Contribute&quot;
-                    </Link>{" "}page
+                      {displayText("\"Stake, Earn, Contribute\" ")}</Link>{" "}page
                   </li>
                   <li>Select a nonprofit pool</li>
-                  <li>Enter your staking amount</li>
-                  <li>Click Stake</li>
+                  <li>{displayText("Enter your staking amount")}</li>
+                  <li>{displayText("Click Stake")}</li>
                   <li>Confirm the transaction</li>
                 </ol>
               </>
@@ -245,8 +244,7 @@ export default function FAQPage() {
             answer={
               <>
                 <p className="mb-4">
-                  APY (Annual Percentage Yield) is the rate at which your staked tokens earn rewards over a year. The APY is global across all pools and follows a declining 10-year schedule:
-                </p>
+                  {displayText("APY (Annual Percentage Yield) is the rate at which your staked tokens earn rewards over a year. The APY is global across all pools and follows a declining 10-year schedule: ")}</p>
                 <div
                   className="p-4 rounded-lg border shadow-md mb-4"
                   style={{
@@ -292,10 +290,10 @@ export default function FAQPage() {
                 >
                   <div className="space-y-3 text-sm">
                     {[
-                      { pct: "88%", label: "to Stakers", desc: "You earn 88% of the pool's emissions", color: "#16a34a" },
+                      { pct: "88%", label: displayText("to Stakers"), desc: "You earn 88% of the pool's emissions", color: "#16a34a" },
                       { pct: "10%", label: "to Nonprofit", desc: "Directly funds the nonprofit you're supporting", color: "#2563eb" },
-                      { pct: "1%",  label: "to ExtendOliveBranch", desc: "Accumulates OBN all year, then stakers vote which nonprofit receives it", color: "#a855f7" },
-                      { pct: "1%",  label: "to TheOffering", desc: "Accumulates OBN all year, then stakers vote to burn it or add it to ExtendOliveBranch", color: "#6b7280" },
+                      { pct: "1%",  label: "to ExtendOliveBranch", desc: displayText("Accumulates OBN all year, then stakers vote which nonprofit receives it"), color: "#a855f7" },
+                      { pct: "1%",  label: "to TheOffering", desc: displayText("Accumulates OBN all year, then stakers vote to burn it or add it to ExtendOliveBranch"), color: "#6b7280" },
                     ].map(({ pct, label, desc, color }) => (
                       <div key={label} className="flex items-start gap-3">
                         <span
@@ -341,8 +339,7 @@ export default function FAQPage() {
                   >
                     <h4 className="font-bold mb-1 text-sm" style={{ color: "#a855f7" }}>🌿 ExtendOliveBranch</h4>
                     <p className="text-sm" style={{ color: "var(--card-subtext)" }}>
-                      Receives 1% of all emissions. OBN accumulates here throughout the year. At the end of each annual cycle, stakers vote on which nonprofit receives the full balance.
-                    </p>
+                      {displayText("Receives 1% of all emissions. OBN accumulates here throughout the year. At the end of each annual cycle, stakers vote on which nonprofit receives the full balance. ")}</p>
                   </div>
                   <div
                     className="p-4 rounded-lg border shadow-md"
@@ -354,8 +351,7 @@ export default function FAQPage() {
                   >
                     <h4 className="font-bold mb-1 text-sm" style={{ color: "#6b7280" }}>🔥 TheOffering</h4>
                     <p className="text-sm" style={{ color: "var(--card-subtext)" }}>
-                      Receives 1% of all emissions. OBN accumulates here throughout the year. At the end of each annual cycle, stakers vote whether those tokens are permanently burned or redirected to ExtendOliveBranch for additional nonprofit funding.
-                    </p>
+                      {displayText("Receives 1% of all emissions. OBN accumulates here throughout the year. At the end of each annual cycle, stakers vote whether those tokens are permanently burned or redirected to ExtendOliveBranch for additional nonprofit funding. ")}</p>
                   </div>
                   <div
                     className="p-4 rounded-lg border shadow-md"
@@ -367,27 +363,25 @@ export default function FAQPage() {
                   >
                     <h4 className="font-bold mb-1 text-sm" style={{ color: "#2563eb" }}>🗳️ Annual Governance</h4>
                     <p className="text-sm" style={{ color: "var(--card-subtext)" }}>
-                      Once per year, stakers participate in a two-part vote: (1) whether TheOffering is burned or contributed to ExtendOliveBranch, and (2) which nonprofit receives the ExtendOliveBranch balance. Voting power is proportional to the amount of OBN you have staked.
-                    </p>
+                      {displayText("Once per year, stakers participate in a two-part vote: (1) whether TheOffering is burned or contributed to ExtendOliveBranch, and (2) which nonprofit receives the ExtendOliveBranch balance. Voting power is proportional to the amount of OBN you have staked. ")}</p>
                   </div>
                 </div>
                 <p className="text-sm" style={{ color: "var(--card-subtext)" }}>
-                  The result: 100% of newly minted OBN either goes to stakers, directly to nonprofits, or is permanently removed from circulation. The protocol no longer extracts.
-                </p>
+                  {displayText("The result: 100% of newly minted OBN either goes to stakers, directly to nonprofits, or is permanently removed from circulation. The protocol no longer extracts. ")}</p>
               </>
             }
           />
 
           <FAQItem
             index={5}
-            question="What is the minimum staking amount?"
-            answer="There is no minimum staking amount. You can stake any amount that works for you and adjust it anytime."
+            question={displayText("What is the minimum staking amount?")}
+            answer={displayText("There is no minimum staking amount. You can stake any amount that works for you and adjust it anytime.")}
           />
 
           <FAQItem
             index={6}
-            question="Can I unstake my tokens at any time?"
-            answer="Yes! You can unstake your tokens whenever you want. Simply go to the pool details page and click the &quot;Unstake&quot; button. Your tokens will be returned to your wallet after the transaction is confirmed. There are no lock-up periods."
+            question={displayText("Can I unstake my tokens at any time?")}
+            answer={displayText("Yes! You can unstake your tokens whenever you want. Simply go to the pool details page and click the \"Unstake\" button. Your tokens will be returned to your wallet after the transaction is confirmed. There are no lock-up periods.")}
           />
 
           <FAQItem
@@ -412,12 +406,11 @@ export default function FAQPage() {
 
           <FAQItem
             index={8}
-            question="Can I stake in multiple pools?"
+            question={displayText("Can I stake in multiple pools?")}
             answer={
               <>
                 <p className="mb-3">
-                  Yes! You can stake in as many nonprofit pools as you want simultaneously. Each pool has its own staking interface on the Dashboard.
-                </p>
+                  {displayText("Yes! You can stake in as many nonprofit pools as you want simultaneously. Each pool has its own staking interface on the Dashboard. ")}</p>
                 <p>
                   Managing rewards across multiple pools is easy with the{" "}
                   <Link
@@ -427,8 +420,7 @@ export default function FAQPage() {
                   >
                     Profile
                   </Link>
-                  {" "}page, which shows all your active stakes in one place. Use the &quot;Claim All&quot; button to collect pending rewards from all your pools in a single transaction.
-                </p>
+                  {" "}{displayText("page, which shows all your active stakes in one place. Use the \"Claim All\" button to collect pending rewards from all your pools in a single transaction. ")}</p>
               </>
             }
           />
@@ -448,8 +440,7 @@ export default function FAQPage() {
                     className="w-full h-auto mb-4"
                   />
                   <p style={{ color: "var(--card-text)" }} className="text-sm leading-relaxed text-center">
-                    OliveNFT is the official digital collectible of the Olive Branch Network. It represents your participation in the ecosystem and visually evolves the longer you stake with it on the platform.
-                  </p>
+                    {displayText("OliveNFT is the official digital collectible of the Olive Branch Network. It represents your participation in the ecosystem and visually evolves the longer you stake with it on the platform. ")}</p>
                 </div>
 
                 {/* Key Details */}
@@ -490,10 +481,9 @@ export default function FAQPage() {
                 </div>
 
                 {/* Visual Evolution */}
-                <h3 className="text-base font-bold mb-3 text-center" style={{ color: "var(--card-text)" }}>Visual Evolution Through Staking</h3>
+                <h3 className="text-base font-bold mb-3 text-center" style={{ color: "var(--card-text)" }}>{displayText("Visual Evolution Through Staking")}</h3>
                 <p className="text-sm text-center mb-4" style={{ color: "var(--card-subtext)" }}>
-                  When you stake with your OliveNFT on the OBN App, its appearance changes over time, reflecting your commitment and activity.
-                </p>
+                  {displayText("When you stake with your OliveNFT on the OBN App, its appearance changes over time, reflecting your commitment and activity. ")}</p>
                 <div className="space-y-3 mb-4">
                   {[
                     { days: "0–30 days", effect: "Standard display", desc: "(no gloss)" },
@@ -541,7 +531,7 @@ export default function FAQPage() {
                     {[
                       "Appear in your wallet",
                       "Display on your Profile page",
-                      "Begin its visual progression as you stake with it over time",
+                      displayText("Begin its visual progression as you stake with it over time"),
                     ].map((item, i) => (
                       <li key={i} className="flex gap-2 text-sm" style={{ color: "var(--card-text)" }}>
                         <span className="text-green-600 font-bold">✓</span>
@@ -556,7 +546,7 @@ export default function FAQPage() {
                 <div className="grid grid-cols-1 gap-3 mb-6">
                   {[
                     { title: "Identity", desc: "Serves as your unique badge in the Olive Branch Network" },
-                    { title: "Progression", desc: "The longer you stake with your OliveNFT, the more exclusive its appearance becomes" },
+                    { title: "Progression", desc: displayText("The longer you stake with your OliveNFT, the more exclusive its appearance becomes") },
                     { title: "Scarcity", desc: "With only 20,000 ever available, each NFT is rare and meaningful" },
                   ].map((item, i) => (
                     <div
@@ -606,14 +596,12 @@ export default function FAQPage() {
             answer={
               <>
                 <p className="mb-4">
-                  You may incur standard Base network gas fees (paid in ETH) when staking, unstaking, or claiming rewards. These fees go to the Base network.
-                </p>
+                  {displayText("You may incur standard Base network gas fees (paid in ETH) when staking, unstaking, or claiming rewards. These fees go to the Base network. ")}</p>
                 <p className="text-sm font-semibold mb-1" style={{ color: "var(--card-text)" }}>
                   Don&apos;t have ETH on Base?
                 </p>
                 <p className="text-xs mb-3">
-                  ETH on Base is required to cover network fees when staking, unstaking, and claiming rewards.
-                </p>
+                  {displayText("ETH on Base is required to cover network fees when staking, unstaking, and claiming rewards. ")}</p>
                 {isInMiniApp ? (
                   <div className="flex flex-wrap gap-2 mb-3">
                     <a
@@ -681,7 +669,7 @@ export default function FAQPage() {
             answer={
               <>
                 <p>
-                  Your funds are held in smart contracts on Base, an L2 solution for Ethereum. The contracts have been designed with security in mind. However, as with all cryptocurrency, please do your own research and only stake what you can afford to lose. For more details on risks and disclaimers, please refer to our{" "}
+                  {displayText("Your funds are held in smart contracts on Base, an L2 solution for Ethereum. The contracts have been designed with security in mind. However, as with all cryptocurrency, please do your own research and only stake what you can afford to lose. For more details on risks and disclaimers, please refer to our")}{" "}
                   <Link
                     href="/terms-of-service"
                     className="font-semibold hover:underline"
@@ -712,8 +700,7 @@ export default function FAQPage() {
                   >
                     Discord community
                   </a>{" "}
-                  to ask questions and connect with other stakers.
-                </p>
+                  {displayText("to ask questions and connect with other stakers. ")}</p>
               </>
             }
           />

@@ -10,7 +10,7 @@ The live Timelock had open execution enabled, allowing the configured deployment
 wallet to execute the exact previously scheduled operation without another Safe
 signature round. The preflight, candidate bytecode/storage checks, operation-ID
 comparison, and read-only execution simulation passed before submission.
-See [execution record](2026-09-23-annual-fixed-allocation-execution-record.json).
+See [execution record](../../governance-operations/2026-09-23-annual-fixed-allocation-execution-record.json).
 The scheduling instructions below are retained as historical documentation.
 
 ## Verified deployment
@@ -55,4 +55,5 @@ The live baseline comparison, storage validation, ownership, inactive cycle, and
 candidate bytecode checks passed. Keep the cycle inactive until the upgrade executes.
 Source publication and on-chain scheduling are separate operations.
 
-Machine-readable receipt and status: [deployment record](2026-09-21-annual-fixed-allocation-record.json).
+Historical deployment and scheduling snapshot: [deployment record](2026-09-21-annual-fixed-allocation-record.json).
+Its pending-upgrade status reflects 21 September, before the completed execution.

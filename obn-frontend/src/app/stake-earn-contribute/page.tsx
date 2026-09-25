@@ -1,6 +1,7 @@
 // src/app/stake-earn-contribute/page.tsx
 "use client";
 
+import { useDisplayText } from "@/hooks/useDisplayText";
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { useAccount } from "wagmi";
 import { sdk } from "@farcaster/miniapp-sdk";
@@ -33,6 +34,7 @@ function usePageBackground() {
 }
 
 export default function DashboardPage() {
+  const displayText = useDisplayText();
   // Override body background to match page gradient
   usePageBackground();
   const { address } = useAccount();
@@ -337,8 +339,7 @@ export default function DashboardPage() {
                 Olive Branch Network
               </h2>
               <p className="text-sm mt-2 max-w-xs mx-auto" style={{ color: "#ffffff" }}>
-                A staking protocol empowering non-profits to help better the world.
-              </p>
+                {displayText("A staking protocol empowering non-profits to help better the world. ")}</p>
             </div>
 
             <div className="p-6 text-center">
@@ -349,11 +350,11 @@ export default function DashboardPage() {
                 </li>
                 <li className="flex items-start gap-2">
                   <CheckCircle className="w-4 h-4 mt-0.5" style={{ color: "#16a34a" }} />
-                  <span>Type in the amount you want to stake</span>
+                  <span>{displayText("Type in the amount you want to stake")}</span>
                 </li>
                 <li className="flex items-start gap-2">
                   <CheckCircle className="w-4 h-4 mt-0.5" style={{ color: "#16a34a" }} />
-                  <span>Hit the &quot;Stake&quot; button</span>
+                  <span>{displayText("Hit the \"Stake\" button")}</span>
                 </li>
                 <li className="flex items-start gap-2">
                   <CheckCircle className="w-4 h-4 mt-0.5" style={{ color: "#16a34a" }} />
@@ -401,7 +402,7 @@ export default function DashboardPage() {
           >
             {/* Page title */}
             <h1 className="text-2xl font-bold text-center mb-5" style={{ color: "var(--card-text)" }}>
-              Stake <span style={{ color: theme === "dark" ? "#86efac" : "#0D9921" }}>-</span> Earn <span style={{ color: theme === "dark" ? "#86efac" : "#0D9921" }}>-</span> Contribute
+              {displayText("Stake ")}<span style={{ color: theme === "dark" ? "#86efac" : "#0D9921" }}>-</span> Earn <span style={{ color: theme === "dark" ? "#86efac" : "#0D9921" }}>-</span> Contribute
             </h1>
 
             {/* Stake, Earn, Contribute + APY - directly under title */}
@@ -415,7 +416,7 @@ export default function DashboardPage() {
                   <div className="flex flex-col space-y-2">
                     {[
                       "Click on a nonprofit organization",
-                      "Stake $OBN tokens and earn rewards",
+                      displayText("Stake $OBN tokens and earn rewards"),
                       "Claim rewards and contribute",
                     ].map((step, i) => (
                       <div key={i} className="flex items-start gap-1.5">
@@ -448,7 +449,7 @@ export default function DashboardPage() {
                     </div>
                   </div>
                   <div className="space-y-1.5 text-center">
-                    <p className="text-[min(2.5vw,9px)] px-1.5 py-0.5 rounded font-semibold whitespace-nowrap" style={{ backgroundColor: "#16a34a", color: "white" }}>88% to Stakers</p>
+                    <p className="text-[min(2.5vw,9px)] px-1.5 py-0.5 rounded font-semibold whitespace-nowrap" style={{ backgroundColor: "#16a34a", color: "white" }}>{displayText("88% to Stakers")}</p>
                     <p className="text-[min(2.5vw,9px)] px-1.5 py-0.5 rounded font-semibold whitespace-nowrap" style={{ backgroundColor: "#2563eb", color: "white" }}>10% to Nonprofits</p>
                     <p className="text-[min(2.5vw,9px)] px-1.5 py-0.5 rounded font-semibold whitespace-nowrap" style={{ backgroundColor: "#a855f7", color: "white" }}>1% to ExtendOliveBranch</p>
                     <p className="text-[min(2.5vw,9px)] px-1.5 py-0.5 rounded font-semibold whitespace-nowrap" style={{ backgroundColor: "#6b7280", color: "white" }}>1% to TheOffering</p>

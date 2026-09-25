@@ -58,7 +58,13 @@ export function FarcasterHeaderUser({ onMiniAppDetected }: Props) {
           />
         </div>
       )}
-      <span className="text-sm text-white">
+      {/*
+        Avatar box (h-5 img + p-0.5 padding + border) is ~26px and gap-2 is 8px,
+        so the text caps at (34px less than) the rainbow wallet pill's own
+        max-w-27/40 + its px-3 padding on each side — same total on-screen footprint
+        for avatar+username as that pill, not just the text itself.
+      */}
+      <span className="max-w-24.5 sm:max-w-37.5 truncate text-sm text-white">
         {user.username ? `@${user.username}` : `FID ${user.fid}`}
       </span>
     </button>

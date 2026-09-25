@@ -1,4 +1,6 @@
 "use client";
+import { useDisplayText } from "@/hooks/useDisplayText";
+import { ObnUsd } from "@/components/ObnUsd";
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
@@ -190,8 +192,8 @@ function VoteTallySection({
 
           {/* Raw counts */}
           <div className="flex justify-between text-xs tabular-nums" style={{ color: "var(--card-subtext)" }}>
-            <span>{formatObnCompact(burnVotes)} OBN</span>
-            <span>{formatObnCompact(giveVotes)} OBN</span>
+            <span>{formatObnCompact(burnVotes)} OBN <ObnUsd amount={burnVotes} /></span>
+            <span>{formatObnCompact(giveVotes)} OBN <ObnUsd amount={giveVotes} /></span>
           </div>
         </>
       )}
@@ -200,6 +202,7 @@ function VoteTallySection({
 }
 
 export default function OfferingVotePage() {
+  const displayText = useDisplayText();
   usePageBackground();
   const router = useRouter();
   const { address } = useAccount();
@@ -523,7 +526,7 @@ export default function OfferingVotePage() {
                     style={{ color: "var(--card-subtext)" }}
                   >
                     OBN
-                  </span>
+                  </span> <ObnUsd amount={offeringBalance} />
                 </p>
               </div>
             )}
@@ -576,7 +579,7 @@ export default function OfferingVotePage() {
                     </div>
                   ) : votedDisplay ? (
                     <p className="text-xl font-bold" style={{ color: "var(--card-text)" }}>
-                      {votedDisplay.choice === "BURN" ? "🔥 Burn" : "🌿 Give"} {votedDisplay.amount}
+                      {votedDisplay.choice === "BURN" ? "🔥 Burn" : "🌿 Give"} {votedDisplay.amount} <ObnUsd amount={votingPower?.power} />
                     </p>
                   ) : needsActivation ? (
                     <div className="flex flex-col items-center gap-3">
@@ -588,8 +591,7 @@ export default function OfferingVotePage() {
                         style={{ backgroundColor: "#f59e0b14", border: "1px solid #f59e0b44" }}
                       >
                         <p className="text-xs leading-relaxed" style={{ color: "var(--card-text)" }}>
-                          Staking, unstaking, or claiming rewards will activate your voting power. Visit your profile to interact with the protocol.
-                        </p>
+                          {displayText("Staking, unstaking, or claiming rewards will activate your voting power. Visit your profile to interact with the protocol. ")}</p>
                         <Link
                           href="/profile"
                           className="text-xs font-semibold hover:opacity-80 transition-opacity w-fit"
@@ -602,7 +604,7 @@ export default function OfferingVotePage() {
                   ) : powerDisplay ? (
                     <div>
                       <p className="text-xl font-bold" style={{ color: "var(--card-text)" }}>
-                        {powerDisplay.label}
+                        {powerDisplay.label} <ObnUsd amount={votingPower?.power} />
                       </p>
                       {powerDisplay.sub && (
                         <p className="text-xs mt-0.5" style={{ color: "var(--card-subtext)" }}>
@@ -651,7 +653,7 @@ export default function OfferingVotePage() {
                 {effectiveSummary?.phase1Outcome === 1
                   ? "🔥 BURNED"
                   : "🌿 SENT TO EXTEND OLIVE BRANCH"}
-                {phase1Amount !== null && ` ${formatObn(phase1Amount)} OBN`}
+                {phase1Amount !== null && <> {formatObn(phase1Amount)} OBN <ObnUsd amount={phase1Amount} /></>}
               </p>
               {isPending && (
                 <p className="text-xs mt-2" style={{ color: "var(--card-subtext)" }}>

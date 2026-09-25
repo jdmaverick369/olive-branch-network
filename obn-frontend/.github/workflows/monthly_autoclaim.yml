@@ -1,0 +1,99 @@
+name: OBN Monthly Autoclaim
+
+on:
+  schedule:
+    - cron: '23 9-23 14 * *'
+  workflow_dispatch:
+    inputs:
+      send:
+        description: Submit claims only if AUTOCLAIM_ENABLED is true (otherwise read-only checks)
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+concurrency:
+  group: obn-monthly-autoclaim-base
+  cancel-in-progress: false
+
+defaults:
+  run:
+    working-directory: scripts/autoclaim
+
+env:
+  DISABLE_CDP_ERROR_REPORTING: 'true'
+
+jobs:
+  validate:
+    if: github.ref == 'refs/heads/main' && (github.event_name == 'workflow_dispatch' || vars.AUTOCLAIM_ENABLED == 'true')
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: scripts/autoclaim/package-lock.json
+      - run: npm ci --ignore-scripts --no-audit --no-fund
+      - name: Worker regression tests
+        run: npm test
+      - name: Read-only mainnet readiness check
+        run: npm run check
+        env:
+          AUTOCLAIM_ENABLED: ${{ vars.AUTOCLAIM_ENABLED }}
+          AUTOCLAIM_RPC_URL: ${{ secrets.AUTOCLAIM_RPC_URL }}
+          AUTOCLAIM_PAYMASTER_URL: ${{ secrets.AUTOCLAIM_PAYMASTER_URL }}
+          AUTOCLAIM_CDP_API_KEY_ID: ${{ secrets.AUTOCLAIM_CDP_API_KEY_ID }}
+          AUTOCLAIM_CDP_API_KEY_SECRET: ${{ secrets.AUTOCLAIM_CDP_API_KEY_SECRET }}
+          AUTOCLAIM_CDP_WALLET_SECRET: ${{ secrets.AUTOCLAIM_CDP_WALLET_SECRET }}
+          AUTOCLAIM_OWNER: ${{ vars.AUTOCLAIM_OWNER }}
+          AUTOCLAIM_EXECUTOR: ${{ vars.AUTOCLAIM_EXECUTOR }}
+          AUTOCLAIM_START_BLOCK: ${{ vars.AUTOCLAIM_START_BLOCK }}
+  claim:
+    needs: validate
+    if: vars.AUTOCLAIM_ENABLED == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: scripts/autoclaim/package-lock.json
+      - run: npm ci --ignore-scripts --no-audit --no-fund
+      - uses: actions/cache/restore@v4
+        id: journal
+        with:
+          path: scripts/autoclaim/.autoclaim/state.json
+          key: autoclaim-v2-${{ vars.AUTOCLAIM_EXECUTOR }}-${{ vars.AUTOCLAIM_START_BLOCK }}-${{ github.run_id }}-${{ github.run_attempt }}
+          restore-keys: |
+            autoclaim-v2-${{ vars.AUTOCLAIM_EXECUTOR }}-${{ vars.AUTOCLAIM_START_BLOCK }}-
+      - name: Reconcile and claim
+        id: worker
+        run: npm start
+        env:
+          AUTOCLAIM_SEND: ${{ github.event_name == 'schedule' || inputs.send }}
+          AUTOCLAIM_RPC_URL: ${{ secrets.AUTOCLAIM_RPC_URL }}
+          AUTOCLAIM_PAYMASTER_URL: ${{ secrets.AUTOCLAIM_PAYMASTER_URL }}
+          AUTOCLAIM_CDP_API_KEY_ID: ${{ secrets.AUTOCLAIM_CDP_API_KEY_ID }}
+          AUTOCLAIM_CDP_API_KEY_SECRET: ${{ secrets.AUTOCLAIM_CDP_API_KEY_SECRET }}
+          AUTOCLAIM_CDP_WALLET_SECRET: ${{ secrets.AUTOCLAIM_CDP_WALLET_SECRET }}
+          AUTOCLAIM_OWNER: ${{ vars.AUTOCLAIM_OWNER }}
+          AUTOCLAIM_EXECUTOR: ${{ vars.AUTOCLAIM_EXECUTOR }}
+          AUTOCLAIM_START_BLOCK: ${{ vars.AUTOCLAIM_START_BLOCK }}
+          AUTOCLAIM_MAX_CLAIMS: '300'
+      - uses: actions/cache/save@v4
+        if: always() && steps.worker.outcome != 'skipped' && hashFiles('scripts/autoclaim/.autoclaim/state.json') != ''
+        with:
+          path: scripts/autoclaim/.autoclaim/state.json
+          key: ${{ steps.journal.outputs.cache-primary-key }}
+      - uses: actions/upload-artifact@v4
+        if: always() && hashFiles('scripts/autoclaim/.autoclaim/state.json') != ''
+        with:
+          name: autoclaim-journal-${{ github.run_id }}-${{ github.run_attempt }}
+          path: scripts/autoclaim/.autoclaim/state.json
+          include-hidden-files: true
+          retention-days: 90

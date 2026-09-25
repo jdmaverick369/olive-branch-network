@@ -1,6 +1,9 @@
 "use client";
+import { useDisplayText } from "@/hooks/useDisplayText";
+import { ObnPrimary, ObnUsd } from "@/components/ObnUsd";
 
 import Image from "next/image";
+import { useMonthlyAutoClaim, AutoClaimButton, AutoClaimDialog } from "@/components/MonthlyAutoClaim";
 
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState, useMemo, type CSSProperties } from "react";
@@ -104,6 +107,7 @@ const fmtRewards = (n: number): string => {
 };
 
 export default function PoolDetailPage() {
+  const displayText = useDisplayText();
   // Match body background to page theme so overscroll area blends in
   useEffect(() => {
     const update = () => {
@@ -141,6 +145,7 @@ export default function PoolDetailPage() {
   // Unified address: use wagmi if available, otherwise MiniApp address
   const currentAddress = wagmiAddress ?? miniAppAddress;
   const userAddr = (currentAddress ?? ZERO_ADDR) as `0x${string}`;
+  const autoClaim = useMonthlyAutoClaim();
 
   const meta: PoolMeta | undefined = Number.isFinite(pid) ? getPoolMeta(pid) : undefined;
   const invalid = !Number.isFinite(pid) || !meta;
@@ -371,6 +376,7 @@ export default function PoolDetailPage() {
   const canBatch = !!(walletCapabilities?.[CHAIN_ID]?.paymasterService?.supported && PAYMASTER_URL);
   const { sendCallsAsync } = useSendCalls();
   const [pendingCallsId, setPendingCallsId] = useState<string | null>(null);
+  const [pendingCallsWallet, setPendingCallsWallet] = useState<string | null>(null);
   const [pendingCallsAction, setPendingCallsAction] = useState<'stake' | 'unstake' | 'claim' | null>(null);
   const { status: callsStatus } = useWaitForCallsStatus({
     id: pendingCallsId ?? undefined,
@@ -380,7 +386,8 @@ export default function PoolDetailPage() {
     if (!pendingCallsId || !pendingCallsAction) return;
     if (callsStatus === 'success') {
       postTxnRefresh();
-      toast.success(pendingCallsAction === 'stake' ? 'Stake successful!' : pendingCallsAction === 'unstake' ? 'Unstake successful!' : 'Rewards claimed!');
+      toast.success(pendingCallsAction === 'stake' ? displayText('Stake successful!') : pendingCallsAction === 'unstake' ? displayText('Unstake successful!') : 'Rewards claimed!');
+      if (pendingCallsAction !== 'unstake' && pendingCallsWallet) void autoClaim.promptAfterSuccess(pendingCallsWallet);
       setPendingCallsId(null);
       setPendingCallsAction(null);
       setProcessingAction(null);
@@ -441,6 +448,7 @@ export default function PoolDetailPage() {
           ],
           capabilities: { paymasterService: { url: PAYMASTER_URL }, dataSuffix: { value: DATA_SUFFIX, optional: true } },
         });
+        setPendingCallsWallet(userAddr);
         setPendingCallsId(id);
         setPendingCallsAction('stake');
         return;
@@ -480,13 +488,14 @@ export default function PoolDetailPage() {
         args: [effectivePid, amt],
         dataSuffix: DATA_SUFFIX,
       }));
-      await publicClient.waitForTransactionReceipt({ hash: depositTxHash });
+      const depositReceipt = await publicClient.waitForTransactionReceipt({ hash: depositTxHash });
+      if (depositReceipt.status !== "success") throw new Error(displayText("Stake reverted"));
 
       await postTxnRefresh();
-      toast.success("Stake successful!");
+      toast.success(displayText("Stake successful!")); void autoClaim.promptAfterSuccess(userAddr);
     } catch (err) {
       console.error("Stake error:", err);
-      toast.error("Stake failed. Please try again.");
+      toast.error(displayText("Stake failed. Please try again."));
       setProcessingAction(null);
     } finally {
       if (!tookBatchPath) setProcessingAction(null);
@@ -517,16 +526,17 @@ export default function PoolDetailPage() {
           calls: [{ to: STAKING_CONTRACT, data: encodeFunctionData({ abi: stakingAbi, functionName: "withdraw", args: [effectivePid, amt] }) }],
           capabilities: { paymasterService: { url: PAYMASTER_URL }, dataSuffix: { value: DATA_SUFFIX, optional: true } },
         });
+        setPendingCallsWallet(userAddr);
         setPendingCallsId(id);
         setPendingCallsAction('unstake');
         return;
       }
       await withTxTimeout(writeContractAsync({ address: STAKING_CONTRACT, abi: stakingAbi, functionName: "withdraw", args: [effectivePid, amt], dataSuffix: DATA_SUFFIX }));
       await postTxnRefresh();
-      toast.success("Unstake successful!");
+      toast.success(displayText("Unstake successful!"));
     } catch (err) {
       console.error(err);
-      toast.error("Unstake failed. Please try again.");
+      toast.error(displayText("Unstake failed. Please try again."));
       setProcessingAction(null);
     } finally {
       if (!tookBatchPath) setProcessingAction(null);
@@ -551,13 +561,16 @@ export default function PoolDetailPage() {
           calls: [{ to: STAKING_CONTRACT, data: encodeFunctionData({ abi: stakingAbi, functionName: "claim", args: [effectivePid] }) }],
           capabilities: { paymasterService: { url: PAYMASTER_URL }, dataSuffix: { value: DATA_SUFFIX, optional: true } },
         });
+        setPendingCallsWallet(userAddr);
         setPendingCallsId(id);
         setPendingCallsAction('claim');
         return;
       }
-      await withTxTimeout(writeContractAsync({ address: STAKING_CONTRACT, abi: stakingAbi, functionName: "claim", args: [effectivePid], dataSuffix: DATA_SUFFIX }));
+      const claimHash = await withTxTimeout(writeContractAsync({ address: STAKING_CONTRACT, abi: stakingAbi, functionName: "claim", args: [effectivePid], dataSuffix: DATA_SUFFIX }));
+      const claimReceipt = await publicClient.waitForTransactionReceipt({ hash: claimHash });
+      if (claimReceipt.status !== "success") throw new Error("Claim reverted");
       await postTxnRefresh();
-      toast.success("Rewards claimed!");
+      toast.success("Rewards claimed!"); void autoClaim.promptAfterSuccess(userAddr);
     } catch (err) {
       console.error(err);
       const msg = err instanceof Error ? err.message : String(err);
@@ -586,7 +599,8 @@ export default function PoolDetailPage() {
   const isMiniAppLayout = isInMiniApp ?? isLikelyMiniApp;
 
   return (
-    <div className="page-bg flex flex-col relative" style={{ minHeight: "calc(100dvh - var(--obn-header-h))", ...(!isMiniAppLayout && !isMobileBrowser ? { overflowX: 'hidden' } : {}) }}>
+    // Clip the scaled desktop width without creating a second vertical scroll container.
+    <div className="page-bg flex flex-col relative" style={{ minHeight: "calc(100dvh - var(--obn-header-h))", ...(!isMiniAppLayout && !isMobileBrowser ? { overflowX: 'clip' } : {}) }}>
       <main className="flex flex-col items-center" style={!isMiniAppLayout && !isMobileBrowser ? { paddingLeft: "32px", paddingRight: "32px", transform: 'scale(1.25)', transformOrigin: 'top center', paddingTop: '32px', paddingBottom: '16px' } : { padding: "8px 16px", flex: "1 0 auto", width: "100%" }}>
         {invalid ? (
           <section
@@ -697,25 +711,25 @@ export default function PoolDetailPage() {
               {/* Balance - centered */}
               <div className="flex items-center justify-center gap-2 mb-3">
                 <p className="font-medium text-sm" style={subTextStyle}>Balance:</p>
-                <p className="font-semibold text-sm truncate" style={{ color: "var(--card-text)" }}>{fmtStaked(obnBalance)} OBN</p>
+                <p className="font-semibold text-sm wrap-break-word" style={{ color: "var(--card-text)" }}><ObnPrimary amount={obnBalance}>{fmtStaked(obnBalance)} OBN</ObnPrimary> <ObnUsd amount={obnBalance} tokenLabel={<>{fmtStaked(obnBalance)} OBN</>} /></p>
               </div>
 
               {/* Two-column: LEFT (Staked) + RIGHT (Contributions) */}
               <div className="grid grid-cols-2 gap-3 w-full">
                 {/* LEFT: Staked + Pending */}
                 <div className="flex flex-col gap-1.5 text-center rounded-xl border p-2" style={{ borderColor: "var(--card-border)", backgroundColor: "var(--card-bg)" }}>
-                  <p className="font-medium whitespace-nowrap" style={{ ...subTextStyle, fontSize: "min(3.2vw, 0.75rem)" }}>Active Stake:</p>
-                  <p className="font-semibold text-xs mb-1.5 truncate" style={{ color: "var(--card-text)" }}>{fmtStaked(userStake)} OBN</p>
+                  <p className="font-medium whitespace-nowrap" style={{ ...subTextStyle, fontSize: "min(3.2vw, 0.75rem)" }}>{displayText("Active Stake:")}</p>
+                  <p className="font-semibold text-xs mb-1.5 wrap-break-word" style={{ color: "var(--card-text)" }}><ObnPrimary amount={userStake}>{fmtStaked(userStake)} OBN</ObnPrimary> <ObnUsd amount={userStake} tokenLabel={<>{fmtStaked(userStake)} OBN</>} /></p>
                   <p className="font-medium whitespace-nowrap" style={{ ...subTextStyle, fontSize: "min(3.2vw, 0.75rem)" }}>Pending Rewards:</p>
-                  <p className="font-semibold text-xs truncate" style={{ color: "var(--card-text)" }}>{fmtRewards(pendingRewards)} OBN</p>
+                  <p className="font-semibold text-xs wrap-break-word" style={{ color: "var(--card-text)" }}><ObnPrimary amount={pendingRewards}>{fmtRewards(pendingRewards)} OBN</ObnPrimary> <ObnUsd amount={pendingRewards} tokenLabel={<>{fmtRewards(pendingRewards)} OBN</>} /></p>
                 </div>
 
                 {/* RIGHT: Contributions */}
                 <div className="flex flex-col gap-1.5 text-center rounded-xl border p-2" style={{ borderColor: "var(--card-border)", backgroundColor: "var(--card-bg)" }}>
                   <p className="font-medium whitespace-nowrap" style={{ ...subTextStyle, fontSize: "min(3.2vw, 0.75rem)" }}>Contributed:</p>
-                  <p className="font-semibold text-xs mb-1.5 truncate" style={{ color: theme === "dark" ? "#86efac" : "#16a34a" }}>{fmtRewards(charityContributed)} OBN</p>
+                  <p className="font-semibold text-xs mb-1.5 wrap-break-word" style={{ color: theme === "dark" ? "#86efac" : "#16a34a" }}><ObnPrimary amount={charityContributed}>{fmtRewards(charityContributed)} OBN</ObnPrimary> <ObnUsd amount={charityContributed} tokenLabel={<>{fmtRewards(charityContributed)} OBN</>} /></p>
                   <p className="font-medium whitespace-nowrap" style={{ ...subTextStyle, fontSize: "min(3.2vw, 0.75rem)" }}>Pending Contribution:</p>
-                  <p className="font-semibold text-xs truncate" style={{ color: theme === "dark" ? "#86efac" : "#16a34a" }}>{fmtRewards(pendingRewards / 0.88 * 0.10)} OBN</p>
+                  <p className="font-semibold text-xs wrap-break-word" style={{ color: theme === "dark" ? "#86efac" : "#16a34a" }}><ObnPrimary amount={pendingRewards / 0.88 * 0.10}>{fmtRewards(pendingRewards / 0.88 * 0.10)} OBN</ObnPrimary> <ObnUsd amount={pendingRewards / 0.88 * 0.10} tokenLabel={<>{fmtRewards(pendingRewards / 0.88 * 0.10)} OBN</>} /></p>
                 </div>
               </div>
 
@@ -723,17 +737,38 @@ export default function PoolDetailPage() {
 
             {/* Controls */}
             <div className="flex flex-col items-center w-full shrink-0" style={{ maxWidth: !isMiniAppLayout && !isMobileBrowser ? "400px" : "448px", marginTop: !isMiniAppLayout && !isMobileBrowser ? "32px" : "16px" }}>
-              <input
-                type="number"
-                inputMode="decimal"
-                value={amount}
-                onChange={(e) => setAmount(e.target.value)}
-                placeholder="Enter OBN amount"
-                className="w-50 border rounded-lg px-3.5 py-2.5 mb-4 text-center focus:ring-2 focus:ring-green-500 text-sm"
-                style={{ borderColor: "var(--card-border)", color: "var(--card-text)", backgroundColor: "var(--card-bg)" }}
-              />
+              <div className="w-50 max-w-full mb-4 flex flex-col gap-1">
+                <label
+                  className="flex items-baseline justify-center gap-1 w-full border rounded-lg px-3.5 py-2.5 text-sm focus-within:ring-2 focus-within:ring-green-500 cursor-text"
+                  style={{ borderColor: "var(--card-border)", color: "var(--card-text)", backgroundColor: "var(--card-bg)" }}
+                >
+                  <span className="relative min-w-0 overflow-hidden">
+                    <span aria-hidden="true" className="invisible whitespace-pre">{amount || "Enter amount"}</span>
+                    <input
+                      type="text"
+                      inputMode="decimal"
+                      value={amount}
+                      onChange={(e) => {
+                        const value = e.target.value;
+                        if (/^\d*\.?\d*$/.test(value)) setAmount(value);
+                      }}
+                      placeholder="Enter amount"
+                      aria-label="OBN amount"
+                      aria-describedby={amount ? "amount-usd-estimate" : undefined}
+                      className="absolute inset-0 w-full min-w-0 border-0 bg-transparent p-0 text-right text-inherit outline-none"
+                    />
+                  </span>
+                  <span aria-hidden="true" className="shrink-0">OBN</span>
+                </label>
+                {amount && (
+                  <div id="amount-usd-estimate">
+                    <ObnUsd amount={amount} block size="text-xs" />
+                  </div>
+                )}
+              </div>
               {isThisPoolsNonprofitWallet ? (
                 <div className="flex flex-col items-center gap-2">
+                  <div className="flex items-center gap-2">
                   <button
                     disabled={loading}
                     onClick={handleClaim}
@@ -750,8 +785,10 @@ export default function PoolDetailPage() {
                   >
                     {processingAction === 'claim' ? "Processing..." : "Claim"}
                   </button>
+                  <AutoClaimButton control={autoClaim} disabled={loading} className="px-5 py-2.5 text-sm" />
+                  </div>
 
-                  <div className="flex gap-2 justify-center">
+                  <div className="flex items-center gap-2 justify-center w-full">
                     <button
                       onClick={handleBack}
                       className="text-xs font-semibold px-4 py-2 rounded-lg transition hover:opacity-80"
@@ -764,16 +801,23 @@ export default function PoolDetailPage() {
                     >
                       Back
                     </button>
+                    {isInMiniApp && (
+                      <ShareToFarcaster
+                        text={`I'm earning $OBN while supporting ${meta?.name ?? "a nonprofit"} on the Olive Branch Network! Check out their MiniApp 🌱`}
+                        className="px-4 py-2 rounded-lg font-semibold border border-purple-600 text-purple-600 transition text-xs whitespace-nowrap hover:bg-purple-600 hover:text-white"
+                      />
+                    )}
                   </div>
                 </div>
               ) : (
                 <>
-                  <div className={isMiniAppLayout ? "flex flex-wrap gap-3 justify-center" : "flex gap-3 justify-center"} style={isMiniAppLayout ? undefined : { flexWrap: 'nowrap' }}>
+                  <div className="w-full">
+                  <div className="flex gap-2 justify-center">
                     <button
                       disabled={loading}
                       onClick={handleStake}
-                      className={isMiniAppLayout ? "px-4 py-2 rounded-lg font-semibold border transition text-xs flex-1 min-w-20 whitespace-nowrap" : "px-3 py-2 rounded-lg font-semibold border transition text-xs flex-1 whitespace-nowrap"}
-                      style={{ borderColor: "#0D9921", color: "#0D9921", minWidth: isMiniAppLayout ? undefined : '70px' }}
+                      className="px-2 sm:px-3 py-2 rounded-lg font-semibold border transition text-xs flex-1 min-w-0 whitespace-nowrap"
+                      style={{ borderColor: "#0D9921", color: "#0D9921", minWidth: 0 }}
                       onMouseEnter={(e) => {
                         (e.currentTarget as HTMLButtonElement).style.backgroundColor = "#0D9921";
                         (e.currentTarget as HTMLButtonElement).style.color = "#ffffff";
@@ -783,13 +827,13 @@ export default function PoolDetailPage() {
                         (e.currentTarget as HTMLButtonElement).style.color = "#0D9921";
                       }}
                     >
-                      {processingAction === 'stake' ? "Processing..." : "Stake"}
+                      {processingAction === 'stake' ? "Processing..." : displayText("Stake")}
                     </button>
                     <button
                       disabled={loading}
                       onClick={handleUnstake}
-                      className={isMiniAppLayout ? "px-4 py-2 rounded-lg font-semibold border transition text-xs flex-1 min-w-20 whitespace-nowrap" : "px-3 py-2 rounded-lg font-semibold border transition text-xs flex-1 whitespace-nowrap"}
-                      style={{ borderColor: "#dc2626", color: "#dc2626", minWidth: isMiniAppLayout ? undefined : '70px' }}
+                      className="px-2 sm:px-3 py-2 rounded-lg font-semibold border transition text-xs flex-1 min-w-0 whitespace-nowrap"
+                      style={{ borderColor: "#dc2626", color: "#dc2626", minWidth: 0 }}
                       onMouseEnter={(e) => {
                         (e.currentTarget as HTMLButtonElement).style.backgroundColor = "#dc2626";
                         (e.currentTarget as HTMLButtonElement).style.color = "#ffffff";
@@ -799,13 +843,13 @@ export default function PoolDetailPage() {
                         (e.currentTarget as HTMLButtonElement).style.color = "#dc2626";
                       }}
                     >
-                      {processingAction === 'unstake' ? "Processing..." : "Unstake"}
+                      {processingAction === 'unstake' ? "Processing..." : displayText("Unstake")}
                     </button>
                     <button
                       disabled={loading}
                       onClick={handleClaim}
-                      className={isMiniAppLayout ? "px-4 py-2 rounded-lg font-semibold border transition text-xs flex-1 min-w-20 whitespace-nowrap" : "px-3 py-2 rounded-lg font-semibold border transition text-xs flex-1 whitespace-nowrap"}
-                      style={{ borderColor: "#2563eb", color: "#2563eb", minWidth: isMiniAppLayout ? undefined : '70px' }}
+                      className="px-2 sm:px-3 py-2 rounded-lg font-semibold border transition text-xs flex-1 min-w-0 whitespace-nowrap"
+                      style={{ borderColor: "#2563eb", color: "#2563eb", minWidth: 0 }}
                       onMouseEnter={(e) => {
                         (e.currentTarget as HTMLButtonElement).style.backgroundColor = "#2563eb";
                         (e.currentTarget as HTMLButtonElement).style.color = "#ffffff";
@@ -817,15 +861,12 @@ export default function PoolDetailPage() {
                     >
                       {processingAction === 'claim' ? "Processing..." : "Claim"}
                     </button>
-                    {isInMiniApp && (
-                      <ShareToFarcaster
-                        text={`I'm earning $OBN while supporting ${meta?.name ?? "a nonprofit"} on the Olive Branch Network! Check out their MiniApp 🌱`}
-                        className="px-4 py-2 rounded-lg font-semibold border border-purple-600 text-purple-600 transition text-xs flex-1 min-w-20 whitespace-nowrap hover:bg-purple-600 hover:text-white"
-                      />
-                    )}
+                    <AutoClaimButton control={autoClaim} disabled={loading} className="px-2 sm:px-3 py-2 flex-1 min-w-0" />
                   </div>
 
-                  <div className="flex gap-2 justify-center mt-5 mb-3">
+                  </div>
+
+                  <div className="flex items-center gap-2 justify-center w-full mt-5 mb-3">
                     <button
                       onClick={handleBack}
                       className="text-xs font-semibold px-4 py-2 rounded-lg transition hover:opacity-80"
@@ -838,6 +879,12 @@ export default function PoolDetailPage() {
                     >
                       Back
                     </button>
+                    {isInMiniApp && (
+                      <ShareToFarcaster
+                        text={`I'm earning $OBN while supporting ${meta?.name ?? "a nonprofit"} on the Olive Branch Network! Check out their MiniApp 🌱`}
+                        className="px-4 py-2 rounded-lg font-semibold border border-purple-600 text-purple-600 transition text-xs whitespace-nowrap hover:bg-purple-600 hover:text-white"
+                      />
+                    )}
                   </div>
                 </>
               )}
@@ -853,6 +900,7 @@ export default function PoolDetailPage() {
           affiliation with any of the organizations displayed.
         </footer>
       </main>
+      <AutoClaimDialog control={autoClaim} />
 
       {/* 🔲 Light-mode image borders (scoped helpers) */}
       <style jsx global>{`

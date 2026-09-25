@@ -1,6 +1,8 @@
 "use client";
+import { useDisplayText } from "@/hooks/useDisplayText";
+import { ObnUsd } from "@/components/ObnUsd";
 
-import { useEffect, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useReadContract } from "wagmi";
 import { formatUnits } from "viem";
@@ -127,6 +129,26 @@ function FundCard({
 }) {
   const theme = useTheme();
   const isClickable = !!onClick;
+  const balanceContainerRef = useRef<HTMLParagraphElement>(null);
+  const balanceLineRef = useRef<HTMLSpanElement>(null);
+
+  useLayoutEffect(() => {
+    const container = balanceContainerRef.current;
+    const line = balanceLineRef.current;
+    if (!container || !line) return;
+
+    // Fit the complete balance pair, including asynchronously loaded USD prices.
+    const fitBalance = () => {
+      const scale = Math.min(1, container.clientWidth / Math.max(1, line.offsetWidth));
+      line.style.transform = `scale(${scale})`;
+      container.style.height = `${line.offsetHeight * scale}px`;
+    };
+    const observer = new ResizeObserver(fitBalance);
+    observer.observe(container);
+    observer.observe(line);
+    fitBalance();
+    return () => observer.disconnect();
+  }, []);
 
   const inner = (
     <div
@@ -174,15 +196,18 @@ function FundCard({
           Current Balance
         </p>
         <p
-          className="text-[min(5vw,1.25rem)] md:text-3xl font-bold tabular-nums whitespace-nowrap"
+          ref={balanceContainerRef}
+          className="text-[min(5vw,1.25rem)] md:text-3xl font-bold tabular-nums"
           style={{ color: "var(--card-text)" }}
         >
+          <span ref={balanceLineRef} className="inline-flex w-max origin-top-left items-baseline whitespace-nowrap [&>span]:whitespace-nowrap">
           {formatObn(balance)}
           <span
             className="text-xs md:text-base font-semibold ml-1"
             style={{ color: "var(--card-subtext)" }}
           >
             OBN
+          </span> <ObnUsd amount={balance} />
           </span>
         </p>
       </div>
@@ -235,6 +260,7 @@ function FundCard({
 }
 
 export default function ProtocolFundsPage() {
+  const displayText = useDisplayText();
   usePageBackground();
   const router = useRouter();
   const { state, summary } = useGovernanceCycle();
@@ -368,7 +394,7 @@ export default function ProtocolFundsPage() {
             emoji="🔥"
             name="TheOffering"
             phase="Phase 1"
-            description="Stakers vote whether to permanently burn the balance or add it to ExtendOliveBranch."
+            description={displayText("Stakers vote whether to permanently burn the balance or add it to ExtendOliveBranch.")}
             balance={offeringBalance}
             address={THE_OFFERING}
             accentColor="#6b7280"
@@ -381,7 +407,7 @@ export default function ProtocolFundsPage() {
             emoji="🌿"
             name="ExtendOliveBranch"
             phase="Phase 2"
-            description="Stakers vote on which nonprofit receives the full balance."
+            description={displayText("Stakers vote on which nonprofit receives the full balance.")}
             balance={extendBalance}
             address={EXTEND_OLIVE_BRANCH}
             accentColor="#a855f7"

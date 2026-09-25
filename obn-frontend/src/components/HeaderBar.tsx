@@ -1,6 +1,7 @@
 // src/components/HeaderBar.tsx
 "use client";
 
+import { useDisplayText } from "@/hooks/useDisplayText";
 import { useEffect, useRef, useState } from "react";
 import { usePathname } from "next/navigation";
 import { ConnectButton, useAccountModal } from "@rainbow-me/rainbowkit";
@@ -12,6 +13,7 @@ import { FarcasterHeaderUser } from "@/components/FarcasterHeaderUser";
 import { isMiniAppRuntime } from "@/lib/miniapp";
 import MarketTicker from "@/components/MarketTicker";
 import { useName } from "@coinbase/onchainkit/identity";
+import { useDisplayMode } from "@/hooks/useDisplayMode";
 import { targetChain } from "@/wagmiConfig";
 
 const DEV_MODE = process.env.NODE_ENV === "development";
@@ -19,7 +21,9 @@ const DEV_MODE = process.env.NODE_ENV === "development";
 const STORAGE_KEY = "obnTheme"; // ← same as ThemeInitScript
 
 export default function HeaderBar() {
+  const displayText = useDisplayText();
   const pathname = usePathname();
+  const { displayMode, toggleDisplayMode } = useDisplayMode();
   const { connector, address } = useAccount();
   const isBaseAccount = connector?.id === "baseAccount";
   const { openAccountModal } = useAccountModal();
@@ -260,7 +264,7 @@ export default function HeaderBar() {
                 }}
               >
                 <MenuItem href="/profile" label="Profile" />
-                <MenuItem href="/stake-earn-contribute" label="Stake, Earn, Contribute" />
+                <MenuItem href="/stake-earn-contribute" label={displayText("Stake, Earn, Contribute")} />
                 <MenuItem href="/protocol-funds" label="Protocol Funds" />
                 <MenuItem href="/trade" label="Trade OBN" />
                 <MenuItem href="/analytics" label="Analytics" />
@@ -272,6 +276,17 @@ export default function HeaderBar() {
 
           {/* ✅ Theme toggle - same size as menu button */}
           <button
+            type="button"
+            onClick={toggleDisplayMode}
+            aria-label={`Display mode: ${displayMode === "crypto" ? "Web3" : "Web2"}. Switch to ${displayMode === "crypto" ? "Web2" : "Web3"} mode`}
+            aria-pressed={displayMode === "normal"}
+            title={`Switch to ${displayMode === "crypto" ? "Web2" : "Web3"} mode`}
+            className="rounded-md border border-white/70 px-2 py-1.5 text-xs font-semibold leading-4 text-white hover:bg-white hover:text-green-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-white/70 transition-colors"
+          >
+            {displayMode === "crypto" ? "Web3" : "Web2"}
+          </button>
+
+          <button
             onClick={toggleTheme}
             className="group flex items-center justify-center rounded-md p-1.5
                        border border-white/70 text-white
@@ -279,15 +294,15 @@ export default function HeaderBar() {
                        focus:outline-none focus-visible:ring-2 focus-visible:ring-white/70
                        transition-colors
                        dark:border-white/60 dark:hover:bg-white dark:hover:text-green-900"
-            aria-label="Toggle dark mode"
-            title="Toggle dark mode"
+            aria-label={`Theme: ${theme === "dark" ? "Dark" : "Light"}. Switch to ${theme === "dark" ? "light" : "dark"} mode`}
+            title={`Switch to ${theme === "dark" ? "light" : "dark"} mode`}
           >
-            {theme === "dark" ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+            {theme === "dark" ? <Moon className="h-4 w-4" /> : <Sun className="h-4 w-4" />}
           </button>
         </div>
 
         {/* Center: rotating market prices */}
-        <div className="min-w-0 overflow-hidden px-1 flex justify-center md:absolute md:left-1/2 md:-translate-x-1/2 md:max-w-[42vw] md:px-0">
+        <div className="min-w-0 overflow-hidden px-1 flex justify-center md:flex-1 md:px-4">
           <MarketTicker />
         </div>
 
@@ -305,7 +320,7 @@ export default function HeaderBar() {
               className="flex items-center justify-center px-3 py-2 rounded-xl bg-white text-gray-900 shadow-sm hover:shadow-lg hover:scale-105 transition-all"
               title={baseName ? `${baseName} — click to manage wallet` : "Click to manage wallet"}
             >
-              <span className={`${baseName ? "font-sans" : "font-mono"} max-w-[108px] sm:max-w-[160px] truncate text-[13px] font-bold leading-none`}>
+              <span className={`${baseName ? "font-sans" : "font-mono"} max-w-27 sm:max-w-40 truncate text-[13px] font-bold leading-none`}>
                 {baseName || `${address.slice(0, 6)}...${address.slice(-4)}`}
               </span>
             </button>

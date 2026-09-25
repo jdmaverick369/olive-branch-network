@@ -18,8 +18,8 @@ export default function FarcasterMiniAppReady() {
     // Double-RAF ensures the green background has been painted before we signal
     // the host to dismiss its splash screen. Without this, Base App (which cuts
     // instantly rather than crossfading) shows a white frame on transition.
-    let raf2 = 0;
-    const raf1 = requestAnimationFrame(() => {
+    let raf1: number, raf2: number;
+    raf1 = requestAnimationFrame(() => {
       raf2 = requestAnimationFrame(() => {
         markReady();
       });
