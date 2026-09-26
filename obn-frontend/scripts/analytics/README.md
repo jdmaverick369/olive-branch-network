@@ -7,7 +7,7 @@ Nonprofit pool cards continue reading the Lens contract every 30 seconds.
 
 - **Active Stakers:** distinct addresses with positive stake across any pool, including nonprofit bootstrap positions. A wallet in two pools counts once.
 - **Total Staked:** sum of current staking balances, in OBN.
-- **Total Contributed:** cumulative `CharityDistributed` plus `CharityFundDistributed` amounts. Excludes pending/unminted rewards, `CharityAllocated`, treasury distributions, and direct donations outside these events.
+- **Total Contributed:** cumulative `CharityDistributed`, `CharityFundDistributed`, and the nonprofit's own-pool `Claim` rewards from its seed stake. A claim qualifies only when its recipient matches that pool's charity wallet at that exact event position. `PoolAdded` and `CharityWalletUpdated` track historical recipients, including migrations; removed pools cannot qualify treasury claims as nonprofit rewards. Each event's actual minted amount is counted once. Excludes seed principal, ordinary staker claims, pending/unminted rewards, `CharityAllocated`, treasury distributions, and direct donations outside these events.
 
 These definitions have not been compared with the original Dune SQL. Daily points are UTC end-of-day balances, with the most recent day showing the last indexed finalized block. Only the display converts exact integer token amounts into JavaScript numbers.
 
@@ -20,6 +20,8 @@ The default is Base's free public RPC. Optionally set the Actions secret `ANALYT
 A verified history snapshot and checkpoint are included, covering September 6, 2025 onward. The workflow continues from that checkpoint. When rebuilding from scratch, the worker discovers the proxy's original deployment using historical code reads; initial backfill can require many runs, especially with small provider block-range limits. Run it again to resume immediately rather than waiting for the next day. Daily runs read only new blocks. Standard GitHub-hosted runners are free for public repositories; private repositories have a monthly allowance. Provider and Actions limits still apply.
 
 The repository stores `scripts/analytics/state.json` (public on-chain wallet balances and an exact checkpoint) and `src/data/analytics.json` (small daily chart series). Checkpoints survive failed or time-limited runs. The worker publishes only after reaching the finalized tip and matching `globalTotalStaked` and `uniqueStakersGlobal`. A finalized block hash mismatch stops processing for investigation; it never silently resets history. Wallet-change events trigger historical balance reads to handle `migrateBootstrap`, which does not emit deposit/withdraw events.
+
+Checkpoint schema 2 includes historical charity wallets and the exact `seedClaims` subtotal. Schema 1 checkpoints and archives are rejected because they omitted claim events; rebuild in a fresh state directory from deployment instead of appending new claims to incomplete history. RPC archives record their event topics and reject incompatible cached ranges. The frontend snapshot retains schema 1 because its response shape is unchanged.
 
 If balances become negative or reconciliation fails, retain the checkpoint for diagnosis and rebuild from deployment with complete RPC history. Do not skip the failing events or publish the partial state. A changed historical data source cannot repair already-indexed days merely by continuing from a later cursor.
 

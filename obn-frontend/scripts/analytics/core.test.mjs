@@ -65,3 +65,31 @@ test('checkpoint round-trip preserves exact token amounts and resumes daily seri
   assert.equal(totals(state).staked, 1n);
   assert.equal(state.rows.length, 2);
 });
+
+test('counts own-pool nonprofit claims once and follows wallet changes in log order', () => {
+  let state = initialState(100, start);
+  const add = (pid, charityWallet) => applyEvent(state, { name: 'PoolAdded', args: { pid, charityWallet } });
+  const claim = (user, pid, amountUser) => applyEvent(state, { name: 'Claim', args: { user, pid, amountUser } });
+  add(0n, '0xOld');
+  add(1n, '0xOther');
+  applyEvent(state, event('Deposit', '0xOld', 0n, 1000000n * unit));
+  claim('0xOLD', 0n, 88n * unit);
+  claim('0xStaker', 0n, 88n * unit);
+  claim('0xOld', 1n, 88n * unit); // A nonprofit staking in another pool is not its seed position.
+  applyEvent(state, event('CharityDistributed', null, 0n, 10n * unit));
+  applyEvent(state, event('CharityFundDistributed', null, null, unit));
+  assert.equal(state.contributed, (99n * unit).toString());
+  assert.equal(state.seedClaims, (88n * unit).toString());
+  advanceDay(state, start + 86400);
+  state = JSON.parse(JSON.stringify(state));
+  applyEvent(state, { name: 'CharityWalletUpdated', args: { pid: 0n, oldWallet: '0xOld', newWallet: '0xNew' } });
+  claim('0xOld', 0n, 100n * unit);
+  claim('0xNew', 0n, 2n * unit);
+  assert.equal(state.contributed, (101n * unit).toString());
+  assert.equal(state.rows[0].totalContributed, 99);
+  applyEvent(state, { name: 'PoolRemoved', args: { pid: 0n } });
+  applyEvent(state, { name: 'CharityWalletUpdated', args: { pid: 0n, oldWallet: '0xNew', newWallet: '0xTreasury' } });
+  claim('0xTreasury', 0n, unit);
+  assert.equal(state.contributed, (101n * unit).toString());
+  assert.throws(() => claim('0xNew', 99n, unit), /Missing charity wallet/);
+});

@@ -1,7 +1,7 @@
 export const ANALYTICS_METRICS = [
   { id: 'active-stakers', key: 'activeStakers', title: 'Active Stakers', description: 'Distinct wallets with positive stake across all pools' },
   { id: 'total-staked', key: 'totalStaked', title: 'Total Staked', description: 'Total OBN currently staked' },
-  { id: 'total-contributed', key: 'totalContributed', title: 'Total Contributed', description: 'OBN distributed to nonprofit pools and the charity fund' },
+  { id: 'total-contributed', key: 'totalContributed', title: 'Total Contributed', description: 'OBN paid to nonprofits, including claimed seed rewards, and the charity fund' },
 ] as const;
 
 export interface AnalyticsSnapshot {

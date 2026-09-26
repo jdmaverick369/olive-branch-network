@@ -118,13 +118,13 @@ async function run() {
   let archive = null;
   if (process.env.ANALYTICS_LOGS_FILE) {
     archive = JSON.parse(await readFile(resolve(process.env.ANALYTICS_LOGS_FILE), 'utf8'));
-    if (archive.schema !== 1 || archive.chainId !== 8453 || archive.contract !== STAKING || archive.fromBlock !== 0 || archive.source !== 'Base JSON-RPC' ||
+    if (archive.schema !== 2 || JSON.stringify(archive.topics) !== JSON.stringify(topics) || archive.chainId !== 8453 || archive.contract !== STAKING || archive.fromBlock !== 0 || archive.source !== 'Base JSON-RPC' ||
         !Number.isSafeInteger(archive.toBlock) || archive.toBlock > tip.number || !Array.isArray(archive.logs) ||
         (await block(archive.toBlock)).hash !== archive.blockHash) throw new Error('Invalid bootstrap archive');
   }
   let state = await readState();
   if (state) {
-    if (state.schema !== 1 || state.chainId !== 8453 || state.contract !== STAKING) throw new Error('Incompatible checkpoint');
+    if (state.schema !== 2 || !state.charityWallets || !state.removedPools || typeof state.seedClaims !== 'string' || state.chainId !== 8453 || state.contract !== STAKING) throw new Error('Incompatible checkpoint; rebuild history with nonprofit claim events');
     if (state.cursor > tip.number) throw new Error('RPC finalized tip is behind the checkpoint');
     if (state.blockHash && (await block(state.cursor)).hash !== state.blockHash) throw new Error('Finalized checkpoint hash changed; rebuild history before publishing');
   } else {

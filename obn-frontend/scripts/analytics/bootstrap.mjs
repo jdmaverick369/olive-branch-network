@@ -52,11 +52,11 @@ async function run() {
       if (await provider.getCode(STAKING, middle) === '0x') low = middle + 1;
       else high = middle;
     }
-    metadata = { schema: 1, chainId: 8453, contract: STAKING, source: 'Base JSON-RPC',
+    metadata = { schema: 2, topics, chainId: 8453, contract: STAKING, source: 'Base JSON-RPC',
       fromBlock: 0, startBlock: low, toBlock: end.number, blockHash: end.hash };
     await save(metadataFile, metadata);
   }
-  if (metadata.contract !== STAKING || metadata.chainId !== 8453 ||
+  if (metadata.schema !== 2 || JSON.stringify(metadata.topics) !== JSON.stringify(topics) || metadata.contract !== STAKING || metadata.chainId !== 8453 ||
       (await provider.getBlock(metadata.toBlock))?.hash !== metadata.blockHash) throw new Error('Incompatible RPC archive checkpoint');
   const jobs = [];
   for (let from = metadata.startBlock; from <= metadata.toBlock; from += range) jobs.push({ from, to: Math.min(from + range - 1, metadata.toBlock) });

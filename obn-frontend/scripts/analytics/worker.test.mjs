@@ -7,7 +7,7 @@ import { mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { abi, STAKING } from './core.mjs';
+import { abi, STAKING, topics } from './core.mjs';
 
 const execute = promisify(execFile);
 const script = fileURLToPath(new URL('./run.mjs', import.meta.url));
@@ -31,10 +31,14 @@ test('worker retries bounded ranges, resumes, reconciles migrations and preserve
   let maxLogSpan = 2;
   const logReads = [];
   const logs = [
+    eventLog(100, 0, 'PoolAdded', [0n, old]),
     eventLog(101, 0, 'Deposit', [old, 0n, 10n * unit]),
+    eventLog(103, 0, 'Claim', [old, 0n, 8n * unit]),
     eventLog(104, 0, 'CharityWalletUpdated', [0n, old, newer]),
     eventLog(104, 1, 'Deposit', [newer, 0n, unit]),
     eventLog(104, 2, 'Withdraw', [newer, 0n, unit]),
+    eventLog(104, 3, 'Claim', [old, 0n, 100n * unit]),
+    eventLog(104, 4, 'Claim', [newer, 0n, 4n * unit]),
     eventLog(106, 0, 'CharityDistributed', [0n, 2n * unit]),
     eventLog(107, 0, 'CharityFundDistributed', [unit]),
   ];
@@ -95,7 +99,8 @@ test('worker retries bounded ranges, resumes, reconciles migrations and preserve
   } });
   await run();
   let published = JSON.parse(await readFile(join(directory, 'analytics.json'), 'utf8'));
-  assert.equal(published.rows.at(-1).totalContributed, 3);
+  assert.equal(published.rows.at(-1).totalContributed, 15);
+  assert.equal(published.rows.find(row => row.day === '2025-09-04').totalContributed, 8);
   assert.equal(published.rows.at(-1).totalStaked, 10);
   assert.equal(published.rows.at(-1).activeStakers, 1);
   const state = JSON.parse(await readFile(join(directory, 'state.json'), 'utf8'));
@@ -103,7 +108,7 @@ test('worker retries bounded ranges, resumes, reconciles migrations and preserve
   assert.equal(state.balances[`0:${old}`], undefined);
 
   const archiveFile = join(directory, 'archive.json');
-  await writeFile(archiveFile, JSON.stringify({ schema: 1, chainId: 8453, contract: STAKING,
+  await writeFile(archiveFile, JSON.stringify({ schema: 2, topics, chainId: 8453, contract: STAKING,
     source: 'Base JSON-RPC', fromBlock: 0, toBlock: 107, blockHash: hash(107), logs }));
   await run({ ANALYTICS_LOGS_FILE: archiveFile, ANALYTICS_STATE_DIR: join(directory, 'archived') });
   const imported = JSON.parse(await readFile(join(directory, 'archived', 'analytics.json'), 'utf8'));
@@ -132,5 +137,10 @@ test('worker retries bounded ranges, resumes, reconciles migrations and preserve
   maxLogSpan = 100;
   await run({ ANALYTICS_STATE_DIR: join(directory, 'base-clock'), ANALYTICS_LOG_RANGE: '100' });
   const fast = JSON.parse(await readFile(join(directory, 'base-clock', 'analytics.json'), 'utf8'));
-  assert.deepEqual(fast.rows, [{ day: '2025-09-01', activeStakers: 1, totalStaked: 10, totalContributed: 3 }]);
+  assert.deepEqual(fast.rows, [{ day: '2025-09-01', activeStakers: 1, totalStaked: 10, totalContributed: 15 }]);
+  await writeFile(join(directory, 'state.json'), JSON.stringify({ ...state, schema: 1 }));
+  await assert.rejects(run(), /Incompatible checkpoint/);
+  await writeFile(archiveFile, JSON.stringify({ schema: 1, chainId: 8453, contract: STAKING,
+    source: 'Base JSON-RPC', fromBlock: 0, toBlock: 107, blockHash: hash(107), logs }));
+  await assert.rejects(run({ ANALYTICS_LOGS_FILE: archiveFile }), /Invalid bootstrap archive/);
 });

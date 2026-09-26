@@ -4,6 +4,9 @@ export const STAKING = '0x2C4Bd5B2a48a76f288d7F2DB23aFD3a03b9E7cD2';
 export const abi = new Interface([
   'event Deposit(address indexed user, uint256 indexed pid, uint256 amount)',
   'event Withdraw(address indexed user, uint256 indexed pid, uint256 amount)',
+  'event PoolAdded(uint256 indexed pid, address charityWallet)',
+  'event PoolRemoved(uint256 indexed pid)',
+  'event Claim(address indexed user, uint256 indexed pid, uint256 amountUser)',
   'event CharityDistributed(uint256 indexed pid, uint256 amount)',
   'event CharityFundDistributed(uint256 amount)',
   'event CharityWalletUpdated(uint256 indexed pid, address indexed oldWallet, address indexed newWallet)',
@@ -24,8 +27,9 @@ export function baseTimestamp(start, end, number) {
 }
 
 export function initialState(startBlock, startTimestamp) {
-  return { schema: 1, chainId: 8453, contract: STAKING, startBlock,
+  return { schema: 2, chainId: 8453, contract: STAKING, startBlock,
     cursor: startBlock - 1, blockHash: null, balances: {}, contributed: '0',
+    charityWallets: {}, removedPools: {}, seedClaims: '0',
     day: dayOf(startTimestamp), rows: [], logRange: null };
 }
 
@@ -67,7 +71,24 @@ export function setBalance(state, pid, wallet, amount) {
 
 export function applyEvent(state, event) {
   const { name, args } = event;
-  if (name === 'Deposit' || name === 'Withdraw') {
+  if (name === 'PoolAdded') {
+    if (state.charityWallets[args.pid] !== undefined) throw new Error('Duplicate pool creation');
+    state.charityWallets[args.pid] = args.charityWallet.toLowerCase();
+  } else if (name === 'PoolRemoved') {
+    state.removedPools[args.pid] = true;
+  } else if (name === 'CharityWalletUpdated') {
+    if (state.charityWallets[args.pid] !== args.oldWallet.toLowerCase()) throw new Error('Incomplete charity wallet history');
+    state.charityWallets[args.pid] = args.newWallet.toLowerCase();
+  } else if (name === 'Claim') {
+    const charity = state.charityWallets[args.pid];
+    if (!charity) throw new Error('Missing charity wallet for claim');
+    // A nonprofit's own-pool reward is a separate mint from the 10%/1% slices.
+    // Follow the wallet at this exact log position, including wallet migrations.
+    if (!state.removedPools[args.pid] && args.user.toLowerCase() === charity) {
+      state.seedClaims = (BigInt(state.seedClaims) + args.amountUser).toString();
+      state.contributed = (BigInt(state.contributed) + args.amountUser).toString();
+    }
+  } else if (name === 'Deposit' || name === 'Withdraw') {
     const key = `${args.pid}:${args.user.toLowerCase()}`;
     setBalance(state, args.pid, args.user, BigInt(state.balances[key] ?? '0') +
       (name === 'Deposit' ? args.amount : -args.amount));
@@ -82,6 +103,6 @@ export function snapshot(state, block, generatedAt = new Date().toISOString()) {
     definitions: {
       activeStakers: 'Distinct wallets with positive stake across all pools, including nonprofit bootstrap stakes.',
       totalStaked: 'OBN currently staked across all pools.',
-      totalContributed: 'Cumulative CharityDistributed plus CharityFundDistributed OBN; excludes unminted rewards and direct donations.',
+      totalContributed: 'Cumulative nonprofit own-pool Claim rewards plus CharityDistributed and CharityFundDistributed OBN; excludes seed principal, unminted rewards and direct donations.',
     }, rows: [...state.rows, row(state)] };
 }
