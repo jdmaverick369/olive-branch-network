@@ -816,7 +816,7 @@ export default function PoolDetailPage() {
                     {isInMiniApp && (
                       <ShareToFarcaster
                         text={`I'm earning $OBN while supporting ${meta?.name ?? "a nonprofit"} on the Olive Branch Network! Check out their MiniApp 🌱`}
-                        className="px-4 py-2 rounded-lg font-semibold border border-purple-600 text-purple-600 transition text-xs whitespace-nowrap hover:bg-purple-600 hover:text-white"
+                        className="px-4 py-2 rounded-lg font-semibold border border-[#6b7280] text-[#6b7280] transition text-xs whitespace-nowrap hover:bg-[#6b7280] hover:text-white"
                       />
                     )}
                   </div>
@@ -894,7 +894,7 @@ export default function PoolDetailPage() {
                     {isInMiniApp && (
                       <ShareToFarcaster
                         text={`I'm earning $OBN while supporting ${meta?.name ?? "a nonprofit"} on the Olive Branch Network! Check out their MiniApp 🌱`}
-                        className="px-4 py-2 rounded-lg font-semibold border border-purple-600 text-purple-600 transition text-xs whitespace-nowrap hover:bg-purple-600 hover:text-white"
+                        className="px-4 py-2 rounded-lg font-semibold border border-[#6b7280] text-[#6b7280] transition text-xs whitespace-nowrap hover:bg-[#6b7280] hover:text-white"
                       />
                     )}
                   </div>
