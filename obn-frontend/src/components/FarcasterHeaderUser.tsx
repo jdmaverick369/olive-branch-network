@@ -2,7 +2,6 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { useRouter } from "next/navigation";
 import { sdk } from "@farcaster/miniapp-sdk";
 import type { Address } from "viem";
 import { Eye } from "lucide-react";
@@ -20,7 +19,6 @@ type Props = {
 };
 
 export function FarcasterHeaderUser({ onMiniAppDetected }: Props) {
-  const router = useRouter();
   const wallet = useMiniAppWallet();
   const [user, setUser] = useState<MiniAppUser | null>(null);
   const [isInMiniApp, setIsInMiniApp] = useState(false);
@@ -125,10 +123,6 @@ export function FarcasterHeaderUser({ onMiniAppDetected }: Props) {
           className="absolute right-0 top-full z-50 mt-2 w-72 max-w-[calc(100vw-2rem)] rounded-xl border p-2 shadow-xl"
           style={{ background: "var(--card-bg, white)", color: "var(--card-text, #111827)", borderColor: "var(--card-border, #e5e7eb)" }}
         >
-          <button type="button" role="menuitem" className={rowClass(false)} onClick={() => { setOpen(false); router.push("/profile"); }}>
-            View profile
-          </button>
-
           <p className="mt-2 px-3 pb-1 text-xs font-semibold uppercase tracking-wide" style={{ color: "var(--card-subtext)" }}>Wallet</p>
 
           <button type="button" role="menuitemradio" aria-checked={onDefault} className={rowClass(onDefault)} onClick={() => choose(null)}>
