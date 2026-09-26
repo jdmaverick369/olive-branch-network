@@ -4,6 +4,13 @@ export const ANALYTICS_METRICS = [
   { id: 'total-contributed', key: 'totalContributed', title: 'Total Contributed', description: 'OBN paid to nonprofits, including claimed seed rewards, and the charity fund' },
 ] as const;
 
+export interface PoolAnalytics {
+  contributions: number;
+  seedClaims: number;
+  annualAwards: number;
+  rows: { day: string; activeStakers: number }[];
+}
+
 export interface AnalyticsSnapshot {
   schema: 1;
   chainId: 8453;
@@ -13,6 +20,7 @@ export interface AnalyticsSnapshot {
   throughTimestamp: string;
   definitions: Record<string, string>;
   rows: { day: string; activeStakers: number; totalStaked: number; totalContributed: number }[];
+  pools?: Record<string, PoolAnalytics>;
 }
 
 export function isAnalyticsSnapshot(value: unknown): value is AnalyticsSnapshot {
@@ -30,7 +38,14 @@ export function isAnalyticsSnapshot(value: unknown): value is AnalyticsSnapshot 
       Number.isFinite(row.totalStaked) && row.totalStaked >= 0 &&
       Number.isFinite(row.totalContributed) && row.totalContributed >= 0 &&
       (i === 0 || row.totalContributed >= data.rows[i - 1].totalContributed)
-    ) && data.rows.at(-1)?.day === data.throughTimestamp.slice(0, 10);
+    ) && data.rows.at(-1)?.day === data.throughTimestamp.slice(0, 10) &&
+    (data.pools === undefined || (data.pools !== null && typeof data.pools === 'object' && !Array.isArray(data.pools) &&
+      Object.entries(data.pools).every(([pid, pool]) => /^\d+$/.test(pid) && pool &&
+        [pool.contributions, pool.seedClaims, pool.annualAwards].every(amount => typeof amount === 'number' && Number.isFinite(amount) && amount >= 0) &&
+        Array.isArray(pool.rows) && pool.rows.length > 0 && pool.rows.every((row, i) => row &&
+          /^\d{4}-\d{2}-\d{2}$/.test(row.day) && Number.isFinite(Date.parse(row.day)) &&
+          (i === 0 || row.day > pool.rows[i - 1].day) && Number.isSafeInteger(row.activeStakers) && row.activeStakers >= 0
+        ) && pool.rows.at(-1)?.day === data.throughTimestamp.slice(0, 10))));
 }
 
 export async function fetchAnalytics(signal?: AbortSignal): Promise<AnalyticsSnapshot> {

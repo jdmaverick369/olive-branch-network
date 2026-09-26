@@ -1,6 +1,6 @@
 import { mkdir, readFile, rename, writeFile } from 'node:fs/promises';
 import { dirname, resolve } from 'node:path';
-import { abi, STAKING, topics, initialState, advanceDay, applyEvent, setBalance, totals, snapshot, baseTimestamp } from './core.mjs';
+import { abi, STAKING, GOVERNANCE, LENS, governanceAbi, governanceTopic, topics, initialState, advanceDay, applyEvent, setBalance, totals, snapshot, baseTimestamp, poolActiveCounts } from './core.mjs';
 
 const directory = resolve(process.env.ANALYTICS_STATE_DIR || '.analytics');
 const rpcUrl = process.env.ANALYTICS_RPC_URL || process.env.BASE_RPC_URL || process.env.RPC_URL || process.env.NEXT_PUBLIC_RPC_URL;
@@ -98,6 +98,18 @@ async function call(name, args, at) {
   const result = await rpc('eth_call', [{ to: STAKING, data: abi.encodeFunctionData(name, args) }, hex(at)]);
   return abi.decodeFunctionResult(name, result)[0];
 }
+async function governanceLogs(from, to) {
+  if (to - from >= 10000) {
+    return [...await governanceLogs(from, from + 9999), ...await governanceLogs(from + 10000, to)];
+  }
+  try {
+    return await rpc('eth_getLogs', [{ address: GOVERNANCE, fromBlock: hex(from), toBlock: hex(to), topics: [governanceTopic] }]);
+  } catch (error) {
+    if (!error.range || from === to) throw error;
+    const middle = Math.floor((from + to) / 2);
+    return [...await governanceLogs(from, middle), ...await governanceLogs(middle + 1, to)];
+  }
+}
 async function save(name, value) {
   const path = resolve(directory, name);
   await mkdir(dirname(path), { recursive: true });
@@ -124,7 +136,7 @@ async function run() {
   }
   let state = await readState();
   if (state) {
-    if (state.schema !== 2 || !state.charityWallets || !state.removedPools || typeof state.seedClaims !== 'string' || state.chainId !== 8453 || state.contract !== STAKING) throw new Error('Incompatible checkpoint; rebuild history with nonprofit claim events');
+    if (state.schema !== 3 || state.governance !== GOVERNANCE || !state.pools || !state.annualCycles || !state.charityWallets || !state.removedPools || typeof state.seedClaims !== 'string' || state.chainId !== 8453 || state.contract !== STAKING) throw new Error('Incompatible checkpoint; rebuild nonprofit pool history');
     if (state.cursor > tip.number) throw new Error('RPC finalized tip is behind the checkpoint');
     if (state.blockHash && (await block(state.cursor)).hash !== state.blockHash) throw new Error('Finalized checkpoint hash changed; rebuild history before publishing');
   } else {
@@ -139,6 +151,19 @@ async function run() {
     state = initialState(low, (await block(low)).timestamp);
     await save('state.json', state);
     console.log(`Discovered staking deployment block ${low}`);
+  }
+  if (state.governanceStartBlock === undefined) {
+    let low = 0, high = tip.number;
+    if (await rpc('eth_getCode', [GOVERNANCE, hex(high)]) === '0x') throw new Error('Annual governance proxy not deployed');
+    while (low < high) {
+      const middle = Math.floor((low + high) / 2);
+      if (await rpc('eth_getCode', [GOVERNANCE, hex(middle)]) === '0x') low = middle + 1;
+      else high = middle;
+    }
+    if (low < state.startBlock) throw new Error('Governance predates staking; historical payout coverage requires review');
+    state.governanceStartBlock = low;
+    await save('state.json', state);
+    console.log(`Discovered annual governance deployment block ${low}`);
   }
   let range = positive('ANALYTICS_LOG_RANGE', state.logRange || 10000);
   while (state.cursor < tip.number && Date.now() - started < maxSeconds * 1000 && requests < maxRequests - 100) {
@@ -155,13 +180,16 @@ async function run() {
       if (error.range && range > 1) { range = Math.max(1, Math.floor(range / 2)); continue; }
       throw error;
     }
+    if (to >= state.governanceStartBlock) logs.push(...await governanceLogs(Math.max(from, state.governanceStartBlock), to));
     logs.sort((a, b) => Number(BigInt(a.blockNumber) - BigInt(b.blockNumber)) || Number(BigInt(a.logIndex) - BigInt(b.logIndex)));
     const groups = new Map();
     const seen = new Set();
     for (const log of logs) {
       const n = Number(BigInt(log.blockNumber));
       const key = `${log.blockHash}:${log.logIndex}`;
-      if (log.removed || n < from || n > to || log.address.toLowerCase() !== STAKING.toLowerCase()) throw new Error('Invalid RPC log');
+      const validSource = (log.address.toLowerCase() === STAKING.toLowerCase() && topics.includes(log.topics[0])) ||
+        (log.address.toLowerCase() === GOVERNANCE.toLowerCase() && log.topics[0] === governanceTopic);
+      if (log.removed || n < from || n > to || !validSource) throw new Error('Invalid RPC log');
       if (seen.has(key)) continue;
       seen.add(key);
       if (!groups.has(n)) groups.set(n, []);
@@ -195,7 +223,7 @@ async function run() {
       const expectedHash = at.hash || entries[0].blockHash;
       if (entries.some(log => log.blockHash !== expectedHash)) throw new Error('Log/block hash mismatch');
       advanceDay(next, at.timestamp);
-      const events = entries.map(log => abi.parseLog(log));
+      const events = entries.map(log => (log.address.toLowerCase() === GOVERNANCE.toLowerCase() ? governanceAbi : abi).parseLog(log));
       const migrated = new Map();
       for (const event of events) {
         if (event.name === 'CharityWalletUpdated') {
@@ -227,6 +255,14 @@ async function run() {
   const expectedActive = await call('uniqueStakersGlobal', [], tip.number);
   const actual = totals(state);
   if (actual.staked !== expectedStake || BigInt(actual.active) !== expectedActive) throw new Error('Rebuilt balances disagree with contract totals; refusing to publish');
+  const counts = poolActiveCounts(state);
+  const poolResult = await rpc('eth_call', [{ to: LENS, data: abi.encodeFunctionData('listPoolsBasic', []) }, hex(tip.number)]);
+  const [, , expectedCounts] = abi.decodeFunctionResult('listPoolsBasic', poolResult);
+  for (const pid of Object.keys(state.pools)) {
+    if (BigInt(counts[pid] || 0) !== expectedCounts[Number(pid)]) {
+      throw new Error(`Rebuilt active stakers disagree with pool ${pid}; refusing to publish`);
+    }
+  }
   await save('analytics.json', snapshot(state, tip));
   console.log(`Published ${state.rows.length + 1} daily points; ${actual.active} active wallets; ${requests} RPC requests`);
 }

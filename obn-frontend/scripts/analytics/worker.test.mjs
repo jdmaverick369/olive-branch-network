@@ -7,7 +7,7 @@ import { mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { abi, STAKING, topics } from './core.mjs';
+import { abi, STAKING, GOVERNANCE, governanceAbi, topics } from './core.mjs';
 
 const execute = promisify(execFile);
 const script = fileURLToPath(new URL('./run.mjs', import.meta.url));
@@ -27,6 +27,7 @@ test('worker retries bounded ranges, resumes, reconciles migrations and preserve
   const directory = await mkdtemp(join(tmpdir(), 'obn-analytics-test-'));
   let tip = 110;
   let badTotals = false;
+  let badPoolCounts = false;
   let changedHash = false;
   let maxLogSpan = 2;
   const logReads = [];
@@ -41,6 +42,8 @@ test('worker retries bounded ranges, resumes, reconciles migrations and preserve
     eventLog(104, 4, 'Claim', [newer, 0n, 4n * unit]),
     eventLog(106, 0, 'CharityDistributed', [0n, 2n * unit]),
     eventLog(107, 0, 'CharityFundDistributed', [unit]),
+    { ...eventLog(108, 0, 'CharityFundDistributed', [unit]), address: GOVERNANCE,
+      ...governanceAbi.encodeEventLog(governanceAbi.getEvent('Phase2Executed'), [1n, newer, 5n * unit]) },
   ];
   const server = createServer(async (request, response) => {
     let body = '';
@@ -69,7 +72,7 @@ test('worker retries bounded ranges, resumes, reconciles migrations and preserve
         return;
       }
       logReads.push([from, to]);
-      result = logs.filter(log => Number(BigInt(log.blockNumber)) >= from && Number(BigInt(log.blockNumber)) <= to);
+      result = logs.filter(log => log.address === params[0].address && Number(BigInt(log.blockNumber)) >= from && Number(BigInt(log.blockNumber)) <= to);
       // Deliberately duplicate a provider log to verify de-duplication.
       if (result.length) result = [...result, result[0]];
     }
@@ -79,7 +82,7 @@ test('worker retries bounded ranges, resumes, reconciles migrations and preserve
       if (call.name === 'globalTotalStaked') value = (badTotals ? 11n : 10n) * unit;
       if (call.name === 'uniqueStakersGlobal') value = 1n;
       if (call.name === 'userAmount') value = call.args[1].toLowerCase() === newer ? 10n * unit : 0n;
-      result = abi.encodeFunctionResult(call.name, [value]);
+      result = abi.encodeFunctionResult(call.name, call.name === 'listPoolsBasic' ? [[newer], [10n * unit], [badPoolCounts ? 2n : 1n]] : [value]);
     }
     response.setHeader('content-type', 'application/json');
     response.end(JSON.stringify({ jsonrpc: '2.0', id, result }));
@@ -103,6 +106,10 @@ test('worker retries bounded ranges, resumes, reconciles migrations and preserve
   assert.equal(published.rows.find(row => row.day === '2025-09-04').totalContributed, 8);
   assert.equal(published.rows.at(-1).totalStaked, 10);
   assert.equal(published.rows.at(-1).activeStakers, 1);
+  assert.equal(published.pools[0].contributions, 2);
+  assert.equal(published.pools[0].seedClaims, 12);
+  assert.equal(published.pools[0].annualAwards, 5);
+  assert.deepEqual(published.pools[0].rows.map(row => row.activeStakers), [0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]);
   const state = JSON.parse(await readFile(join(directory, 'state.json'), 'utf8'));
   assert.equal(state.balances[`0:${newer}`], (10n * unit).toString());
   assert.equal(state.balances[`0:${old}`], undefined);
@@ -115,6 +122,8 @@ test('worker retries bounded ranges, resumes, reconciles migrations and preserve
   assert.deepEqual(imported.rows, published.rows);
 
   logReads.length = 0;
+  logs.push({ ...eventLog(111, 0, 'CharityFundDistributed', [unit]), address: GOVERNANCE,
+    ...governanceAbi.encodeEventLog(governanceAbi.getEvent('Phase2Executed'), [2n, newer, 2n * unit]) });
   tip = 112;
   await run();
   assert.ok(logReads.every(([from]) => from > 110));
@@ -122,11 +131,20 @@ test('worker retries bounded ranges, resumes, reconciles migrations and preserve
   published = JSON.parse(good);
   assert.equal(published.throughBlock, 112);
   assert.equal(published.rows.length, 13);
+  assert.equal(published.pools[0].annualAwards, 7);
+  await run();
+  assert.equal(JSON.parse(await readFile(join(directory, 'analytics.json'), 'utf8')).pools[0].annualAwards, 7);
 
   tip = 114;
+  badPoolCounts = true;
+  await assert.rejects(run(), /disagree with pool 0/);
+  assert.deepEqual(JSON.parse(await readFile(join(directory, 'analytics.json'), 'utf8')).rows, published.rows);
+  // The successful unchanged-tip run above only changes generatedAt.
+  const lastGood = await readFile(join(directory, 'analytics.json'), 'utf8');
+  badPoolCounts = false;
   badTotals = true;
   await assert.rejects(run(), /disagree with contract totals/);
-  assert.equal(await readFile(join(directory, 'analytics.json'), 'utf8'), good);
+  assert.equal(await readFile(join(directory, 'analytics.json'), 'utf8'), lastGood);
   changedHash = true;
   await assert.rejects(run(), /checkpoint hash changed/);
 

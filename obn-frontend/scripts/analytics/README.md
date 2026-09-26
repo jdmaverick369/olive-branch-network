@@ -21,7 +21,17 @@ A verified history snapshot and checkpoint are included, covering September 6, 2
 
 The repository stores `scripts/analytics/state.json` (public on-chain wallet balances and an exact checkpoint) and `src/data/analytics.json` (small daily chart series). Checkpoints survive failed or time-limited runs. The worker publishes only after reaching the finalized tip and matching `globalTotalStaked` and `uniqueStakersGlobal`. A finalized block hash mismatch stops processing for investigation; it never silently resets history. Wallet-change events trigger historical balance reads to handle `migrateBootstrap`, which does not emit deposit/withdraw events.
 
-Checkpoint schema 2 includes historical charity wallets and the exact `seedClaims` subtotal. Schema 1 checkpoints and archives are rejected because they omitted claim events; rebuild in a fresh state directory from deployment instead of appending new claims to incomplete history. RPC archives record their event topics and reject incompatible cached ranges. The frontend snapshot retains schema 1 because its response shape is unchanged.
+Checkpoint schema 3 includes per-pool payment totals, daily active-staker history, historical charity wallets, and processed annual-vote cycles. Earlier checkpoints are rejected; rebuild in a fresh state directory from deployment. Schema 2 staking RPC archives remain reusable because their event coverage is unchanged. Governance payouts are read separately from the annual governance proxy, starting at its discovered deployment block. The frontend snapshot retains schema 1 and adds a `pools` map.
+
+## Expanded nonprofit cards
+
+Cards start collapsed and show the nonprofit name and live stake total. Expanding a card shows daily indexed receipts and a daily pool active-staker chart (including the nonprofit seed position). Pool history starts at pool creation and includes quiet days. Each finalized pool count is checked against the Lens contract's `listPoolsBasic` result before publishing, using one read for all pools.
+
+- **Contributions:** `CharityDistributed` amounts paid to that pool's nonprofit; excludes distributions after the pool was removed.
+- **Seed claims:** the nonprofit's own-pool `Claim` rewards, following historical charity wallet changes.
+- **ExtendOliveBranch · annual vote:** actual `Phase2Executed` payout amounts from annual governance proxy `0x1135d5fEA8098b09b4ED3AFbfFDc7B248359D270`. Zero-participation rollovers and projected awards are excluded. Historical recipient wallets are mapped to their nonprofit pool; ambiguous or unknown recipients stop publication rather than assigning a payment incorrectly. Each cycle is counted once.
+
+The expanded card shows one **Contributions Received** balance: contributions plus seed claims plus annual-vote payouts. The dataset keeps these components separate for accounting. Annual payouts are not added again to the network contribution series, which already counts inflows to the charity fund. Receipts exclude seed principal and pending rewards. A missing or failed history response shows unavailable status instead of fabricated zero balances.
 
 If balances become negative or reconciliation fails, retain the checkpoint for diagnosis and rebuild from deployment with complete RPC history. Do not skip the failing events or publish the partial state. A changed historical data source cannot repair already-indexed days merely by continuing from a later cursor.
 

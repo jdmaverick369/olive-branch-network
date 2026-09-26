@@ -31,6 +31,7 @@ test('counts distinct wallets across pools, partial withdrawals and full exits',
 
 test('fills quiet UTC days and combines only actual charity distributions', () => {
   const state = initialState(100, start);
+  applyEvent(state, { name: 'PoolAdded', args: { pid: 0n, charityWallet: '0xCharity' } });
   applyEvent(state, event('Deposit', '0xAlice', 0n, unit));
   applyEvent(state, event('CharityDistributed', null, 0n, 2n * unit));
   applyEvent(state, event('CharityFundDistributed', null, null, unit));
@@ -42,6 +43,29 @@ test('fills quiet UTC days and combines only actual charity distributions', () =
   const output = snapshot(state, { number: 300, timestamp: start + 3 * 86400 });
   assert.equal(output.rows.at(-1).activeStakers, 0);
   assert.equal(output.rows[0].activeStakers, 1);
+});
+
+test('pool history tracks entrances, exits and quiet days; annual payouts stay separate', () => {
+  const state = initialState(100, start);
+  applyEvent(state, { name: 'PoolAdded', args: { pid: 0n, charityWallet: '0xCharity' } });
+  applyEvent(state, event('Deposit', '0xCharity', 0n, 100n * unit));
+  applyEvent(state, event('Deposit', '0xUser', 0n, 2n * unit));
+  applyEvent(state, event('Deposit', '0xUser', 0n, unit));
+  applyEvent(state, event('CharityDistributed', null, 0n, 10n * unit));
+  applyEvent(state, { name: 'Claim', args: { user: '0xCharity', pid: 0n, amountUser: 88n * unit } });
+  advanceDay(state, start + 86400);
+  applyEvent(state, event('Withdraw', '0xUser', 0n, 3n * unit));
+  applyEvent(state, { name: 'CharityWalletUpdated', args: { pid: 0n, oldWallet: '0xCharity', newWallet: '0xNew' } });
+  applyEvent(state, { name: 'Phase2Executed', args: { cycleId: 1n, winner: '0xCharity', amount: 7n * unit } });
+  advanceDay(state, start + 3 * 86400);
+  const pool = snapshot(state, { number: 200, timestamp: start + 3 * 86400 }).pools[0];
+  assert.deepEqual(pool.rows.map(row => row.activeStakers), [2, 1, 1, 1]);
+  assert.equal(pool.contributions, 10);
+  assert.equal(pool.seedClaims, 88);
+  assert.equal(pool.annualAwards, 7);
+  assert.equal(state.contributed, (98n * unit).toString());
+  assert.throws(() => applyEvent(state, { name: 'Phase2Executed', args: { cycleId: 1n, winner: '0xCharity', amount: unit } }), /Duplicate annual/);
+  assert.throws(() => applyEvent(state, { name: 'Phase2Executed', args: { cycleId: 2n, winner: '0xUnknown', amount: unit } }), /cannot be attributed/);
 });
 
 test('balance corrections handle a migrated nonprofit that stakes in another pool', () => {

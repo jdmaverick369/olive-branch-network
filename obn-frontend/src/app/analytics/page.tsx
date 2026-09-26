@@ -4,14 +4,13 @@ import { useDisplayText } from "@/hooks/useDisplayText";
 import { ObnPrimary, ObnUsd } from "@/components/ObnUsd";
 
 import { useEffect, useLayoutEffect, useState } from "react";
-import { useRouter } from "next/navigation";
 import { useReadContract } from "wagmi";
 import { formatUnits } from "viem";
 import Image from "next/image";
 import { useTheme } from "@/hooks/useTheme";
-import { Loader } from "lucide-react";
+import { ChevronDown, Loader } from "lucide-react";
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
-import { ANALYTICS_METRICS, fetchAnalytics } from "@/lib/analytics";
+import { ANALYTICS_METRICS, fetchAnalytics, type AnalyticsSnapshot, type PoolAnalytics } from "@/lib/analytics";
 import { lensAbi } from "@/lib/lensAbi";
 import { LENS_PROXY } from "@/lib/contracts";
 import { POOLS } from "@/lib/pools";
@@ -63,6 +62,7 @@ export default function AnalyticsPage() {
 
   const theme = useTheme();
   const [isMobileBrowser, setIsMobileBrowser] = useState(false);
+  const [history, setHistory] = useState<AnalyticsSnapshot | null>(null);
 
   // ── Per-nonprofit stats (total staked, active stakers) — one on-chain call ──
   const { data: poolsBasic, isLoading: poolsLoading } = useReadContract({
@@ -112,6 +112,7 @@ export default function AnalyticsPage() {
   useEffect(() => {
     const controller = new AbortController();
     fetchAnalytics(controller.signal).then((snapshot) => {
+      setHistory(snapshot);
       setQueries(ANALYTICS_METRICS.map((metric) => ({
         ...metric, loading: false, error: null,
         data: { result: { rows: snapshot.rows.map((row) => ({ day: row.day, value: row[metric.key] })) } },
@@ -257,6 +258,7 @@ export default function AnalyticsPage() {
                       stat={stat}
                       cardStyle={graphCardStyle}
                       large={!isMobileBrowser}
+                      history={history?.pools?.[stat.pid]}
                     />
                   ))}
                 </div>
@@ -279,7 +281,7 @@ export default function AnalyticsPage() {
   );
 }
 
-function renderLineChartWithTitle(title: string, data: Record<string, unknown>, theme: "light" | "dark", displayText: (text: string) => string, isMobileBrowser: boolean = false) {
+function renderLineChartWithTitle(title: string, data: Record<string, unknown>, theme: "light" | "dark", displayText: (text: string) => string, isMobileBrowser: boolean = false, chartId = title.replaceAll(" ", "-")) {
   // Extract rows from result
   let rows: Record<string, unknown>[] = [];
   if ("result" in data && data.result && typeof data.result === "object") {
@@ -370,7 +372,7 @@ function renderLineChartWithTitle(title: string, data: Record<string, unknown>, 
             margin={{ top: 5, right: 15, left: 10, bottom: 20 }}
           >
             <defs>
-              <linearGradient id="greenGradient" x1="0" y1="0" x2="0" y2="1">
+              <linearGradient id={`greenGradient-${chartId}`} x1="0" y1="0" x2="0" y2="1">
                 <stop offset="0%" stopColor="#16a34a" stopOpacity={0.4} />
                 <stop offset="100%" stopColor="#16a34a" stopOpacity={0.05} />
               </linearGradient>
@@ -412,7 +414,7 @@ function renderLineChartWithTitle(title: string, data: Record<string, unknown>, 
               type="monotone"
               dataKey="value"
               stroke="#16a34a"
-              fill="url(#greenGradient)"
+              fill={`url(#greenGradient-${chartId})`}
               dot={false}
               strokeWidth={2}
               isAnimationActive={false}
@@ -444,30 +446,39 @@ function NonprofitStatRow({
   stat,
   cardStyle,
   large = false,
+  history,
 }: {
   stat: NonprofitStat;
   cardStyle: React.CSSProperties;
   large?: boolean;
+  history?: PoolAnalytics;
 }) {
   const displayText = useDisplayText();
-  const router = useRouter();
+  const [expanded, setExpanded] = useState(false);
+  const theme = useTheme();
 
   // `large` mirrors the ~1.25x scale the profile page applies to its whole
   // page on desktop (transform: scale(1.25)), but as real sizing here instead
   // of a CSS transform — a transform on just this section would visually
   // overflow into the "About" card below without reserving layout space.
   const logoSize = large ? 30 : 24;
-  const statWidth = large ? "100px" : "84px";
 
   return (
     <div
-      className={large ? "rounded-xl border p-4 cursor-pointer hover:opacity-90 transition-opacity" : "rounded-xl border p-3 cursor-pointer hover:opacity-90 transition-opacity"}
+      className="rounded-xl border overflow-hidden"
       style={cardStyle}
-      onClick={() => router.push(`/stake-earn-contribute/${stat.pid}`)}
     >
-      <div className={large ? "flex items-center justify-between gap-3" : "flex items-center justify-between gap-2"}>
+      <button
+        type="button"
+        id={`nonprofit-toggle-${stat.pid}`}
+        aria-expanded={expanded}
+        aria-controls={`nonprofit-details-${stat.pid}`}
+        aria-label={`${stat.name} pool details`}
+        onClick={() => setExpanded(value => !value)}
+        className={`w-full text-left flex items-center justify-between hover:opacity-90 transition-opacity focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-green-600 ${large ? "p-4 gap-3" : "p-3 gap-2"}`}
+      >
         {/* Logo and Name */}
-        <div className={large ? "flex items-center gap-3 min-w-0 shrink" : "flex items-center gap-2 min-w-0 shrink"}>
+        <span className={large ? "flex items-center gap-3 min-w-0 shrink" : "flex items-center gap-2 min-w-0 shrink"}>
           <Image
             src={stat.logo}
             alt={stat.name}
@@ -481,37 +492,48 @@ function NonprofitStatRow({
           >
             {stat.name}
           </span>
-        </div>
+        </span>
 
         {/* Stats */}
-        <div className={large ? "flex items-center gap-2 shrink-0" : "flex items-center gap-1 shrink-0"}>
-          <div className="text-center" style={{ width: statWidth }}>
-            <p
+        <span className={large ? "flex items-center gap-2 shrink-0" : "flex items-center gap-1 shrink-0"}>
+          <span className="text-center mr-3">
+            <span
               className={large ? "text-[11px] font-medium whitespace-nowrap" : "text-[9px] font-medium whitespace-nowrap"}
               style={{ color: "var(--card-subtext)" }}
             >
-              {displayText("Total Staked ")}</p>
-            <p
-              className={large ? "text-sm font-bold" : "text-xs font-bold"}
+              {displayText("Total Staked ")}</span>
+            <span
+              className={`flex items-baseline justify-center whitespace-nowrap font-bold ${large ? "text-sm" : "text-xs"}`}
               style={{ color: "var(--card-text)", fontVariantNumeric: "tabular-nums" }}
             >
-              <ObnPrimary amount={stat.totalStaked}>{formatValue(stat.totalStaked)} OBN</ObnPrimary> <ObnUsd amount={stat.totalStaked} tokenLabel={<>{formatValue(stat.totalStaked)} OBN</>} />
-            </p>
+              <span className="shrink-0"><ObnPrimary amount={stat.totalStaked}>{formatValue(stat.totalStaked)} OBN</ObnPrimary></span>
+              <ObnUsd amount={stat.totalStaked} tokenLabel={<>{formatValue(stat.totalStaked)} OBN</>} />
+            </span>
+          </span>
+          <ChevronDown aria-hidden="true" className={`h-4 w-4 shrink-0 transition-transform ${expanded ? "rotate-180" : ""}`} style={{ color: "var(--card-text)" }} />
+        </span>
+      </button>
+      <div id={`nonprofit-details-${stat.pid}`} role="region" aria-labelledby={`nonprofit-toggle-${stat.pid}`} hidden={!expanded}>
+        {expanded && (
+          <div className={large ? "border-t p-4" : "border-t p-3"} style={{ borderColor: "var(--card-border)", color: "var(--card-text)" }}>
+            {history ? <>
+              <dl className="space-y-2 mb-5 pb-5 border-b text-center text-sm" style={{ borderColor: "var(--card-border)" }}>
+                {([
+                  ["Contributions Received", history.contributions + history.seedClaims + history.annualAwards],
+                ] as const).map(([label, amount]) => (
+                  <div key={label}>
+                    <dt className="inline" style={{ color: "var(--card-subtext)" }}>{label}: </dt>
+                    <dd className="inline font-semibold tabular-nums">
+                      <ObnPrimary amount={amount}>{amount.toLocaleString(undefined, { maximumFractionDigits: 2 })} OBN</ObnPrimary>
+                      <ObnUsd amount={amount} tokenLabel={<>{amount.toLocaleString(undefined, { maximumFractionDigits: 2 })} OBN</>} />
+                    </dd>
+                  </div>
+                ))}
+              </dl>
+              {renderLineChartWithTitle("Active Stakers", { result: { rows: history.rows.map(row => ({ day: row.day, value: row.activeStakers })) } }, theme, displayText, !large, `pool-${stat.pid}`)}
+            </> : <p className="text-sm" style={{ color: "var(--card-subtext)" }}>Payment history and pool chart are temporarily unavailable.</p>}
           </div>
-          <div className="text-center" style={{ width: statWidth }}>
-            <p
-              className={large ? "text-[11px] font-medium whitespace-nowrap" : "text-[9px] font-medium whitespace-nowrap"}
-              style={{ color: "var(--card-subtext)" }}
-            >
-              {displayText("Active Stakers ")}</p>
-            <p
-              className={large ? "text-sm font-bold" : "text-xs font-bold"}
-              style={{ color: "var(--card-text)", fontVariantNumeric: "tabular-nums" }}
-            >
-              {stat.activeStakers.toLocaleString()}
-            </p>
-          </div>
-        </div>
+        )}
       </div>
     </div>
   );
