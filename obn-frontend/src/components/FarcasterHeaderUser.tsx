@@ -132,7 +132,7 @@ export function FarcasterHeaderUser({ onMiniAppDetected }: Props) {
           <p className="mt-2 px-3 pb-1 text-xs font-semibold uppercase tracking-wide" style={{ color: "var(--card-subtext)" }}>Wallet</p>
 
           <button type="button" role="menuitemradio" aria-checked={onDefault} className={rowClass(onDefault)} onClick={() => choose(null)}>
-            <span>Farcaster wallet</span>
+            <span>Farcaster Wallet</span>
             <span className="font-mono text-xs">{farcasterAddress ? shortAddress(farcasterAddress) : ""}</span>
           </button>
 
@@ -141,7 +141,7 @@ export function FarcasterHeaderUser({ onMiniAppDetected }: Props) {
             return (
               <button key={a} type="button" role="menuitemradio" aria-checked={active} className={rowClass(active)} onClick={() => choose(a)}>
                 <span>
-                  {isBaseAccount(a) ? "Base Account" : "Verified wallet"}
+                  {isBaseAccount(a) ? "Coinbase Wallet" : "Verified Wallet"}
                   {primary?.toLowerCase() === a.toLowerCase() && <span className="font-normal opacity-70"> · primary</span>}
                 </span>
                 <span className="font-mono text-xs">{shortAddress(a)}</span>
@@ -151,7 +151,7 @@ export function FarcasterHeaderUser({ onMiniAppDetected }: Props) {
 
           {connectedViaWalletConnect && viewAddress && !others.some((a) => a.toLowerCase() === viewAddress.toLowerCase()) && (
             <div className={rowClass(true)}>
-              <span>Connected wallet</span>
+              <span>Connected Wallet</span>
               <span className="font-mono text-xs">{shortAddress(viewAddress)}</span>
             </div>
           )}
@@ -166,7 +166,7 @@ export function FarcasterHeaderUser({ onMiniAppDetected }: Props) {
             <div className="mt-2 border-t pt-2 px-1" style={{ borderColor: "var(--card-border, #e5e7eb)" }}>
               <p className="px-2 text-xs" style={{ color: "var(--card-subtext)" }}>
                 {viewingBaseAccount
-                  ? "Viewing only. This Base Account signs in Coinbase Wallet — open the OBN App there to stake, claim or change autoclaim."
+                  ? "Viewing only. The button below takes you to the OBN App inside Coinbase Wallet."
                   : "Viewing only. Connect this wallet to stake, claim or change autoclaim."}
               </p>
               <button
