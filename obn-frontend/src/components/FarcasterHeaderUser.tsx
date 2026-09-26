@@ -166,7 +166,7 @@ export function FarcasterHeaderUser({ onMiniAppDetected }: Props) {
             <div className="mt-2 border-t pt-2 px-1" style={{ borderColor: "var(--card-border, #e5e7eb)" }}>
               <p className="px-2 text-xs" style={{ color: "var(--card-subtext)" }}>
                 {viewingBaseAccount
-                  ? "Viewing only. This Base Account signs in the Base app — open OBN there to stake, claim or change autoclaim."
+                  ? "Viewing only. This Base Account signs in Coinbase Wallet — open the OBN App there to stake, claim or change autoclaim."
                   : "Viewing only. Connect this wallet to stake, claim or change autoclaim."}
               </p>
               <button
@@ -175,7 +175,7 @@ export function FarcasterHeaderUser({ onMiniAppDetected }: Props) {
                 onClick={() => void wallet.connectViewed()}
                 className="mt-2 w-full rounded-lg bg-purple-600 px-3 py-2 text-sm font-semibold text-white disabled:opacity-50"
               >
-                {viewingBaseAccount ? "Open in Base app" : connecting ? "Connecting…" : "Connect this wallet"}
+                {viewingBaseAccount ? "Open in Coinbase Wallet" : connecting ? "Connecting…" : "Connect this wallet"}
               </button>
             </div>
           )}
