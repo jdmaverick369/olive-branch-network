@@ -124,7 +124,7 @@ export function AutoClaimButton({ control, className = "", style, disabled = fal
   return <button type="button" onClick={control.open} disabled={blocked}
     aria-label={control.known ? `Monthly autoclaim ${control.enabled ? "on" : "off"}; ${control.viewOnly ? "connect this wallet to change" : `${control.enabled ? "disable" : "enable"} for all pools`}` : "Monthly autoclaim status unavailable"}
     title={!control.known ? "Checking autoclaim status" : control.viewOnly ? "Connect this wallet to change autoclaim" : !control.ready ? "Switch your wallet to Base" : !control.enabled && !control.available ? "Autoclaim is currently unavailable" : "Manage monthly autoclaim for all pools"}
-    className={`rounded-lg font-semibold border border-purple-600 text-purple-600 transition text-xs whitespace-nowrap hover:bg-purple-600 hover:text-white disabled:opacity-50 disabled:cursor-not-allowed ${className}`}
+    className={`rounded-lg font-semibold border border-purple-600 text-purple-600 transition whitespace-nowrap hover:bg-purple-600 hover:text-white disabled:opacity-50 disabled:cursor-not-allowed ${className}`}
     style={style}>{control.known ? control.enabled ? "Auto On" : "Auto Off" : "Auto …"}</button>;
 }
 

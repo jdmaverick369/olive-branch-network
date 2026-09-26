@@ -873,7 +873,7 @@ export default function PoolDetailPage() {
                     >
                       {processingAction === 'claim' ? "Processing..." : "Claim"}
                     </button>
-                    <AutoClaimButton control={autoClaim} disabled={loading} className="px-2 sm:px-3 py-2 flex-1 min-w-0" />
+                    <AutoClaimButton control={autoClaim} disabled={loading} className="px-2 sm:px-3 py-2 text-xs flex-1 min-w-0" />
                   </div>
 
                   </div>

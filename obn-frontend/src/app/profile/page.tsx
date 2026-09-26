@@ -1137,7 +1137,7 @@ export default function UserPage() {
                           {claimingAll ? "Claiming..." : "Claim All"}
                         </button>
                       )}
-                      <AutoClaimButton control={autoClaim} disabled={claimingAll || claimingPid !== null} className="px-3 py-1.5" />
+                      <AutoClaimButton control={autoClaim} disabled={claimingAll || claimingPid !== null} className="px-3 py-1.5 text-xs" />
                     </div>
                   </div>
                 </FitAmountGroup>
@@ -1461,7 +1461,7 @@ export default function UserPage() {
                       {claimingAll ? "Claiming..." : "Claim All"}
                     </button>
                   )}
-                  <AutoClaimButton control={autoClaim} disabled={claimingAll || claimingPid !== null} className="px-3 py-1.5" />
+                  <AutoClaimButton control={autoClaim} disabled={claimingAll || claimingPid !== null} className="px-3 py-1.5 text-xs" />
                 </div>
               </div>
             </FitAmountGroup>
