@@ -394,7 +394,7 @@ export default function ProtocolFundsPage() {
             emoji="🔥"
             name="TheOffering"
             phase="Phase 1"
-            description={displayText("Stakers vote whether to permanently burn the balance or add it to ExtendOliveBranch.")}
+            description={displayText("Stakers with an OliveNFT vote whether to permanently burn the balance or add it to ExtendOliveBranch.")}
             balance={offeringBalance}
             address={THE_OFFERING}
             accentColor="#6b7280"
@@ -407,7 +407,7 @@ export default function ProtocolFundsPage() {
             emoji="🌿"
             name="ExtendOliveBranch"
             phase="Phase 2"
-            description={displayText("Stakers vote on which nonprofit receives the full balance.")}
+            description={displayText("Stakers with an OliveNFT vote on which nonprofit receives the full balance.")}
             balance={extendBalance}
             address={EXTEND_OLIVE_BRANCH}
             accentColor="#a855f7"
