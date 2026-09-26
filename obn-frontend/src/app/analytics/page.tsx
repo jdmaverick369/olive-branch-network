@@ -496,14 +496,14 @@ function NonprofitStatRow({
 
         {/* Stats */}
         <span className={large ? "flex items-center gap-2 shrink-0" : "flex items-center gap-1 shrink-0"}>
-          <span className="text-center mr-3">
+          <span className="flex flex-col items-center justify-center gap-1 text-center mr-3">
             <span
-              className={large ? "text-[11px] font-medium whitespace-nowrap" : "text-[9px] font-medium whitespace-nowrap"}
+              className={`font-medium leading-none whitespace-nowrap ${large ? "text-[11px]" : "text-[9px]"}`}
               style={{ color: "var(--card-subtext)" }}
             >
               {displayText("Total Staked ")}</span>
             <span
-              className={`flex items-baseline justify-center whitespace-nowrap font-bold ${large ? "text-sm" : "text-xs"}`}
+              className={`flex items-baseline justify-center whitespace-nowrap font-bold leading-none ${large ? "text-sm" : "text-xs"}`}
               style={{ color: "var(--card-text)", fontVariantNumeric: "tabular-nums" }}
             >
               <span className="shrink-0"><ObnPrimary amount={stat.totalStaked}>{formatValue(stat.totalStaked)} OBN</ObnPrimary></span>

@@ -325,9 +325,6 @@ export default function FAQPage() {
             question="What are ExtendOliveBranch, TheOffering, and Annual Governance?"
             answer={
               <>
-                <p className="mb-4">
-                  With the v9.3 protocol upgrade, the old Treasury and CharityFund mechanisms were removed and replaced with two community-directed contracts. OBN no longer accumulates in a protocol-owned treasury.
-                </p>
                 <div className="space-y-4 mb-4">
                   <div
                     className="p-4 rounded-lg border shadow-md"
@@ -363,64 +360,11 @@ export default function FAQPage() {
                   >
                     <h4 className="font-bold mb-1 text-sm" style={{ color: "#2563eb" }}>🗳️ Annual Governance</h4>
                     <p className="text-sm" style={{ color: "var(--card-subtext)" }}>
-                      {displayText("Once per year, stakers participate in a two-part vote: (1) whether TheOffering is burned or contributed to ExtendOliveBranch, and (2) which nonprofit receives the ExtendOliveBranch balance. Voting power is proportional to the amount of OBN you have staked. ")}</p>
+                      {displayText("Once per year, stakers participate in a two-part vote: (1) whether TheOffering is burned or contributed to ExtendOliveBranch, and (2) which nonprofit receives the ExtendOliveBranch balance. You will need to hold an OliveNFT in your voting wallet to vote. Voting power is proportional to the amount of OBN you have staked. ")}</p>
                   </div>
                 </div>
                 <p className="text-sm" style={{ color: "var(--card-subtext)" }}>
                   {displayText("The result: 100% of newly minted OBN either goes to stakers, directly to nonprofits, or is permanently removed from circulation. The protocol no longer extracts. ")}</p>
-              </>
-            }
-          />
-
-          <FAQItem
-            index={5}
-            question={displayText("What is the minimum staking amount?")}
-            answer={displayText("There is no minimum staking amount. You can stake any amount that works for you and adjust it anytime.")}
-          />
-
-          <FAQItem
-            index={6}
-            question={displayText("Can I unstake my tokens at any time?")}
-            answer={displayText("Yes! You can unstake your tokens whenever you want. Simply go to the pool details page and click the \"Unstake\" button. Your tokens will be returned to your wallet after the transaction is confirmed. There are no lock-up periods.")}
-          />
-
-          <FAQItem
-            index={7}
-            question="When and how do I receive my rewards?"
-            answer={
-              <>
-                <p>
-                  Rewards accumulate automatically and continuously. You can view your pending rewards on the{" "}
-                  <Link
-                    href="/profile"
-                    className="font-semibold hover:underline"
-                    style={{ color: "#16a34a" }}
-                  >
-                    Profile
-                  </Link>{" "}
-                  page and individual pool pages. When you&apos;re ready, click the &quot;Claim All&quot; or &quot;Claim&quot; button to withdraw your rewards to your wallet.
-                </p>
-              </>
-            }
-          />
-
-          <FAQItem
-            index={8}
-            question={displayText("Can I stake in multiple pools?")}
-            answer={
-              <>
-                <p className="mb-3">
-                  {displayText("Yes! You can stake in as many nonprofit pools as you want simultaneously. Each pool has its own staking interface on the Dashboard. ")}</p>
-                <p>
-                  Managing rewards across multiple pools is easy with the{" "}
-                  <Link
-                    href="/profile"
-                    className="font-semibold hover:underline"
-                    style={{ color: "#16a34a" }}
-                  >
-                    Profile
-                  </Link>
-                  {" "}{displayText("page, which shows all your active stakes in one place. Use the \"Claim All\" button to collect pending rewards from all your pools in a single transaction. ")}</p>
               </>
             }
           />
@@ -440,7 +384,7 @@ export default function FAQPage() {
                     className="w-full h-auto mb-4"
                   />
                   <p style={{ color: "var(--card-text)" }} className="text-sm leading-relaxed text-center">
-                    {displayText("OliveNFT is the official digital collectible of the Olive Branch Network. It represents your participation in the ecosystem and visually evolves the longer you stake with it on the platform. ")}</p>
+                    {displayText("OliveNFT is the official digital collectible of the Olive Branch Network and serves as your governance identity. Holding an OliveNFT will be required to vote in Annual Governance. It represents your participation in the ecosystem and visually evolves the longer you stake with it on the platform. ")}</p>
                 </div>
 
                 {/* Key Details */}
@@ -451,6 +395,7 @@ export default function FAQPage() {
                     { label: "Max Supply", value: "20,000 NFTs (fixed)" },
                     { label: "Mint Price", value: "0.005 ETH" },
                     { label: "Mint Limit", value: "One per wallet at a time" },
+                    { label: "Identity", value: "Required to vote in Annual Governance" },
                     { label: "Distribution", value: "Randomized commit-and-reveal system" },
                     { label: "Rarity", value: "125 patterned / 475 solid backgrounds each" },
                   ].map((item, i) => (
@@ -545,7 +490,8 @@ export default function FAQPage() {
                 <h3 className="text-base font-bold mb-3 text-center" style={{ color: "var(--card-text)" }}>Why OliveNFT Matters</h3>
                 <div className="grid grid-cols-1 gap-3 mb-6">
                   {[
-                    { title: "Identity", desc: "Serves as your unique badge in the Olive Branch Network" },
+                    { title: "Identity", desc: "Serves as your governance identity in the Olive Branch Network" },
+                    { title: "Governance", desc: "Holding an OliveNFT will be required to vote in Annual Governance" },
                     { title: "Progression", desc: displayText("The longer you stake with your OliveNFT, the more exclusive its appearance becomes") },
                     { title: "Scarcity", desc: "With only 20,000 ever available, each NFT is rare and meaningful" },
                   ].map((item, i) => (
@@ -591,17 +537,94 @@ export default function FAQPage() {
 
 
           <FAQItem
+            index={5}
+            question={displayText("What is the minimum staking amount?")}
+            answer={displayText("There is no minimum staking amount. You can stake any amount that works for you and adjust it anytime.")}
+          />
+
+          <FAQItem
+            index={6}
+            question={displayText("Can I unstake my tokens at any time?")}
+            answer={displayText("Yes! You can unstake your tokens whenever you want. Simply go to the pool details page and click the \"Unstake\" button. Your tokens will be returned to your wallet after the transaction is confirmed. There are no lock-up periods.")}
+          />
+
+          <FAQItem
+            index={7}
+            question="When and how do I receive my rewards?"
+            answer={
+              <>
+                <p>
+                  Rewards accumulate automatically and continuously. You can view your pending rewards on the{" "}
+                  <Link
+                    href="/profile"
+                    className="font-semibold hover:underline"
+                    style={{ color: "#16a34a" }}
+                  >
+                    Profile
+                  </Link>{" "}
+                  page and individual pool pages. When you&apos;re ready, click the &quot;Claim All&quot; or &quot;Claim&quot; button to withdraw your rewards to your wallet. You can also use the &quot;Auto&quot; button on your Profile page to opt in to sponsored monthly autoclaim.
+                </p>
+              </>
+            }
+          />
+
+          <FAQItem
+            index={13}
+            question="What is sponsored monthly autoclaim?"
+            answer={displayText("Sponsored monthly autoclaim is an optional way to collect pending rewards without submitting each monthly claim yourself. After you opt in, OBN submits eligible claims and sponsors their network gas fees. Your preference covers all current and future nonprofit pools for that wallet. Rewards go to the same recipients with the usual 88% to you, 10% to the pool's nonprofit, 1% to ExtendOliveBranch, and 1% to TheOffering. It does not move your staked principal or automatically reinvest your rewards.")}
+          />
+
+          <FAQItem
+            index={14}
+            question="How do I turn monthly autoclaim on or off?"
+            answer={
+              <p>
+                Connect the wallet that holds your deposits, open your{" "}
+                <Link href="/profile" className="font-semibold hover:underline" style={{ color: "#16a34a" }}>Profile</Link>,
+                {" "}and use the &quot;Auto&quot; button. Confirm the change in your wallet. You can turn it off at any time, including after withdrawing all deposits. OBN sponsors the automatic monthly claims; changing your preference may require a small Base gas fee depending on your wallet and available sponsorship.
+              </p>
+            }
+          />
+
+          <FAQItem
+            index={15}
+            question="When does autoclaim run, and can I still claim manually?"
+            answer={displayText("Autoclaim is scheduled for the 14th of each month (UTC), with retries during that day's processing window. Only pools with claimable rewards are included, and each pool can be automatically claimed once per UTC calendar month. This is not a rolling 30-day timer. If you opt in after that month's processing window, your first scheduled claim is the following month. Claims depend on service and sponsorship availability; unfinished claims wait for the next scheduled run. You can still claim manually at any time. Manual claims do not use your automatic monthly allowance, and turning autoclaim off and back on does not reset it.")}
+          />
+
+          <FAQItem
+            index={8}
+            question={displayText("Can I stake in multiple pools?")}
+            answer={
+              <>
+                <p className="mb-3">
+                  {displayText("Yes! You can stake in as many nonprofit pools as you want simultaneously. Each pool has its own staking interface on the Dashboard. ")}</p>
+                <p>
+                  Managing rewards across multiple pools is easy with the{" "}
+                  <Link
+                    href="/profile"
+                    className="font-semibold hover:underline"
+                    style={{ color: "#16a34a" }}
+                  >
+                    Profile
+                  </Link>
+                  {" "}{displayText("page, which shows all your active stakes in one place. Use the \"Claim All\" button to collect pending rewards from all your pools in a single transaction. ")}</p>
+              </>
+            }
+          />
+
+          <FAQItem
             index={10}
             question="Are there any fees?"
             answer={
               <>
                 <p className="mb-4">
-                  {displayText("You may incur standard Base network gas fees (paid in ETH) when staking, unstaking, or claiming rewards. These fees go to the Base network. ")}</p>
+                  {displayText("You may incur standard Base network gas fees (paid in ETH) when staking, unstaking, manually claiming rewards, or changing your autoclaim preference if wallet sponsorship is unavailable. These fees go to the Base network. OBN sponsors the network fees for its automatic monthly claims. ")}</p>
                 <p className="text-sm font-semibold mb-1" style={{ color: "var(--card-text)" }}>
                   Don&apos;t have ETH on Base?
                 </p>
                 <p className="text-xs mb-3">
-                  {displayText("ETH on Base is required to cover network fees when staking, unstaking, and claiming rewards. ")}</p>
+                  {displayText("For transactions your wallet does not sponsor, you need ETH on Base to cover network fees. Sponsored monthly claims do not require you to pay gas for those claims. ")}</p>
                 {isInMiniApp ? (
                   <div className="flex flex-wrap gap-2 mb-3">
                     <a

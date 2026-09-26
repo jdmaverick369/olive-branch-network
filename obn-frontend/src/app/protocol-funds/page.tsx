@@ -1,6 +1,6 @@
 "use client";
 import { useDisplayText } from "@/hooks/useDisplayText";
-import { ObnUsd } from "@/components/ObnUsd";
+import { ObnPrimary, ObnUsd } from "@/components/ObnUsd";
 
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
@@ -197,17 +197,17 @@ function FundCard({
         </p>
         <p
           ref={balanceContainerRef}
-          className="text-[min(5vw,1.25rem)] md:text-3xl font-bold tabular-nums"
+          className="overflow-hidden text-[min(5vw,1.25rem)] md:text-3xl font-bold tabular-nums"
           style={{ color: "var(--card-text)" }}
         >
           <span ref={balanceLineRef} className="inline-flex w-max origin-top-left items-baseline whitespace-nowrap [&>span]:whitespace-nowrap">
-          {formatObn(balance)}
+          <ObnPrimary amount={balance}>{formatObn(balance)}
           <span
             className="text-xs md:text-base font-semibold ml-1"
             style={{ color: "var(--card-subtext)" }}
           >
             OBN
-          </span> <ObnUsd amount={balance} />
+          </span></ObnPrimary> <ObnUsd amount={balance} tokenLabel={<>{formatObn(balance)} OBN</>} />
           </span>
         </p>
       </div>
