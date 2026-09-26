@@ -11,7 +11,7 @@ import Image from "next/image";
 import { useTheme } from "@/hooks/useTheme";
 import { Loader } from "lucide-react";
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
-import { DUNE_QUERIES, fetchDuneQuery } from "@/lib/dune";
+import { ANALYTICS_METRICS, fetchAnalytics } from "@/lib/analytics";
 import { lensAbi } from "@/lib/lensAbi";
 import { LENS_PROXY } from "@/lib/contracts";
 import { POOLS } from "@/lib/pools";
@@ -99,7 +99,7 @@ export default function AnalyticsPage() {
   }, []);
 
   const [queries, setQueries] = useState<QueryData[]>(
-    DUNE_QUERIES.map((q) => ({
+    ANALYTICS_METRICS.map((q) => ({
       id: q.id,
       title: q.title,
       description: q.description,
@@ -110,23 +110,18 @@ export default function AnalyticsPage() {
   );
 
   useEffect(() => {
-    DUNE_QUERIES.forEach((q, i) => {
-      fetchDuneQuery(q.queryId)
-        .then((result) => {
-          setQueries((prev) => {
-            const updated = [...prev];
-            updated[i] = { ...updated[i], data: result, loading: false, error: null };
-            return updated;
-          });
-        })
-        .catch((error) => {
-          setQueries((prev) => {
-            const updated = [...prev];
-            updated[i] = { ...updated[i], loading: false, error: error instanceof Error ? error.message : "Unknown error" };
-            return updated;
-          });
-        });
+    const controller = new AbortController();
+    fetchAnalytics(controller.signal).then((snapshot) => {
+      setQueries(ANALYTICS_METRICS.map((metric) => ({
+        ...metric, loading: false, error: null,
+        data: { result: { rows: snapshot.rows.map((row) => ({ day: row.day, value: row[metric.key] })) } },
+      })));
+    }).catch((error) => {
+      if (controller.signal.aborted) return;
+      setQueries((prev) => prev.map((q) => ({ ...q, loading: false,
+        error: error instanceof Error ? error.message : "Chart history is temporarily unavailable." })));
     });
+    return () => controller.abort();
   }, []);
 
   // Combine queries for display
@@ -137,7 +132,7 @@ export default function AnalyticsPage() {
   const metrics: CombinedMetric[] = [
     {
       title: "OBN Network Analytics",
-      description: displayText("Live protocol stats for active stakers, total staked, and total OBN contributed — plus total staked and active stakers by nonprofit pool."),
+      description: displayText("Daily network history for active stakers, total staked, and OBN contributed — alongside live nonprofit pool stats."),
       data: null,
       loading: false,
       error: null,
@@ -391,6 +386,8 @@ function renderLineChartWithTitle(title: string, data: Record<string, unknown>, 
               interval={Math.max(Math.floor(chartData.length / 6), 0)}
             />
             <YAxis
+              allowDecimals={title !== "Active Stakers"}
+              tickFormatter={(value) => new Intl.NumberFormat(undefined, { notation: "compact", maximumFractionDigits: 1 }).format(Number(value))}
               stroke="var(--card-subtext)"
               tick={{ fontSize: 10 }}
               width={50}

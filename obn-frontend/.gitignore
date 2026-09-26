@@ -109,3 +109,9 @@ next-env.d.ts
 .claude/
 .codex/
 *.log
+
+# Private notification receipts
+.notification-state/
+
+# Local analytics backfill checkpoints
+.analytics/

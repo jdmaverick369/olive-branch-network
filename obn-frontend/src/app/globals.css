@@ -16,6 +16,8 @@
   --card-border: #86efac;      /* green-200 */
   --card-text: #111827;        /* gray-900 */
   --card-subtext: #1f2937;     /* gray-800 */
+  --wallet-selected-bg: #047857;
+  --wallet-selected-text: #ffffff;
   --card-badge-bg: #ffffff;    /* white */
   --card-badge-text: #0D9921;  /* dark green */
   --card-badge-ring: #4ade80;  /* green-400 - darker border */
@@ -42,6 +44,8 @@
   --card-border: #374151;      /* gray-700 */
   --card-text: #f3f4f6;        /* gray-100 */
   --card-subtext: #d1d5db;     /* gray-300 */
+  --wallet-selected-bg: rgba(20, 83, 45, 0.3);
+  --wallet-selected-text: #bbf7d0;
   --card-badge-bg: rgba(20,83,45,.3); /* green-900/30 */
   --card-badge-text: #86efac;  /* green-300 */
   --card-badge-ring: #065f46;  /* green-800 */

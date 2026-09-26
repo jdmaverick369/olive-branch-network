@@ -1,0 +1,2331 @@
+{
+  "schema": 1,
+  "chainId": 8453,
+  "contract": "0x2C4Bd5B2a48a76f288d7F2DB23aFD3a03b9E7cD2",
+  "generatedAt": "2026-09-26T04:28:10.817Z",
+  "throughBlock": 51803317,
+  "throughTimestamp": "2026-09-26T04:13:01.000Z",
+  "definitions": {
+    "activeStakers": "Distinct wallets with positive stake across all pools, including nonprofit bootstrap stakes.",
+    "totalStaked": "OBN currently staked across all pools.",
+    "totalContributed": "Cumulative CharityDistributed plus CharityFundDistributed OBN; excludes unminted rewards and direct donations."
+  },
+  "rows": [
+    {
+      "day": "2025-09-06",
+      "activeStakers": 12,
+      "totalStaked": 9017100,
+      "totalContributed": 28.61195447742263
+    },
+    {
+      "day": "2025-09-07",
+      "activeStakers": 13,
+      "totalStaked": 9020200,
+      "totalContributed": 56.50684875632042
+    },
+    {
+      "day": "2025-09-08",
+      "activeStakers": 13,
+      "totalStaked": 9020200,
+      "totalContributed": 56.550472043720426
+    },
+    {
+      "day": "2025-09-09",
+      "activeStakers": 29,
+      "totalStaked": 10101120,
+      "totalContributed": 57.51904146765792
+    },
+    {
+      "day": "2025-09-10",
+      "activeStakers": 30,
+      "totalStaked": 10189715,
+      "totalContributed": 57.62448042258142
+    },
+    {
+      "day": "2025-09-11",
+      "activeStakers": 31,
+      "totalStaked": 10302233.71,
+      "totalContributed": 59.963236127581425
+    },
+    {
+      "day": "2025-09-12",
+      "activeStakers": 29,
+      "totalStaked": 10179215,
+      "totalContributed": 64.46835818943437
+    },
+    {
+      "day": "2025-09-13",
+      "activeStakers": 29,
+      "totalStaked": 10179215,
+      "totalContributed": 64.46835818943437
+    },
+    {
+      "day": "2025-09-14",
+      "activeStakers": 29,
+      "totalStaked": 10179215,
+      "totalContributed": 64.46835818943437
+    },
+    {
+      "day": "2025-09-15",
+      "activeStakers": 31,
+      "totalStaked": 10195264.987,
+      "totalContributed": 64.63639194386542
+    },
+    {
+      "day": "2025-09-16",
+      "activeStakers": 32,
+      "totalStaked": 10205264.987,
+      "totalContributed": 64.63645472856543
+    },
+    {
+      "day": "2025-09-17",
+      "activeStakers": 32,
+      "totalStaked": 10192765.987,
+      "totalContributed": 65.51479523371535
+    },
+    {
+      "day": "2025-09-18",
+      "activeStakers": 32,
+      "totalStaked": 10192265.987,
+      "totalContributed": 66.87006826867184
+    },
+    {
+      "day": "2025-09-19",
+      "activeStakers": 32,
+      "totalStaked": 10192265.987,
+      "totalContributed": 66.87006826867184
+    },
+    {
+      "day": "2025-09-20",
+      "activeStakers": 32,
+      "totalStaked": 10192265.987,
+      "totalContributed": 66.87006826867184
+    },
+    {
+      "day": "2025-09-21",
+      "activeStakers": 31,
+      "totalStaked": 9192265.987,
+      "totalContributed": 424.01149290867187
+    },
+    {
+      "day": "2025-09-22",
+      "activeStakers": 31,
+      "totalStaked": 9192265.987,
+      "totalContributed": 424.01149290867187
+    },
+    {
+      "day": "2025-09-23",
+      "activeStakers": 31,
+      "totalStaked": 9192265.987,
+      "totalContributed": 424.01149290867187
+    },
+    {
+      "day": "2025-09-24",
+      "activeStakers": 31,
+      "totalStaked": 9192265.987,
+      "totalContributed": 424.01149290867187
+    },
+    {
+      "day": "2025-09-25",
+      "activeStakers": 31,
+      "totalStaked": 9192265.987,
+      "totalContributed": 424.01149290867187
+    },
+    {
+      "day": "2025-09-26",
+      "activeStakers": 31,
+      "totalStaked": 9192265.987,
+      "totalContributed": 424.01149290867187
+    },
+    {
+      "day": "2025-09-27",
+      "activeStakers": 33,
+      "totalStaked": 9224765.987,
+      "totalContributed": 424.0126788538718
+    },
+    {
+      "day": "2025-09-28",
+      "activeStakers": 33,
+      "totalStaked": 9224765.987,
+      "totalContributed": 424.0126788538718
+    },
+    {
+      "day": "2025-09-29",
+      "activeStakers": 33,
+      "totalStaked": 9224765.987,
+      "totalContributed": 424.42550882593184
+    },
+    {
+      "day": "2025-09-30",
+      "activeStakers": 33,
+      "totalStaked": 9224765.987,
+      "totalContributed": 424.42550882593184
+    },
+    {
+      "day": "2025-10-01",
+      "activeStakers": 33,
+      "totalStaked": 9224765.987,
+      "totalContributed": 424.42550882593184
+    },
+    {
+      "day": "2025-10-02",
+      "activeStakers": 34,
+      "totalStaked": 9294765.987,
+      "totalContributed": 424.42823705951685
+    },
+    {
+      "day": "2025-10-03",
+      "activeStakers": 35,
+      "totalStaked": 9327291.907,
+      "totalContributed": 427.66846536731686
+    },
+    {
+      "day": "2025-10-04",
+      "activeStakers": 36,
+      "totalStaked": 9347291.907,
+      "totalContributed": 427.66846536731686
+    },
+    {
+      "day": "2025-10-05",
+      "activeStakers": 40,
+      "totalStaked": 9387291.907,
+      "totalContributed": 427.66846536731686
+    },
+    {
+      "day": "2025-10-06",
+      "activeStakers": 53,
+      "totalStaked": 10512111.907,
+      "totalContributed": 428.00170926918685
+    },
+    {
+      "day": "2025-10-07",
+      "activeStakers": 60,
+      "totalStaked": 11696111.907,
+      "totalContributed": 429.1443126024868
+    },
+    {
+      "day": "2025-10-08",
+      "activeStakers": 66,
+      "totalStaked": 11760111.907,
+      "totalContributed": 429.3338128502368
+    },
+    {
+      "day": "2025-10-09",
+      "activeStakers": 72,
+      "totalStaked": 12471011.907,
+      "totalContributed": 432.0092750501005
+    },
+    {
+      "day": "2025-10-10",
+      "activeStakers": 77,
+      "totalStaked": 12663548.907,
+      "totalContributed": 436.7291578757255
+    },
+    {
+      "day": "2025-10-11",
+      "activeStakers": 80,
+      "totalStaked": 12693548.907,
+      "totalContributed": 438.2484316922255
+    },
+    {
+      "day": "2025-10-12",
+      "activeStakers": 85,
+      "totalStaked": 12737549.177,
+      "totalContributed": 446.8106571673237
+    },
+    {
+      "day": "2025-10-13",
+      "activeStakers": 89,
+      "totalStaked": 12101437.177,
+      "totalContributed": 542.1435741003908
+    },
+    {
+      "day": "2025-10-14",
+      "activeStakers": 93,
+      "totalStaked": 12877846.157,
+      "totalContributed": 556.2746706975908
+    },
+    {
+      "day": "2025-10-15",
+      "activeStakers": 94,
+      "totalStaked": 13148119.157,
+      "totalContributed": 567.7554407381435
+    },
+    {
+      "day": "2025-10-16",
+      "activeStakers": 94,
+      "totalStaked": 13649948.327,
+      "totalContributed": 600.738051930598
+    },
+    {
+      "day": "2025-10-17",
+      "activeStakers": 93,
+      "totalStaked": 13594948.327,
+      "totalContributed": 609.698548781948
+    },
+    {
+      "day": "2025-10-18",
+      "activeStakers": 93,
+      "totalStaked": 13594948.327,
+      "totalContributed": 609.698548781948
+    },
+    {
+      "day": "2025-10-19",
+      "activeStakers": 95,
+      "totalStaked": 13605948.327,
+      "totalContributed": 609.7042978305279
+    },
+    {
+      "day": "2025-10-20",
+      "activeStakers": 94,
+      "totalStaked": 13600948.327,
+      "totalContributed": 613.886697576228
+    },
+    {
+      "day": "2025-10-21",
+      "activeStakers": 94,
+      "totalStaked": 13600997.327,
+      "totalContributed": 620.0639077087279
+    },
+    {
+      "day": "2025-10-22",
+      "activeStakers": 94,
+      "totalStaked": 13600997.327,
+      "totalContributed": 794.6701237213388
+    },
+    {
+      "day": "2025-10-23",
+      "activeStakers": 97,
+      "totalStaked": 13631497.327,
+      "totalContributed": 908.1696956965789
+    },
+    {
+      "day": "2025-10-24",
+      "activeStakers": 98,
+      "totalStaked": 13631507.36487,
+      "totalContributed": 912.9033790674788
+    },
+    {
+      "day": "2025-10-25",
+      "activeStakers": 98,
+      "totalStaked": 13631507.36487,
+      "totalContributed": 915.3004972711788
+    },
+    {
+      "day": "2025-10-26",
+      "activeStakers": 98,
+      "totalStaked": 13631507.36487,
+      "totalContributed": 915.3004972711788
+    },
+    {
+      "day": "2025-10-27",
+      "activeStakers": 98,
+      "totalStaked": 13631507.36487,
+      "totalContributed": 915.3004972711788
+    },
+    {
+      "day": "2025-10-28",
+      "activeStakers": 99,
+      "totalStaked": 14631507.36487,
+      "totalContributed": 1084.3464745709744
+    },
+    {
+      "day": "2025-10-29",
+      "activeStakers": 102,
+      "totalStaked": 15396507.36487,
+      "totalContributed": 1090.5501452540743
+    },
+    {
+      "day": "2025-10-30",
+      "activeStakers": 104,
+      "totalStaked": 16439854.24687,
+      "totalContributed": 1148.5256586776104
+    },
+    {
+      "day": "2025-10-31",
+      "activeStakers": 105,
+      "totalStaked": 16464865.55687,
+      "totalContributed": 1309.2491488375733
+    },
+    {
+      "day": "2025-11-01",
+      "activeStakers": 104,
+      "totalStaked": 16314911.78687,
+      "totalContributed": 1403.9433961720733
+    },
+    {
+      "day": "2025-11-02",
+      "activeStakers": 104,
+      "totalStaked": 16314911.78687,
+      "totalContributed": 1403.9433961720733
+    },
+    {
+      "day": "2025-11-03",
+      "activeStakers": 115,
+      "totalStaked": 16421121.78687,
+      "totalContributed": 1411.856283138273
+    },
+    {
+      "day": "2025-11-04",
+      "activeStakers": 116,
+      "totalStaked": 16518921.78687,
+      "totalContributed": 1615.8661292285017
+    },
+    {
+      "day": "2025-11-05",
+      "activeStakers": 117,
+      "totalStaked": 16528921.78687,
+      "totalContributed": 18151.012665664544
+    },
+    {
+      "day": "2025-11-06",
+      "activeStakers": 123,
+      "totalStaked": 16588121.78687,
+      "totalContributed": 18152.590057849924
+    },
+    {
+      "day": "2025-11-07",
+      "activeStakers": 124,
+      "totalStaked": 16620802.78687,
+      "totalContributed": 18153.962888263824
+    },
+    {
+      "day": "2025-11-08",
+      "activeStakers": 125,
+      "totalStaked": 19122830.13687,
+      "totalContributed": 18417.946553403428
+    },
+    {
+      "day": "2025-11-09",
+      "activeStakers": 125,
+      "totalStaked": 19125254.55687,
+      "totalContributed": 18430.71910960364
+    },
+    {
+      "day": "2025-11-10",
+      "activeStakers": 126,
+      "totalStaked": 19135254.55687,
+      "totalContributed": 18442.48971303064
+    },
+    {
+      "day": "2025-11-11",
+      "activeStakers": 126,
+      "totalStaked": 19134799.55687,
+      "totalContributed": 18449.586188376084
+    },
+    {
+      "day": "2025-11-12",
+      "activeStakers": 125,
+      "totalStaked": 19119693.55687,
+      "totalContributed": 18450.954486558596
+    },
+    {
+      "day": "2025-11-13",
+      "activeStakers": 125,
+      "totalStaked": 19119793.55687,
+      "totalContributed": 18813.772309342665
+    },
+    {
+      "day": "2025-11-14",
+      "activeStakers": 125,
+      "totalStaked": 19119793.55687,
+      "totalContributed": 18813.772309342665
+    },
+    {
+      "day": "2025-11-15",
+      "activeStakers": 126,
+      "totalStaked": 26735395.55687,
+      "totalContributed": 18836.033454630367
+    },
+    {
+      "day": "2025-11-16",
+      "activeStakers": 128,
+      "totalStaked": 28366835.60687,
+      "totalContributed": 20987.22323004313
+    },
+    {
+      "day": "2025-11-17",
+      "activeStakers": 130,
+      "totalStaked": 27914935.60687,
+      "totalContributed": 21004.78299091201
+    },
+    {
+      "day": "2025-11-18",
+      "activeStakers": 131,
+      "totalStaked": 28019935.60687,
+      "totalContributed": 21004.78299091201
+    },
+    {
+      "day": "2025-11-19",
+      "activeStakers": 131,
+      "totalStaked": 28019935.60687,
+      "totalContributed": 21016.456468010623
+    },
+    {
+      "day": "2025-11-20",
+      "activeStakers": 131,
+      "totalStaked": 28509435.60687,
+      "totalContributed": 21018.641263944395
+    },
+    {
+      "day": "2025-11-21",
+      "activeStakers": 132,
+      "totalStaked": 28519435.60687,
+      "totalContributed": 21018.641263944395
+    },
+    {
+      "day": "2025-11-22",
+      "activeStakers": 132,
+      "totalStaked": 28519435.60687,
+      "totalContributed": 21018.641263944395
+    },
+    {
+      "day": "2025-11-23",
+      "activeStakers": 132,
+      "totalStaked": 28600191.07687,
+      "totalContributed": 21043.146541475362
+    },
+    {
+      "day": "2025-11-24",
+      "activeStakers": 132,
+      "totalStaked": 28600241.07687,
+      "totalContributed": 21044.057369929436
+    },
+    {
+      "day": "2025-11-25",
+      "activeStakers": 132,
+      "totalStaked": 28607219.87687,
+      "totalContributed": 21994.112278896926
+    },
+    {
+      "day": "2025-11-26",
+      "activeStakers": 132,
+      "totalStaked": 28607469.87687,
+      "totalContributed": 21996.132690371105
+    },
+    {
+      "day": "2025-11-27",
+      "activeStakers": 132,
+      "totalStaked": 28607469.87687,
+      "totalContributed": 21997.684302516456
+    },
+    {
+      "day": "2025-11-28",
+      "activeStakers": 132,
+      "totalStaked": 28607469.87687,
+      "totalContributed": 21997.943738715458
+    },
+    {
+      "day": "2025-11-29",
+      "activeStakers": 133,
+      "totalStaked": 38607469.87687,
+      "totalContributed": 22029.030672345078
+    },
+    {
+      "day": "2025-11-30",
+      "activeStakers": 133,
+      "totalStaked": 28689488.82787,
+      "totalContributed": 22899.75932913529
+    },
+    {
+      "day": "2025-12-01",
+      "activeStakers": 131,
+      "totalStaked": 26467266.82787,
+      "totalContributed": 24717.938021236205
+    },
+    {
+      "day": "2025-12-02",
+      "activeStakers": 132,
+      "totalStaked": 37003200.07787,
+      "totalContributed": 24819.448202377487
+    },
+    {
+      "day": "2025-12-03",
+      "activeStakers": 133,
+      "totalStaked": 37013200.07787,
+      "totalContributed": 24822.49678209011
+    },
+    {
+      "day": "2025-12-04",
+      "activeStakers": 135,
+      "totalStaked": 41421200.07793,
+      "totalContributed": 24872.857626136134
+    },
+    {
+      "day": "2025-12-05",
+      "activeStakers": 135,
+      "totalStaked": 39404200.07793,
+      "totalContributed": 24935.342841852573
+    },
+    {
+      "day": "2025-12-06",
+      "activeStakers": 135,
+      "totalStaked": 38416700.07793,
+      "totalContributed": 24946.324703842572
+    },
+    {
+      "day": "2025-12-07",
+      "activeStakers": 134,
+      "totalStaked": 38406700.07793,
+      "totalContributed": 24948.725088830848
+    },
+    {
+      "day": "2025-12-08",
+      "activeStakers": 133,
+      "totalStaked": 38386650.07793,
+      "totalContributed": 25064.115246478657
+    },
+    {
+      "day": "2025-12-09",
+      "activeStakers": 138,
+      "totalStaked": 43412650.07793,
+      "totalContributed": 25314.91356455302
+    },
+    {
+      "day": "2025-12-10",
+      "activeStakers": 137,
+      "totalStaked": 38427736.62793,
+      "totalContributed": 27633.798918722394
+    },
+    {
+      "day": "2025-12-11",
+      "activeStakers": 137,
+      "totalStaked": 38427736.62793,
+      "totalContributed": 27712.178851978664
+    },
+    {
+      "day": "2025-12-12",
+      "activeStakers": 138,
+      "totalStaked": 38437736.62793,
+      "totalContributed": 27712.178851978664
+    },
+    {
+      "day": "2025-12-13",
+      "activeStakers": 138,
+      "totalStaked": 38437736.62793,
+      "totalContributed": 27712.178851978664
+    },
+    {
+      "day": "2025-12-14",
+      "activeStakers": 138,
+      "totalStaked": 39428187.62793,
+      "totalContributed": 45463.453218776805
+    },
+    {
+      "day": "2025-12-15",
+      "activeStakers": 137,
+      "totalStaked": 39784463.38093,
+      "totalContributed": 45550.84873960706
+    },
+    {
+      "day": "2025-12-16",
+      "activeStakers": 138,
+      "totalStaked": 39962099.20093,
+      "totalContributed": 45583.019758135815
+    },
+    {
+      "day": "2025-12-17",
+      "activeStakers": 138,
+      "totalStaked": 39962099.20093,
+      "totalContributed": 45583.019758135815
+    },
+    {
+      "day": "2025-12-18",
+      "activeStakers": 138,
+      "totalStaked": 40025852.20093,
+      "totalContributed": 45869.50798729054
+    },
+    {
+      "day": "2025-12-19",
+      "activeStakers": 138,
+      "totalStaked": 40025852.20093,
+      "totalContributed": 45876.65816164329
+    },
+    {
+      "day": "2025-12-20",
+      "activeStakers": 138,
+      "totalStaked": 40040852.20093,
+      "totalContributed": 45890.634508040785
+    },
+    {
+      "day": "2025-12-21",
+      "activeStakers": 138,
+      "totalStaked": 40040852.20093,
+      "totalContributed": 46148.20807440078
+    },
+    {
+      "day": "2025-12-22",
+      "activeStakers": 139,
+      "totalStaked": 49040099.20093,
+      "totalContributed": 46177.86328581996
+    },
+    {
+      "day": "2025-12-23",
+      "activeStakers": 139,
+      "totalStaked": 49040099.20093,
+      "totalContributed": 46224.37365477996
+    },
+    {
+      "day": "2025-12-24",
+      "activeStakers": 139,
+      "totalStaked": 49040096.78479,
+      "totalContributed": 46231.21280270115
+    },
+    {
+      "day": "2025-12-25",
+      "activeStakers": 138,
+      "totalStaked": 49029846.78479,
+      "totalContributed": 46322.259711059414
+    },
+    {
+      "day": "2025-12-26",
+      "activeStakers": 138,
+      "totalStaked": 49029846.78479,
+      "totalContributed": 46354.107617537775
+    },
+    {
+      "day": "2025-12-27",
+      "activeStakers": 138,
+      "totalStaked": 49019846.78479,
+      "totalContributed": 46356.171066287774
+    },
+    {
+      "day": "2025-12-28",
+      "activeStakers": 138,
+      "totalStaked": 49029846.78479,
+      "totalContributed": 46446.67585445277
+    },
+    {
+      "day": "2025-12-29",
+      "activeStakers": 137,
+      "totalStaked": 49019893.78479,
+      "totalContributed": 47236.595667291775
+    },
+    {
+      "day": "2025-12-30",
+      "activeStakers": 136,
+      "totalStaked": 48982806.78479,
+      "totalContributed": 47284.894378454075
+    },
+    {
+      "day": "2025-12-31",
+      "activeStakers": 136,
+      "totalStaked": 48982806.78479,
+      "totalContributed": 47290.62251961677
+    },
+    {
+      "day": "2026-01-01",
+      "activeStakers": 136,
+      "totalStaked": 48982806.78479,
+      "totalContributed": 47290.62251961677
+    },
+    {
+      "day": "2026-01-02",
+      "activeStakers": 137,
+      "totalStaked": 50025325.62479,
+      "totalContributed": 47365.30408075066
+    },
+    {
+      "day": "2026-01-03",
+      "activeStakers": 138,
+      "totalStaked": 50035325.62479,
+      "totalContributed": 47365.30408075066
+    },
+    {
+      "day": "2026-01-04",
+      "activeStakers": 138,
+      "totalStaked": 50035325.62479,
+      "totalContributed": 47365.30408075066
+    },
+    {
+      "day": "2026-01-05",
+      "activeStakers": 138,
+      "totalStaked": 50035325.62479,
+      "totalContributed": 47365.30408075066
+    },
+    {
+      "day": "2026-01-06",
+      "activeStakers": 139,
+      "totalStaked": 50045325.62479,
+      "totalContributed": 47365.30408075066
+    },
+    {
+      "day": "2026-01-07",
+      "activeStakers": 140,
+      "totalStaked": 50280031.62479,
+      "totalContributed": 47365.30408075066
+    },
+    {
+      "day": "2026-01-08",
+      "activeStakers": 140,
+      "totalStaked": 50280031.62479,
+      "totalContributed": 47365.30408075066
+    },
+    {
+      "day": "2026-01-09",
+      "activeStakers": 141,
+      "totalStaked": 50530031.62479,
+      "totalContributed": 47768.05438467125
+    },
+    {
+      "day": "2026-01-10",
+      "activeStakers": 141,
+      "totalStaked": 50530031.62479,
+      "totalContributed": 47768.05438467125
+    },
+    {
+      "day": "2026-01-11",
+      "activeStakers": 141,
+      "totalStaked": 50530031.62479,
+      "totalContributed": 47853.44284736045
+    },
+    {
+      "day": "2026-01-12",
+      "activeStakers": 141,
+      "totalStaked": 50530031.62479,
+      "totalContributed": 47853.44284736045
+    },
+    {
+      "day": "2026-01-13",
+      "activeStakers": 141,
+      "totalStaked": 50530031.62479,
+      "totalContributed": 47853.44284736045
+    },
+    {
+      "day": "2026-01-14",
+      "activeStakers": 142,
+      "totalStaked": 51530031.62479,
+      "totalContributed": 47886.30018836876
+    },
+    {
+      "day": "2026-01-15",
+      "activeStakers": 142,
+      "totalStaked": 51530031.62479,
+      "totalContributed": 47886.30018836876
+    },
+    {
+      "day": "2026-01-16",
+      "activeStakers": 142,
+      "totalStaked": 51624341.96479,
+      "totalContributed": 51705.970080621904
+    },
+    {
+      "day": "2026-01-17",
+      "activeStakers": 141,
+      "totalStaked": 51535419.96479,
+      "totalContributed": 61895.25240086372
+    },
+    {
+      "day": "2026-01-18",
+      "activeStakers": 141,
+      "totalStaked": 51535419.96479,
+      "totalContributed": 61895.25240086372
+    },
+    {
+      "day": "2026-01-19",
+      "activeStakers": 142,
+      "totalStaked": 61535419.96479,
+      "totalContributed": 61899.52738801972
+    },
+    {
+      "day": "2026-01-20",
+      "activeStakers": 141,
+      "totalStaked": 51535419.96479,
+      "totalContributed": 62225.64864501972
+    },
+    {
+      "day": "2026-01-21",
+      "activeStakers": 141,
+      "totalStaked": 51535419.96479,
+      "totalContributed": 62225.64864501972
+    },
+    {
+      "day": "2026-01-22",
+      "activeStakers": 141,
+      "totalStaked": 51535419.96479,
+      "totalContributed": 62225.64864501972
+    },
+    {
+      "day": "2026-01-23",
+      "activeStakers": 141,
+      "totalStaked": 51474919.96479,
+      "totalContributed": 62365.806256763215
+    },
+    {
+      "day": "2026-01-24",
+      "activeStakers": 141,
+      "totalStaked": 51481680.46479,
+      "totalContributed": 63547.25142400809
+    },
+    {
+      "day": "2026-01-25",
+      "activeStakers": 141,
+      "totalStaked": 51481680.46479,
+      "totalContributed": 63547.25142400809
+    },
+    {
+      "day": "2026-01-26",
+      "activeStakers": 142,
+      "totalStaked": 51588080.46479,
+      "totalContributed": 63638.45447218268
+    },
+    {
+      "day": "2026-01-27",
+      "activeStakers": 141,
+      "totalStaked": 51488080.46479,
+      "totalContributed": 63686.98618172768
+    },
+    {
+      "day": "2026-01-28",
+      "activeStakers": 141,
+      "totalStaked": 51488080.46479,
+      "totalContributed": 63686.98618172768
+    },
+    {
+      "day": "2026-01-29",
+      "activeStakers": 141,
+      "totalStaked": 51488080.46479,
+      "totalContributed": 63686.98618172768
+    },
+    {
+      "day": "2026-01-30",
+      "activeStakers": 141,
+      "totalStaked": 51488080.46479,
+      "totalContributed": 63686.98618172768
+    },
+    {
+      "day": "2026-01-31",
+      "activeStakers": 141,
+      "totalStaked": 51488080.46479,
+      "totalContributed": 63898.660490397684
+    },
+    {
+      "day": "2026-02-01",
+      "activeStakers": 141,
+      "totalStaked": 51488080.46479,
+      "totalContributed": 63898.660490397684
+    },
+    {
+      "day": "2026-02-02",
+      "activeStakers": 141,
+      "totalStaked": 51488080.46479,
+      "totalContributed": 63900.24756489768
+    },
+    {
+      "day": "2026-02-03",
+      "activeStakers": 141,
+      "totalStaked": 51488080.46479,
+      "totalContributed": 63900.24756489768
+    },
+    {
+      "day": "2026-02-04",
+      "activeStakers": 141,
+      "totalStaked": 51488080.46479,
+      "totalContributed": 63900.24756489768
+    },
+    {
+      "day": "2026-02-05",
+      "activeStakers": 141,
+      "totalStaked": 51488080.46479,
+      "totalContributed": 63908.54516319678
+    },
+    {
+      "day": "2026-02-06",
+      "activeStakers": 141,
+      "totalStaked": 51488080.46479,
+      "totalContributed": 63999.910459966784
+    },
+    {
+      "day": "2026-02-07",
+      "activeStakers": 141,
+      "totalStaked": 51488080.46479,
+      "totalContributed": 63999.910459966784
+    },
+    {
+      "day": "2026-02-08",
+      "activeStakers": 141,
+      "totalStaked": 51488080.46479,
+      "totalContributed": 64245.83223108037
+    },
+    {
+      "day": "2026-02-09",
+      "activeStakers": 141,
+      "totalStaked": 51488080.46479,
+      "totalContributed": 64245.83223108037
+    },
+    {
+      "day": "2026-02-10",
+      "activeStakers": 141,
+      "totalStaked": 51478080.46479,
+      "totalContributed": 64251.14795596517
+    },
+    {
+      "day": "2026-02-11",
+      "activeStakers": 141,
+      "totalStaked": 51478080.46479,
+      "totalContributed": 64251.14795596517
+    },
+    {
+      "day": "2026-02-12",
+      "activeStakers": 141,
+      "totalStaked": 51478090.46479,
+      "totalContributed": 64252.47847069384
+    },
+    {
+      "day": "2026-02-13",
+      "activeStakers": 141,
+      "totalStaked": 51478090.46479,
+      "totalContributed": 64252.47847069384
+    },
+    {
+      "day": "2026-02-14",
+      "activeStakers": 141,
+      "totalStaked": 51478090.46479,
+      "totalContributed": 64252.47847069384
+    },
+    {
+      "day": "2026-02-15",
+      "activeStakers": 141,
+      "totalStaked": 51478090.46479,
+      "totalContributed": 64252.47847069384
+    },
+    {
+      "day": "2026-02-16",
+      "activeStakers": 141,
+      "totalStaked": 51501090.46479,
+      "totalContributed": 66356.25617060215
+    },
+    {
+      "day": "2026-02-17",
+      "activeStakers": 141,
+      "totalStaked": 51501090.46479,
+      "totalContributed": 66356.25617060215
+    },
+    {
+      "day": "2026-02-18",
+      "activeStakers": 141,
+      "totalStaked": 51501090.46479,
+      "totalContributed": 66356.25617060215
+    },
+    {
+      "day": "2026-02-19",
+      "activeStakers": 141,
+      "totalStaked": 51501090.46479,
+      "totalContributed": 66356.25617060215
+    },
+    {
+      "day": "2026-02-20",
+      "activeStakers": 141,
+      "totalStaked": 51501090.46479,
+      "totalContributed": 66359.97494216415
+    },
+    {
+      "day": "2026-02-21",
+      "activeStakers": 141,
+      "totalStaked": 51501090.46479,
+      "totalContributed": 66359.97494216415
+    },
+    {
+      "day": "2026-02-22",
+      "activeStakers": 141,
+      "totalStaked": 51501090.46479,
+      "totalContributed": 66889.43366643097
+    },
+    {
+      "day": "2026-02-23",
+      "activeStakers": 141,
+      "totalStaked": 51501090.46479,
+      "totalContributed": 66909.35618113592
+    },
+    {
+      "day": "2026-02-24",
+      "activeStakers": 142,
+      "totalStaked": 51511090.46479,
+      "totalContributed": 66925.54739555222
+    },
+    {
+      "day": "2026-02-25",
+      "activeStakers": 143,
+      "totalStaked": 53011090.46479,
+      "totalContributed": 66973.47559811291
+    },
+    {
+      "day": "2026-02-26",
+      "activeStakers": 142,
+      "totalStaked": 51511090.46479,
+      "totalContributed": 67047.68281308711
+    },
+    {
+      "day": "2026-02-27",
+      "activeStakers": 142,
+      "totalStaked": 51511090.46479,
+      "totalContributed": 67047.68281308711
+    },
+    {
+      "day": "2026-02-28",
+      "activeStakers": 142,
+      "totalStaked": 51511090.46479,
+      "totalContributed": 67047.68281308711
+    },
+    {
+      "day": "2026-03-01",
+      "activeStakers": 142,
+      "totalStaked": 51511090.46479,
+      "totalContributed": 67047.68281308711
+    },
+    {
+      "day": "2026-03-02",
+      "activeStakers": 142,
+      "totalStaked": 51511090.46479,
+      "totalContributed": 67189.79652409865
+    },
+    {
+      "day": "2026-03-03",
+      "activeStakers": 142,
+      "totalStaked": 51511090.46479,
+      "totalContributed": 67189.79652409865
+    },
+    {
+      "day": "2026-03-04",
+      "activeStakers": 142,
+      "totalStaked": 51511090.46479,
+      "totalContributed": 67189.79652409865
+    },
+    {
+      "day": "2026-03-05",
+      "activeStakers": 142,
+      "totalStaked": 51511090.46479,
+      "totalContributed": 67189.79652409865
+    },
+    {
+      "day": "2026-03-06",
+      "activeStakers": 142,
+      "totalStaked": 51511090.46479,
+      "totalContributed": 67335.79662612225
+    },
+    {
+      "day": "2026-03-07",
+      "activeStakers": 142,
+      "totalStaked": 51511090.46479,
+      "totalContributed": 67335.79662612225
+    },
+    {
+      "day": "2026-03-08",
+      "activeStakers": 142,
+      "totalStaked": 51881090.46479,
+      "totalContributed": 67447.88715946715
+    },
+    {
+      "day": "2026-03-09",
+      "activeStakers": 142,
+      "totalStaked": 51881090.46479,
+      "totalContributed": 67447.88715946715
+    },
+    {
+      "day": "2026-03-10",
+      "activeStakers": 142,
+      "totalStaked": 51881090.46479,
+      "totalContributed": 67447.88715946715
+    },
+    {
+      "day": "2026-03-11",
+      "activeStakers": 142,
+      "totalStaked": 51892390.46479,
+      "totalContributed": 67620.61652881595
+    },
+    {
+      "day": "2026-03-12",
+      "activeStakers": 142,
+      "totalStaked": 51892390.46479,
+      "totalContributed": 67620.61652881595
+    },
+    {
+      "day": "2026-03-13",
+      "activeStakers": 142,
+      "totalStaked": 51892390.46479,
+      "totalContributed": 67620.61652881595
+    },
+    {
+      "day": "2026-03-14",
+      "activeStakers": 142,
+      "totalStaked": 51892390.46479,
+      "totalContributed": 67620.61652881595
+    },
+    {
+      "day": "2026-03-15",
+      "activeStakers": 143,
+      "totalStaked": 53642390.46479,
+      "totalContributed": 67900.02288384594
+    },
+    {
+      "day": "2026-03-16",
+      "activeStakers": 144,
+      "totalStaked": 55152390.46479,
+      "totalContributed": 67900.02288384594
+    },
+    {
+      "day": "2026-03-17",
+      "activeStakers": 144,
+      "totalStaked": 54407390.46479,
+      "totalContributed": 68030.81561819735
+    },
+    {
+      "day": "2026-03-18",
+      "activeStakers": 143,
+      "totalStaked": 53408928.46479,
+      "totalContributed": 68392.45386122318
+    },
+    {
+      "day": "2026-03-19",
+      "activeStakers": 143,
+      "totalStaked": 53408928.46479,
+      "totalContributed": 68392.45386122318
+    },
+    {
+      "day": "2026-03-20",
+      "activeStakers": 143,
+      "totalStaked": 53456338.77479,
+      "totalContributed": 74318.74544854123
+    },
+    {
+      "day": "2026-03-21",
+      "activeStakers": 143,
+      "totalStaked": 53456338.77479,
+      "totalContributed": 74514.06322871083
+    },
+    {
+      "day": "2026-03-22",
+      "activeStakers": 143,
+      "totalStaked": 53456338.77479,
+      "totalContributed": 74514.06322871083
+    },
+    {
+      "day": "2026-03-23",
+      "activeStakers": 143,
+      "totalStaked": 53441338.77479,
+      "totalContributed": 74526.34302013378
+    },
+    {
+      "day": "2026-03-24",
+      "activeStakers": 143,
+      "totalStaked": 53441574.77479,
+      "totalContributed": 74748.10237107152
+    },
+    {
+      "day": "2026-03-25",
+      "activeStakers": 143,
+      "totalStaked": 53441574.77479,
+      "totalContributed": 74748.10237107152
+    },
+    {
+      "day": "2026-03-26",
+      "activeStakers": 143,
+      "totalStaked": 53441574.77479,
+      "totalContributed": 74748.50366039072
+    },
+    {
+      "day": "2026-03-27",
+      "activeStakers": 143,
+      "totalStaked": 53441574.77479,
+      "totalContributed": 74748.50366039072
+    },
+    {
+      "day": "2026-03-28",
+      "activeStakers": 143,
+      "totalStaked": 53441574.77479,
+      "totalContributed": 74897.74371845232
+    },
+    {
+      "day": "2026-03-29",
+      "activeStakers": 143,
+      "totalStaked": 53441574.77479,
+      "totalContributed": 74945.43290397212
+    },
+    {
+      "day": "2026-03-30",
+      "activeStakers": 143,
+      "totalStaked": 53441574.77479,
+      "totalContributed": 75027.45001452332
+    },
+    {
+      "day": "2026-03-31",
+      "activeStakers": 143,
+      "totalStaked": 53441574.77479,
+      "totalContributed": 75027.45001452332
+    },
+    {
+      "day": "2026-04-01",
+      "activeStakers": 143,
+      "totalStaked": 53441574.77479,
+      "totalContributed": 75121.74709581492
+    },
+    {
+      "day": "2026-04-02",
+      "activeStakers": 143,
+      "totalStaked": 53441574.77479,
+      "totalContributed": 75121.74709581492
+    },
+    {
+      "day": "2026-04-03",
+      "activeStakers": 143,
+      "totalStaked": 53441574.77479,
+      "totalContributed": 75121.74709581492
+    },
+    {
+      "day": "2026-04-04",
+      "activeStakers": 143,
+      "totalStaked": 53441574.77479,
+      "totalContributed": 75468.07478448232
+    },
+    {
+      "day": "2026-04-05",
+      "activeStakers": 143,
+      "totalStaked": 53441574.77479,
+      "totalContributed": 77928.48624837732
+    },
+    {
+      "day": "2026-04-06",
+      "activeStakers": 143,
+      "totalStaked": 53931574.77479,
+      "totalContributed": 78029.06027092302
+    },
+    {
+      "day": "2026-04-07",
+      "activeStakers": 148,
+      "totalStaked": 53995074.77479,
+      "totalContributed": 78038.72187478043
+    },
+    {
+      "day": "2026-04-08",
+      "activeStakers": 164,
+      "totalStaked": 54075084.77479,
+      "totalContributed": 80090.46540014914
+    },
+    {
+      "day": "2026-04-09",
+      "activeStakers": 165,
+      "totalStaked": 54075085.77479,
+      "totalContributed": 80090.90113771515
+    },
+    {
+      "day": "2026-04-10",
+      "activeStakers": 166,
+      "totalStaked": 54100085.77479,
+      "totalContributed": 80348.65318993016
+    },
+    {
+      "day": "2026-04-11",
+      "activeStakers": 166,
+      "totalStaked": 54100085.77479,
+      "totalContributed": 80348.65610594656
+    },
+    {
+      "day": "2026-04-12",
+      "activeStakers": 166,
+      "totalStaked": 54100085.77479,
+      "totalContributed": 80348.66276116547
+    },
+    {
+      "day": "2026-04-13",
+      "activeStakers": 166,
+      "totalStaked": 54100085.77479,
+      "totalContributed": 80348.66586553596
+    },
+    {
+      "day": "2026-04-14",
+      "activeStakers": 166,
+      "totalStaked": 54100085.77479,
+      "totalContributed": 80350.23753969849
+    },
+    {
+      "day": "2026-04-15",
+      "activeStakers": 167,
+      "totalStaked": 54110085.77479,
+      "totalContributed": 80350.24508088708
+    },
+    {
+      "day": "2026-04-16",
+      "activeStakers": 168,
+      "totalStaked": 54120085.77479,
+      "totalContributed": 80725.00853720268
+    },
+    {
+      "day": "2026-04-17",
+      "activeStakers": 170,
+      "totalStaked": 60771835.77479,
+      "totalContributed": 80725.13406607648
+    },
+    {
+      "day": "2026-04-18",
+      "activeStakers": 170,
+      "totalStaked": 60771835.77479,
+      "totalContributed": 80727.49675695319
+    },
+    {
+      "day": "2026-04-19",
+      "activeStakers": 170,
+      "totalStaked": 60771835.77479,
+      "totalContributed": 80727.50169604669
+    },
+    {
+      "day": "2026-04-20",
+      "activeStakers": 170,
+      "totalStaked": 60771835.77479,
+      "totalContributed": 80727.50696302488
+    },
+    {
+      "day": "2026-04-21",
+      "activeStakers": 170,
+      "totalStaked": 60771835.77479,
+      "totalContributed": 80727.54088791148
+    },
+    {
+      "day": "2026-04-22",
+      "activeStakers": 170,
+      "totalStaked": 60771835.77479,
+      "totalContributed": 80729.43205330078
+    },
+    {
+      "day": "2026-04-23",
+      "activeStakers": 171,
+      "totalStaked": 60781835.77479,
+      "totalContributed": 80729.47605163869
+    },
+    {
+      "day": "2026-04-24",
+      "activeStakers": 170,
+      "totalStaked": 54214702.77479,
+      "totalContributed": 82025.50271294946
+    },
+    {
+      "day": "2026-04-25",
+      "activeStakers": 170,
+      "totalStaked": 54214702.77479,
+      "totalContributed": 86672.61576331763
+    },
+    {
+      "day": "2026-04-26",
+      "activeStakers": 170,
+      "totalStaked": 54214706.77479,
+      "totalContributed": 86672.96938431392
+    },
+    {
+      "day": "2026-04-27",
+      "activeStakers": 172,
+      "totalStaked": 60529706.77479,
+      "totalContributed": 86673.00113259973
+    },
+    {
+      "day": "2026-04-28",
+      "activeStakers": 172,
+      "totalStaked": 60529706.77479,
+      "totalContributed": 86673.01774968814
+    },
+    {
+      "day": "2026-04-29",
+      "activeStakers": 173,
+      "totalStaked": 66552002.77479,
+      "totalContributed": 87130.19506676443
+    },
+    {
+      "day": "2026-04-30",
+      "activeStakers": 173,
+      "totalStaked": 66552002.77479,
+      "totalContributed": 87390.58521538963
+    },
+    {
+      "day": "2026-05-01",
+      "activeStakers": 179,
+      "totalStaked": 66612002.77479,
+      "totalContributed": 87390.74081137963
+    },
+    {
+      "day": "2026-05-02",
+      "activeStakers": 179,
+      "totalStaked": 66612002.77479,
+      "totalContributed": 87391.15355539483
+    },
+    {
+      "day": "2026-05-03",
+      "activeStakers": 179,
+      "totalStaked": 55307641.77479,
+      "totalContributed": 89161.10791301783
+    },
+    {
+      "day": "2026-05-04",
+      "activeStakers": 180,
+      "totalStaked": 55317641.77479,
+      "totalContributed": 89426.79850072543
+    },
+    {
+      "day": "2026-05-05",
+      "activeStakers": 181,
+      "totalStaked": 55327641.77479,
+      "totalContributed": 89426.98189534718
+    },
+    {
+      "day": "2026-05-06",
+      "activeStakers": 183,
+      "totalStaked": 55385983.77479,
+      "totalContributed": 90538.12726665792
+    },
+    {
+      "day": "2026-05-07",
+      "activeStakers": 183,
+      "totalStaked": 55425719.77479,
+      "totalContributed": 90926.50895596623
+    },
+    {
+      "day": "2026-05-08",
+      "activeStakers": 184,
+      "totalStaked": 55479136.54479,
+      "totalContributed": 91048.98728015559
+    },
+    {
+      "day": "2026-05-09",
+      "activeStakers": 186,
+      "totalStaked": 55499136.54479,
+      "totalContributed": 91202.24247483876
+    },
+    {
+      "day": "2026-05-10",
+      "activeStakers": 186,
+      "totalStaked": 51833049.54479,
+      "totalContributed": 91365.43625969191
+    },
+    {
+      "day": "2026-05-11",
+      "activeStakers": 186,
+      "totalStaked": 51833049.54479,
+      "totalContributed": 91365.46391290761
+    },
+    {
+      "day": "2026-05-12",
+      "activeStakers": 191,
+      "totalStaked": 51883049.54479,
+      "totalContributed": 91758.0477414071
+    },
+    {
+      "day": "2026-05-13",
+      "activeStakers": 191,
+      "totalStaked": 51883113.54479,
+      "totalContributed": 92022.18215592911
+    },
+    {
+      "day": "2026-05-14",
+      "activeStakers": 191,
+      "totalStaked": 51883115.54479,
+      "totalContributed": 92022.34479981427
+    },
+    {
+      "day": "2026-05-15",
+      "activeStakers": 191,
+      "totalStaked": 51883115.54479,
+      "totalContributed": 92030.34925199524
+    },
+    {
+      "day": "2026-05-16",
+      "activeStakers": 191,
+      "totalStaked": 51883115.54479,
+      "totalContributed": 92188.09516099801
+    },
+    {
+      "day": "2026-05-17",
+      "activeStakers": 191,
+      "totalStaked": 51883115.54479,
+      "totalContributed": 92311.80694595906
+    },
+    {
+      "day": "2026-05-18",
+      "activeStakers": 191,
+      "totalStaked": 51883115.54479,
+      "totalContributed": 92316.1896105811
+    },
+    {
+      "day": "2026-05-19",
+      "activeStakers": 191,
+      "totalStaked": 55238498.54479,
+      "totalContributed": 92629.90254349285
+    },
+    {
+      "day": "2026-05-20",
+      "activeStakers": 191,
+      "totalStaked": 55238498.54479,
+      "totalContributed": 92629.90254349285
+    },
+    {
+      "day": "2026-05-21",
+      "activeStakers": 190,
+      "totalStaked": 55172245.54479,
+      "totalContributed": 93015.55403389342
+    },
+    {
+      "day": "2026-05-22",
+      "activeStakers": 190,
+      "totalStaked": 55182245.54479,
+      "totalContributed": 93016.30459831737
+    },
+    {
+      "day": "2026-05-23",
+      "activeStakers": 190,
+      "totalStaked": 55172245.54479,
+      "totalContributed": 93660.11780790637
+    },
+    {
+      "day": "2026-05-24",
+      "activeStakers": 190,
+      "totalStaked": 55172245.54479,
+      "totalContributed": 93794.69654098636
+    },
+    {
+      "day": "2026-05-25",
+      "activeStakers": 190,
+      "totalStaked": 55172245.54479,
+      "totalContributed": 93807.22444120666
+    },
+    {
+      "day": "2026-05-26",
+      "activeStakers": 190,
+      "totalStaked": 55172245.54479,
+      "totalContributed": 94071.15102136183
+    },
+    {
+      "day": "2026-05-27",
+      "activeStakers": 190,
+      "totalStaked": 55172245.54479,
+      "totalContributed": 94228.36048323283
+    },
+    {
+      "day": "2026-05-28",
+      "activeStakers": 190,
+      "totalStaked": 55172245.54479,
+      "totalContributed": 94229.06833615113
+    },
+    {
+      "day": "2026-05-29",
+      "activeStakers": 190,
+      "totalStaked": 55172245.54479,
+      "totalContributed": 94229.06833615113
+    },
+    {
+      "day": "2026-05-30",
+      "activeStakers": 190,
+      "totalStaked": 55172246.54479,
+      "totalContributed": 94230.2819824851
+    },
+    {
+      "day": "2026-05-31",
+      "activeStakers": 190,
+      "totalStaked": 55262246.54479,
+      "totalContributed": 94998.23546878542
+    },
+    {
+      "day": "2026-06-01",
+      "activeStakers": 191,
+      "totalStaked": 57223120.49479,
+      "totalContributed": 95022.30860647354
+    },
+    {
+      "day": "2026-06-02",
+      "activeStakers": 191,
+      "totalStaked": 57223120.49479,
+      "totalContributed": 96991.99634652928
+    },
+    {
+      "day": "2026-06-03",
+      "activeStakers": 191,
+      "totalStaked": 57226555.49479,
+      "totalContributed": 97371.09394608896
+    },
+    {
+      "day": "2026-06-04",
+      "activeStakers": 191,
+      "totalStaked": 57226555.49479,
+      "totalContributed": 97371.09394608896
+    },
+    {
+      "day": "2026-06-05",
+      "activeStakers": 191,
+      "totalStaked": 57226555.49479,
+      "totalContributed": 97371.09394608896
+    },
+    {
+      "day": "2026-06-06",
+      "activeStakers": 191,
+      "totalStaked": 57226594.49479,
+      "totalContributed": 97373.20577263959
+    },
+    {
+      "day": "2026-06-07",
+      "activeStakers": 191,
+      "totalStaked": 57226594.49479,
+      "totalContributed": 98343.07870850658
+    },
+    {
+      "day": "2026-06-08",
+      "activeStakers": 191,
+      "totalStaked": 57226594.49479,
+      "totalContributed": 98508.08777701658
+    },
+    {
+      "day": "2026-06-09",
+      "activeStakers": 191,
+      "totalStaked": 57226594.49479,
+      "totalContributed": 98699.03127928321
+    },
+    {
+      "day": "2026-06-10",
+      "activeStakers": 191,
+      "totalStaked": 57226594.49479,
+      "totalContributed": 98852.9058229819
+    },
+    {
+      "day": "2026-06-11",
+      "activeStakers": 191,
+      "totalStaked": 57226611.49479,
+      "totalContributed": 98852.9122867376
+    },
+    {
+      "day": "2026-06-12",
+      "activeStakers": 191,
+      "totalStaked": 57226586.50729,
+      "totalContributed": 99213.41614639337
+    },
+    {
+      "day": "2026-06-13",
+      "activeStakers": 192,
+      "totalStaked": 74005886.50729,
+      "totalContributed": 99297.46057684041
+    },
+    {
+      "day": "2026-06-14",
+      "activeStakers": 191,
+      "totalStaked": 57226586.50729,
+      "totalContributed": 100104.64672828467
+    },
+    {
+      "day": "2026-06-15",
+      "activeStakers": 191,
+      "totalStaked": 57226586.50729,
+      "totalContributed": 142920.8696866522
+    },
+    {
+      "day": "2026-06-16",
+      "activeStakers": 191,
+      "totalStaked": 57226589.7463063,
+      "totalContributed": 143466.22652670732
+    },
+    {
+      "day": "2026-06-17",
+      "activeStakers": 191,
+      "totalStaked": 57226589.7463063,
+      "totalContributed": 143466.22652670732
+    },
+    {
+      "day": "2026-06-18",
+      "activeStakers": 191,
+      "totalStaked": 57226589.7463063,
+      "totalContributed": 145447.5307793808
+    },
+    {
+      "day": "2026-06-19",
+      "activeStakers": 191,
+      "totalStaked": 57226589.7463063,
+      "totalContributed": 145459.9580044877
+    },
+    {
+      "day": "2026-06-20",
+      "activeStakers": 191,
+      "totalStaked": 57355195.4363063,
+      "totalContributed": 145939.0002914175
+    },
+    {
+      "day": "2026-06-21",
+      "activeStakers": 191,
+      "totalStaked": 57355195.4363063,
+      "totalContributed": 146096.0554974175
+    },
+    {
+      "day": "2026-06-22",
+      "activeStakers": 192,
+      "totalStaked": 57395195.4363063,
+      "totalContributed": 146708.0125425807
+    },
+    {
+      "day": "2026-06-23",
+      "activeStakers": 192,
+      "totalStaked": 57395195.4363063,
+      "totalContributed": 146709.6384884613
+    },
+    {
+      "day": "2026-06-24",
+      "activeStakers": 192,
+      "totalStaked": 57395195.4363063,
+      "totalContributed": 147370.95473433947
+    },
+    {
+      "day": "2026-06-25",
+      "activeStakers": 192,
+      "totalStaked": 57395195.4363063,
+      "totalContributed": 147415.17762145447
+    },
+    {
+      "day": "2026-06-26",
+      "activeStakers": 192,
+      "totalStaked": 57395195.4363063,
+      "totalContributed": 147415.17762145447
+    },
+    {
+      "day": "2026-06-27",
+      "activeStakers": 192,
+      "totalStaked": 57395195.4363063,
+      "totalContributed": 147855.04298134448
+    },
+    {
+      "day": "2026-06-28",
+      "activeStakers": 192,
+      "totalStaked": 57395672.5363063,
+      "totalContributed": 147920.92694535787
+    },
+    {
+      "day": "2026-06-29",
+      "activeStakers": 192,
+      "totalStaked": 57395728.5363063,
+      "totalContributed": 147952.86116730885
+    },
+    {
+      "day": "2026-06-30",
+      "activeStakers": 192,
+      "totalStaked": 57395728.5363063,
+      "totalContributed": 147952.86116730885
+    },
+    {
+      "day": "2026-07-01",
+      "activeStakers": 192,
+      "totalStaked": 57395728.5363063,
+      "totalContributed": 148630.52409176383
+    },
+    {
+      "day": "2026-07-02",
+      "activeStakers": 192,
+      "totalStaked": 57395728.5363063,
+      "totalContributed": 149901.31195157414
+    },
+    {
+      "day": "2026-07-03",
+      "activeStakers": 192,
+      "totalStaked": 57395728.5363063,
+      "totalContributed": 150089.46127243913
+    },
+    {
+      "day": "2026-07-04",
+      "activeStakers": 192,
+      "totalStaked": 57395809.9058433,
+      "totalContributed": 150099.63370891628
+    },
+    {
+      "day": "2026-07-05",
+      "activeStakers": 193,
+      "totalStaked": 62895809.9058433,
+      "totalContributed": 150545.6754066113
+    },
+    {
+      "day": "2026-07-06",
+      "activeStakers": 193,
+      "totalStaked": 62895809.9058433,
+      "totalContributed": 150555.91543178225
+    },
+    {
+      "day": "2026-07-07",
+      "activeStakers": 193,
+      "totalStaked": 62895309.9058433,
+      "totalContributed": 150815.28723770703
+    },
+    {
+      "day": "2026-07-08",
+      "activeStakers": 193,
+      "totalStaked": 62895309.9058433,
+      "totalContributed": 150815.28723770703
+    },
+    {
+      "day": "2026-07-09",
+      "activeStakers": 194,
+      "totalStaked": 63145309.9058433,
+      "totalContributed": 151211.74366580334
+    },
+    {
+      "day": "2026-07-10",
+      "activeStakers": 194,
+      "totalStaked": 63191925.9058433,
+      "totalContributed": 157038.77551676508
+    },
+    {
+      "day": "2026-07-11",
+      "activeStakers": 195,
+      "totalStaked": 63441925.9058433,
+      "totalContributed": 157038.77551676508
+    },
+    {
+      "day": "2026-07-12",
+      "activeStakers": 195,
+      "totalStaked": 63441925.9058433,
+      "totalContributed": 157555.28160400508
+    },
+    {
+      "day": "2026-07-13",
+      "activeStakers": 195,
+      "totalStaked": 63441925.9058433,
+      "totalContributed": 158594.10434695988
+    },
+    {
+      "day": "2026-07-14",
+      "activeStakers": 195,
+      "totalStaked": 63441925.9058433,
+      "totalContributed": 158594.10434695988
+    },
+    {
+      "day": "2026-07-15",
+      "activeStakers": 195,
+      "totalStaked": 63441925.9058433,
+      "totalContributed": 159069.2093251556
+    },
+    {
+      "day": "2026-07-16",
+      "activeStakers": 195,
+      "totalStaked": 63442349.9058433,
+      "totalContributed": 159101.3026276059
+    },
+    {
+      "day": "2026-07-17",
+      "activeStakers": 196,
+      "totalStaked": 63822349.9058433,
+      "totalContributed": 159606.7470453699
+    },
+    {
+      "day": "2026-07-18",
+      "activeStakers": 196,
+      "totalStaked": 63822349.9058433,
+      "totalContributed": 159621.03914310524
+    },
+    {
+      "day": "2026-07-19",
+      "activeStakers": 196,
+      "totalStaked": 63822349.9058433,
+      "totalContributed": 159655.98025799522
+    },
+    {
+      "day": "2026-07-20",
+      "activeStakers": 196,
+      "totalStaked": 63822349.9058433,
+      "totalContributed": 159655.98025799522
+    },
+    {
+      "day": "2026-07-21",
+      "activeStakers": 196,
+      "totalStaked": 63822349.9058433,
+      "totalContributed": 160266.63722090024
+    },
+    {
+      "day": "2026-07-22",
+      "activeStakers": 196,
+      "totalStaked": 63822349.9058433,
+      "totalContributed": 160449.12562291595
+    },
+    {
+      "day": "2026-07-23",
+      "activeStakers": 196,
+      "totalStaked": 63822349.9058433,
+      "totalContributed": 160733.10881625593
+    },
+    {
+      "day": "2026-07-24",
+      "activeStakers": 196,
+      "totalStaked": 63822349.9058433,
+      "totalContributed": 160877.95121830094
+    },
+    {
+      "day": "2026-07-25",
+      "activeStakers": 196,
+      "totalStaked": 65143410.9058433,
+      "totalContributed": 160983.22497267535
+    },
+    {
+      "day": "2026-07-26",
+      "activeStakers": 196,
+      "totalStaked": 65143434.9058433,
+      "totalContributed": 160997.79981709764
+    },
+    {
+      "day": "2026-07-27",
+      "activeStakers": 196,
+      "totalStaked": 65143434.9058433,
+      "totalContributed": 161406.79255520765
+    },
+    {
+      "day": "2026-07-28",
+      "activeStakers": 196,
+      "totalStaked": 65143434.9058433,
+      "totalContributed": 161406.79255520765
+    },
+    {
+      "day": "2026-07-29",
+      "activeStakers": 196,
+      "totalStaked": 65087441.9058433,
+      "totalContributed": 161922.83780381415
+    },
+    {
+      "day": "2026-07-30",
+      "activeStakers": 196,
+      "totalStaked": 65087441.9058433,
+      "totalContributed": 161922.83780381415
+    },
+    {
+      "day": "2026-07-31",
+      "activeStakers": 196,
+      "totalStaked": 65087441.9058433,
+      "totalContributed": 162149.04134879913
+    },
+    {
+      "day": "2026-08-01",
+      "activeStakers": 196,
+      "totalStaked": 65087441.9058433,
+      "totalContributed": 162149.04134879913
+    },
+    {
+      "day": "2026-08-02",
+      "activeStakers": 196,
+      "totalStaked": 65087441.9058433,
+      "totalContributed": 162485.76252402915
+    },
+    {
+      "day": "2026-08-03",
+      "activeStakers": 196,
+      "totalStaked": 65087441.9058433,
+      "totalContributed": 162485.76252402915
+    },
+    {
+      "day": "2026-08-04",
+      "activeStakers": 196,
+      "totalStaked": 65087441.9058433,
+      "totalContributed": 162951.23804354915
+    },
+    {
+      "day": "2026-08-05",
+      "activeStakers": 196,
+      "totalStaked": 65086441.9058433,
+      "totalContributed": 162985.9374371121
+    },
+    {
+      "day": "2026-08-06",
+      "activeStakers": 196,
+      "totalStaked": 65086441.9058433,
+      "totalContributed": 162985.9374371121
+    },
+    {
+      "day": "2026-08-07",
+      "activeStakers": 196,
+      "totalStaked": 65093941.9058433,
+      "totalContributed": 164040.73626161844
+    },
+    {
+      "day": "2026-08-08",
+      "activeStakers": 196,
+      "totalStaked": 65093941.9058433,
+      "totalContributed": 164042.05418236728
+    },
+    {
+      "day": "2026-08-09",
+      "activeStakers": 196,
+      "totalStaked": 65093941.9058433,
+      "totalContributed": 172609.42211853835
+    },
+    {
+      "day": "2026-08-10",
+      "activeStakers": 196,
+      "totalStaked": 63898841.9058433,
+      "totalContributed": 172664.0090111956
+    },
+    {
+      "day": "2026-08-11",
+      "activeStakers": 196,
+      "totalStaked": 63898841.9058433,
+      "totalContributed": 173840.57315402708
+    },
+    {
+      "day": "2026-08-12",
+      "activeStakers": 196,
+      "totalStaked": 63898841.9058433,
+      "totalContributed": 173940.72707575152
+    },
+    {
+      "day": "2026-08-13",
+      "activeStakers": 198,
+      "totalStaked": 64714583.9058433,
+      "totalContributed": 174142.19806096153
+    },
+    {
+      "day": "2026-08-14",
+      "activeStakers": 199,
+      "totalStaked": 114714624.9058433,
+      "totalContributed": 174147.32257223217
+    },
+    {
+      "day": "2026-08-15",
+      "activeStakers": 199,
+      "totalStaked": 114714624.9058433,
+      "totalContributed": 174147.32257223217
+    },
+    {
+      "day": "2026-08-16",
+      "activeStakers": 200,
+      "totalStaked": 117714624.9058433,
+      "totalContributed": 174660.12606596216
+    },
+    {
+      "day": "2026-08-17",
+      "activeStakers": 200,
+      "totalStaked": 117714624.9058433,
+      "totalContributed": 174674.93334467692
+    },
+    {
+      "day": "2026-08-18",
+      "activeStakers": 200,
+      "totalStaked": 117714624.9058433,
+      "totalContributed": 174805.63259170804
+    },
+    {
+      "day": "2026-08-19",
+      "activeStakers": 200,
+      "totalStaked": 117714624.9058433,
+      "totalContributed": 174816.38021992586
+    },
+    {
+      "day": "2026-08-20",
+      "activeStakers": 200,
+      "totalStaked": 117714624.9058433,
+      "totalContributed": 175484.25908779085
+    },
+    {
+      "day": "2026-08-21",
+      "activeStakers": 200,
+      "totalStaked": 117714624.9058433,
+      "totalContributed": 175484.25908779085
+    },
+    {
+      "day": "2026-08-22",
+      "activeStakers": 200,
+      "totalStaked": 117714624.9058433,
+      "totalContributed": 175484.25908779085
+    },
+    {
+      "day": "2026-08-23",
+      "activeStakers": 200,
+      "totalStaked": 117714624.9058433,
+      "totalContributed": 175484.25908779085
+    },
+    {
+      "day": "2026-08-24",
+      "activeStakers": 200,
+      "totalStaked": 117714624.9058433,
+      "totalContributed": 175484.25908779085
+    },
+    {
+      "day": "2026-08-25",
+      "activeStakers": 200,
+      "totalStaked": 117714624.9058433,
+      "totalContributed": 176434.31973240746
+    },
+    {
+      "day": "2026-08-26",
+      "activeStakers": 200,
+      "totalStaked": 117714624.9058433,
+      "totalContributed": 176434.31973240746
+    },
+    {
+      "day": "2026-08-27",
+      "activeStakers": 200,
+      "totalStaked": 117714624.9058433,
+      "totalContributed": 261536.2124198998
+    },
+    {
+      "day": "2026-08-28",
+      "activeStakers": 200,
+      "totalStaked": 117714624.9058433,
+      "totalContributed": 261536.2124198998
+    },
+    {
+      "day": "2026-08-29",
+      "activeStakers": 200,
+      "totalStaked": 117714624.9058433,
+      "totalContributed": 261536.2124198998
+    },
+    {
+      "day": "2026-08-30",
+      "activeStakers": 200,
+      "totalStaked": 117714624.9058433,
+      "totalContributed": 262422.86853279837
+    },
+    {
+      "day": "2026-08-31",
+      "activeStakers": 200,
+      "totalStaked": 117714666.9058433,
+      "totalContributed": 262428.0931050797
+    },
+    {
+      "day": "2026-09-01",
+      "activeStakers": 200,
+      "totalStaked": 117715822.9058433,
+      "totalContributed": 263714.1359060347
+    },
+    {
+      "day": "2026-09-02",
+      "activeStakers": 200,
+      "totalStaked": 117715822.9058433,
+      "totalContributed": 263732.18433181423
+    },
+    {
+      "day": "2026-09-03",
+      "activeStakers": 200,
+      "totalStaked": 117715822.9058433,
+      "totalContributed": 263732.18433181423
+    },
+    {
+      "day": "2026-09-04",
+      "activeStakers": 200,
+      "totalStaked": 117715822.9058433,
+      "totalContributed": 263732.18433181423
+    },
+    {
+      "day": "2026-09-05",
+      "activeStakers": 200,
+      "totalStaked": 117715835.9058433,
+      "totalContributed": 264277.9938975482
+    },
+    {
+      "day": "2026-09-06",
+      "activeStakers": 200,
+      "totalStaked": 117715835.9058433,
+      "totalContributed": 264277.9938975482
+    },
+    {
+      "day": "2026-09-07",
+      "activeStakers": 202,
+      "totalStaked": 117966821.5721433,
+      "totalContributed": 264277.9938975482
+    },
+    {
+      "day": "2026-09-08",
+      "activeStakers": 202,
+      "totalStaked": 117966821.5721433,
+      "totalContributed": 264277.9938975482
+    },
+    {
+      "day": "2026-09-09",
+      "activeStakers": 202,
+      "totalStaked": 117966821.5721433,
+      "totalContributed": 265071.312307555
+    },
+    {
+      "day": "2026-09-10",
+      "activeStakers": 202,
+      "totalStaked": 117966821.5721433,
+      "totalContributed": 265071.312307555
+    },
+    {
+      "day": "2026-09-11",
+      "activeStakers": 201,
+      "totalStaked": 117870321.5721433,
+      "totalContributed": 265385.0435980146
+    },
+    {
+      "day": "2026-09-12",
+      "activeStakers": 201,
+      "totalStaked": 117870321.5721433,
+      "totalContributed": 265531.4783068196
+    },
+    {
+      "day": "2026-09-13",
+      "activeStakers": 201,
+      "totalStaked": 117870331.5721433,
+      "totalContributed": 265531.5010121088
+    },
+    {
+      "day": "2026-09-14",
+      "activeStakers": 201,
+      "totalStaked": 117870331.5721433,
+      "totalContributed": 265531.5010121088
+    },
+    {
+      "day": "2026-09-15",
+      "activeStakers": 201,
+      "totalStaked": 117870331.5721433,
+      "totalContributed": 266170.16583901877
+    },
+    {
+      "day": "2026-09-16",
+      "activeStakers": 201,
+      "totalStaked": 117870331.5721433,
+      "totalContributed": 267844.27764130285
+    },
+    {
+      "day": "2026-09-17",
+      "activeStakers": 201,
+      "totalStaked": 139881361.5721433,
+      "totalContributed": 280219.37317120365
+    },
+    {
+      "day": "2026-09-18",
+      "activeStakers": 201,
+      "totalStaked": 139881361.5721433,
+      "totalContributed": 280219.37317120365
+    },
+    {
+      "day": "2026-09-19",
+      "activeStakers": 201,
+      "totalStaked": 139881361.5721433,
+      "totalContributed": 280219.37317120365
+    },
+    {
+      "day": "2026-09-20",
+      "activeStakers": 201,
+      "totalStaked": 139881361.5721433,
+      "totalContributed": 280235.8488941062
+    },
+    {
+      "day": "2026-09-21",
+      "activeStakers": 201,
+      "totalStaked": 139881361.5721433,
+      "totalContributed": 280235.8488941062
+    },
+    {
+      "day": "2026-09-22",
+      "activeStakers": 201,
+      "totalStaked": 139881361.5721433,
+      "totalContributed": 287421.3812407209
+    },
+    {
+      "day": "2026-09-23",
+      "activeStakers": 201,
+      "totalStaked": 139881361.5721433,
+      "totalContributed": 287421.3812407209
+    },
+    {
+      "day": "2026-09-24",
+      "activeStakers": 202,
+      "totalStaked": 139983245.7121433,
+      "totalContributed": 287421.52288138925
+    },
+    {
+      "day": "2026-09-25",
+      "activeStakers": 204,
+      "totalStaked": 140152576.7121433,
+      "totalContributed": 306914.8458968271
+    },
+    {
+      "day": "2026-09-26",
+      "activeStakers": 204,
+      "totalStaked": 140152576.7121433,
+      "totalContributed": 307808.0717522533
+    }
+  ]
+}

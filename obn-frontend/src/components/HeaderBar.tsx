@@ -207,7 +207,7 @@ export default function HeaderBar() {
 
   return (
     <div className="fixed top-0 left-0 w-full text-white z-50 " style={{ backgroundColor: "#0D9921" }}>
-      <div className="relative w-full px-4 md:px-8 py-3 grid grid-cols-[auto_minmax(0,1fr)_auto] items-center md:flex md:justify-between">
+      <div className={`relative w-full px-4 md:px-8 py-3 grid grid-cols-[auto_minmax(0,1fr)_auto] items-center md:flex md:justify-between ${!isInMiniApp && !likelyMiniApp ? "lg:grid lg:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)]" : ""}`}>
 
         {/* Left: Menu button + Theme toggle */}
         <div className="flex items-center gap-2 z-10">
@@ -307,7 +307,7 @@ export default function HeaderBar() {
         </div>
 
         {/* Right: User info */}
-        <div className="flex items-center gap-3 z-10">
+        <div className="flex items-center gap-3 z-10 justify-self-end">
 
           {/* Priority 1: Farcaster MiniApp user */}
           <FarcasterHeaderUser onMiniAppDetected={handleMiniAppDetected} />
@@ -320,8 +320,9 @@ export default function HeaderBar() {
               className="flex items-center justify-center px-3 py-2 rounded-xl bg-white text-gray-900 shadow-sm hover:shadow-lg hover:scale-105 transition-all"
               title={baseName ? `${baseName} — click to manage wallet` : "Click to manage wallet"}
             >
-              <span className={`${baseName ? "font-sans" : "font-mono"} max-w-27 sm:max-w-40 truncate text-[13px] font-bold leading-none`}>
-                {baseName || `${address.slice(0, 6)}...${address.slice(-4)}`}
+              <span className={`${baseName ? "font-sans" : "font-mono"} max-w-27 sm:max-w-40 lg:max-w-none truncate text-[13px] font-bold leading-none`}>
+                <span className="lg:hidden">{baseName || `${address.slice(0, 6)}...${address.slice(-4)}`}</span>
+                <span className="hidden lg:inline">{baseName || address}</span>
               </span>
             </button>
           )}
@@ -386,7 +387,10 @@ export default function HeaderBar() {
                           className="flex items-center justify-center px-3 py-2 rounded-xl bg-white text-gray-900 shadow-sm hover:shadow-lg hover:scale-105 transition-all"
                           title="Click to disconnect"
                         >
-                          <span className="font-mono text-[13px] font-bold leading-none">{`${account.address.slice(0, 6)}...${account.address.slice(-4)}`}</span>
+                          <span className="font-mono whitespace-nowrap text-[13px] font-bold leading-none">
+                            <span className="lg:hidden">{`${account.address.slice(0, 6)}...${account.address.slice(-4)}`}</span>
+                            <span className="hidden lg:inline">{account.address}</span>
+                          </span>
                         </button>
                       );
                     })()}

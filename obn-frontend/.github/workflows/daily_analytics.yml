@@ -1,0 +1,67 @@
+name: OBN Daily Analytics
+
+on:
+  schedule:
+    - cron: '41 7 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: obn-daily-analytics-base
+  cancel-in-progress: false
+
+jobs:
+  update:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      ANALYTICS_STATE_DIR: ${{ github.workspace }}/.analytics-data
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: scripts/analytics/package-lock.json
+      - run: npm ci --ignore-scripts --no-audit --no-fund
+        working-directory: scripts/analytics
+      - run: npm test
+        working-directory: scripts/analytics
+      - name: Restore durable checkpoint
+        id: restore
+        shell: bash
+        run: |
+          mkdir -p "$ANALYTICS_STATE_DIR"
+          if [ -f scripts/analytics/state.json ]; then
+            cp scripts/analytics/state.json "$ANALYTICS_STATE_DIR/state.json"
+          fi
+          cp src/data/analytics.json "$ANALYTICS_STATE_DIR/analytics.json"
+      - name: Read finalized on-chain history
+        id: worker
+        working-directory: scripts/analytics
+        run: npm start
+        env:
+          # Public fallback has no account or key. An optional provider may speed up backfill.
+          ANALYTICS_RPC_URL: ${{ secrets.ANALYTICS_RPC_URL || 'https://mainnet.base.org' }}
+          ANALYTICS_LOG_RANGE: ${{ vars.ANALYTICS_LOG_RANGE }}
+          ANALYTICS_MAX_SECONDS: '480'
+          ANALYTICS_MAX_REQUESTS: '20000'
+      - name: Persist checkpoint and published charts
+        if: always() && steps.restore.outcome == 'success' && steps.worker.outcome != 'skipped'
+        shell: bash
+        run: |
+          if [ ! -s "$ANALYTICS_STATE_DIR/state.json" ]; then exit 0; fi
+          cp "$ANALYTICS_STATE_DIR/state.json" scripts/analytics/state.json
+          if [ -s "$ANALYTICS_STATE_DIR/analytics.json" ]; then
+            cp "$ANALYTICS_STATE_DIR/analytics.json" src/data/analytics.json
+          fi
+          git add scripts/analytics/state.json src/data/analytics.json
+          if git diff --cached --quiet; then exit 0; fi
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git commit -m 'Update finalized OBN analytics'
+          git pull --rebase origin main
+          git push origin HEAD:main

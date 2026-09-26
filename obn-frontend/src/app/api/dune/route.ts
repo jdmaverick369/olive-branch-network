@@ -1,43 +1,19 @@
-import { NextRequest, NextResponse } from "next/server";
-import { DuneClient } from "@duneanalytics/client-sdk";
-import { DUNE_QUERIES } from "@/lib/dune";
+// Preserve old client URLs while deployments and browser caches roll forward.
+import { NextRequest, NextResponse } from 'next/server';
+import { GET as getAnalytics } from '@/app/api/analytics/route';
+import { AnalyticsSnapshot } from '@/lib/analytics';
 
-const DUNE_API_KEY = process.env.DUNE_API_KEY;
-const ALLOWED_QUERY_IDS = new Set(DUNE_QUERIES.map(({ queryId }) => queryId));
+const legacyMetrics = new Map<string, 'activeStakers' | 'totalStaked' | 'totalContributed'>([
+  ['5887886', 'activeStakers'], ['6172584', 'totalStaked'], ['6798005', 'totalContributed'],
+]);
 
 export async function GET(request: NextRequest) {
-  const queryId = request.nextUrl.searchParams.get("queryId");
-
-  const parsedQueryId = Number(queryId);
-  if (!queryId || !Number.isInteger(parsedQueryId) || !ALLOWED_QUERY_IDS.has(parsedQueryId)) {
-    return NextResponse.json(
-      { error: "Unsupported queryId parameter" },
-      { status: 400 }
-    );
-  }
-
-  if (!DUNE_API_KEY) {
-    console.error("DUNE_API_KEY environment variable is not configured");
-    return NextResponse.json(
-      {
-        error: "Dune API key not configured",
-        message: "Please set the DUNE_API_KEY environment variable"
-      },
-      { status: 500 }
-    );
-  }
-
-  try {
-    const dune = new DuneClient(DUNE_API_KEY);
-    const result = await dune.getLatestResult({ queryId: parsedQueryId });
-    return NextResponse.json(result, {
-      headers: { "Cache-Control": "public, s-maxage=3600, stale-while-revalidate=3600" },
-    });
-  } catch {
-    console.error(`Error fetching configured Dune query ${parsedQueryId}`);
-    return NextResponse.json(
-      { error: "Failed to fetch analytics data" },
-      { status: 502 }
-    );
-  }
+  const key = legacyMetrics.get(request.nextUrl.searchParams.get('queryId') || '');
+  if (!key) return NextResponse.json({ error: 'Unsupported queryId parameter' }, { status: 400 });
+  const response = await getAnalytics();
+  if (!response.ok) return response;
+  const data: AnalyticsSnapshot = await response.json();
+  return NextResponse.json({ result: { rows: data.rows.map(row => ({ day: row.day, value: row[key] })) } }, {
+    headers: response.headers,
+  });
 }

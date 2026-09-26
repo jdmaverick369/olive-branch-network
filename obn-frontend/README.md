@@ -2,6 +2,10 @@
 
 The production dApp provides staking, reward claims, nonprofit contribution views, and governance on Base.
 
+## Analytics
+
+Network charts use daily finalized on-chain snapshots, with no Dune subscription. The daily GitHub Actions worker commits its checkpoint and chart data for the normal deployment to pick up; nonprofit pool cards continue refreshing directly from the contract. See [analytics setup and metric definitions](scripts/analytics/README.md).
+
 ## Staking and reward claims
 
 Stakers can opt in on-chain to sponsored monthly autoclaim for all current and future pools held by their wallet. The worker submits on the 14th of each month, starting at 09:23 UTC with hourly retries through 23:23 UTC. The automation account batches pools with positive claimable user rewards, up to 32 pools per transaction, and pays gas through the configured paymaster. The contract permits one successful automatic claim per pool per UTC calendar month. Rewards follow the same 88% / 10% / 1% / 1% split and go to the same recipients as manual claims. Users can disable consent at any time; deposits, withdrawals, and manual claims remain available. Autoclaim does not transfer principal, compound rewards, or change voting power.

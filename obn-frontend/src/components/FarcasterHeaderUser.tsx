@@ -75,7 +75,7 @@ export function FarcasterHeaderUser({ onMiniAppDetected }: Props) {
 
   const rowClass = (active: boolean) =>
     `flex w-full items-center justify-between gap-2 rounded-lg px-3 py-2 text-left text-sm transition ${
-      active ? "bg-green-50 font-semibold text-green-800 dark:bg-green-900/30 dark:text-green-200" : "hover:bg-gray-100 dark:hover:bg-white/10"
+      active ? "bg-[var(--wallet-selected-bg)] font-semibold text-[var(--wallet-selected-text)]" : "hover:bg-gray-100 dark:hover:bg-white/10"
     }`;
 
   return (
