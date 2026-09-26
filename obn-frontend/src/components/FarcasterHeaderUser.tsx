@@ -62,7 +62,8 @@ export function FarcasterHeaderUser({ onMiniAppDetected }: Props) {
 
   if (!isInMiniApp || !user) return null;
 
-  const { farcasterAddress, verified, primary, viewAddress, viewOnly, connectedViaWalletConnect, connecting, error } = wallet;
+  const { farcasterAddress, verified, primary, isBaseAccount, viewAddress, viewOnly, connectedViaWalletConnect, connecting, error } = wallet;
+  const viewingBaseAccount = !!viewAddress && isBaseAccount(viewAddress);
   // Verified wallets other than the built-in one; the built-in wallet is the default entry.
   const others = verified.filter((a) => a.toLowerCase() !== farcasterAddress?.toLowerCase());
   const onDefault = !viewAddress;
@@ -139,7 +140,10 @@ export function FarcasterHeaderUser({ onMiniAppDetected }: Props) {
             const active = viewAddress?.toLowerCase() === a.toLowerCase();
             return (
               <button key={a} type="button" role="menuitemradio" aria-checked={active} className={rowClass(active)} onClick={() => choose(a)}>
-                <span>{primary?.toLowerCase() === a.toLowerCase() ? "Verified (primary)" : "Verified wallet"}</span>
+                <span>
+                  {isBaseAccount(a) ? "Base Account" : "Verified wallet"}
+                  {primary?.toLowerCase() === a.toLowerCase() && <span className="font-normal opacity-70"> · primary</span>}
+                </span>
                 <span className="font-mono text-xs">{shortAddress(a)}</span>
               </button>
             );
@@ -161,7 +165,9 @@ export function FarcasterHeaderUser({ onMiniAppDetected }: Props) {
           {viewOnly && (
             <div className="mt-2 border-t pt-2 px-1" style={{ borderColor: "var(--card-border, #e5e7eb)" }}>
               <p className="px-2 text-xs" style={{ color: "var(--card-subtext)" }}>
-                Viewing only. Connect this wallet to stake, claim or change autoclaim.
+                {viewingBaseAccount
+                  ? "Viewing only. This Base Account signs in the Base app — open OBN there to stake, claim or change autoclaim."
+                  : "Viewing only. Connect this wallet to stake, claim or change autoclaim."}
               </p>
               <button
                 type="button"
@@ -169,7 +175,7 @@ export function FarcasterHeaderUser({ onMiniAppDetected }: Props) {
                 onClick={() => void wallet.connectViewed()}
                 className="mt-2 w-full rounded-lg bg-purple-600 px-3 py-2 text-sm font-semibold text-white disabled:opacity-50"
               >
-                {connecting ? "Connecting…" : "Connect this wallet"}
+                {viewingBaseAccount ? "Open in Base app" : connecting ? "Connecting…" : "Connect this wallet"}
               </button>
             </div>
           )}
