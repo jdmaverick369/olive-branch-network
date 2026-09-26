@@ -97,14 +97,14 @@ export default function NFTPrefetch() {
 
     const count = Number(oliveBalBN);
     if (count === 0) {
-      writeOwnedNftsCache([]);
+      writeOwnedNftsCache(effectiveAddress, []);
       fetchedRef.current = true; // Mark as fetched for empty case
       console.debug('🎨 NFTPrefetch: No NFTs owned, cached empty result');
       return;
     }
 
     // Check if we already have valid cached data
-    if (readOwnedNftsCache(count) !== null) {
+    if (readOwnedNftsCache(effectiveAddress, count) !== null) {
       console.debug('🎨 NFTPrefetch: Cache is fresh, skipping fetch');
       fetchedRef.current = true;
       return;
@@ -131,7 +131,7 @@ export default function NFTPrefetch() {
           timestamp: Date.now(),
         }));
 
-        writeOwnedNftsCache(cached);
+        writeOwnedNftsCache(effectiveAddress, cached);
         console.debug('🎨 NFTPrefetch: Cached', cached.length, 'NFT(s)');
         fetchedRef.current = true; // ✅ Only mark as fetched after successful cache
         clearFetchInProgress();

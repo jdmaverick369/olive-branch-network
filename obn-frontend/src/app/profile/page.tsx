@@ -482,7 +482,7 @@ export default function UserPage() {
         return;
       }
 
-      const cached = readOwnedNftsCache(count);
+      const cached = readOwnedNftsCache(userAddr, count);
       if (cached !== null) {
         if (!stopped) {
           setOwned(cached.map((c) => ({ id: BigInt(c.id), uri: c.uri, img: c.img })));
@@ -503,6 +503,7 @@ export default function UserPage() {
           setNftLoading(false);
         }
         writeOwnedNftsCache(
+          userAddr,
           idsAndUris.map(({ id, uri }, i) => ({ id: id.toString(), uri, img: imgs[i], timestamp: Date.now() }))
         );
       } catch {

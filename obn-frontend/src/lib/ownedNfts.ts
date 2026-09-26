@@ -15,7 +15,8 @@ export type OwnedNft = {
   timestamp: number;
 };
 
-const CACHE_KEY = "obn_nft_cache";
+// Keyed per owner so switching wallets never shows another wallet's NFTs.
+const cacheKey = (owner: string) => `obn_nft_cache:${owner.toLowerCase()}`;
 const CACHE_LIFETIME_MS = 5 * 60 * 1000; // NFTs don't change often
 
 /**
@@ -23,9 +24,9 @@ const CACHE_LIFETIME_MS = 5 * 60 * 1000; // NFTs don't change often
  * on-chain balance, otherwise null. expectedCount guards against using a
  * stale cache from before the user minted/transferred an NFT.
  */
-export function readOwnedNftsCache(expectedCount: number): OwnedNft[] | null {
+export function readOwnedNftsCache(owner: string, expectedCount: number): OwnedNft[] | null {
   try {
-    const raw = sessionStorage.getItem(CACHE_KEY);
+    const raw = sessionStorage.getItem(cacheKey(owner));
     if (!raw) return null;
     const parsed: OwnedNft[] = JSON.parse(raw);
     if (!Array.isArray(parsed) || parsed.length !== expectedCount) return null;
@@ -38,9 +39,9 @@ export function readOwnedNftsCache(expectedCount: number): OwnedNft[] | null {
   }
 }
 
-export function writeOwnedNftsCache(items: OwnedNft[]) {
+export function writeOwnedNftsCache(owner: string, items: OwnedNft[]) {
   try {
-    sessionStorage.setItem(CACHE_KEY, JSON.stringify(items));
+    sessionStorage.setItem(cacheKey(owner), JSON.stringify(items));
   } catch {
     /* sessionStorage unavailable — skip caching */
   }
