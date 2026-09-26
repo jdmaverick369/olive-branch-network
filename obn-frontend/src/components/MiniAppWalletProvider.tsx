@@ -11,9 +11,14 @@ import { getAddress, type Address } from "viem";
 import { sdk } from "@farcaster/miniapp-sdk";
 import { detectMiniApp } from "@/lib/miniapp";
 
-// Coinbase Smart Wallet (Base Account) factory on Base. Deployed accounts are
-// ERC-1967 proxies whose implementation matches the factory's.
-const BASE_ACCOUNT_FACTORY = "0x0BA5ED0c6AA8c49038F819E587E2633c4A9F428a" as const;
+// Coinbase Smart Wallet (Base Account) factories on Base: v1 and v1.1, the only
+// two published in github.com/coinbase/smart-wallet. Deployed accounts are
+// ERC-1967 proxies whose implementation matches a factory's. EOAs upgraded via
+// Coinbase's EIP-7702 proxy keep the same implementation slot, so they match too.
+const BASE_ACCOUNT_FACTORIES = [
+  "0x0BA5ED0c6AA8c49038F819E587E2633c4A9F428a",
+  "0xBA5ED110eFDBa3D005bfC882d75358ACBbB85842",
+] as const;
 const ERC1967_IMPLEMENTATION_SLOT = "0x360894a13ba1a3210667c828492db98dca3e2076cc3735a920a3ca505d382bbc" as const;
 const factoryAbi = [{ type: "function", name: "implementation", inputs: [], outputs: [{ type: "address" }], stateMutability: "view" }] as const;
 
@@ -111,16 +116,17 @@ export function MiniAppWalletProvider({ children }: { children: ReactNode }) {
     let cancelled = false;
     (async () => {
       try {
-        const implementation = await publicClient.readContract({
-          address: BASE_ACCOUNT_FACTORY, abi: factoryAbi, functionName: "implementation",
-        });
+        const implementations = (await Promise.allSettled(BASE_ACCOUNT_FACTORIES.map((address) =>
+          publicClient.readContract({ address, abi: factoryAbi, functionName: "implementation" })
+        ))).flatMap((r) => (r.status === "fulfilled" ? [r.value.toLowerCase()] : []));
+        if (implementations.length === 0) return;
         const found = new Set<string>();
         await Promise.all(verified.map(async (a) => {
           try {
             const code = await publicClient.getCode({ address: a });
             if (!code || code === "0x") return;
             const slot = await publicClient.getStorageAt({ address: a, slot: ERC1967_IMPLEMENTATION_SLOT });
-            if (slot && same(`0x${slot.slice(-40)}`, implementation)) found.add(a.toLowerCase());
+            if (slot && implementations.includes(`0x${slot.slice(-40)}`.toLowerCase())) found.add(a.toLowerCase());
           } catch { /* Unknown wallets simply stay unlabelled. */ }
         }));
         if (!cancelled) setBaseAccounts(found);
