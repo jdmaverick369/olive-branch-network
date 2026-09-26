@@ -5,6 +5,26 @@ import { useMarketPrices, type TickerItem } from "@/hooks/useMarketPrices";
 
 
 
+// Prices with 3+ zeros after the decimal point use subscript notation:
+// 0.00001951 → $0.0₄1951, where the subscript counts the zeros.
+const SUBSCRIPT_MIN_ZEROS = 3;
+
+function SubscriptPrice({ value, digits }: { value: number; digits: number }) {
+  const [mantissa, exponent] = value.toExponential(digits - 1).split("e");
+  const zeros = -Number(exponent) - 1;
+  const significant = mantissa.replace(".", "").replace(/0+$/, "") || "0";
+  const plain = `$${value.toLocaleString(undefined, { maximumSignificantDigits: digits })}`;
+  if (!(value > 0) || zeros < SUBSCRIPT_MIN_ZEROS) return <>{plain}</>;
+  return (
+    <>
+      <span className="sr-only">{plain}</span>
+      <span aria-hidden="true">
+        $0.0<sub className="text-[0.7em] leading-none">{zeros}</sub>{significant}
+      </span>
+    </>
+  );
+}
+
 function formatPrice(symbol: TickerItem["symbol"], value: number) {
   if (symbol === "OBN") {
     return value < 0.01
@@ -14,10 +34,7 @@ function formatPrice(symbol: TickerItem["symbol"], value: number) {
   return `$${value.toLocaleString(undefined, { maximumFractionDigits: 0 })}`;
 }
 
-function formatCompactPrice(symbol: TickerItem["symbol"], value: number) {
-  if (symbol === "OBN") {
-    return `$${value.toLocaleString(undefined, { maximumSignificantDigits: 3 })}`;
-  }
+function formatCompactPrice(value: number) {
   if (value >= 1_000) {
     return `$${(value / 1_000).toFixed(value >= 10_000 ? 1 : 2)}K`;
   }
@@ -54,8 +71,12 @@ export default function MarketTicker() {
     >
       <span className="flex items-center gap-1 sm:contents">
         <span className="font-bold">{item.symbol}</span>
-        <span className="font-medium text-white/95 sm:hidden">{formatCompactPrice(item.symbol, item.priceUsd)}</span>
-        <span className="hidden sm:inline font-medium text-white/95">{formatPrice(item.symbol, item.priceUsd)}</span>
+        <span className="font-medium text-white/95 sm:hidden">
+          {item.symbol === "OBN" ? <SubscriptPrice value={item.priceUsd} digits={3} /> : formatCompactPrice(item.priceUsd)}
+        </span>
+        <span className="hidden sm:inline font-medium text-white/95">
+          {item.symbol === "OBN" && item.priceUsd < 0.01 ? <SubscriptPrice value={item.priceUsd} digits={4} /> : formatPrice(item.symbol, item.priceUsd)}
+        </span>
       </span>
       <span className={`flex items-center gap-1 font-bold ${positive ? "text-emerald-200" : "text-red-200"}`}>
         <span>{positive ? "+" : ""}{item.change24h.toFixed(2)}%</span>
