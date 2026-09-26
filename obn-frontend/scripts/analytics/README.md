@@ -1,6 +1,6 @@
 # Daily on-chain analytics
 
-The three network graphs use `/api/analytics`, with no Dune account or subscription.
+The network graphs and Squarespace impact widget use `/api/analytics`.
 Nonprofit pool cards continue reading the Lens contract every 30 seconds.
 
 ## Definitions
@@ -9,7 +9,7 @@ Nonprofit pool cards continue reading the Lens contract every 30 seconds.
 - **Total Staked:** sum of current staking balances, in OBN.
 - **Total Contributed:** cumulative `CharityDistributed`, `CharityFundDistributed`, and the nonprofit's own-pool `Claim` rewards from its seed stake. A claim qualifies only when its recipient matches that pool's charity wallet at that exact event position. `PoolAdded` and `CharityWalletUpdated` track historical recipients, including migrations; removed pools cannot qualify treasury claims as nonprofit rewards. Each event's actual minted amount is counted once. Excludes seed principal, ordinary staker claims, pending/unminted rewards, `CharityAllocated`, treasury distributions, and direct donations outside these events.
 
-These definitions have not been compared with the original Dune SQL. Daily points are UTC end-of-day balances, with the most recent day showing the last indexed finalized block. Only the display converts exact integer token amounts into JavaScript numbers.
+Daily points are UTC end-of-day balances, with the most recent day showing the last indexed finalized block. Only the display converts exact integer token amounts into JavaScript numbers.
 
 ## Automatic operation
 
@@ -25,7 +25,7 @@ Checkpoint schema 2 includes historical charity wallets and the exact `seedClaim
 
 If balances become negative or reconciliation fails, retain the checkpoint for diagnosis and rebuild from deployment with complete RPC history. Do not skip the failing events or publish the partial state. A changed historical data source cannot repair already-indexed days merely by continuing from a later cursor.
 
-The API serves the snapshot bundled with the deployment. Connect the normal Vercel deployment to commits on `main`, including commits from `github-actions[bot]`, so daily updates reach the site. Confirm the first bot data commit deploys successfully; [Vercel applies commit-author checks for private repositories](https://vercel.com/docs/deployments/troubleshoot-project-collaboration). If deployment is manual, deploy after each update. A GitHub Actions deployment workflow will not automatically run in response to a push made with `GITHUB_TOKEN`; use the hosting provider's Git integration or explicitly invoke the deployment workflow. No runtime GitHub token or Dune API key is needed, including for private repositories.
+The API serves the snapshot bundled with the deployment. Connect the normal Vercel deployment to commits on `main`, including commits from `github-actions[bot]`, so daily updates reach the site. Confirm the first bot data commit deploys successfully; [Vercel applies commit-author checks for private repositories](https://vercel.com/docs/deployments/troubleshoot-project-collaboration). If deployment is manual, deploy after each update. A GitHub Actions deployment workflow will not automatically run in response to a push made with `GITHUB_TOKEN`; use the hosting provider's Git integration or explicitly invoke the deployment workflow. No runtime GitHub token or analytics service API key is needed, including for private repositories.
 
 `src/data/analytics.json` keeps charts available during RPC outages. Until a complete snapshot is available, the graphs show unavailable status; they do not invent data. The API includes the indexed UTC cutoff in `throughTimestamp`; the page omits the freshness caption.
 
@@ -43,7 +43,7 @@ Root dependencies include ethers. For a standalone worker, run `npm ci` inside `
 
 To continue locally from the bundled checkpoint instead of rebuilding, create `.analytics` and copy `scripts/analytics/state.json` into it before running the worker. Publish both the validated chart snapshot and its corresponding checkpoint together.
 
-Run `npm test --prefix scripts/analytics` for worker regression tests and `npm run typecheck` for frontend types. Dune API keys can be removed from deployment configuration after switching.
+Run `npm test --prefix scripts/analytics` for worker regression tests and `npm run typecheck` for frontend types.
 
 ### Optional faster initial import
 
@@ -60,5 +60,3 @@ node scripts/analytics/run.mjs
 ```
 
 Optionally set `ANALYTICS_LOG_RPC_URL` to a separate Base RPC for log requests while `ANALYTICS_RPC_URL` handles block headers and historical contract reads. Both default to the same provider; the daily workflow needs only one RPC.
-
-The chart endpoint preserves `/api/dune?queryId=...` as a compatibility adapter for cached older clients; that route also reads the new snapshot and never contacts Dune.

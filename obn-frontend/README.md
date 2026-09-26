@@ -4,7 +4,7 @@ The production dApp provides staking, reward claims, nonprofit contribution view
 
 ## Analytics
 
-Network charts use daily finalized on-chain snapshots, with no Dune subscription. The daily GitHub Actions worker commits its checkpoint and chart data for the normal deployment to pick up; nonprofit pool cards continue refreshing directly from the contract. See [analytics setup and metric definitions](scripts/analytics/README.md).
+Network charts use daily finalized on-chain snapshots. The daily GitHub Actions worker commits its checkpoint and chart data for the normal deployment to pick up; nonprofit pool cards continue refreshing directly from the contract. See [analytics setup and metric definitions](scripts/analytics/README.md).
 
 ## Staking and reward claims
 
