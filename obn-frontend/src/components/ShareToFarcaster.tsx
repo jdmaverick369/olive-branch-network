@@ -114,7 +114,7 @@ export function ShareToFarcaster({
         onClick={handleClick}
         className={
           className ??
-          "px-5 py-2.5 rounded-lg font-semibold bg-[#6b7280] text-white hover:opacity-80 disabled:opacity-50 transition text-sm"
+          "px-5 py-2.5 rounded-lg font-semibold bg-purple-600 text-white hover:opacity-80 disabled:opacity-50 transition text-sm"
         }
         aria-label="Share on Farcaster"
         data-share-target={shareTarget}
@@ -126,7 +126,7 @@ export function ShareToFarcaster({
       <noscript>
         <a
           href={webComposeUrl}
-          className="px-5 py-2.5 rounded-lg font-semibold bg-[#6b7280] text-white"
+          className="px-5 py-2.5 rounded-lg font-semibold bg-purple-600 text-white"
         >
           Share
         </a>
