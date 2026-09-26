@@ -107,6 +107,9 @@ const fmtRewards = (n: number): string => {
   return formatWithDecimals(0);
 };
 
+// Back and Share sit side by side on pool pages; same size, colour differs.
+const NAV_BUTTON_CLASS = "w-16 py-2 rounded-lg text-xs font-semibold text-white text-center whitespace-nowrap cursor-pointer transition hover:opacity-80";
+
 export default function PoolDetailPage() {
   const displayText = useDisplayText();
   // Match body background to page theme so overscroll area blends in
@@ -803,20 +806,14 @@ export default function PoolDetailPage() {
                   <div className="flex items-center gap-2 justify-center w-full">
                     <button
                       onClick={handleBack}
-                      className="text-xs font-semibold px-4 py-2 rounded-lg transition hover:opacity-80"
-                      style={{
-                        backgroundColor: "#0D9921",
-                        color: "white",
-                        border: "none",
-                        cursor: "pointer",
-                      }}
+                      className={`${NAV_BUTTON_CLASS} bg-[#0D9921]`}
                     >
                       Back
                     </button>
                     {isInMiniApp && (
                       <ShareToFarcaster
                         text={`I'm earning $OBN while supporting ${meta?.name ?? "a nonprofit"} on the Olive Branch Network! Check out their MiniApp 🌱`}
-                        className="px-4 py-2 rounded-lg font-semibold border border-[#6b7280] text-[#6b7280] transition text-xs whitespace-nowrap hover:bg-[#6b7280] hover:text-white"
+                        className={`${NAV_BUTTON_CLASS} bg-[#6b7280]`}
                       />
                     )}
                   </div>
@@ -881,20 +878,14 @@ export default function PoolDetailPage() {
                   <div className="flex items-center gap-2 justify-center w-full mt-5 mb-3">
                     <button
                       onClick={handleBack}
-                      className="text-xs font-semibold px-4 py-2 rounded-lg transition hover:opacity-80"
-                      style={{
-                        backgroundColor: "#0D9921",
-                        color: "white",
-                        border: "none",
-                        cursor: "pointer",
-                      }}
+                      className={`${NAV_BUTTON_CLASS} bg-[#0D9921]`}
                     >
                       Back
                     </button>
                     {isInMiniApp && (
                       <ShareToFarcaster
                         text={`I'm earning $OBN while supporting ${meta?.name ?? "a nonprofit"} on the Olive Branch Network! Check out their MiniApp 🌱`}
-                        className="px-4 py-2 rounded-lg font-semibold border border-[#6b7280] text-[#6b7280] transition text-xs whitespace-nowrap hover:bg-[#6b7280] hover:text-white"
+                        className={`${NAV_BUTTON_CLASS} bg-[#6b7280]`}
                       />
                     )}
                   </div>
