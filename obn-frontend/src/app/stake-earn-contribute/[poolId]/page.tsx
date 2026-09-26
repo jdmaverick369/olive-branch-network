@@ -812,7 +812,7 @@ export default function PoolDetailPage() {
                     </button>
                     {isInMiniApp && (
                       <ShareToFarcaster
-                        text={`I'm earning $OBN while supporting ${meta?.name ?? "a nonprofit"} on the Olive Branch Network! Check out their MiniApp 🌱`}
+                        text={`I'm earning $OBN while supporting ${meta?.name ?? "a nonprofit"} on the Olive Branch Network 🌿`}
                         className={`${NAV_BUTTON_CLASS} bg-purple-600`}
                       />
                     )}
@@ -884,7 +884,7 @@ export default function PoolDetailPage() {
                     </button>
                     {isInMiniApp && (
                       <ShareToFarcaster
-                        text={`I'm earning $OBN while supporting ${meta?.name ?? "a nonprofit"} on the Olive Branch Network! Check out their MiniApp 🌱`}
+                        text={`I'm earning $OBN while supporting ${meta?.name ?? "a nonprofit"} on the Olive Branch Network 🌿`}
                         className={`${NAV_BUTTON_CLASS} bg-purple-600`}
                       />
                     )}
