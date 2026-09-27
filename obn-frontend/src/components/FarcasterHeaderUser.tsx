@@ -172,7 +172,7 @@ export function FarcasterHeaderUser({ onMiniAppDetected }: Props) {
                 type="button"
                 disabled={connecting}
                 onClick={() => void wallet.connectViewed()}
-                className="mt-2 w-full rounded-lg bg-purple-600 px-3 py-2 text-sm font-semibold text-white disabled:opacity-50"
+                className={`mt-2 w-full rounded-lg px-3 py-2 text-sm font-semibold disabled:opacity-50 ${selectedWalletClass[viewingBaseAccount ? "coinbase" : "other"]}`}
               >
                 {viewingBaseAccount ? "Open in Coinbase Wallet" : connecting ? "Connecting…" : "Connect this wallet"}
               </button>
