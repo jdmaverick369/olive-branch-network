@@ -90,8 +90,6 @@ export const viewport: Viewport = {
   themeColor: BOOT_GREEN,
   width: "device-width",
   initialScale: 1,
-  maximumScale: 1,
-  userScalable: false,
 };
 
 function ThemeInitScript() {

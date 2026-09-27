@@ -92,6 +92,61 @@ video {
   height: auto;
 }
 
+/* Content-based wrapping: these cards grow with text and display scaling.
+   Keep the existing columns whenever their contents have enough room. */
+.pool-list-card,
+.impact-label,
+.pool-detail-description,
+.pool-detail-stats > * {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.impact-overview,
+.impact-pending,
+.pool-list-card,
+.pool-balance,
+.pool-actions {
+  flex-wrap: wrap;
+}
+
+.pool-list-card > :last-child {
+  flex: 1 1 9em;
+}
+
+.impact-overview > :first-child {
+  flex: 1 1 6.25em;
+  min-width: 0;
+}
+
+.impact-overview > :last-child {
+  flex: 2 1 12.5em;
+}
+
+.impact-pending > :not(:last-child) {
+  flex: 1 1 6.5em;
+}
+
+.impact-pending > :last-child {
+  margin-inline: auto;
+  max-width: 100%;
+}
+
+.pool-detail-header {
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 9em), 1fr));
+}
+
+.pool-detail-stats {
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 8.5em), 1fr));
+}
+
+.pool-actions > button {
+  flex: 1 1 max-content;
+  max-width: 100%;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+
 a {
   color: var(--color-link);
   text-decoration: none;

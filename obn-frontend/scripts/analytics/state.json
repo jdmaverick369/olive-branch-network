@@ -4,8 +4,8 @@
   "contract": "0x2C4Bd5B2a48a76f288d7F2DB23aFD3a03b9E7cD2",
   "governance": "0x1135d5fEA8098b09b4ED3AFbfFDc7B248359D270",
   "startBlock": 35165256,
-  "cursor": 51804826,
-  "blockHash": "0x9e26ac86412fe912903302165559c645dc3b5f40bf478727050376944f908708",
+  "cursor": 51809050,
+  "blockHash": "0x6b6d6940fe80dde4e3b99fdc4676e205170896e3effd25bb11ff9740f0490ea8",
   "balances": {
     "0:0x750ef1d7a0b4ab1c97b7a623d7917cceb5ea779c": "1000000000000000000000000",
     "1:0xe04063602b8b6b5d3526e6af873d2a4777e12d92": "1000000000000000000000000",
@@ -18757,6 +18757,6 @@
       "totalContributed": 614862.9736236271
     }
   ],
-  "logRange": 10000,
+  "logRange": 1250,
   "governanceStartBlock": 47225430
 }

@@ -661,7 +661,7 @@ export default function PoolDetailPage() {
                 </h2>
 
                 {/* Two-column header: LEFT (Logo + Address) + RIGHT (Description + Links) */}
-                <div className="grid grid-cols-2 mb-4 items-center" style={{ gap: isInMiniApp === false ? "24px" : "24px" }}>
+                <div className="pool-detail-header grid mb-4 items-center" style={{ gap: isInMiniApp === false ? "24px" : "24px" }}>
                   {/* LEFT: Logo, Truncated Address */}
                   <div className="flex flex-col items-center justify-center">
                   <Image
@@ -694,7 +694,7 @@ export default function PoolDetailPage() {
                 </div>
 
                 {/* RIGHT: Description + Links */}
-                <div className="flex flex-col overflow-hidden pr-2">
+                <div className="pool-detail-description flex flex-col pr-2">
                   {detailDescription && (
                     <p className="text-xs leading-relaxed whitespace-pre-line mb-2 wrap-break-word" style={subTextStyle}>
                       {detailDescription}
@@ -724,26 +724,26 @@ export default function PoolDetailPage() {
               <hr className="w-full mb-3" style={{ marginTop: "auto", borderColor: "var(--card-border)" }} />
 
               {/* Balance - centered */}
-              <div className="flex items-center justify-center gap-2 mb-3">
+              <div className="pool-balance flex items-center justify-center gap-2 mb-3">
                 <p className="font-medium text-sm" style={subTextStyle}>Balance:</p>
                 <p className="font-semibold text-sm wrap-break-word" style={{ color: "var(--card-text)" }}><ObnPrimary amount={obnBalance}>{fmtStaked(obnBalance)} OBN</ObnPrimary> <ObnUsd amount={obnBalance} tokenLabel={<>{fmtStaked(obnBalance)} OBN</>} /></p>
               </div>
 
               {/* Two-column: LEFT (Staked) + RIGHT (Contributions) */}
-              <div className="grid grid-cols-2 gap-3 w-full">
+              <div className="pool-detail-stats grid gap-3 w-full">
                 {/* LEFT: Staked + Pending */}
                 <div className="flex flex-col gap-1.5 text-center rounded-xl border p-2" style={{ borderColor: "var(--card-border)", backgroundColor: "var(--card-bg)" }}>
-                  <p className="font-medium whitespace-nowrap" style={{ ...subTextStyle, fontSize: "min(3.2vw, 0.75rem)" }}>{displayText("Active Stake:")}</p>
+                  <p className="font-medium" style={{ ...subTextStyle, fontSize: "min(3.2vw, 0.75rem)" }}>{displayText("Active Stake:")}</p>
                   <p className="font-semibold text-xs mb-1.5 wrap-break-word" style={{ color: "var(--card-text)" }}><ObnPrimary amount={userStake}>{fmtStaked(userStake)} OBN</ObnPrimary> <ObnUsd amount={userStake} tokenLabel={<>{fmtStaked(userStake)} OBN</>} /></p>
-                  <p className="font-medium whitespace-nowrap" style={{ ...subTextStyle, fontSize: "min(3.2vw, 0.75rem)" }}>Pending Rewards:</p>
+                  <p className="font-medium" style={{ ...subTextStyle, fontSize: "min(3.2vw, 0.75rem)" }}>Pending Rewards:</p>
                   <p className="font-semibold text-xs wrap-break-word" style={{ color: "var(--card-text)" }}><ObnPrimary amount={pendingRewards}>{fmtRewards(pendingRewards)} OBN</ObnPrimary> <ObnUsd amount={pendingRewards} tokenLabel={<>{fmtRewards(pendingRewards)} OBN</>} /></p>
                 </div>
 
                 {/* RIGHT: Contributions */}
                 <div className="flex flex-col gap-1.5 text-center rounded-xl border p-2" style={{ borderColor: "var(--card-border)", backgroundColor: "var(--card-bg)" }}>
-                  <p className="font-medium whitespace-nowrap" style={{ ...subTextStyle, fontSize: "min(3.2vw, 0.75rem)" }}>Contributed:</p>
+                  <p className="font-medium" style={{ ...subTextStyle, fontSize: "min(3.2vw, 0.75rem)" }}>Contributed:</p>
                   <p className="font-semibold text-xs mb-1.5 wrap-break-word" style={{ color: theme === "dark" ? "#86efac" : "#16a34a" }}><ObnPrimary amount={charityContributed}>{fmtRewards(charityContributed)} OBN</ObnPrimary> <ObnUsd amount={charityContributed} tokenLabel={<>{fmtRewards(charityContributed)} OBN</>} /></p>
-                  <p className="font-medium whitespace-nowrap" style={{ ...subTextStyle, fontSize: "min(3.2vw, 0.75rem)" }}>Pending Contribution:</p>
+                  <p className="font-medium" style={{ ...subTextStyle, fontSize: "min(3.2vw, 0.75rem)" }}>Pending Contribution:</p>
                   <p className="font-semibold text-xs wrap-break-word" style={{ color: theme === "dark" ? "#86efac" : "#16a34a" }}><ObnPrimary amount={pendingRewards / 0.88 * 0.10}>{fmtRewards(pendingRewards / 0.88 * 0.10)} OBN</ObnPrimary> <ObnUsd amount={pendingRewards / 0.88 * 0.10} tokenLabel={<>{fmtRewards(pendingRewards / 0.88 * 0.10)} OBN</>} /></p>
                 </div>
               </div>
@@ -821,7 +821,7 @@ export default function PoolDetailPage() {
               ) : (
                 <>
                   <div className="w-full">
-                  <div className="flex gap-2 justify-center">
+                  <div className="pool-actions flex gap-2 justify-center">
                     <button
                       disabled={loading}
                       onClick={handleStake}

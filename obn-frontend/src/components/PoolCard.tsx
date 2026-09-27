@@ -20,7 +20,7 @@ export default function PoolCard({ pid, logo, name, description, live }: PoolCar
   const CardContent = (
     <div
       className={clsx(
-        "flex items-center gap-3 rounded-xl border px-4 py-3 w-full transition-colors",
+        "pool-list-card flex items-center gap-3 rounded-xl border px-4 py-3 w-full transition-colors",
         live ? "cursor-pointer hover:opacity-90" : "opacity-60 cursor-not-allowed"
       )}
       style={{

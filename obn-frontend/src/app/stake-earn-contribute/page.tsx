@@ -2,12 +2,11 @@
 "use client";
 
 import { useDisplayText } from "@/hooks/useDisplayText";
-import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useAccount } from "wagmi";
 import { sdk } from "@farcaster/miniapp-sdk";
 import Image from "next/image";
 import { CheckCircle, X as XIcon } from "lucide-react";
-import { useWindowVirtualizer } from "@tanstack/react-virtual";
 import LazyPoolCard from "@/components/LazyPoolCard";
 import { POOLS, PoolCategory } from "@/lib/pools";
 import { useStakingPhase } from "@/hooks/useStakingPhase";
@@ -285,22 +284,6 @@ export default function DashboardPage() {
     return base;
   }, [sortedPools, activeCategory, connectedNonprofitPid]);
 
-  // Window-virtualize the pool list: every pool stays reachable by scrolling
-  // (nothing is hidden behind a button), but only cards near the viewport are
-  // ever actually mounted, so render cost stays flat as the list grows from
-  // 11 pools today toward 99 rather than scaling with it.
-  const poolListRef = useRef<HTMLDivElement>(null);
-  const poolListOffsetRef = useRef(0);
-  useLayoutEffect(() => {
-    poolListOffsetRef.current = poolListRef.current?.offsetTop ?? 0;
-  });
-  const poolVirtualizer = useWindowVirtualizer({
-    count: filteredPools.length,
-    estimateSize: () => 98, // ~64px logo + py-3 padding + border + gap-2
-    overscan: 8,
-    scrollMargin: poolListOffsetRef.current,
-  });
-
   // Prefer the authoritative async result once it resolves; until then, use
   // the synchronous best-guess so first paint picks the right layout instead
   // of always assuming "web" and flashing/reflowing for real MiniApp users.
@@ -489,34 +472,18 @@ export default function DashboardPage() {
             {/* Two-column layout for desktop browsers, stacked for mobile/MiniApp */}
             <div className="w-full flex flex-col items-center" style={{ maxWidth: isMobileBrowser || isMiniAppLayout ? '1280px' : '1800px', margin: '0 auto' }}>
 
-              {/* Pools List — virtualized, see poolVirtualizer above */}
-              <div
-                ref={poolListRef}
-                className="w-full relative"
-                style={{ maxWidth: "600px", height: poolVirtualizer.getTotalSize() }}
-              >
-                {poolVirtualizer.getVirtualItems().map((virtualRow) => {
-                  const pool = filteredPools[virtualRow.index];
-                  return (
-                    <div
-                      key={pool.pid}
-                      ref={poolVirtualizer.measureElement}
-                      data-index={virtualRow.index}
-                      className="absolute top-0 left-0 w-full pb-2"
-                      style={{
-                        transform: `translateY(${virtualRow.start - poolVirtualizer.options.scrollMargin}px)`,
-                      }}
-                    >
-                      <LazyPoolCard
-                        pid={pool.pid}
-                        logo={pool.logo}
-                        name={pool.name}
-                        description={pool.listDescription}
-                        live={pool.live}
-                      />
-                    </div>
-                  );
-                })}
+              {/* Natural flow keeps card spacing correct when browser text scaling changes. */}
+              <div className="w-full flex flex-col gap-2" style={{ maxWidth: "600px" }}>
+                {filteredPools.map((pool) => (
+                  <LazyPoolCard
+                    key={pool.pid}
+                    pid={pool.pid}
+                    logo={pool.logo}
+                    name={pool.name}
+                    description={pool.listDescription}
+                    live={pool.live}
+                  />
+                ))}
               </div>
             </div>
 

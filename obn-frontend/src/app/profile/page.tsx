@@ -956,9 +956,9 @@ export default function UserPage() {
             {contributions.length > 0 && (
               <>
                 {/* Summary Card */}
-                <FitAmountGroup className="mt-4 rounded-xl border p-4 sm:max-w-md sm:mx-auto" style={{ ...cardStyle, backgroundColor: "var(--page-bg-to)" }}>
+                <FitAmountGroup className="impact-card mt-4 rounded-xl border p-4 sm:max-w-md sm:mx-auto" style={{ ...cardStyle, backgroundColor: "var(--page-bg-to)" }}>
                   {/* NFT + Core Stats */}
-                  <div className="flex items-center gap-2">
+                  <div className="impact-overview flex items-center gap-2">
                     {/* NFT */}
                     <div className="flex-1 flex flex-col items-center">
                       {OLIVE_NFT ? (
@@ -1062,14 +1062,14 @@ export default function UserPage() {
                       <div className="flex gap-2">
                         <div className="flex-1 min-w-0 text-center">
                           <div className="mb-3">
-                            <p className="text-[min(2.6vw,0.625rem)] font-medium mb-0.5 whitespace-nowrap" style={{ color: "var(--card-subtext)" }}>Balance</p>
+                            <p className="impact-label text-[min(2.6vw,0.625rem)] font-medium mb-0.5" style={{ color: "var(--card-subtext)" }}>Balance</p>
                             <FitAmountLine>
                               <p className="text-sm font-bold whitespace-nowrap" style={{ color: "var(--card-text)", fontVariantNumeric: "tabular-nums", fontSize: "min(3.4vw, 0.875rem)" }}><ObnPrimary amount={obnBalance}>{formatUniform(obnBalance).replace(/\u00A0/g, '')} OBN</ObnPrimary></p>
                               <ObnUsd amount={obnBalance} tokenLabel={<>{formatUniform(obnBalance).replace(/\u00A0/g, '')} OBN</>} />
                             </FitAmountLine>
                           </div>
                           <div>
-                            <p className="text-[min(2.6vw,0.625rem)] font-medium mb-0.5 whitespace-nowrap" style={{ color: "var(--card-subtext)" }}>Total Earned</p>
+                            <p className="impact-label text-[min(2.6vw,0.625rem)] font-medium mb-0.5" style={{ color: "var(--card-subtext)" }}>Total Earned</p>
                             <FitAmountLine>
                               <p className="text-sm font-bold whitespace-nowrap" style={{ color: theme === "dark" ? "#60a5fa" : "#2563eb", fontVariantNumeric: "tabular-nums", fontSize: "min(3.4vw, 0.875rem)" }}><ObnPrimary amount={totalClaimed}>{formatUniform(totalClaimed).replace(/\u00A0/g, '')} OBN</ObnPrimary></p>
                               <ObnUsd amount={totalClaimed} tokenLabel={<>{formatUniform(totalClaimed).replace(/\u00A0/g, '')} OBN</>} />
@@ -1078,14 +1078,14 @@ export default function UserPage() {
                         </div>
                         <div className="flex-1 min-w-0 text-center">
                           <div className="mb-3">
-                            <p className="text-[min(2.6vw,0.625rem)] font-medium mb-0.5 whitespace-nowrap" style={{ color: "var(--card-subtext)" }}>{displayText("Total Active Stake")}</p>
+                            <p className="impact-label text-[min(2.6vw,0.625rem)] font-medium mb-0.5" style={{ color: "var(--card-subtext)" }}>{displayText("Total Active Stake")}</p>
                             <FitAmountLine>
                               <p className="text-sm font-bold whitespace-nowrap" style={{ color: "var(--card-text)", fontVariantNumeric: "tabular-nums", fontSize: "min(3.4vw, 0.875rem)" }}><ObnPrimary amount={Number.parseFloat(formatUnits(totalStaked, 18))}>{formatUniform(Number.parseFloat(formatUnits(totalStaked, 18))).replace(/\u00A0/g, '')} OBN</ObnPrimary></p>
                               <ObnUsd amount={Number.parseFloat(formatUnits(totalStaked, 18))} tokenLabel={<>{formatUniform(Number.parseFloat(formatUnits(totalStaked, 18))).replace(/\u00A0/g, '')} OBN</>} />
                             </FitAmountLine>
                           </div>
                           <div>
-                            <p className="text-[min(2.6vw,0.625rem)] font-medium mb-0.5 whitespace-nowrap" style={{ color: "var(--card-subtext)" }}>Total Contributed</p>
+                            <p className="impact-label text-[min(2.6vw,0.625rem)] font-medium mb-0.5" style={{ color: "var(--card-subtext)" }}>Total Contributed</p>
                             <FitAmountLine>
                               <p className="text-sm font-bold whitespace-nowrap" style={{ color: theme === "dark" ? "#86efac" : "#16a34a", fontVariantNumeric: "tabular-nums", fontSize: "min(3.4vw, 0.875rem)" }}><ObnPrimary amount={totalCharityContributed}>{formatUniform(totalCharityContributed).replace(/\u00A0/g, '')} OBN</ObnPrimary></p>
                               <ObnUsd amount={totalCharityContributed} tokenLabel={<>{formatUniform(totalCharityContributed).replace(/\u00A0/g, '')} OBN</>} />
@@ -1097,16 +1097,16 @@ export default function UserPage() {
                   </div>
 
                   {/* Pending section */}
-                  <div className="flex items-center gap-2 mt-3.5 pt-3.5" style={{ borderTop: `1px solid ${theme === "dark" ? "rgba(255,255,255,0.1)" : "rgba(0,0,0,0.1)"}` }}>
+                  <div className="impact-pending flex items-center gap-2 mt-3.5 pt-3.5" style={{ borderTop: `1px solid ${theme === "dark" ? "rgba(255,255,255,0.1)" : "rgba(0,0,0,0.1)"}` }}>
                     <div className="flex-1 min-w-0 text-center">
-                      <p className="text-[min(2.6vw,0.625rem)] font-medium mb-0.5 whitespace-nowrap" style={{ color: "var(--card-subtext)" }}>Pending Rewards</p>
+                      <p className="impact-label text-[min(2.6vw,0.625rem)] font-medium mb-0.5" style={{ color: "var(--card-subtext)" }}>Pending Rewards</p>
                       <FitAmountLine>
                         <p className="text-sm font-bold whitespace-nowrap" style={{ color: theme === "dark" ? "#60a5fa" : "#2563eb", fontVariantNumeric: "tabular-nums", fontSize: "min(3.4vw, 0.875rem)" }}><ObnPrimary amount={totalPendingRewards}>{formatUniform(totalPendingRewards).replace(/\u00A0/g, '')} OBN</ObnPrimary></p>
                         <ObnUsd amount={totalPendingRewards} tokenLabel={<>{formatUniform(totalPendingRewards).replace(/\u00A0/g, '')} OBN</>} />
                       </FitAmountLine>
                     </div>
                     <div className="flex-1 min-w-0 text-center">
-                      <p className="text-[min(2.6vw,0.625rem)] font-medium mb-0.5 whitespace-nowrap" style={{ color: "var(--card-subtext)" }}>Pending Contribution</p>
+                      <p className="impact-label text-[min(2.6vw,0.625rem)] font-medium mb-0.5" style={{ color: "var(--card-subtext)" }}>Pending Contribution</p>
                       <FitAmountLine>
                         <p className="text-sm font-bold whitespace-nowrap" style={{ color: theme === "dark" ? "#86efac" : "#16a34a", fontVariantNumeric: "tabular-nums", fontSize: "min(3.4vw, 0.875rem)" }}><ObnPrimary amount={totalPendingContribution}>{formatUniform(totalPendingContribution).replace(/\u00A0/g, '')} OBN</ObnPrimary></p>
                         <ObnUsd amount={totalPendingContribution} tokenLabel={<>{formatUniform(totalPendingContribution).replace(/\u00A0/g, '')} OBN</>} />
@@ -1280,9 +1280,9 @@ export default function UserPage() {
           /* Regular User View */
           <div className="w-full max-w-150 space-y-4">
             {/* Summary Card */}
-            <FitAmountGroup className="mt-4 rounded-xl border p-4 sm:max-w-md sm:mx-auto" style={{ ...cardStyle, backgroundColor: "var(--page-bg-to)" }}>
+            <FitAmountGroup className="impact-card mt-4 rounded-xl border p-4 sm:max-w-md sm:mx-auto" style={{ ...cardStyle, backgroundColor: "var(--page-bg-to)" }}>
               {/* NFT + Core Stats */}
-              <div className="flex items-center gap-2">
+              <div className="impact-overview flex items-center gap-2">
                 {/* NFT */}
                 <div className="flex-1 flex flex-col items-center">
                   {OLIVE_NFT ? (
@@ -1386,14 +1386,14 @@ export default function UserPage() {
                   <div className="flex gap-2">
                     <div className="flex-1 min-w-0 text-center">
                       <div className="mb-3">
-                        <p className="text-[min(2.6vw,0.625rem)] font-medium mb-0.5 whitespace-nowrap" style={{ color: "var(--card-subtext)" }}>Balance</p>
+                        <p className="impact-label text-[min(2.6vw,0.625rem)] font-medium mb-0.5" style={{ color: "var(--card-subtext)" }}>Balance</p>
                         <FitAmountLine>
                           <p className="text-sm font-bold whitespace-nowrap" style={{ color: "var(--card-text)", fontVariantNumeric: "tabular-nums", fontSize: "min(3.4vw, 0.875rem)" }}><ObnPrimary amount={obnBalance}>{formatUniform(obnBalance).replace(/\u00A0/g, '')} OBN</ObnPrimary></p>
                           <ObnUsd amount={obnBalance} tokenLabel={<>{formatUniform(obnBalance).replace(/\u00A0/g, '')} OBN</>} />
                         </FitAmountLine>
                       </div>
                       <div>
-                        <p className="text-[min(2.6vw,0.625rem)] font-medium mb-0.5 whitespace-nowrap" style={{ color: "var(--card-subtext)" }}>Total Earned</p>
+                        <p className="impact-label text-[min(2.6vw,0.625rem)] font-medium mb-0.5" style={{ color: "var(--card-subtext)" }}>Total Earned</p>
                         <FitAmountLine>
                           <p className="text-sm font-bold whitespace-nowrap" style={{ color: theme === "dark" ? "#60a5fa" : "#2563eb", fontVariantNumeric: "tabular-nums", fontSize: "min(3.4vw, 0.875rem)" }}><ObnPrimary amount={totalClaimed}>{formatUniform(totalClaimed).replace(/\u00A0/g, '')} OBN</ObnPrimary></p>
                           <ObnUsd amount={totalClaimed} tokenLabel={<>{formatUniform(totalClaimed).replace(/\u00A0/g, '')} OBN</>} />
@@ -1402,14 +1402,14 @@ export default function UserPage() {
                     </div>
                     <div className="flex-1 min-w-0 text-center">
                       <div className="mb-3">
-                        <p className="text-[min(2.6vw,0.625rem)] font-medium mb-0.5 whitespace-nowrap" style={{ color: "var(--card-subtext)" }}>{displayText("Total Active Stake")}</p>
+                        <p className="impact-label text-[min(2.6vw,0.625rem)] font-medium mb-0.5" style={{ color: "var(--card-subtext)" }}>{displayText("Total Active Stake")}</p>
                         <FitAmountLine>
                           <p className="text-sm font-bold whitespace-nowrap" style={{ color: "var(--card-text)", fontVariantNumeric: "tabular-nums", fontSize: "min(3.4vw, 0.875rem)" }}><ObnPrimary amount={Number.parseFloat(formatUnits(totalStaked, 18))}>{formatUniform(Number.parseFloat(formatUnits(totalStaked, 18))).replace(/\u00A0/g, '')} OBN</ObnPrimary></p>
                           <ObnUsd amount={Number.parseFloat(formatUnits(totalStaked, 18))} tokenLabel={<>{formatUniform(Number.parseFloat(formatUnits(totalStaked, 18))).replace(/\u00A0/g, '')} OBN</>} />
                         </FitAmountLine>
                       </div>
                       <div>
-                        <p className="text-[min(2.6vw,0.625rem)] font-medium mb-0.5 whitespace-nowrap" style={{ color: "var(--card-subtext)" }}>Total Contributed</p>
+                        <p className="impact-label text-[min(2.6vw,0.625rem)] font-medium mb-0.5" style={{ color: "var(--card-subtext)" }}>Total Contributed</p>
                         <FitAmountLine>
                           <p className="text-sm font-bold whitespace-nowrap" style={{ color: theme === "dark" ? "#86efac" : "#16a34a", fontVariantNumeric: "tabular-nums", fontSize: "min(3.4vw, 0.875rem)" }}><ObnPrimary amount={totalCharityContributed}>{formatUniform(totalCharityContributed).replace(/\u00A0/g, '')} OBN</ObnPrimary></p>
                           <ObnUsd amount={totalCharityContributed} tokenLabel={<>{formatUniform(totalCharityContributed).replace(/\u00A0/g, '')} OBN</>} />
@@ -1421,16 +1421,16 @@ export default function UserPage() {
               </div>
 
               {/* Pending section */}
-              <div className="flex items-center gap-2 mt-3.5 pt-3.5" style={{ borderTop: `1px solid ${theme === "dark" ? "rgba(255,255,255,0.1)" : "rgba(0,0,0,0.1)"}` }}>
+              <div className="impact-pending flex items-center gap-2 mt-3.5 pt-3.5" style={{ borderTop: `1px solid ${theme === "dark" ? "rgba(255,255,255,0.1)" : "rgba(0,0,0,0.1)"}` }}>
                 <div className="flex-1 min-w-0 text-center">
-                  <p className="text-[min(2.6vw,0.625rem)] font-medium mb-0.5 whitespace-nowrap" style={{ color: "var(--card-subtext)" }}>Pending Rewards</p>
+                  <p className="impact-label text-[min(2.6vw,0.625rem)] font-medium mb-0.5" style={{ color: "var(--card-subtext)" }}>Pending Rewards</p>
                   <FitAmountLine>
                     <p className="text-sm font-bold whitespace-nowrap" style={{ color: theme === "dark" ? "#60a5fa" : "#2563eb", fontVariantNumeric: "tabular-nums", fontSize: "min(3.4vw, 0.875rem)" }}><ObnPrimary amount={totalPendingRewards}>{formatUniform(totalPendingRewards).replace(/\u00A0/g, '')} OBN</ObnPrimary></p>
                     <ObnUsd amount={totalPendingRewards} tokenLabel={<>{formatUniform(totalPendingRewards).replace(/\u00A0/g, '')} OBN</>} />
                   </FitAmountLine>
                 </div>
                 <div className="flex-1 min-w-0 text-center">
-                  <p className="text-[min(2.6vw,0.625rem)] font-medium mb-0.5 whitespace-nowrap" style={{ color: "var(--card-subtext)" }}>Pending Contribution</p>
+                  <p className="impact-label text-[min(2.6vw,0.625rem)] font-medium mb-0.5" style={{ color: "var(--card-subtext)" }}>Pending Contribution</p>
                   <FitAmountLine>
                     <p className="text-sm font-bold whitespace-nowrap" style={{ color: theme === "dark" ? "#86efac" : "#16a34a", fontVariantNumeric: "tabular-nums", fontSize: "min(3.4vw, 0.875rem)" }}><ObnPrimary amount={totalPendingContribution}>{formatUniform(totalPendingContribution).replace(/\u00A0/g, '')} OBN</ObnPrimary></p>
                     <ObnUsd amount={totalPendingContribution} tokenLabel={<>{formatUniform(totalPendingContribution).replace(/\u00A0/g, '')} OBN</>} />
