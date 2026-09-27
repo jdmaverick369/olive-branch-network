@@ -71,9 +71,14 @@ export function FarcasterHeaderUser({ onMiniAppDetected }: Props) {
     else wallet.select(address);
   };
 
-  const rowClass = (active: boolean) =>
+  const selectedWalletClass = {
+    farcaster: "bg-purple-600 text-white",
+    coinbase: "bg-blue-600 text-white",
+    other: "bg-[var(--wallet-selected-bg)] text-[var(--wallet-selected-text)]",
+  };
+  const rowClass = (active: boolean, kind: keyof typeof selectedWalletClass = "other") =>
     `flex w-full items-center justify-between gap-2 rounded-lg px-3 py-2 text-left text-sm transition ${
-      active ? "bg-[var(--wallet-selected-bg)] font-semibold text-[var(--wallet-selected-text)]" : "hover:bg-gray-100 dark:hover:bg-white/10"
+      active ? `${selectedWalletClass[kind]} font-semibold` : "hover:bg-gray-100 dark:hover:bg-white/10"
     }`;
 
   return (
@@ -125,7 +130,7 @@ export function FarcasterHeaderUser({ onMiniAppDetected }: Props) {
         >
           <p className="mt-2 px-3 pb-1 text-xs font-semibold uppercase tracking-wide" style={{ color: "var(--card-subtext)" }}>Wallet</p>
 
-          <button type="button" role="menuitemradio" aria-checked={onDefault} className={rowClass(onDefault)} onClick={() => choose(null)}>
+          <button type="button" role="menuitemradio" aria-checked={onDefault} className={rowClass(onDefault, "farcaster")} onClick={() => choose(null)}>
             <span>Farcaster Wallet</span>
             <span className="font-mono text-xs">{farcasterAddress ? shortAddress(farcasterAddress) : ""}</span>
           </button>
@@ -133,7 +138,7 @@ export function FarcasterHeaderUser({ onMiniAppDetected }: Props) {
           {others.map((a) => {
             const active = viewAddress?.toLowerCase() === a.toLowerCase();
             return (
-              <button key={a} type="button" role="menuitemradio" aria-checked={active} className={rowClass(active)} onClick={() => choose(a)}>
+              <button key={a} type="button" role="menuitemradio" aria-checked={active} className={rowClass(active, isBaseAccount(a) ? "coinbase" : "other")} onClick={() => choose(a)}>
                 <span>
                   {isBaseAccount(a) ? "Coinbase Wallet" : "Verified Wallet"}
                   {primary?.toLowerCase() === a.toLowerCase() && <span className="font-normal opacity-70"> · primary</span>}
@@ -144,7 +149,7 @@ export function FarcasterHeaderUser({ onMiniAppDetected }: Props) {
           })}
 
           {connectedViaWalletConnect && viewAddress && !others.some((a) => a.toLowerCase() === viewAddress.toLowerCase()) && (
-            <div className={rowClass(true)}>
+            <div className={rowClass(true, viewingBaseAccount ? "coinbase" : "other")}>
               <span>Connected Wallet</span>
               <span className="font-mono text-xs">{shortAddress(viewAddress)}</span>
             </div>

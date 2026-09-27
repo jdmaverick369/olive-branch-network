@@ -388,7 +388,7 @@ export default function TradePage() {
           </div>
         </div>
 
-        <div className="w-full max-w-4xl rounded-xl overflow-hidden mb-4 md:mb-6 flex-1 min-h-0 max-h-[55vh]" style={{ border: "1px solid var(--card-border)" }}>
+        <div className="w-full max-w-4xl rounded-xl overflow-hidden mb-4 md:mb-6 flex-1 min-h-0 max-h-[53vh] md:max-h-[55vh]" style={{ border: "1px solid var(--card-border)" }}>
           <iframe src="https://dexscreener.com/base/0x8fce8be03745fa2821cb25f7dfebbfc5573a9beaca433f69a53c998a6fff1e94?embed=1&theme=dark&trades=0&info=0" className="w-full h-full" title="OBN price chart" referrerPolicy="strict-origin-when-cross-origin" allow="clipboard-write" />
         </div>
 

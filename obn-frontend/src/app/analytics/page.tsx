@@ -235,9 +235,9 @@ export default function AnalyticsPage() {
             </div>
 
             {/* Nonprofit pool stats — total staked + active stakers per pool */}
-            <div className={isMobileBrowser ? "w-full mx-auto" : "w-full min-w-0"} style={{ maxWidth: isMobileBrowser ? '440px' : '620px' }}>
+            <div className={isMobileBrowser ? "w-full mx-auto mt-4" : "w-full min-w-0"} style={{ maxWidth: isMobileBrowser ? '440px' : '620px' }}>
               <h2
-                className={isMobileBrowser ? "text-sm font-semibold mb-2 px-1" : "text-base font-semibold mb-2.5 px-1 text-center"}
+                className={isMobileBrowser ? "text-sm font-semibold mb-2 px-1 text-center" : "text-base font-semibold mb-2.5 px-1 text-center"}
                 style={{ color: "var(--card-text)" }}
               >
                 Nonprofit Pools
@@ -478,7 +478,7 @@ function NonprofitStatRow({
         className={`w-full text-left flex items-center justify-between hover:opacity-90 transition-opacity focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-green-600 ${large ? "p-4 gap-3" : "p-3 gap-2"}`}
       >
         {/* Logo and Name */}
-        <span className={large ? "flex items-center gap-3 min-w-0 shrink" : "flex items-center gap-2 min-w-0 shrink"}>
+        <span className={large ? "flex flex-1 items-center gap-3 min-w-0" : "flex flex-1 items-center gap-2 min-w-0"}>
           <Image
             src={stat.logo}
             alt={stat.name}
@@ -496,19 +496,19 @@ function NonprofitStatRow({
 
         {/* Stats */}
         <span className={large ? "flex items-center gap-2 shrink-0" : "flex items-center gap-1 shrink-0"}>
-          <span className="flex flex-col items-center justify-center gap-1 text-center mr-3">
+          <span className="flex flex-col items-center text-center" style={{ width: large ? "85px" : "68px" }}>
             <span
-              className={`font-medium leading-none whitespace-nowrap ${large ? "text-[11px]" : "text-[9px]"}`}
+              className={`font-medium ${large ? "text-[11px]" : "text-[9px]"}`}
               style={{ color: "var(--card-subtext)" }}
             >
               {displayText("Total Staked ")}</span>
             <span
-              className={`flex items-baseline justify-center whitespace-nowrap font-bold leading-none ${large ? "text-sm" : "text-xs"}`}
+              className={`font-bold ${large ? "text-xs" : "text-[10px]"}`}
               style={{ color: "var(--card-text)", fontVariantNumeric: "tabular-nums" }}
             >
-              <span className="shrink-0"><ObnPrimary amount={stat.totalStaked}>{formatValue(stat.totalStaked)} OBN</ObnPrimary></span>
-              <ObnUsd amount={stat.totalStaked} tokenLabel={<>{formatValue(stat.totalStaked)} OBN</>} />
+              <ObnPrimary amount={stat.totalStaked}>{formatValue(stat.totalStaked)} OBN</ObnPrimary>
             </span>
+            <ObnUsd amount={stat.totalStaked} tokenLabel={<>{formatValue(stat.totalStaked)} OBN</>} block size={large ? "text-[10px]" : "text-[8px]"} />
           </span>
           <ChevronDown aria-hidden="true" className={`h-4 w-4 shrink-0 transition-transform ${expanded ? "rotate-180" : ""}`} style={{ color: "var(--card-text)" }} />
         </span>
