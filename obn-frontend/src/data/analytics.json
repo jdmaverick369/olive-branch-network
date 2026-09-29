@@ -2,9 +2,9 @@
   "schema": 1,
   "chainId": 8453,
   "contract": "0x2C4Bd5B2a48a76f288d7F2DB23aFD3a03b9E7cD2",
-  "generatedAt": "2026-09-26T07:44:17.242Z",
-  "throughBlock": 51809050,
-  "throughTimestamp": "2026-09-26T07:24:07.000Z",
+  "generatedAt": "2026-09-29T07:52:40.486Z",
+  "throughBlock": 51938852,
+  "throughTimestamp": "2026-09-29T07:30:51.000Z",
   "definitions": {
     "activeStakers": "Distinct wallets with positive stake across all pools, including nonprofit bootstrap stakes.",
     "totalStaked": "OBN currently staked across all pools.",
@@ -2324,13 +2324,31 @@
     {
       "day": "2026-09-26",
       "activeStakers": 204,
-      "totalStaked": 140152576.7121433,
-      "totalContributed": 615756.1994790533
+      "totalStaked": 140152581.7703997,
+      "totalContributed": 615984.0105603934
+    },
+    {
+      "day": "2026-09-27",
+      "activeStakers": 205,
+      "totalStaked": 136222581.7703997,
+      "totalContributed": 616701.5629060151
+    },
+    {
+      "day": "2026-09-28",
+      "activeStakers": 205,
+      "totalStaked": 136222581.7703997,
+      "totalContributed": 616701.8342100483
+    },
+    {
+      "day": "2026-09-29",
+      "activeStakers": 205,
+      "totalStaked": 136230211.7703997,
+      "totalContributed": 616701.8771803674
     }
   ],
   "pools": {
     "0": {
-      "contributions": 33778.16337388775,
+      "contributions": 33794.14418881405,
       "seedClaims": 32059.1902312,
       "annualAwards": 0,
       "rows": [
@@ -3877,11 +3895,23 @@
         {
           "day": "2026-09-26",
           "activeStakers": 34
+        },
+        {
+          "day": "2026-09-27",
+          "activeStakers": 34
+        },
+        {
+          "day": "2026-09-28",
+          "activeStakers": 34
+        },
+        {
+          "day": "2026-09-29",
+          "activeStakers": 34
         }
       ]
     },
     "1": {
-      "contributions": 6729.906499213393,
+      "contributions": 6730.910301215992,
       "seedClaims": 32057.71687272,
       "annualAwards": 0,
       "rows": [
@@ -5428,11 +5458,23 @@
         {
           "day": "2026-09-26",
           "activeStakers": 19
+        },
+        {
+          "day": "2026-09-27",
+          "activeStakers": 19
+        },
+        {
+          "day": "2026-09-28",
+          "activeStakers": 19
+        },
+        {
+          "day": "2026-09-29",
+          "activeStakers": 19
         }
       ]
     },
     "2": {
-      "contributions": 27129.502015737075,
+      "contributions": 27145.483304358175,
       "seedClaims": 32057.51595024,
       "annualAwards": 0,
       "rows": [
@@ -6979,11 +7021,23 @@
         {
           "day": "2026-09-26",
           "activeStakers": 18
+        },
+        {
+          "day": "2026-09-27",
+          "activeStakers": 18
+        },
+        {
+          "day": "2026-09-28",
+          "activeStakers": 18
+        },
+        {
+          "day": "2026-09-29",
+          "activeStakers": 18
         }
       ]
     },
     "3": {
-      "contributions": 7765.021149259313,
+      "contributions": 7781.002346559013,
       "seedClaims": 32057.24242864,
       "annualAwards": 0,
       "rows": [
@@ -8530,11 +8584,23 @@
         {
           "day": "2026-09-26",
           "activeStakers": 26
+        },
+        {
+          "day": "2026-09-27",
+          "activeStakers": 26
+        },
+        {
+          "day": "2026-09-28",
+          "activeStakers": 26
+        },
+        {
+          "day": "2026-09-29",
+          "activeStakers": 26
         }
       ]
     },
     "4": {
-      "contributions": 89974.39984166465,
+      "contributions": 90489.75967641157,
       "seedClaims": 32057.11971528,
       "annualAwards": 0,
       "rows": [
@@ -10081,11 +10147,23 @@
         {
           "day": "2026-09-26",
           "activeStakers": 28
+        },
+        {
+          "day": "2026-09-27",
+          "activeStakers": 28
+        },
+        {
+          "day": "2026-09-28",
+          "activeStakers": 28
+        },
+        {
+          "day": "2026-09-29",
+          "activeStakers": 28
         }
       ]
     },
     "5": {
-      "contributions": 12511.231696313867,
+      "contributions": 12527.212724710767,
       "seedClaims": 32026.84875808,
       "annualAwards": 0,
       "rows": [
@@ -11632,11 +11710,23 @@
         {
           "day": "2026-09-26",
           "activeStakers": 29
+        },
+        {
+          "day": "2026-09-27",
+          "activeStakers": 29
+        },
+        {
+          "day": "2026-09-28",
+          "activeStakers": 29
+        },
+        {
+          "day": "2026-09-29",
+          "activeStakers": 29
         }
       ]
     },
     "6": {
-      "contributions": 9737.809659901714,
+      "contributions": 9753.791027189214,
       "seedClaims": 32056.67881592,
       "annualAwards": 0,
       "rows": [
@@ -13183,11 +13273,23 @@
         {
           "day": "2026-09-26",
           "activeStakers": 23
+        },
+        {
+          "day": "2026-09-27",
+          "activeStakers": 23
+        },
+        {
+          "day": "2026-09-28",
+          "activeStakers": 23
+        },
+        {
+          "day": "2026-09-29",
+          "activeStakers": 23
         }
       ]
     },
     "7": {
-      "contributions": 52932.85683221621,
+      "contributions": 52949.12354070651,
       "seedClaims": 32056.46116464,
       "annualAwards": 0,
       "rows": [
@@ -14734,11 +14836,23 @@
         {
           "day": "2026-09-26",
           "activeStakers": 29
+        },
+        {
+          "day": "2026-09-27",
+          "activeStakers": 30
+        },
+        {
+          "day": "2026-09-28",
+          "activeStakers": 30
+        },
+        {
+          "day": "2026-09-29",
+          "activeStakers": 30
         }
       ]
     },
     "8": {
-      "contributions": 25118.851172782408,
+      "contributions": 25349.517018092356,
       "seedClaims": 32032.1478268,
       "annualAwards": 0,
       "rows": [
@@ -16285,11 +16399,23 @@
         {
           "day": "2026-09-26",
           "activeStakers": 87
+        },
+        {
+          "day": "2026-09-27",
+          "activeStakers": 87
+        },
+        {
+          "day": "2026-09-28",
+          "activeStakers": 87
+        },
+        {
+          "day": "2026-09-29",
+          "activeStakers": 87
         }
       ]
     },
     "9": {
-      "contributions": 7478.492873680532,
+      "contributions": 7494.415884801382,
       "seedClaims": 19487.20596328,
       "annualAwards": 0,
       "rows": [
@@ -17628,11 +17754,23 @@
         {
           "day": "2026-09-26",
           "activeStakers": 27
+        },
+        {
+          "day": "2026-09-27",
+          "activeStakers": 27
+        },
+        {
+          "day": "2026-09-28",
+          "activeStakers": 27
+        },
+        {
+          "day": "2026-09-29",
+          "activeStakers": 27
         }
       ]
     },
     "10": {
-      "contributions": 6669.284660118781,
+      "contributions": 6669.866763111281,
       "seedClaims": 0,
       "annualAwards": 0,
       "rows": [
@@ -18414,6 +18552,18 @@
         },
         {
           "day": "2026-09-26",
+          "activeStakers": 18
+        },
+        {
+          "day": "2026-09-27",
+          "activeStakers": 18
+        },
+        {
+          "day": "2026-09-28",
+          "activeStakers": 18
+        },
+        {
+          "day": "2026-09-29",
           "activeStakers": 18
         }
       ]

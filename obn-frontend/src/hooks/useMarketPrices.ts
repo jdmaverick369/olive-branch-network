@@ -1,6 +1,6 @@
 "use client";
 import { useQuery } from "@tanstack/react-query";
-export type TickerItem = { symbol: "OBN" | "ETH" | "BTC"; priceUsd: number; change24h: number };
+export type TickerItem = { symbol: "OBN" | "ETH" | "BTC"; priceUsd: number; change24h: number | null };
 export function useMarketPrices() {
   return useQuery({
     queryKey: ["market-ticker"],

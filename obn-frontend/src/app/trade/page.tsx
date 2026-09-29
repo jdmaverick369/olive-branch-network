@@ -1,5 +1,6 @@
 "use client";
 import { ObnUsd } from "@/components/ObnUsd";
+import { useTheme } from "@/hooks/useTheme";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import {
@@ -24,6 +25,7 @@ import {
   type Hex,
 } from "viem";
 import { DATA_SUFFIX } from "@/lib/builderCode";
+import { EURC_BASE_ADDRESS, EURC_BASE_SEPOLIA_ADDRESS } from "@/lib/eurc";
 
 const OBN_TOKEN_ADDRESS = process.env.NEXT_PUBLIC_OBN_TOKEN as Address;
 const CHAIN_ID = Number(process.env.NEXT_PUBLIC_CHAIN_ID || 8453);
@@ -35,10 +37,12 @@ const USDC_ADDRESS = (CHAIN_ID === 84532
   : "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913") as Address;
 const ETH_IMAGE = "https://wallet-api-production.s3.amazonaws.com/uploads/tokens/eth_288.png";
 const USDC_IMAGE = "/usdc.svg";
+const EURC_ADDRESS = CHAIN_ID === 84532 ? EURC_BASE_SEPOLIA_ADDRESS : EURC_BASE_ADDRESS;
 const SLIPPAGE_BPS = 100;
 const ETH_GAS_RESERVE = 50_000_000_000_000n;
 
-type TokenSymbol = "ETH" | "USDC" | "OBN";
+type SettlementTokenSymbol = "ETH" | "USDC" | "EURC";
+type TokenSymbol = SettlementTokenSymbol | "OBN";
 type TradeDirection = "buy" | "sell";
 
 type SwapToken = {
@@ -69,8 +73,32 @@ type QuoteResponse = {
 const TOKENS: Record<TokenSymbol, SwapToken> = {
   ETH: { symbol: "ETH", address: ETH_ADDRESS, decimals: 18, image: ETH_IMAGE },
   USDC: { symbol: "USDC", address: USDC_ADDRESS, decimals: 6, image: USDC_IMAGE },
+  EURC: { symbol: "EURC", address: EURC_ADDRESS, decimals: 6, image: "/eurc.svg" },
   OBN: { symbol: "OBN", address: OBN_TOKEN_ADDRESS, decimals: 18, image: "/logo.png" },
 };
+
+function SettlementTokenSelect({ value, onChange, label, disabled }: {
+  value: SettlementTokenSymbol;
+  onChange: (symbol: SettlementTokenSymbol) => void;
+  label: string;
+  disabled: boolean;
+}) {
+  const theme = useTheme();
+  const menuColors = { backgroundColor: "var(--card-bg)", color: "var(--card-text)" };
+
+  return (
+    <div className="relative flex items-center gap-2 pl-1.5 pr-2 py-1.5 rounded-full font-semibold text-sm shrink-0 focus-within:ring-2 focus-within:ring-green-500" style={{ backgroundColor: "var(--card-bg)", color: "var(--card-text)", border: "1px solid var(--card-border)" }}>
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img src={TOKENS[value].image} alt="" className="w-6 h-6 rounded-full" />
+      <span>{value}</span><ChevronDown className="w-3.5 h-3.5" aria-hidden="true" />
+      <select value={value} onChange={(event) => onChange(event.target.value as SettlementTokenSymbol)} aria-label={label} disabled={disabled} className="absolute inset-0 w-full h-full opacity-0 cursor-pointer disabled:cursor-default" style={{ ...menuColors, colorScheme: theme }}>
+        <option value="ETH" style={menuColors}>ETH</option>
+        <option value="USDC" style={menuColors}>USDC</option>
+        <option value="EURC" style={menuColors}>EURC</option>
+      </select>
+    </div>
+  );
+}
 
 function usePageBackground() {
   useEffect(() => {
@@ -115,13 +143,18 @@ export default function TradePage() {
     token: OBN_TOKEN_ADDRESS,
     query: { enabled: !!address && !!OBN_TOKEN_ADDRESS },
   });
+  const { data: eurcBalance, refetch: refetchEurc } = useBalance({
+    address,
+    token: EURC_ADDRESS,
+    query: { enabled: !!address },
+  });
 
   const [isInMiniApp, setIsInMiniApp] = useState<boolean | null>(null);
   const [openingMiniAppSwap, setOpeningMiniAppSwap] = useState(false);
   const [showSwap, setShowSwap] = useState(false);
   const [copied, setCopied] = useState(false);
   const [direction, setDirection] = useState<TradeDirection>("buy");
-  const [settlementToken, setSettlementToken] = useState<"ETH" | "USDC">("ETH");
+  const [settlementToken, setSettlementToken] = useState<SettlementTokenSymbol>("ETH");
   const [fromAmount, setFromAmount] = useState("");
   const [quote, setQuote] = useState<QuoteResponse | null>(null);
   const [priceImpact, setPriceImpact] = useState<number | null>(null);
@@ -136,7 +169,9 @@ export default function TradePage() {
     ? ethBalance?.value
     : fromToken.symbol === "USDC"
       ? usdcBalance?.value
-      : obnBalance?.value;
+      : fromToken.symbol === "EURC"
+        ? eurcBalance?.value
+        : obnBalance?.value;
 
   useEffect(() => {
     sdk.isInMiniApp().then(setIsInMiniApp).catch(() => setIsInMiniApp(false));
@@ -190,7 +225,7 @@ export default function TradePage() {
     const timer = window.setTimeout(async () => {
       try {
         const amount = parseUnits(fromAmount, fromToken.decimals);
-        const referenceHuman = fromToken.symbol === "ETH" ? "0.001" : fromToken.symbol === "USDC" ? "1" : "1000";
+        const referenceHuman = fromToken.symbol === "ETH" ? "0.001" : fromToken.symbol === "OBN" ? "1000" : "1";
         const referenceAmount = parseUnits(referenceHuman, fromToken.decimals);
         const [actualResponse, referenceResponse] = await Promise.all([
           fetch(quoteUrl(fromToken, toToken, amount.toString())),
@@ -339,12 +374,13 @@ export default function TradePage() {
       setSwapHash(hash);
       setSwapStage("idle");
       void refetchUsdc();
+      void refetchEurc();
       void refetchObn();
     } catch (err) {
       setSwapError(friendlyError(err));
       setSwapStage("idle");
     }
-  }, [address, fetchExecutableQuote, fromAmount, fromToken, publicClient, refetchObn, refetchUsdc, sendTransactionAsync, signTypedDataAsync, writeContractAsync]);
+  }, [address, fetchExecutableQuote, fromAmount, fromToken, publicClient, refetchObn, refetchUsdc, refetchEurc, sendTransactionAsync, signTypedDataAsync, writeContractAsync]);
 
   const maxAmount = useMemo(() => {
     if (selectedBalance === undefined) return "";
@@ -438,10 +474,7 @@ export default function TradePage() {
                         <img src={fromToken.image} alt="" className="w-6 h-6 rounded-full" /><span>{fromToken.symbol}</span>
                       </div>
                     ) : (
-                      <button onClick={() => setSettlementToken(settlementToken === "ETH" ? "USDC" : "ETH")} aria-label={`Change payment token from ${settlementToken}`} className="flex items-center gap-2 pl-1.5 pr-2 py-1.5 rounded-full font-semibold text-sm shrink-0 transition-opacity hover:opacity-75" style={{ backgroundColor: "var(--card-bg)", color: "var(--card-text)", border: "1px solid var(--card-border)" }}>
-                        {/* eslint-disable-next-line @next/next/no-img-element */}
-                        <img src={fromToken.image} alt="" className="w-6 h-6 rounded-full" /><span>{fromToken.symbol}</span><ChevronDown className="w-3.5 h-3.5" aria-hidden="true" />
-                      </button>
+                      <SettlementTokenSelect value={settlementToken} onChange={setSettlementToken} label="Payment token" disabled={isBusy} />
                     )}
                   </div>
                 </div>
@@ -468,10 +501,7 @@ export default function TradePage() {
                         <img src={toToken.image} alt="" className="w-6 h-6 rounded-full" /><span>{toToken.symbol}</span>
                       </div>
                     ) : (
-                      <button onClick={() => setSettlementToken(settlementToken === "ETH" ? "USDC" : "ETH")} aria-label={`Change receiving token from ${settlementToken}`} className="flex items-center gap-2 pl-1.5 pr-2 py-1.5 rounded-full font-semibold text-sm shrink-0 transition-opacity hover:opacity-75" style={{ backgroundColor: "var(--card-bg)", color: "var(--card-text)", border: "1px solid var(--card-border)" }}>
-                        {/* eslint-disable-next-line @next/next/no-img-element */}
-                        <img src={toToken.image} alt="" className="w-6 h-6 rounded-full" /><span>{toToken.symbol}</span><ChevronDown className="w-3.5 h-3.5" aria-hidden="true" />
-                      </button>
+                      <SettlementTokenSelect value={settlementToken} onChange={setSettlementToken} label="Receiving token" disabled={isBusy} />
                     )}
                   </div>
                 </div>

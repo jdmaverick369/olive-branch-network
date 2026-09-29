@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { CdpClient } from "@coinbase/cdp-sdk";
+import { EURC_BASE_ADDRESS } from "@/lib/eurc";
 
 const ETH_ADDRESS = "0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE";
 const USDC_ADDRESS = "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913";
@@ -29,7 +30,7 @@ export async function GET(req: NextRequest) {
   }
 
   const allowedTokens = new Set(
-    [ETH_ADDRESS, USDC_ADDRESS, OBN_ADDRESS].filter(Boolean).map((token) => token.toLowerCase()),
+    [ETH_ADDRESS, USDC_ADDRESS, EURC_BASE_ADDRESS, OBN_ADDRESS].filter(Boolean).map((token) => token.toLowerCase()),
   );
   const from = fromToken.toLowerCase();
   const to = toToken.toLowerCase();

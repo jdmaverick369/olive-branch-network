@@ -196,7 +196,7 @@ export default function FAQPage() {
             question="What blockchain is Olive Branch Network on?"
             answer={
               <>
-                {displayText("Olive Branch Network operates on Base, an L2 solution for Ethereum. You'll need a Base-compatible wallet and $OBN tokens to stake. You can buy or sell OBN with ETH or USDC on the")}{" "}
+                {displayText("Olive Branch Network operates on Base, an L2 solution for Ethereum. You'll need a Base-compatible wallet and $OBN tokens to stake. You can buy or sell OBN with ETH, USDC, or EURC on the")}{" "}
                 <Link href="/trade" className="font-semibold hover:underline" style={{ color: "#16a34a" }}>
                   Trade OBN
                 </Link>{" "}
@@ -219,7 +219,7 @@ export default function FAQPage() {
                     <Link href="/trade" className="font-semibold hover:underline" style={{ color: "#16a34a" }}>
                       Trade OBN
                     </Link>{" "}
-                    page using ETH or USDC
+                    page using ETH, USDC, or EURC
                   </li>
                   <li>Go to the{" "}
                     <Link
