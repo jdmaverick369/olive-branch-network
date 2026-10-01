@@ -3,6 +3,7 @@ import { parseAbi } from "viem";
 export const autoClaimAbi = parseAbi([
   "function autoClaimExecutor() view returns (address)",
   "function autoClaimPreference(address user) view returns (bool enabled, uint256 nonce)",
+  "function activePoolCount(address user) view returns (uint256)",
   "function setAutoClaimEnabled(bool enabled)",
   "function currentAutoClaimMonth() view returns (uint256)",
   "function lastAutoClaimMonth(uint256 pid, address user) view returns (uint256)",
