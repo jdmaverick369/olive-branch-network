@@ -2,6 +2,11 @@
 // Server-side IPFS proxy — avoids mobile browser CORS/gateway issues.
 import { NextRequest, NextResponse } from "next/server";
 import { fetchIpfsJson } from "@/lib/ipfs";
+import { normalizeIpfsUri } from "@/lib/ipfsUri";
+import { ApiError, createResourceGuard } from "@/lib/server/http";
+
+export const maxDuration = 20;
+const metadata = createResourceGuard({ requestsPerMinute: 120, maxConcurrent: 8, cacheMs: 3_600_000, maxEntries: 64 });
 
 export async function GET(req: NextRequest) {
   const uri = req.nextUrl.searchParams.get("uri");
@@ -10,12 +15,12 @@ export async function GET(req: NextRequest) {
   }
   // This public route is an IPFS gateway proxy, not a general-purpose URL
   // fetcher. Restricting the scheme prevents access to private infrastructure.
-  if (!uri.startsWith("ipfs://")) {
-    return NextResponse.json({ error: "only ipfs:// metadata URIs are supported" }, { status: 400 });
-  }
+  let normalized: string;
+  try { normalized = normalizeIpfsUri(uri); }
+  catch { return NextResponse.json({ error: "Invalid IPFS metadata URI" }, { status: 400 }); }
 
   try {
-    const meta = await fetchIpfsJson<Record<string, unknown>>(uri);
+    const meta = await metadata(normalized, () => fetchIpfsJson<Record<string, unknown>>(normalized));
 
     // IPFS content is content-addressed — a given uri's content cannot
     // change, so this is safe to cache indefinitely on both the browser and
@@ -23,7 +28,10 @@ export async function GET(req: NextRequest) {
     return NextResponse.json(meta, {
       headers: { "Cache-Control": "public, max-age=31536000, immutable" },
     });
-  } catch {
-    return NextResponse.json({ error: "failed to fetch metadata" }, { status: 500 });
+  } catch (error) {
+    const limited = error instanceof ApiError && error.status === 429;
+    return NextResponse.json({ error: limited ? "Service busy; try again shortly" : "failed to fetch metadata" }, {
+      status: limited ? 429 : 502, headers: { "Cache-Control": "no-store", ...(limited ? { "Retry-After": "60" } : {}) },
+    });
   }
 }

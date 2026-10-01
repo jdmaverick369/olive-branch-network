@@ -1,4 +1,6 @@
 // src/lib/ipfs.ts
+import { normalizeIpfsUri, matchesIpfsGatewayResource } from "./ipfsUri";
+import { fetchJsonBounded, isRecord } from "./server/http";
 
 /**
  * IPFS gateway configuration for Android WebView compatibility.
@@ -56,64 +58,28 @@ export function buildIpfsHttpUrl(
  * Fetches JSON metadata from IPFS with automatic gateway fallback.
  *
  * If the URI is ipfs://, tries all IPFS_METADATA_GATEWAYS in sequence until one succeeds.
- * If the URI is http(s)://, fetches directly (no fallback).
+ * Only validated content-addressed IPFS URIs are fetched. Redirects must preserve
+ * the CID/path and remain on one of the fixed gateways (including CID subdomains).
  *
  * This ensures Android WebView can load metadata even if one gateway is blocked.
  *
- * @param uri - IPFS URI or HTTP URL
+ * @param uri - IPFS URI
  * @returns Parsed JSON object
  * @throws Error if all gateways fail or URI is empty
  */
-export async function fetchIpfsJson<T = any>(uri: string): Promise<T> {
-  if (!uri) {
-    throw new Error("fetchIpfsJson: empty uri");
-  }
-
-  // Non-IPFS URL → normal fetch.
-  // force-cache is safe here: IPFS content is content-addressed, so a given
-  // CID's content cannot change — there's no staleness risk in caching it
-  // indefinitely, unlike a typical API response.
-  if (!uri.startsWith("ipfs://")) {
-    const res = await fetch(uri, { cache: "force-cache" });
-    if (!res.ok) {
-      throw new Error(`fetchIpfsJson: HTTP error ${res.status} for ${uri}`);
-    }
-    return (await res.json()) as T;
-  }
-
-  // Strip "ipfs://" and optional leading "ipfs/" to normalize weird metadata formats
-  const cidAndPath = uri
-    .replace(/^ipfs:\/\//, "")
-    .replace(/^ipfs\//, "");
-
-  let lastError: unknown = null;
-
-  for (let i = 0; i < IPFS_METADATA_GATEWAYS.length; i++) {
-    const url = IPFS_METADATA_GATEWAYS[i] + cidAndPath;
-    const controller = new AbortController();
-    const timer = setTimeout(() => controller.abort(), 5000);
-
+export async function fetchIpfsJson<T = Record<string, unknown>>(uri: string): Promise<T> {
+  const cidAndPath = normalizeIpfsUri(uri).slice(7);
+  const deadline = AbortSignal.timeout(15_000);
+  for (const gateway of IPFS_METADATA_GATEWAYS) {
+    if (deadline.aborted) break;
     try {
-      const res = await fetch(url, { cache: "force-cache", signal: controller.signal });
-      clearTimeout(timer);
-      if (!res.ok) {
-        console.warn("[fetchIpfsJson] Non-OK response", res.status, "from", url);
-        lastError = new Error(`HTTP ${res.status}`);
-        continue;
-      }
-
-      const json = (await res.json()) as T;
-      return json;
-    } catch (e) {
-      clearTimeout(timer);
-      console.warn("[fetchIpfsJson] Error fetching from", url, e);
-      lastError = e;
-    }
+      const json = await fetchJsonBounded(gateway + cidAndPath, { signal: deadline }, {
+        timeoutMs: 3_000, maxBytes: 256 * 1024,
+        allowRedirect: (url) => matchesIpfsGatewayResource(url, uri, IPFS_METADATA_GATEWAYS),
+      });
+      if (!isRecord(json)) throw new Error("Metadata must be an object");
+      return json as T;
+    } catch { /* Try the next fixed gateway, within the shared deadline. */ }
   }
-
-  throw new Error(
-    `fetchIpfsJson: all IPFS gateways failed for ${uri} (last error: ${String(
-      lastError
-    )})`
-  );
+  throw new Error("Metadata unavailable");
 }

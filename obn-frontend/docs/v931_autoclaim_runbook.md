@@ -146,11 +146,13 @@ Do not manually run another worker with the same executor concurrently.
 `.github/workflows/monthly_autoclaim.yml` remains disabled until repository variable
 `AUTOCLAIM_ENABLED=true`. Configure its named secrets and variables first. Manual
 dispatch defaults to simulation; scheduled runs submit once enabled. Workflow
-concurrency serializes runs; cache and artifacts preserve the journal even after
-worker failures. Restore the latest journal artifact if the cache is evicted.
-Without it, chain records still prevent duplicate successful claims, but pending
-submissions may be retried and waste sponsored gas. For higher scale, replace
-file/cache persistence with a transactional store and distributed worker lease.
+concurrency serializes runs. Each live run restores the latest trusted main-branch
+worker journal artifact and saves it even after failure. Missing or expired state
+stops submission; it never silently starts a fresh journal. A first-time setup or
+reconciled recovery requires the explicit manual bootstrap option described in
+`scripts/autoclaim/README.md`. Simulation cannot create a trusted empty journal.
+For higher scale, replace artifact persistence with a transactional store and
+distributed worker lease.
 Do not rely on GitHub scheduling for an exact execution time or delivery SLA.
 
 After an end-to-end sponsored pilot confirms, expose the profile control with
@@ -182,7 +184,7 @@ and reconcile the same key. Never clear an uncertain entry just to resume work.
 Older unresolved journals need the same reconciliation; a new rejection alone
 does not establish that the original request never broadcast.
 
-CDP SDK is pinned to 1.52.0. The worker disables the SDK's hidden HTTP retries
+CDP SDK is pinned to 1.57.1. The worker disables the SDK's hidden HTTP retries
 through its internal transport so an API rejection cannot conceal a previous
 timeout. Run npm test from scripts/autoclaim before changing the SDK version. Classification
 follows https://docs.cdp.coinbase.com/api-reference/v2/errors.

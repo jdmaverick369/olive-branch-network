@@ -1,144 +1,74 @@
-/**
- * Base Dashboard notifications for the Base App
- * https://docs.base.org/base-app/build-with-base-app/notifications
- *
- * Separate audience from Neynar/Farcaster (src/lib/notificationSender.ts):
- * users are addressed by wallet address here, not FID, and only users who
- * opened this app inside the Base App (not Warpcast/other clients) receive
- * these notifications.
- */
+import { fetchJsonBounded, isRecord } from "./server/http";
+import { validAddresses, validTargetPath } from "./server/notificationInput";
 
-const BASE_DASHBOARD_API = "https://dashboard.base.org/api/v1/notifications";
-const MAX_ADDRESSES_PER_REQUEST = 1000;
-
-export interface BaseAppUser {
-  address: string;
-  notificationsEnabled: boolean;
-}
-
-export interface SendBaseAppNotificationParams {
-  appUrl: string;
-  walletAddresses: string[]; // 1-1000 per underlying request; longer lists are batched
-  title: string; // Max 30 chars
-  message: string; // Max 200 chars
-  targetPath?: string; // Must start with "/" if provided
-}
-
-export interface BaseAppSendResult {
-  walletAddress: string;
-  sent: boolean;
-  failureReason?: string;
-}
-
+const API = "https://dashboard.base.org/api/v1/notifications";
+const MAX_USERS = 10_000;
+export interface BaseAppUser { address: string; notificationsEnabled: boolean }
+export interface SendBaseAppNotificationParams { appUrl: string; walletAddresses: string[]; title: string; message: string; targetPath?: string }
+export interface BaseAppSendResult { walletAddress: string; sent: boolean; failureReason?: string }
 export interface SendBaseAppNotificationResult {
-  state: "success" | "error" | "invalid_request";
-  results?: BaseAppSendResult[];
-  sentCount?: number;
-  failedCount?: number;
-  error?: unknown;
+  state: "success" | "error" | "invalid_request"; results?: BaseAppSendResult[]; sentCount?: number; failedCount?: number; error?: string;
 }
 
-/**
- * Fetch every wallet address that has pinned this app and opted in to
- * notifications, paginating through the full result set.
- */
+/** A failed/truncated audience lookup must never be mistaken for an empty audience. */
 export async function getBaseAppOptedInUsers(appUrl: string): Promise<string[]> {
   const apiKey = process.env.BASE_DASHBOARD_API_KEY;
-  if (!apiKey) return [];
-
-  const addresses: string[] = [];
+  if (!apiKey) throw new Error("Base notification service unavailable");
+  const addresses = new Map<string, string>();
+  const cursors = new Set<string>();
+  const deadline = AbortSignal.timeout(15_000);
   let cursor: string | undefined;
-
-  do {
-    const url = new URL(`${BASE_DASHBOARD_API}/app/users`);
-    url.searchParams.set("app_url", appUrl);
-    url.searchParams.set("notification_enabled", "true");
-    url.searchParams.set("limit", "500");
+  for (let page = 0; page < 20; page++) {
+    const url = new URL(`${API}/app/users`);
+    url.searchParams.set("app_url", appUrl); url.searchParams.set("notification_enabled", "true"); url.searchParams.set("limit", "500");
     if (cursor) url.searchParams.set("cursor", cursor);
-
-    const res = await fetch(url.toString(), { headers: { "x-api-key": apiKey } });
-    const data = await res.json();
-    if (!data.success) break;
-
-    addresses.push(...(data.users as BaseAppUser[]).map((u) => u.address));
-    cursor = data.nextCursor;
-  } while (cursor);
-
-  return addresses;
+    const data = await fetchJsonBounded(url.toString(), { headers: { "x-api-key": apiKey }, signal: deadline });
+    if (!isRecord(data) || data.success !== true || !Array.isArray(data.users) || data.users.length > 500) throw new Error("Invalid Base audience response");
+    for (const user of data.users) {
+      if (!isRecord(user) || !validAddresses([user.address]) || user.notificationsEnabled !== true) throw new Error("Invalid Base audience response");
+      const address = user.address as string;
+      addresses.set(address.toLowerCase(), address);
+    }
+    if (addresses.size > MAX_USERS) throw new Error("Base audience exceeds limit");
+    if (data.nextCursor == null || data.nextCursor === "") return [...addresses.values()];
+    if (typeof data.nextCursor !== "string" || data.nextCursor.length > 2048 || cursors.has(data.nextCursor)) throw new Error("Invalid Base audience cursor");
+    cursors.add(data.nextCursor); cursor = data.nextCursor;
+  }
+  throw new Error("Base audience exceeds page limit");
 }
 
-/**
- * Send a notification to one or more Base App wallet addresses. Requests
- * larger than 1,000 addresses are split into multiple calls automatically.
- */
-export async function sendBaseAppNotification({
-  appUrl,
-  walletAddresses,
-  title,
-  message,
-  targetPath,
-}: SendBaseAppNotificationParams): Promise<SendBaseAppNotificationResult> {
-  if (title.length > 30) {
-    return { state: "invalid_request", error: "title exceeds 30 character limit" };
-  }
-  if (message.length > 200) {
-    return { state: "invalid_request", error: "message exceeds 200 character limit" };
-  }
-  if (targetPath && !targetPath.startsWith("/")) {
-    return { state: "invalid_request", error: "targetPath must start with /" };
-  }
-  if (walletAddresses.length === 0) {
-    return { state: "success", results: [], sentCount: 0, failedCount: 0 };
-  }
-
+export async function sendBaseAppNotification({ appUrl, walletAddresses, title, message, targetPath }: SendBaseAppNotificationParams): Promise<SendBaseAppNotificationResult> {
+  if (typeof title !== "string" || !title.trim() || title.length > 30 || typeof message !== "string" || !message.trim() || message.length > 200 ||
+      !validAddresses(walletAddresses, MAX_USERS) || (targetPath !== undefined && !validTargetPath(targetPath))) return { state: "invalid_request", error: "Invalid Base notification request" };
+  const addresses = [...new Map(walletAddresses.map((address) => [address.toLowerCase(), address])).values()];
+  if (addresses.length === 0) return { state: "success", results: [], sentCount: 0, failedCount: 0 };
   const apiKey = process.env.BASE_DASHBOARD_API_KEY;
-  if (!apiKey) {
-    return { state: "error", error: "BASE_DASHBOARD_API_KEY not configured" };
-  }
-
-  const batches: string[][] = [];
-  for (let i = 0; i < walletAddresses.length; i += MAX_ADDRESSES_PER_REQUEST) {
-    batches.push(walletAddresses.slice(i, i + MAX_ADDRESSES_PER_REQUEST));
-  }
-
+  if (!apiKey) return { state: "error", error: "Base notification service unavailable", sentCount: 0, failedCount: addresses.length };
   const results: BaseAppSendResult[] = [];
-  let sentCount = 0;
-  let failedCount = 0;
-
-  for (const batch of batches) {
+  const deadline = AbortSignal.timeout(20_000);
+  for (let start = 0; start < addresses.length; start += 1000) {
+    const batch = addresses.slice(start, start + 1000);
     try {
-      const res = await fetch(`${BASE_DASHBOARD_API}/send`, {
-        method: "POST",
+      const data = await fetchJsonBounded(`${API}/send`, { method: "POST", signal: deadline,
         headers: { "Content-Type": "application/json", "x-api-key": apiKey },
-        body: JSON.stringify({
-          app_url: appUrl,
-          wallet_addresses: batch,
-          title,
-          message,
-          ...(targetPath ? { target_path: targetPath } : {}),
-        }),
-      });
-      const data = await res.json();
-
-      if (Array.isArray(data.results)) results.push(...data.results);
-      sentCount += data.sentCount ?? 0;
-      failedCount += data.failedCount ?? 0;
-    } catch (error) {
-      failedCount += batch.length;
-      results.push(
-        ...batch.map((address) => ({
-          walletAddress: address,
-          sent: false,
-          failureReason: error instanceof Error ? error.message : String(error),
-        }))
-      );
+        body: JSON.stringify({ app_url: appUrl, wallet_addresses: batch, title, message, ...(targetPath ? { target_path: targetPath } : {}) }),
+      }, { maxBytes: 512 * 1024 });
+      if (!isRecord(data) || typeof data.success !== "boolean" || !Array.isArray(data.results) || data.results.length !== batch.length) throw new Error("Invalid Base send response");
+      const expected = new Set(batch.map((address) => address.toLowerCase()));
+      const parsed: BaseAppSendResult[] = [];
+      for (const result of data.results) {
+        if (!isRecord(result) || typeof result.walletAddress !== "string" || typeof result.sent !== "boolean" || !expected.delete(result.walletAddress.toLowerCase())) throw new Error("Invalid Base send result");
+        parsed.push({ walletAddress: result.walletAddress, sent: result.sent, ...(result.sent ? {} : { failureReason: "Provider did not confirm delivery" }) });
+      }
+      const sent = parsed.filter((result) => result.sent).length;
+      if (data.sentCount !== sent || data.failedCount !== batch.length - sent || data.success !== (sent === batch.length)) throw new Error("Invalid Base send counts");
+      results.push(...parsed);
+    } catch {
+      // Delivery may have happened before a timeout; never retry sends automatically.
+      results.push(...batch.map((walletAddress) => ({ walletAddress, sent: false, failureReason: "Delivery could not be confirmed" })));
     }
   }
-
-  return {
-    state: failedCount === 0 ? "success" : "error",
-    results,
-    sentCount,
-    failedCount,
-  };
+  const sentCount = results.filter((result) => result.sent).length;
+  const failedCount = addresses.length - sentCount;
+  return { state: failedCount ? "error" : "success", results, sentCount, failedCount };
 }

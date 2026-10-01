@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { useConnect } from "wagmi";
 import { useAccount } from "wagmi";
 import { isMiniAppRuntime, detectMiniApp } from "@/lib/miniapp";
+import { isBaseAccountConnector } from "@/lib/baseAccountConnector";
 
 function isCoinbaseWalletBrowser(): boolean {
   if (typeof window === "undefined") return false;
@@ -70,9 +71,7 @@ export function useAutoConnect() {
         }, 100);
       }
     } else if (inBaseApp) {
-      const baseConnector = connectors.find(
-        (connector) => connector.id === "baseAccount"
-      );
+      const baseConnector = connectors.find(isBaseAccountConnector);
 
       if (baseConnector) {
         attemptedRef.current = true;

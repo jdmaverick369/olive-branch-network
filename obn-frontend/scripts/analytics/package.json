@@ -2,6 +2,11 @@
   "name": "obn-analytics",
   "private": true,
   "type": "module",
-  "scripts": { "start": "node run.mjs", "test": "node --test *.test.mjs" },
-  "dependencies": { "ethers": "6.15.0" }
+  "scripts": {
+    "start": "node run.mjs",
+    "test": "node --test *.test.mjs"
+  },
+  "dependencies": {
+    "ethers": "6.17.0"
+  }
 }

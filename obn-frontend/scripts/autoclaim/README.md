@@ -49,13 +49,28 @@ allowance also covers all opted-in wallets combined, rather than each staker.
 ## Recovery
 
 The journal is `scripts/autoclaim/.autoclaim/state.json` relative to repository root.
-The workflow serializes runs and preserves it in an Actions cache plus a private
-90-day artifact. If the cache is evicted, recover the latest artifact before live
-submission. Do not delete an ambiguous submission to force a retry. A lost
-response reuses its idempotency key; confirmed rejections can retry with a new key.
+The workflow serializes runs and automatically restores the private 90-day artifact
+from the most recent trusted main-branch execution attempt that reached the live
+worker, including previous attempts of the same run when a job is rerun. It does
+not rely on the short-lived Actions cache. If that run has no retained artifact,
+live execution stops instead of falling back to older state. Do not delete an
+ambiguous submission to force a retry. A lost response reuses its idempotency key;
+confirmed rejections can retry with a new key. Runner loss before artifact upload
+requires manual reconciliation; local disk alone is not durable across runner loss.
 
-SDK 1.52.0 is pinned because the transport disables hidden retries through a
+For the first live setup, dispatch `send=true, bootstrap=true` on the 14th UTC.
+Bootstrap is also the explicit recovery override after an operator has checked
+the last runner, CDP operation history and chain state and confirmed there are no
+unresolved submissions. Leave it false during normal operation. The bootstrap
+input never discards an available valid journal. A local live invocation without
+a journal likewise requires `AUTOCLAIM_BOOTSTRAP=true`. Simulations never create
+a replacement empty journal; they remain available without granting bootstrap.
+
+SDK 1.57.1 is pinned because the transport disables hidden retries through a
 version-specific integration. Run the transport test before upgrading dependencies.
+
+`worker_security.yml` installs and tests each worker independently and audits its
+production dependencies on changes and weekly, without RPC or signing credentials.
 
 See `docs/v931_autoclaim_runbook.md` for contract behavior and fork/testnet evidence.
 

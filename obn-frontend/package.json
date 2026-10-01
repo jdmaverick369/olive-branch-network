@@ -9,6 +9,7 @@
     "start": "next start",
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
+    "test:security": "node --test scripts/api-security.test.cjs scripts/server-security.test.cjs scripts/transaction-security.test.cjs scripts/security-headers.test.cjs scripts/dependency-compat.test.mjs scripts/swap.test.mjs scripts/market-ticker.test.mjs",
     "test:analytics": "node --test scripts/analytics/*.test.mjs",
     "analytics:update": "node --env-file-if-exists=.env.local scripts/analytics/run.mjs",
     "validate:env": "node --env-file-if-exists=.env.local scripts/validate-env.mjs",
@@ -16,27 +17,36 @@
     "test:autoclaim": "node --test scripts/autoclaim/*.test.mjs"
   },
   "dependencies": {
-    "@coinbase/cdp-sdk": "1.52.0",
-    "@coinbase/onchainkit": "^1.1.2",
-    "@farcaster/miniapp-sdk": "^0.2.3",
-    "@farcaster/miniapp-wagmi-connector": "^1.1.1",
-    "@rainbow-me/rainbowkit": "^2.2.10",
+    "@coinbase/cdp-sdk": "1.57.1",
+    "@farcaster/miniapp-sdk": "0.3.0",
+    "@farcaster/miniapp-wagmi-connector": "2.0.0",
+    "@rainbow-me/rainbowkit": "2.2.11",
     "@tanstack/react-query": "^5.83.0",
     "@tanstack/react-virtual": "^3.14.3",
     "@vercel/analytics": "^1.6.1",
     "@vercel/speed-insights": "^2.0.0",
     "@wagmi/connectors": "^6.2.0",
     "@wagmi/core": "^2.16.7",
-    "ethers": "^6.15.0",
+    "ethers": "6.17.0",
     "lucide-react": "^0.545.0",
-    "next": "^16.0.8",
+    "next": "16.3.8",
     "ox": "^0.14.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "recharts": "^3.4.1",
     "sonner": "^2.0.7",
-    "viem": "^2.46.2",
+    "viem": "2.57.2",
     "wagmi": "^2.14.0"
+  },
+  "overrides": {
+    "ws@>=8.0.0 <8.21.0": "8.21.0",
+    "uuid@<11.1.1": "11.1.1",
+    "@walletconnect/utils": {
+      "query-string": "9.5.1"
+    },
+    "@solana/web3.js": {
+      "jayson": "5.0.0"
+    }
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3",
@@ -47,7 +57,7 @@
     "autoprefixer": "^10.4.21",
     "baseline-browser-mapping": "^2.10.0",
     "eslint": "^9",
-    "eslint-config-next": "^16.0.8",
+    "eslint-config-next": "16.3.8",
     "pino-pretty": "^13.1.1",
     "playwright": "^1.61.0",
     "postcss": "^8.5.6",

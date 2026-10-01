@@ -6,42 +6,7 @@ import Image from "next/image";
 import { ChevronDown, ExternalLink, ArrowUpDown, Zap } from "lucide-react";
 import { useState, useEffect } from "react";
 import { useTheme } from "@/hooks/useTheme";
-import { getTokens } from "@coinbase/onchainkit/api";
 import { sdk } from "@farcaster/miniapp-sdk";
-import { useAccount } from "wagmi";
-import {
-  Swap,
-  SwapAmountInput,
-  SwapButton,
-  SwapMessage,
-  SwapSettings,
-  SwapSettingsSlippageDescription,
-  SwapSettingsSlippageInput,
-  SwapSettingsSlippageTitle,
-  SwapToast,
-  SwapToggleButton,
-} from "@coinbase/onchainkit/swap";
-import type { Token } from "@coinbase/onchainkit/token";
-
-const CHAIN_ID = Number(process.env.NEXT_PUBLIC_CHAIN_ID || 8453);
-
-const ETH_TOKEN: Token = {
-  address: "" as Token["address"],
-  chainId: CHAIN_ID,
-  decimals: 18,
-  name: "Ethereum",
-  symbol: "ETH",
-  image: "https://wallet-api-production.s3.amazonaws.com/uploads/tokens/eth_288.png",
-};
-
-const USDC_TOKEN: Token = {
-  address: "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913" as `0x${string}`,
-  chainId: CHAIN_ID,
-  decimals: 6,
-  name: "USD Coin",
-  symbol: "USDC",
-  image: "/usdc.svg",
-};
 
 /**
  * Hook to override body background to match page gradient bottom color
@@ -62,16 +27,6 @@ export default function FAQPage() {
   const displayText = useDisplayText();
   // Override body background to match page gradient
   usePageBackground();
-  const { connector } = useAccount();
-  const isBaseAccount = connector?.id === "baseAccount";
-  const [swappableTokens, setSwappableTokens] = useState<Token[]>([USDC_TOKEN]);
-
-  useEffect(() => {
-    getTokens({ limit: "50" }).then((tokens) => {
-      if (Array.isArray(tokens) && tokens.length > 0) setSwappableTokens(tokens);
-    }).catch(() => {});
-  }, []);
-
   const theme = useTheme();
   const [openItems, setOpenItems] = useState<Record<number, boolean>>({
     0: true,
@@ -625,63 +580,28 @@ export default function FAQPage() {
                 </p>
                 <p className="text-xs mb-3">
                   {displayText("For transactions your wallet does not sponsor, you need ETH on Base to cover network fees. Sponsored monthly claims do not require you to pay gas for those claims. ")}</p>
-                {isInMiniApp ? (
-                  <div className="flex flex-wrap gap-2 mb-3">
-                    <a
-                      href={undefined}
-                      className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-medium transition-opacity hover:opacity-70 cursor-pointer"
-                      style={{ backgroundColor: "var(--card-section-bg, var(--card-bg))", border: "1px solid var(--card-border)", color: "var(--card-text)" }}
-                      onClick={(e) => { e.preventDefault(); sdk.actions.openUrl("https://bridge.base.org"); }}
-                    >
-                      Base Bridge <ExternalLink className="w-3 h-3 ml-1" />
-                    </a>
-                    <a
-                      href={undefined}
-                      className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-medium transition-opacity hover:opacity-70 cursor-pointer"
-                      style={{ backgroundColor: "var(--card-section-bg, var(--card-bg))", border: "1px solid var(--card-border)", color: "var(--card-text)" }}
-                      onClick={async (e) => { e.preventDefault(); try { await sdk.actions.swapToken({ buyToken: `eip155:8453/native` }); } catch {} }}
-                    >
-                      Swap for ETH <ArrowUpDown className="w-3 h-3 ml-1" />
-                    </a>
-                  </div>
-                ) : isBaseAccount ? (
-                  <Swap className="w-full max-w-sm">
-                    <SwapSettings>
-                      <SwapSettingsSlippageTitle>Max slippage</SwapSettingsSlippageTitle>
-                      <SwapSettingsSlippageDescription>
-                        Your swap will revert if the price changes by more than this amount.
-                      </SwapSettingsSlippageDescription>
-                      <SwapSettingsSlippageInput />
-                    </SwapSettings>
-                    <SwapAmountInput label="Sell" token={USDC_TOKEN} type="from" swappableTokens={swappableTokens} />
-                    <SwapToggleButton />
-                    <SwapAmountInput label="Buy" token={ETH_TOKEN} type="to" swappableTokens={[ETH_TOKEN]} />
-                    <SwapButton />
-                    <SwapMessage />
-                    <SwapToast />
-                  </Swap>
-                ) : (
-                  <div className="flex flex-wrap gap-2 mb-3">
-                    <a
-                      href="https://bridge.base.org"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-medium transition-opacity hover:opacity-70 cursor-pointer"
-                      style={{ backgroundColor: "var(--card-section-bg, var(--card-bg))", border: "1px solid var(--card-border)", color: "var(--card-text)" }}
-                    >
-                      Base Bridge <ExternalLink className="w-3 h-3 ml-1" />
-                    </a>
-                    <a
-                      href="https://app.uniswap.org/swap?chain=base&outputCurrency=ETH"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-medium transition-opacity hover:opacity-70 cursor-pointer"
-                      style={{ backgroundColor: "var(--card-section-bg, var(--card-bg))", border: "1px solid var(--card-border)", color: "var(--card-text)" }}
-                    >
-                      Swap for ETH <ArrowUpDown className="w-3 h-3 ml-1" />
-                    </a>
-                  </div>
-                )}
+                <div className="flex flex-wrap gap-2 mb-3">
+                  <a
+                    href="https://bridge.base.org"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-medium transition-opacity hover:opacity-70 cursor-pointer"
+                    style={{ backgroundColor: "var(--card-section-bg, var(--card-bg))", border: "1px solid var(--card-border)", color: "var(--card-text)" }}
+                    onClick={(e) => { if (isInMiniApp) { e.preventDefault(); void sdk.actions.openUrl("https://bridge.base.org"); } }}
+                  >
+                    Base Bridge <ExternalLink className="w-3 h-3 ml-1" />
+                  </a>
+                  <Link
+                    href="/trade?buy=ETH"
+                    className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-medium transition-opacity hover:opacity-70"
+                    style={{ backgroundColor: "var(--card-section-bg, var(--card-bg))", border: "1px solid var(--card-border)", color: "var(--card-text)" }}
+                  >
+                    Swap for ETH <ArrowUpDown className="w-3 h-3 ml-1" />
+                  </Link>
+                </div>
+                <p className="text-xs mb-3">
+                  Swap OBN for ETH on the Trade OBN page. The swap may require an ETH network fee.
+                </p>
               </>
             }
           />

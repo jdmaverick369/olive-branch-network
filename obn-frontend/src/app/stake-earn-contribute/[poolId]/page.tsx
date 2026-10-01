@@ -11,11 +11,8 @@ import { useEffect, useState, useMemo, type CSSProperties } from "react";
 import {
   useAccount,
   useReadContract,
-  useWriteContract,
   usePublicClient,
   useCapabilities,
-  useSendCalls,
-  useWaitForCallsStatus,
 } from "wagmi";
 import { parseUnits, formatUnits, encodeFunctionData } from "viem";
 import { stakingAbi } from "@/lib/stakingAbi";
@@ -25,18 +22,15 @@ import { getPoolMeta, type PoolMeta } from "@/lib/pools";
 import { ShareToFarcaster } from "@/components/ShareToFarcaster";
 import { sdk } from "@farcaster/miniapp-sdk";
 import { toast } from "sonner";
-import { withTxTimeout } from "@/lib/txUtils";
-import { useMobileTxRecovery } from "@/hooks/useMobileTxRecovery";
+import { useWalletTransaction, TransactionRecovery } from "@/hooks/useWalletTransaction";
 import { DATA_SUFFIX } from "@/lib/builderCode";
 import { useTheme } from "@/hooks/useTheme";
 import { isMiniAppRuntime } from "@/lib/miniapp";
 import { useConnectModal } from "@rainbow-me/rainbowkit";
 
-
 const OBN_TOKEN_ADDRESS = process.env.NEXT_PUBLIC_OBN_TOKEN as `0x${string}`;
 const STAKING_CONTRACT = process.env.NEXT_PUBLIC_STAKING_CONTRACT as `0x${string}`;
 const LENS_CONTRACT = (process.env.NEXT_PUBLIC_LENS_CONTRACT || undefined) as `0x${string}` | undefined;
-
 
 const OLIVE_NFT = process.env.NEXT_PUBLIC_OLIVE_NFT as `0x${string}`;
 const ZERO_ADDR = "0x0000000000000000000000000000000000000000" as const;
@@ -133,7 +127,7 @@ export default function PoolDetailPage() {
   const router = useRouter();
   const { address: wagmiAddress, connector } = useAccount();
   const miniWallet = useMiniAppWallet();
-  const publicClient = usePublicClient();
+  const publicClient = usePublicClient({ chainId: CHAIN_ID });
   const { openConnectModal } = useConnectModal();
 
   // MiniApp wallet detection (for Farcaster Android compatibility).
@@ -200,8 +194,6 @@ export default function PoolDetailPage() {
   const [processingAction, setProcessingAction] = useState<'stake' | 'unstake' | 'claim' | null>(null);
   const loading = processingAction !== null;
   const theme = useTheme();
-
-  useMobileTxRecovery(loading, () => setProcessingAction(null));
 
   const [userStake, setUserStake] = useState(0);
   const [pendingRewards, setPendingRewards] = useState(0);
@@ -364,8 +356,6 @@ export default function PoolDetailPage() {
     return () => clearInterval(id);
   }, [invalid, refetchPool, refetchUserStake, refetchPendingRewards, refetchObn, refetchOliveBal]);
 
-
-
   const postTxnRefresh = async () => {
     await new Promise<void>((r) => setTimeout(r, 1_250));
     await Promise.all([
@@ -378,40 +368,14 @@ export default function PoolDetailPage() {
     ]);
   };
 
-  const { writeContractAsync } = useWriteContract();
-
   // EIP-5792 batch + paymaster (Base Account only)
   const { data: walletCapabilities } = useCapabilities({
     account: userAddr,
     query: { enabled: !!currentAddress && connector?.id !== 'metaMask' && connector?.id !== 'io.metamask' },
   });
   const canBatch = !!(walletCapabilities?.[CHAIN_ID]?.paymasterService?.supported && PAYMASTER_URL);
-  const { sendCallsAsync } = useSendCalls();
-  const [pendingCallsId, setPendingCallsId] = useState<string | null>(null);
-  const [pendingCallsWallet, setPendingCallsWallet] = useState<string | null>(null);
-  const [pendingCallsAction, setPendingCallsAction] = useState<'stake' | 'unstake' | 'claim' | null>(null);
-  const { status: callsStatus } = useWaitForCallsStatus({
-    id: pendingCallsId ?? undefined,
-    query: { enabled: !!pendingCallsId, refetchInterval: 500 },
-  });
-  useEffect(() => {
-    if (!pendingCallsId || !pendingCallsAction) return;
-    if (callsStatus === 'success') {
-      postTxnRefresh();
-      toast.success(pendingCallsAction === 'stake' ? displayText('Stake successful!') : pendingCallsAction === 'unstake' ? displayText('Unstake successful!') : 'Rewards claimed!');
-      if (pendingCallsAction !== 'unstake' && pendingCallsWallet) void autoClaim.promptAfterSuccess(pendingCallsWallet);
-      setPendingCallsId(null);
-      setPendingCallsAction(null);
-      setProcessingAction(null);
-    } else if (callsStatus === 'error') {
-      toast.error('Transaction failed. Please try again.');
-      setPendingCallsId(null);
-      setPendingCallsAction(null);
-      setProcessingAction(null);
-    }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [callsStatus]);
-
+  const tx = useWalletTransaction(CHAIN_ID, currentAddress);
+  const { writeContractAsync, sendCallsAsync } = tx;
 
   const handleOpenUrl = (url: string) => {
     if (isInMiniApp) {
@@ -423,6 +387,8 @@ export default function PoolDetailPage() {
 
   // Staking flow: approve + deposit (batch for Base Account, sequential for others)
   const handleStake = async () => {
+    if (needsConnect()) return;
+    return tx.run("Stake", async () => {
     if (loading) return;
     if (!currentAddress) {
       // isMiniAppLayout is the sync-seeded guess, so an early tap inside
@@ -430,7 +396,6 @@ export default function PoolDetailPage() {
       if (!isMiniAppLayout) openConnectModal?.();
       return;
     }
-    if (needsConnect()) return;
     if (!Number.isFinite(pid) || !publicClient) return;
     if (!amount) return;
 
@@ -444,11 +409,9 @@ export default function PoolDetailPage() {
     }
 
     setProcessingAction('stake');
-    let tookBatchPath = false;
     try {
       if (canBatch) {
-        tookBatchPath = true;
-        const { id } = await sendCallsAsync({
+        await sendCallsAsync({
           calls: [
             {
               to: OBN_TOKEN_ADDRESS,
@@ -461,21 +424,20 @@ export default function PoolDetailPage() {
           ],
           capabilities: { paymasterService: { url: PAYMASTER_URL }, dataSuffix: { value: DATA_SUFFIX, optional: true } },
         });
-        setPendingCallsWallet(userAddr);
-        setPendingCallsId(id);
-        setPendingCallsAction('stake');
+        await postTxnRefresh();
+        toast.success(displayText("Stake successful!"));
+        void autoClaim.promptAfterSuccess(userAddr);
         return;
       }
 
       // Sequential path (MiniApp / standard wallets)
-      const approveTxHash = await withTxTimeout(writeContractAsync({
+      await writeContractAsync({
         address: OBN_TOKEN_ADDRESS,
         abi: approveAbi,
         functionName: "approve",
         args: [STAKING_CONTRACT, amt],
         dataSuffix: DATA_SUFFIX,
-      }));
-      await publicClient.waitForTransactionReceipt({ hash: approveTxHash });
+      });
 
       // Poll allowance to handle RPC lag
       let allowanceConfirmed = false;
@@ -494,28 +456,29 @@ export default function PoolDetailPage() {
       }
       if (!allowanceConfirmed) throw new Error("Allowance not confirmed after polling.");
 
-      const depositTxHash = await withTxTimeout(writeContractAsync({
+      await writeContractAsync({
         address: STAKING_CONTRACT,
         abi: stakingAbi,
         functionName: "deposit",
         args: [effectivePid, amt],
         dataSuffix: DATA_SUFFIX,
-      }));
-      const depositReceipt = await publicClient.waitForTransactionReceipt({ hash: depositTxHash });
-      if (depositReceipt.status !== "success") throw new Error(displayText("Stake reverted"));
+      });
 
       await postTxnRefresh();
       toast.success(displayText("Stake successful!")); void autoClaim.promptAfterSuccess(userAddr);
     } catch (err) {
       console.error("Stake error:", err);
-      toast.error(displayText("Stake failed. Please try again."));
+      toast.error(err instanceof Error ? err.message : displayText("Stake failed. Check wallet activity."));
       setProcessingAction(null);
     } finally {
-      if (!tookBatchPath) setProcessingAction(null);
+      setProcessingAction(null);
     }
+  });
   };
 
   const handleUnstake = async () => {
+    if (needsConnect()) return;
+    return tx.run("Unstake", async () => {
     if (loading) return;
     if (!currentAddress) {
       // isMiniAppLayout is the sync-seeded guess, so an early tap inside
@@ -523,7 +486,6 @@ export default function PoolDetailPage() {
       if (!isMiniAppLayout) openConnectModal?.();
       return;
     }
-    if (needsConnect()) return;
     if (!Number.isFinite(pid) || !publicClient) return;
     if (!amount) return;
 
@@ -531,33 +493,34 @@ export default function PoolDetailPage() {
     if (!Number.isFinite(n) || n <= 0) return;
 
     setProcessingAction('unstake');
-    let tookBatchPath = false;
     try {
       const amt = parseUnits(amount, 18);
       if (canBatch) {
-        tookBatchPath = true;
-        const { id } = await sendCallsAsync({
+        await sendCallsAsync({
           calls: [{ to: STAKING_CONTRACT, data: encodeFunctionData({ abi: stakingAbi, functionName: "withdraw", args: [effectivePid, amt] }) }],
           capabilities: { paymasterService: { url: PAYMASTER_URL }, dataSuffix: { value: DATA_SUFFIX, optional: true } },
         });
-        setPendingCallsWallet(userAddr);
-        setPendingCallsId(id);
-        setPendingCallsAction('unstake');
+        await postTxnRefresh();
+        toast.success(displayText("Unstake successful!"));
+
         return;
       }
-      await withTxTimeout(writeContractAsync({ address: STAKING_CONTRACT, abi: stakingAbi, functionName: "withdraw", args: [effectivePid, amt], dataSuffix: DATA_SUFFIX }));
+      await writeContractAsync({ address: STAKING_CONTRACT, abi: stakingAbi, functionName: "withdraw", args: [effectivePid, amt], dataSuffix: DATA_SUFFIX });
       await postTxnRefresh();
       toast.success(displayText("Unstake successful!"));
     } catch (err) {
       console.error(err);
-      toast.error(displayText("Unstake failed. Please try again."));
+      toast.error(err instanceof Error ? err.message : displayText("Unstake failed. Check wallet activity."));
       setProcessingAction(null);
     } finally {
-      if (!tookBatchPath) setProcessingAction(null);
+      setProcessingAction(null);
     }
+  });
   };
 
   const handleClaim = async () => {
+    if (needsConnect()) return;
+    return tx.run("Claim rewards", async () => {
     if (loading) return;
     if (!currentAddress) {
       // isMiniAppLayout is the sync-seeded guess, so an early tap inside
@@ -565,25 +528,20 @@ export default function PoolDetailPage() {
       if (!isMiniAppLayout) openConnectModal?.();
       return;
     }
-    if (needsConnect()) return;
     if (!Number.isFinite(pid) || !publicClient) return;
     setProcessingAction('claim');
-    let tookBatchPath = false;
     try {
       if (canBatch) {
-        tookBatchPath = true;
-        const { id } = await sendCallsAsync({
+        await sendCallsAsync({
           calls: [{ to: STAKING_CONTRACT, data: encodeFunctionData({ abi: stakingAbi, functionName: "claim", args: [effectivePid] }) }],
           capabilities: { paymasterService: { url: PAYMASTER_URL }, dataSuffix: { value: DATA_SUFFIX, optional: true } },
         });
-        setPendingCallsWallet(userAddr);
-        setPendingCallsId(id);
-        setPendingCallsAction('claim');
+        await postTxnRefresh();
+        toast.success("Rewards claimed!");
+        void autoClaim.promptAfterSuccess(userAddr);
         return;
       }
-      const claimHash = await withTxTimeout(writeContractAsync({ address: STAKING_CONTRACT, abi: stakingAbi, functionName: "claim", args: [effectivePid], dataSuffix: DATA_SUFFIX }));
-      const claimReceipt = await publicClient.waitForTransactionReceipt({ hash: claimHash });
-      if (claimReceipt.status !== "success") throw new Error("Claim reverted");
+      await writeContractAsync({ address: STAKING_CONTRACT, abi: stakingAbi, functionName: "claim", args: [effectivePid], dataSuffix: DATA_SUFFIX });
       await postTxnRefresh();
       toast.success("Rewards claimed!"); void autoClaim.promptAfterSuccess(userAddr);
     } catch (err) {
@@ -592,8 +550,9 @@ export default function PoolDetailPage() {
       toast.error(`Claim failed: ${msg}`);
       setProcessingAction(null);
     } finally {
-      if (!tookBatchPath) setProcessingAction(null);
+      setProcessingAction(null);
     }
+  });
   };
 
   const handleBack = () => router.back();
@@ -616,6 +575,7 @@ export default function PoolDetailPage() {
   return (
     // Clip the scaled desktop width without creating a second vertical scroll container.
     <div className="page-bg flex flex-col relative" style={{ minHeight: "calc(100dvh - var(--obn-header-h))", ...(!isMiniAppLayout && !isMobileBrowser ? { overflowX: 'clip' } : {}) }}>
+      <TransactionRecovery control={tx} />
       <main className="flex flex-col items-center" style={!isMiniAppLayout && !isMobileBrowser ? { paddingLeft: "32px", paddingRight: "32px", transform: 'scale(1.25)', transformOrigin: 'top center', paddingTop: '32px', paddingBottom: '16px' } : { padding: "8px 16px", flex: "1 0 auto", width: "100%" }}>
         {invalid ? (
           <section

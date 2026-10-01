@@ -9,8 +9,8 @@ import { useEffect, useMemo, useState, useRef, type CSSProperties } from "react"
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import {
-  useAccount, useReadContract, useWriteContract, usePublicClient,
-  useCapabilities, useSendCalls, useWaitForCallsStatus,
+  useAccount, useReadContract, usePublicClient,
+  useCapabilities,
 } from "wagmi";
 import { sdk } from "@farcaster/miniapp-sdk";
 import Image from "next/image";
@@ -31,8 +31,7 @@ import { useTotalStakedAcrossPools } from "@/hooks/useTotalStakedAcrossPools";
 import { useStakingClock } from "@/hooks/useStakingClock";
 import { DATA_SUFFIX } from "@/lib/builderCode";
 import { useOnChainStakeElapsed } from "@/hooks/useOnChainStakeElapsed";
-import { withTxTimeout } from "@/lib/txUtils";
-import { useMobileTxRecovery } from "@/hooks/useMobileTxRecovery";
+import { useWalletTransaction, TransactionRecovery } from "@/hooks/useWalletTransaction";
 import { useTheme } from "@/hooks/useTheme";
 import { isMiniAppRuntime } from "@/lib/miniapp";
 import { useConnectModal } from "@rainbow-me/rainbowkit";
@@ -67,7 +66,7 @@ function useGifBust(enabled: boolean) {
     if (!enabled) return;
 
     retryRef.current = 0;
-    bump();
+    const initialRefresh = requestAnimationFrame(bump);
 
     const onVis = () => {
       if (!document.hidden) bump();
@@ -78,6 +77,7 @@ function useGifBust(enabled: boolean) {
     window.addEventListener("focus", bump);
 
     return () => {
+      cancelAnimationFrame(initialRefresh);
       document.removeEventListener("visibilitychange", onVis);
       window.removeEventListener("pageshow", bump);
       window.removeEventListener("focus", bump);
@@ -207,19 +207,10 @@ export default function UserPage() {
   const { address, connector } = useAccount();
   const miniWallet = useMiniAppWallet();
   const { openConnectModal } = useConnectModal();
-  const publicClient = usePublicClient();
-  const { writeContractAsync } = useWriteContract();
+  const publicClient = usePublicClient({ chainId: CHAIN_ID });
 
   const { data: walletCapabilities } = useCapabilities({ account: address, query: { enabled: !!address && connector?.id !== 'metaMask' && connector?.id !== 'io.metamask' } });
   const canBatch = !!(walletCapabilities?.[CHAIN_ID]?.paymasterService?.supported && PAYMASTER_URL);
-  const { sendCallsAsync } = useSendCalls();
-  const [pendingCallsId, setPendingCallsId] = useState<string | null>(null);
-  const [pendingCallsWallet, setPendingCallsWallet] = useState<string | null>(null);
-  const [pendingCallsAction, setPendingCallsAction] = useState<'claimAll' | 'claim' | 'nonprofitClaim' | 'mint' | null>(null);
-  const { status: callsStatus } = useWaitForCallsStatus({
-    id: pendingCallsId ?? undefined,
-    query: { enabled: !!pendingCallsId, refetchInterval: 500 },
-  });
 
   const theme = useTheme();
   const [isMobileBrowser, setIsMobileBrowser] = useState(false);
@@ -238,11 +229,6 @@ export default function UserPage() {
   const [claimingPid, setClaimingPid] = useState<number | null>(null);
   const [claimingAll, setClaimingAll] = useState(false);
 
-  useMobileTxRecovery(claimingAll || claimingPid !== null, () => {
-    setClaimingAll(false);
-    setClaimingPid(null);
-  });
-
   // Nonprofit-specific state
   const [nonprofitPoolStats, setNonprofitPoolStats] = useState<{
     totalStaked: number;
@@ -251,7 +237,9 @@ export default function UserPage() {
     pendingRewards: number;
   } | null>(null);
 
-  const currentAddress = miniWallet.viewAddress ?? miniAppAddress ?? address;
+  const currentAddress = miniWallet.viewAddress ?? address ?? miniAppAddress;
+  const tx = useWalletTransaction(CHAIN_ID, currentAddress);
+  const { writeContractAsync, sendCallsAsync } = tx;
 
   // Mini app: a viewed verified wallet must be connected before it can sign.
   const needsConnect = () => {
@@ -283,7 +271,6 @@ export default function UserPage() {
 
   const isNonprofit = !!nonprofitPool;
 
-
   // Detect mobile browser
   useEffect(() => {
     const checkMobile = () => {
@@ -294,47 +281,10 @@ export default function UserPage() {
     return () => window.removeEventListener("resize", checkMobile);
   }, []);
 
-  // Handle EIP-5792 batch transaction completion
-  useEffect(() => {
-    if (!pendingCallsId || !pendingCallsAction) return;
-    if (callsStatus === 'success') {
-      if (pendingCallsAction === 'mint') {
-        toast.success('NFT minted successfully!');
-        setMintingNft(false);
-        setTimeout(() => { refetchOliveBal(); }, 1_250);
-      } else {
-        const msg = pendingCallsAction === 'claimAll' ? 'All rewards claimed!' : 'Rewards claimed!';
-        toast.success(msg);
-        if (pendingCallsWallet) void autoClaim.promptAfterSuccess(pendingCallsWallet);
-        if (pendingCallsAction === 'claimAll') setClaimingAll(false);
-        else setClaimingPid(null);
-        setTimeout(() => {
-          refetchAllContributions();
-          refetchTotalClaimed();
-          refetchTotalCharity();
-          refetchObnBalance();
-        }, 1_250);
-      }
-      setPendingCallsId(null);
-      setPendingCallsAction(null);
-    } else if (callsStatus === 'error') {
-      if (pendingCallsAction === 'mint') {
-        toast.error('Mint failed. Please try again.');
-        setMintingNft(false);
-      } else {
-        toast.error('Claim failed. Please try again.');
-        if (pendingCallsAction === 'claimAll') setClaimingAll(false);
-        else setClaimingPid(null);
-      }
-      setPendingCallsId(null);
-      setPendingCallsAction(null);
-    }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [callsStatus]);
-
   // Detect MiniApp environment
   useEffect(() => {
     let cancelled = false;
+    let detachAccounts: (() => void) | undefined;
     const checkMiniApp = async () => {
       try {
         const inMiniApp = await sdk.isInMiniApp();
@@ -344,6 +294,9 @@ export default function UserPage() {
         if (cancelled || !inMiniApp) return;
 
         const provider = sdk.wallet.ethProvider;
+        const updateAccounts = (accounts: readonly string[]) => { if (!cancelled) setMiniAppAddress(accounts[0] ?? null); };
+        provider.on?.("accountsChanged", updateAccounts);
+        detachAccounts = () => provider.removeListener?.("accountsChanged", updateAccounts);
         try {
           const accounts = await provider.request({ method: "eth_requestAccounts" });
           const accs = Array.isArray(accounts) ? accounts : [];
@@ -372,6 +325,7 @@ export default function UserPage() {
     checkMiniApp();
     return () => {
       cancelled = true;
+      detachAccounts?.();
     };
   }, []);
 
@@ -563,39 +517,38 @@ export default function UserPage() {
   const mintPriceEth = mintPriceBN ? Number(formatUnits(mintPriceBN as bigint, 18)) : 0.005;
 
   const onMintOlive = async () => {
+    if (needsConnect()) return;
+    return tx.run("Mint OliveNFT", async () => {
     if (mintingNft) return;
     if (!currentAddress) {
       if (!isInMiniApp) openConnectModal?.();
       return;
     }
-    if (needsConnect()) return;
     if (!OLIVE_NFT) return;
     setMintingNft(true);
     const price = (mintPriceBN as bigint) ?? parseUnits("0.005", 18);
-    let tookBatchPath = false;
     try {
       if (canBatch) {
-        tookBatchPath = true;
-        const { id } = await sendCallsAsync({
+        await sendCallsAsync({
           calls: [{ to: OLIVE_NFT, data: encodeFunctionData({ abi: oliveAbi, functionName: "mint" }), value: price }],
           capabilities: { paymasterService: { url: PAYMASTER_URL }, dataSuffix: { value: DATA_SUFFIX, optional: true } },
         });
-        setPendingCallsWallet(userAddr);
-        setPendingCallsId(id);
-        setPendingCallsAction('mint');
+        await refetchOliveBal();
+        toast.success("NFT minted successfully!");
         return;
       }
-      await withTxTimeout(writeContractAsync({ address: OLIVE_NFT, abi: oliveAbi, functionName: "mint", value: price, dataSuffix: DATA_SUFFIX }));
+      await writeContractAsync({ address: OLIVE_NFT, abi: oliveAbi, functionName: "mint", value: price, dataSuffix: DATA_SUFFIX });
       await new Promise<void>((r) => setTimeout(r, 1_250));
       await refetchOliveBal();
       toast.success("NFT minted successfully!");
     } catch (err) {
       console.error(err);
-      toast.error("Mint failed. Please try again.");
+      toast.error(err instanceof Error ? err.message : "Mint failed. Check wallet activity.");
       setMintingNft(false);
     } finally {
-      if (!tookBatchPath) setMintingNft(false);
+      setMintingNft(false);
     }
+  });
   };
 
   // Fetch nonprofit pool stats
@@ -683,17 +636,13 @@ export default function UserPage() {
     setTotalPendingContribution(totalPending * (10 / 88));
   };
 
-  async function confirmClaim(hashPromise: Promise<`0x${string}`>) {
-    const hash = await hashPromise;
-    if (!publicClient) throw new Error("Wallet unavailable");
-    const receipt = await publicClient.waitForTransactionReceipt({ hash });
-    if (receipt.status !== "success") throw new Error("Claim reverted");
-  }
+
 
   // Handle claim all - batch claim from all pools with pending rewards
   const handleClaimAll = async () => {
-    if (claimingAll || !currentAddress || !publicClient) return;
     if (needsConnect()) return;
+    return tx.run("Claim all rewards", async () => {
+    if (claimingAll || !currentAddress || !publicClient) return;
 
     // Get all pool IDs with pending rewards
     const poolsWithPending = contributions.filter((c) => c.pending > 0.0001);
@@ -702,41 +651,39 @@ export default function UserPage() {
     const pids = poolsWithPending.map((c) => BigInt(c.pid));
 
     setClaimingAll(true);
-    let tookBatchPath = false;
     try {
       if (canBatch) {
-        tookBatchPath = true;
         const calls = pids.length === 1
           ? [{ to: STAKING_CONTRACT, data: encodeFunctionData({ abi: stakingAbi, functionName: "claim", args: [pids[0]] }) }]
           : [{ to: STAKING_CONTRACT, data: encodeFunctionData({ abi: stakingAbi, functionName: "claimMultiple", args: [pids] }) }];
-        const { id } = await sendCallsAsync({
+        await sendCallsAsync({
           calls,
           capabilities: { paymasterService: { url: PAYMASTER_URL }, dataSuffix: { value: DATA_SUFFIX, optional: true } },
         });
-        setPendingCallsWallet(userAddr);
-        setPendingCallsId(id);
-        setPendingCallsAction('claimAll');
+        await Promise.all([refetchAllContributions(), refetchTotalClaimed(), refetchTotalCharity(), refetchObnBalance()]);
+        toast.success("All rewards claimed!");
+        void autoClaim.promptAfterSuccess(userAddr);
         return;
       }
 
       // Sequential path (MiniApp / standard wallets)
       // Use single claim for 1 pool (cheaper gas), claimMultiple for 2+ pools
       if (pids.length === 1) {
-        await confirmClaim(withTxTimeout(writeContractAsync({
+        await writeContractAsync({
           address: STAKING_CONTRACT,
           abi: stakingAbi,
           functionName: "claim",
           args: [pids[0]],
           dataSuffix: DATA_SUFFIX,
-        })));
+        });
       } else {
-        await confirmClaim(withTxTimeout(writeContractAsync({
+        await writeContractAsync({
           address: STAKING_CONTRACT,
           abi: stakingAbi,
           functionName: "claimMultiple",
           args: [pids],
           dataSuffix: DATA_SUFFIX,
-        })));
+        });
       }
 
       await new Promise<void>((r) => setTimeout(r, 1_250));
@@ -763,8 +710,9 @@ export default function UserPage() {
       toast.error(`Claim failed: ${msg}`);
       setClaimingAll(false);
     } finally {
-      if (!tookBatchPath) setClaimingAll(false);
+      setClaimingAll(false);
     }
+  });
   };
 
   // Periodic refresh for real-time pending rewards updates
@@ -800,30 +748,29 @@ export default function UserPage() {
   }, [currentAddress, publicClient, isNonprofit, nonprofitPool, userAddr]);
 
   const handleClaim = async (pid: number) => {
-    if (claimingPid !== null || !currentAddress || !publicClient) return;
     if (needsConnect()) return;
+    return tx.run("Claim rewards", async () => {
+    if (claimingPid !== null || !currentAddress || !publicClient) return;
     setClaimingPid(pid);
-    let tookBatchPath = false;
     try {
       if (canBatch) {
-        tookBatchPath = true;
-        const { id } = await sendCallsAsync({
+        await sendCallsAsync({
           calls: [{ to: STAKING_CONTRACT, data: encodeFunctionData({ abi: stakingAbi, functionName: "claim", args: [BigInt(pid)] }) }],
           capabilities: { paymasterService: { url: PAYMASTER_URL }, dataSuffix: { value: DATA_SUFFIX, optional: true } },
         });
-        setPendingCallsWallet(userAddr);
-        setPendingCallsId(id);
-        setPendingCallsAction('claim');
+        await Promise.all([refetchAllContributions(), refetchTotalClaimed(), refetchTotalCharity(), refetchObnBalance()]);
+        toast.success("Rewards claimed!");
+        void autoClaim.promptAfterSuccess(userAddr);
         return;
       }
 
-      await confirmClaim(withTxTimeout(writeContractAsync({
+      await writeContractAsync({
         address: STAKING_CONTRACT,
         abi: stakingAbi,
         functionName: "claim",
         args: [BigInt(pid)],
         dataSuffix: DATA_SUFFIX,
-      })));
+      });
 
       await new Promise<void>((r) => setTimeout(r, 1_250));
       // Refetch all data after claim
@@ -838,35 +785,35 @@ export default function UserPage() {
       toast.error(`Claim failed: ${msg}`);
       setClaimingPid(null);
     } finally {
-      if (!tookBatchPath) setClaimingPid(null);
+      setClaimingPid(null);
     }
+  });
   };
 
   const handleNonprofitClaim = async () => {
-    if (claimingPid !== null || !currentAddress || !publicClient || !nonprofitPool) return;
     if (needsConnect()) return;
+    return tx.run("Claim nonprofit rewards", async () => {
+    if (claimingPid !== null || !currentAddress || !publicClient || !nonprofitPool) return;
     setClaimingPid(nonprofitPool.pid);
-    let tookBatchPath = false;
     try {
       if (canBatch) {
-        tookBatchPath = true;
-        const { id } = await sendCallsAsync({
+        await sendCallsAsync({
           calls: [{ to: STAKING_CONTRACT, data: encodeFunctionData({ abi: stakingAbi, functionName: "claim", args: [BigInt(nonprofitPool.pid)] }) }],
           capabilities: { paymasterService: { url: PAYMASTER_URL }, dataSuffix: { value: DATA_SUFFIX, optional: true } },
         });
-        setPendingCallsWallet(userAddr);
-        setPendingCallsId(id);
-        setPendingCallsAction('nonprofitClaim');
+        await Promise.all([refetchAllContributions(), refetchTotalClaimed(), refetchTotalCharity(), refetchObnBalance()]);
+        toast.success("Rewards claimed!");
+        void autoClaim.promptAfterSuccess(userAddr);
         return;
       }
 
-      await confirmClaim(withTxTimeout(writeContractAsync({
+      await writeContractAsync({
         address: STAKING_CONTRACT,
         abi: stakingAbi,
         functionName: "claim",
         args: [BigInt(nonprofitPool.pid)],
         dataSuffix: DATA_SUFFIX,
-      })));
+      });
 
       await new Promise<void>((r) => setTimeout(r, 1_250));
       // Refetch pending rewards
@@ -893,8 +840,9 @@ export default function UserPage() {
       toast.error(`Claim failed: ${msg}`);
       setClaimingPid(null);
     } finally {
-      if (!tookBatchPath) setClaimingPid(null);
+      setClaimingPid(null);
     }
+  });
   };
 
   const formatNumber = (num: number, decimals: number = 2) => {
@@ -932,6 +880,7 @@ export default function UserPage() {
       className="flex flex-col relative page-bg"
       style={{ minHeight: "calc(100dvh - var(--obn-header-h))" }}
     >
+      <TransactionRecovery control={tx} />
       <main
         className="flex flex-col items-center px-4"
         style={

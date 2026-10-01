@@ -4,8 +4,8 @@ export function withTxTimeout<T>(promise: Promise<T>, ms = TX_TIMEOUT_MS): Promi
   return new Promise((resolve, reject) => {
     const timer = setTimeout(() => {
       const msg = isXBrowser()
-        ? "Wallet confirmation didn't complete. Try opening this page in Safari, Chrome, or the MetaMask browser."
-        : "Transaction timed out. Open your wallet app and try again.";
+        ? "Wallet confirmation is unresolved. Open your wallet to check the request; do not submit it again."
+        : "Confirmation is taking longer than expected. Check the pending transaction status before trying again.";
       reject(new Error(msg));
     }, ms);
     promise.then(

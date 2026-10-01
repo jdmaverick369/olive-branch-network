@@ -1,4 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
+import { ApiError, createResourceGuard, fetchJsonBounded, isRecord } from "@/lib/server/http";
+
+export const maxDuration = 12;
+const lookup = createResourceGuard({ requestsPerMinute: 120, maxConcurrent: 8, cacheMs: 300_000, maxEntries: 64 });
 
 // Returns the Ethereum addresses a Farcaster user has verified, so the mini app
 // can offer them as wallets to view. Verifications are public protocol data;
@@ -25,15 +29,13 @@ export async function GET(req: NextRequest) {
   }
 
   try {
-    const res = await fetch(`https://api.neynar.com/v2/farcaster/user/bulk?fids=${fid}`, {
-      headers: { "x-api-key": apiKey },
-      next: { revalidate: 300 },
+    const data = await lookup(fid, async () => {
+      const body = await fetchJsonBounded(`https://api.neynar.com/v2/farcaster/user/bulk?fids=${fid}`, {
+        headers: { "x-api-key": apiKey },
+      }, { maxBytes: 128 * 1024 });
+      if (!isRecord(body) || !Array.isArray(body.users)) throw new Error("Invalid lookup response");
+      return body as { users: NeynarUser[] };
     });
-    if (!res.ok) {
-      return NextResponse.json({ error: "Lookup failed" }, { status: 502 });
-    }
-
-    const data = (await res.json()) as { users?: NeynarUser[] };
     const verified = data.users?.[0]?.verified_addresses;
     const addresses = [...new Set(
       (verified?.eth_addresses ?? [])
@@ -49,7 +51,10 @@ export async function GET(req: NextRequest) {
       { addresses, primary },
       { headers: { "Cache-Control": "public, s-maxage=300, stale-while-revalidate=600" } }
     );
-  } catch {
-    return NextResponse.json({ error: "Lookup failed" }, { status: 502 });
+  } catch (error) {
+    const limited = error instanceof ApiError && error.status === 429;
+    return NextResponse.json({ error: limited ? "Service busy; try again shortly" : "Lookup failed" }, {
+      status: limited ? 429 : 502, headers: { "Cache-Control": "no-store", ...(limited ? { "Retry-After": "60" } : {}) },
+    });
   }
 }

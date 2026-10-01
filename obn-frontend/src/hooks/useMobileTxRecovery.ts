@@ -1,22 +1,25 @@
 import { useEffect, useRef } from "react";
 
 /**
- * Clears stuck loading states when a user returns to the browser after a failed
- * wallet handoff (e.g. MetaMask in X/Twitter in-app browser).
- *
- * If the tab was hidden while a transaction was in flight and the user comes back
- * after recoveryDelayMs, we assume the wallet handoff failed and clear the state.
+ * Rechecks a pending request after a mobile wallet handoff. Visibility and elapsed
+ * time are never evidence of cancellation: only a confirmed terminal result can
+ * clear the processing state.
  */
 export function useMobileTxRecovery(
   isProcessing: boolean,
   clearProcessing: () => void,
+  reconcile: () => Promise<boolean>,
   recoveryDelayMs = 10_000,
 ) {
   const clearRef = useRef(clearProcessing);
-  clearRef.current = clearProcessing;
+  const reconcileRef = useRef(reconcile);
 
   const processingRef = useRef(isProcessing);
-  processingRef.current = isProcessing;
+  useEffect(() => {
+    clearRef.current = clearProcessing;
+    reconcileRef.current = reconcile;
+    processingRef.current = isProcessing;
+  }, [clearProcessing, reconcile, isProcessing]);
 
   const hiddenAtRef = useRef<number | null>(null);
 
@@ -31,7 +34,9 @@ export function useMobileTxRecovery(
       if (hiddenAtRef.current !== null && processingRef.current) {
         const elapsed = Date.now() - hiddenAtRef.current;
         if (elapsed > recoveryDelayMs) {
-          clearRef.current();
+          void reconcileRef.current().then(terminal => {
+            if (terminal) clearRef.current();
+          }).catch(() => { /* Keep pending on RPC or wallet errors. */ });
         }
       }
       hiddenAtRef.current = null;

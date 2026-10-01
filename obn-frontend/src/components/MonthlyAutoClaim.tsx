@@ -1,9 +1,9 @@
 "use client";
 
 import { useEffect, useRef, useState, type CSSProperties } from "react";
-import { useAccount, usePublicClient, useReadContract, useWriteContract, useCapabilities, useSendCalls, useWalletClient } from "wagmi";
+import { useAccount, usePublicClient, useReadContract, useCapabilities, useWalletClient } from "wagmi";
 import { encodeFunctionData, zeroAddress, type Address } from "viem";
-import { waitForCallsStatus } from "viem/actions";
+import { useWalletTransaction, TransactionRecovery } from "@/hooks/useWalletTransaction";
 import { autoClaimAbi } from "@/lib/autoClaimAbi";
 import { STAKING_PROXY } from "@/lib/contracts";
 import { useMiniAppWallet } from "@/components/MiniAppWalletProvider";
@@ -25,14 +25,15 @@ function suppress(address: string) {
 export function useMonthlyAutoClaim() {
   const { address, chainId } = useAccount();
   const client = usePublicClient({ chainId: CHAIN_ID });
-  const { writeContractAsync } = useWriteContract();
-  const { sendCallsAsync } = useSendCalls();
+
   const { data: walletClient } = useWalletClient();
   const { data: capabilities } = useCapabilities();
   // In the mini app a user may view a verified wallet that is not the signer.
   const miniWallet = useMiniAppWallet();
   const viewed = (miniWallet.viewAddress ?? address) as Address | undefined;
   const viewOnly = miniWallet.viewOnly;
+  const tx = useWalletTransaction(CHAIN_ID, viewed);
+  const { writeContractAsync, sendCallsAsync } = tx;
   const currentWallet = useRef(address);
   useEffect(() => { currentWallet.current = address; }, [address]);
   const [busy, setBusy] = useState(false);
@@ -86,34 +87,34 @@ export function useMonthlyAutoClaim() {
     submitting.current = true;
     setBusy(true);
     setMessage("");
-    try {
-      const latest = await client.readContract({address: STAKING_PROXY, abi: autoClaimAbi, functionName: "autoClaimPreference", args: [wallet]});
-      if (currentWallet.current !== wallet) return;
-      if (latest[0] !== desired) {
-        const calls = [{ to: STAKING_PROXY, data: encodeFunctionData({ abi: autoClaimAbi, functionName: "setAutoClaimEnabled", args: [desired] }) }];
-        const paymasterUrl = process.env.NEXT_PUBLIC_PAYMASTER_URL;
-        if (capabilities?.[CHAIN_ID]?.paymasterService?.supported && paymasterUrl && walletClient) {
-          const result = await sendCallsAsync({ account: wallet, chainId: CHAIN_ID, calls, capabilities: { paymasterService: { url: paymasterUrl } } });
-          await waitForCallsStatus(walletClient, { id: result.id, timeout: 120_000, throwOnFailure: true });
-        } else {
-          const hash = await writeContractAsync({ account: wallet, address: STAKING_PROXY, abi: autoClaimAbi,
-            functionName: "setAutoClaimEnabled", args: [desired], chainId: CHAIN_ID });
-          const receipt = await client.waitForTransactionReceipt({ hash, timeout: 120_000 });
-          if (receipt.status !== "success") throw new Error("Transaction reverted");
+    await tx.run("Update monthly autoclaim", async () => {
+      try {
+        const latest = await client.readContract({address: STAKING_PROXY, abi: autoClaimAbi, functionName: "autoClaimPreference", args: [wallet]});
+        if (currentWallet.current !== wallet) return;
+        if (latest[0] !== desired) {
+          const calls = [{ to: STAKING_PROXY, data: encodeFunctionData({ abi: autoClaimAbi, functionName: "setAutoClaimEnabled", args: [desired] }) }];
+          const paymasterUrl = process.env.NEXT_PUBLIC_PAYMASTER_URL;
+          if (capabilities?.[CHAIN_ID]?.paymasterService?.supported && paymasterUrl && walletClient) {
+            await sendCallsAsync({ account: wallet, chainId: CHAIN_ID, calls, capabilities: { paymasterService: { url: paymasterUrl } } });
+          } else {
+            await writeContractAsync({ account: wallet, address: STAKING_PROXY, abi: autoClaimAbi,
+              functionName: "setAutoClaimEnabled", args: [desired], chainId: CHAIN_ID });
+          }
+        }
+        const confirmed = await client.readContract({address: STAKING_PROXY, abi: autoClaimAbi, functionName: "autoClaimPreference", args: [wallet]});
+        if (confirmed[0] !== desired) throw new Error("Preference not confirmed");
+        if (desired) suppress(wallet);
+        if (currentWallet.current === wallet) { await preference.refetch(); setPrompt(null); }
+      } catch {
+        if (currentWallet.current === wallet) {
+          await preference.refetch();
+          setMessage("Could not confirm the change. Check your wallet transaction before trying again.");
         }
       }
-      const confirmed = await client.readContract({address: STAKING_PROXY, abi: autoClaimAbi, functionName: "autoClaimPreference", args: [wallet]});
-      if (confirmed[0] !== desired) throw new Error("Preference not confirmed");
-      if (desired) suppress(wallet);
-      if (currentWallet.current === wallet) { await preference.refetch(); setPrompt(null); }
-    } catch {
-      if (currentWallet.current === wallet) {
-        await preference.refetch();
-        setMessage("Could not confirm the change. Check your wallet transaction before trying again.");
-      }
-    } finally { submitting.current = false; setBusy(false); }
+    });
+    submitting.current = false; setBusy(false);
   }
-  return { visible, viewOnly, enabled, known, ready, available, busy, message, prompt: activePrompt, open, close, confirm, promptAfterSuccess };
+  return { transaction: tx, visible, viewOnly, enabled, known, ready, available, busy, message, prompt: activePrompt, open, close, confirm, promptAfterSuccess };
 }
 
 type Control = ReturnType<typeof useMonthlyAutoClaim>;
@@ -146,6 +147,7 @@ export function AutoClaimDialog({ control }: { control: Control }) {
       ? "Automatically claim rewards from all your nonprofit pools each UTC calendar month. OBN sponsors the monthly claims, and eligible pools are batched together. Your rewards go to the same recipients."
       : "Automatic monthly claims will stop for all your nonprofit pools. You can still claim manually and turn automation back on anytime."}</p>
     <p className="mt-3 text-xs" style={{ color: "var(--card-subtext)" }}>Confirm this preference in your wallet. Your wallet may charge gas for this change.</p>
+    <TransactionRecovery control={control.transaction} />
     {control.message && <p role="alert" className="mt-3 text-sm">{control.message}</p>}
     <div className="mt-5 flex flex-wrap gap-3">
       <button type="button" disabled={control.busy || !control.ready} onClick={() => void control.confirm()} className="px-4 py-2 rounded-lg bg-purple-600 text-white font-semibold text-sm disabled:opacity-50">{control.busy ? "Confirming…" : "Yes"}</button>

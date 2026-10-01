@@ -5,18 +5,19 @@
 //   1. Edit the NOTIFICATION object below.
 //   2. Run: node --env-file=.env.local scripts/send-notification.mjs
 //
-// Leave targetFids and walletAddresses both empty to broadcast to everyone
-// opted in on each platform. Fill either one in to target specific users
-// instead of broadcasting.
+// broadcast:true explicitly sends to everyone opted in on BOTH platforms.
+// For a targeted send, set broadcast:false and fill the intended recipient lists.
+// Empty lists with broadcast:false SKIP that platform; they never broadcast.
 
 const NOTIFICATION = {
+  broadcast: true, // Set false before filling either targeted recipient list.
   title: "Your title here", // Keep ≤30 chars (Base App's limit; Neynar allows 32)
   body: "Your message here", // Keep ≤128 chars (Neynar's limit; Base App allows 200)
   targetUrl: "https://dapp.olivebranch.network", // Required — Farcaster deep link
   targetPath: "/", // Optional — Base App deep link, e.g. "/profile". Omit for app root.
 
-  targetFids: [], // Optional — specific Farcaster FIDs. Empty = everyone.
-  walletAddresses: [], // Optional — specific wallet addresses. Empty = everyone.
+  targetFids: [], // With broadcast:false, only these FIDs receive the message.
+  walletAddresses: [], // With broadcast:false, only these addresses receive it.
 };
 
 const APP_URL = process.env.BASE_APP_URL ?? "https://dapp.olivebranch.network";
@@ -47,3 +48,4 @@ const res = await fetch(`${APP_URL}/api/notifications/send`, {
 
 const data = await res.json();
 console.log(JSON.stringify(data, null, 2));
+if (!res.ok) process.exitCode = 1;

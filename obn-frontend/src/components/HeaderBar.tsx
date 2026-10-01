@@ -4,17 +4,14 @@
 import { useDisplayText } from "@/hooks/useDisplayText";
 import { useEffect, useRef, useState } from "react";
 import { usePathname } from "next/navigation";
-import { ConnectButton, useAccountModal } from "@rainbow-me/rainbowkit";
-import { useAccount } from "wagmi";
+import { ConnectButton } from "@rainbow-me/rainbowkit";
 import Image from "next/image";
 import Link from "next/link";
 import { ChevronDown, Moon, Sun } from "lucide-react";
 import { FarcasterHeaderUser } from "@/components/FarcasterHeaderUser";
 import { isMiniAppRuntime } from "@/lib/miniapp";
 import MarketTicker from "@/components/MarketTicker";
-import { useName } from "@coinbase/onchainkit/identity";
 import { useDisplayMode } from "@/hooks/useDisplayMode";
-import { targetChain } from "@/wagmiConfig";
 
 const DEV_MODE = process.env.NODE_ENV === "development";
 
@@ -24,10 +21,6 @@ export default function HeaderBar() {
   const displayText = useDisplayText();
   const pathname = usePathname();
   const { displayMode, toggleDisplayMode } = useDisplayMode();
-  const { connector, address } = useAccount();
-  const isBaseAccount = connector?.id === "baseAccount";
-  const { openAccountModal } = useAccountModal();
-  const { data: baseName } = useName({ address, chain: targetChain });
 
   const [mounted, setMounted] = useState(false);
   const [open, setOpen] = useState(false);
@@ -312,23 +305,8 @@ export default function HeaderBar() {
           {/* Priority 1: Farcaster MiniApp user */}
           <FarcasterHeaderUser onMiniAppDetected={handleMiniAppDetected} />
 
-          {/* Priority 2: Base Account — rendered directly from wagmi state (no RainbowKit loading gate) */}
-          {!isInMiniApp && isBaseAccount && address && (
-            <button
-              type="button"
-              onClick={openAccountModal}
-              className="flex items-center justify-center px-3 py-2 rounded-xl bg-white text-gray-900 shadow-sm hover:shadow-lg hover:scale-105 transition-all"
-              title={baseName ? `${baseName} — click to manage wallet` : "Click to manage wallet"}
-            >
-              <span className={`${baseName ? "font-sans" : "font-mono"} max-w-27 sm:max-w-40 lg:max-w-none truncate text-[13px] font-bold leading-none`}>
-                <span className="lg:hidden">{baseName || `${address.slice(0, 6)}...${address.slice(-4)}`}</span>
-                <span className="hidden lg:inline">{baseName || address}</span>
-              </span>
-            </button>
-          )}
-
-          {/* Priority 3: All other wallets via RainbowKit */}
-          {!isInMiniApp && !isBaseAccount && (
+          {/* Browser wallets share the same account controls. */}
+          {!isInMiniApp && (
             <ConnectButton.Custom>
               {({
                 account,

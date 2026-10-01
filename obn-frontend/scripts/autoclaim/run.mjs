@@ -4,6 +4,7 @@ import { ethers } from "ethers";
 import { CdpClient } from "@coinbase/cdp-sdk";
 import { executeJob, applyPreferences, findEligiblePools, isAutoClaimDay } from "./core.mjs";
 import { disableSubmissionRetries } from "./transport.mjs";
+import { journalMode } from "./journal.mjs";
 
 const STAKING = "0x2C4Bd5B2a48a76f288d7F2DB23aFD3a03b9E7cD2";
 const LENS = "0x2ae4df523040c0245a6F84342E4B06850c5bdb9b";
@@ -59,10 +60,13 @@ async function main() {
     let state;
     try { state = JSON.parse(await readFile(path, "utf8")); }
     catch (e) { if (e.code !== "ENOENT") throw e; }
+    const mode = journalMode(state, { dryRun, allowBootstrap: process.env.AUTOCLAIM_BOOTSTRAP === "true" });
     const identity = `8453:${STAKING.toLowerCase()}:${executor.toLowerCase()}:${startBlock}`;
     if (state && (state.identity !== identity || state.schema !== 1)) throw new Error("Journal configuration mismatch");
     state ??= { schema: 1, identity, cursor: startBlock - 1, blockHash: null, users: {}, journal: {} };
     async function save() {
+      // A simulation must not turn lost live history into a trusted empty journal.
+      if (!mode.persist) return;
       await writeFile(`${path}.tmp`, JSON.stringify(state, null, 2) + "\n");
       await rename(`${path}.tmp`, path);
     }

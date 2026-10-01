@@ -2,9 +2,9 @@
   "schema": 1,
   "chainId": 8453,
   "contract": "0x2C4Bd5B2a48a76f288d7F2DB23aFD3a03b9E7cD2",
-  "generatedAt": "2026-09-29T07:52:40.486Z",
-  "throughBlock": 51938852,
-  "throughTimestamp": "2026-09-29T07:30:51.000Z",
+  "generatedAt": "2026-09-30T07:53:40.431Z",
+  "throughBlock": 51982246,
+  "throughTimestamp": "2026-09-30T07:37:19.000Z",
   "definitions": {
     "activeStakers": "Distinct wallets with positive stake across all pools, including nonprofit bootstrap stakes.",
     "totalStaked": "OBN currently staked across all pools.",
@@ -2344,6 +2344,12 @@
       "activeStakers": 205,
       "totalStaked": 136230211.7703997,
       "totalContributed": 616701.8771803674
+    },
+    {
+      "day": "2026-09-30",
+      "activeStakers": 205,
+      "totalStaked": 136230211.7703997,
+      "totalContributed": 616701.8771803674
     }
   ],
   "pools": {
@@ -3906,6 +3912,10 @@
         },
         {
           "day": "2026-09-29",
+          "activeStakers": 34
+        },
+        {
+          "day": "2026-09-30",
           "activeStakers": 34
         }
       ]
@@ -5470,6 +5480,10 @@
         {
           "day": "2026-09-29",
           "activeStakers": 19
+        },
+        {
+          "day": "2026-09-30",
+          "activeStakers": 19
         }
       ]
     },
@@ -7032,6 +7046,10 @@
         },
         {
           "day": "2026-09-29",
+          "activeStakers": 18
+        },
+        {
+          "day": "2026-09-30",
           "activeStakers": 18
         }
       ]
@@ -8596,6 +8614,10 @@
         {
           "day": "2026-09-29",
           "activeStakers": 26
+        },
+        {
+          "day": "2026-09-30",
+          "activeStakers": 26
         }
       ]
     },
@@ -10158,6 +10180,10 @@
         },
         {
           "day": "2026-09-29",
+          "activeStakers": 28
+        },
+        {
+          "day": "2026-09-30",
           "activeStakers": 28
         }
       ]
@@ -11722,6 +11748,10 @@
         {
           "day": "2026-09-29",
           "activeStakers": 29
+        },
+        {
+          "day": "2026-09-30",
+          "activeStakers": 29
         }
       ]
     },
@@ -13284,6 +13314,10 @@
         },
         {
           "day": "2026-09-29",
+          "activeStakers": 23
+        },
+        {
+          "day": "2026-09-30",
           "activeStakers": 23
         }
       ]
@@ -14848,6 +14882,10 @@
         {
           "day": "2026-09-29",
           "activeStakers": 30
+        },
+        {
+          "day": "2026-09-30",
+          "activeStakers": 30
         }
       ]
     },
@@ -16411,6 +16449,10 @@
         {
           "day": "2026-09-29",
           "activeStakers": 87
+        },
+        {
+          "day": "2026-09-30",
+          "activeStakers": 87
         }
       ]
     },
@@ -17766,6 +17808,10 @@
         {
           "day": "2026-09-29",
           "activeStakers": 27
+        },
+        {
+          "day": "2026-09-30",
+          "activeStakers": 27
         }
       ]
     },
@@ -18564,6 +18610,10 @@
         },
         {
           "day": "2026-09-29",
+          "activeStakers": 18
+        },
+        {
+          "day": "2026-09-30",
           "activeStakers": 18
         }
       ]

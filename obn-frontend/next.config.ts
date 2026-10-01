@@ -1,4 +1,5 @@
 import type { NextConfig } from "next";
+import { appSecurityPolicy, widgetSecurityPolicy } from "./src/lib/securityHeaders";
 
 const nextConfig: NextConfig = {
   reactStrictMode: true,
@@ -56,8 +57,15 @@ const nextConfig: NextConfig = {
           // Required for Base Account popup (keys.coinbase.com).
           // Must NOT be "same-origin" — that blocks the popup.
           { key: "Cross-Origin-Opener-Policy", value: "same-origin-allow-popups" },
+          { key: "X-Content-Type-Options", value: "nosniff" },
+          { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
+          { key: "Content-Security-Policy", value: appSecurityPolicy(process.env.FRAME_ANCESTOR_ORIGINS) },
         ],
       },
+      ...["/embed/impact", "/widgets/impact.html"].map((source) => ({
+        source,
+        headers: [{ key: "Content-Security-Policy", value: widgetSecurityPolicy }],
+      })),
     ];
   },
 
@@ -73,8 +81,9 @@ const nextConfig: NextConfig = {
     formats: ["image/avif", "image/webp"],
   },
 
-  // Optimize package bundling for server components (fixes thread-stream bundling issues)
-  serverExternalPackages: ['thread-stream', 'pino', 'pino-pretty'],
+  // Keep Node-only packages native on the server. CDP loads optional x402 peers
+  // lazily; bundling those unused payment modules would require installing them.
+  serverExternalPackages: ['thread-stream', 'pino', 'pino-pretty', '@coinbase/cdp-sdk'],
 
   // Empty turbopack config to silence the webpack warning (we're using Turbopack)
   turbopack: {},

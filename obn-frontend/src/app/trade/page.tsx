@@ -2,14 +2,12 @@
 import { ObnUsd } from "@/components/ObnUsd";
 import { useTheme } from "@/hooks/useTheme";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import {
   useAccount,
   useBalance,
   usePublicClient,
-  useSendTransaction,
-  useSignTypedData,
-  useWriteContract,
 } from "wagmi";
 import { useConnectModal } from "@rainbow-me/rainbowkit";
 import { sdk } from "@farcaster/miniapp-sdk";
@@ -24,6 +22,8 @@ import {
   type Address,
   type Hex,
 } from "viem";
+import { useWalletTransaction, TransactionRecovery } from "@/hooks/useWalletTransaction";
+import { validateSwapQuote, validateSwapRouter, swapRegistryRead } from "@/lib/swapQuoteValidation";
 import { DATA_SUFFIX } from "@/lib/builderCode";
 import { EURC_BASE_ADDRESS, EURC_BASE_SEPOLIA_ADDRESS } from "@/lib/eurc";
 
@@ -124,13 +124,23 @@ function friendlyError(err: unknown) {
 }
 
 export default function TradePage() {
+  return <Suspense fallback={null}><TradeEntry /></Suspense>;
+}
+
+function TradeEntry() {
+  const searchParams = useSearchParams();
+  const buyEth = searchParams.get("buy") === "ETH";
+  return <TradeContent key={buyEth ? "buy-eth" : "default"} buyEth={buyEth} />;
+}
+
+function TradeContent({ buyEth }: { buyEth: boolean }) {
   usePageBackground();
-  const { address } = useAccount();
+  const { address, chainId } = useAccount();
   const { openConnectModal } = useConnectModal();
-  const publicClient = usePublicClient();
-  const { sendTransactionAsync } = useSendTransaction();
-  const { writeContractAsync } = useWriteContract();
-  const { signTypedDataAsync } = useSignTypedData();
+  const publicClient = usePublicClient({ chainId: CHAIN_ID });
+  const tx = useWalletTransaction(CHAIN_ID, address);
+  const { sendTransactionAsync, writeContractAsync, signTypedDataAsync } = tx;
+  const miniSwapOpening = useRef(false);
 
   const { data: ethBalance } = useBalance({ address, query: { enabled: !!address } });
   const { data: usdcBalance, refetch: refetchUsdc } = useBalance({
@@ -153,13 +163,13 @@ export default function TradePage() {
   const [openingMiniAppSwap, setOpeningMiniAppSwap] = useState(false);
   const [showSwap, setShowSwap] = useState(false);
   const [copied, setCopied] = useState(false);
-  const [direction, setDirection] = useState<TradeDirection>("buy");
+  const [direction, setDirection] = useState<TradeDirection>(buyEth ? "sell" : "buy");
   const [settlementToken, setSettlementToken] = useState<SettlementTokenSymbol>("ETH");
   const [fromAmount, setFromAmount] = useState("");
   const [quote, setQuote] = useState<QuoteResponse | null>(null);
   const [priceImpact, setPriceImpact] = useState<number | null>(null);
   const [isLoadingPrice, setIsLoadingPrice] = useState(false);
-  const [swapStage, setSwapStage] = useState<"idle" | "approving" | "signing" | "swapping">("idle");
+  const [swapStage, setSwapStage] = useState<"idle" | "quoting" | "approving" | "signing" | "swapping">("idle");
   const [swapError, setSwapError] = useState("");
   const [swapHash, setSwapHash] = useState<Hex | null>(null);
 
@@ -279,12 +289,18 @@ export default function TradePage() {
   };
 
   const handleMiniAppSwap = async () => {
+    if (miniSwapOpening.current) return;
+    miniSwapOpening.current = true;
     setOpeningMiniAppSwap(true);
     try {
-      await sdk.actions.swapToken({ sellToken: ETH_CAIP19, buyToken: OBN_CAIP19 });
+      await sdk.actions.swapToken({
+        sellToken: buyEth ? OBN_CAIP19 : ETH_CAIP19,
+        buyToken: buyEth ? ETH_CAIP19 : OBN_CAIP19,
+      });
     } catch (err) {
       console.error("Swap cancelled or failed:", err);
     } finally {
+      miniSwapOpening.current = false;
       setOpeningMiniAppSwap(false);
     }
   };
@@ -311,12 +327,16 @@ export default function TradePage() {
       || data.fromAmount !== amount) {
       throw new Error("The returned quote did not match the requested trade.");
     }
+    validateSwapQuote(data, { chainId: CHAIN_ID, account: address, fromToken: fromToken.address, toToken: toToken.address, fromAmount: BigInt(amount) });
+    if (!publicClient) throw new Error("Unable to verify the swap router.");
+    await validateSwapRouter(data, name => publicClient.readContract(swapRegistryRead(name)));
     return data;
-  }, [address, fromAmount, fromToken, toToken]);
+  }, [address, fromAmount, fromToken, toToken, publicClient]);
 
-  const handleSwap = useCallback(async () => {
+  const handleSwap = useCallback(async () => tx.run("Swap", async () => {
     if (!fromAmount || !address || Number(fromAmount) <= 0) return;
     setSwapError("");
+    setSwapStage("quoting");
     try {
       let executableQuote = await fetchExecutableQuote();
       if (executableQuote.issues?.balance) throw new Error("Your token balance is too low for this trade.");
@@ -325,14 +345,13 @@ export default function TradePage() {
         setSwapStage("approving");
         const approvalAmount = parseUnits(fromAmount, fromToken.decimals);
         const approvalSpender = executableQuote.issues.allowance.spender;
-        const approvalHash = await writeContractAsync({
+        await writeContractAsync({
           address: fromToken.address,
           abi: erc20Abi,
           functionName: "approve",
           args: [approvalSpender, approvalAmount],
         });
         if (!publicClient) throw new Error("Unable to confirm the token approval.");
-        await publicClient.waitForTransactionReceipt({ hash: approvalHash });
 
         // The quote service can briefly report its pre-approval allowance even
         // after the approval is mined. Verify the canonical on-chain allowance
@@ -364,6 +383,10 @@ export default function TradePage() {
         ]);
       }
 
+      // A wallet can stay open past the permit deadline or a router deployment.
+      validateSwapQuote(executableQuote, { chainId: CHAIN_ID, account: address, fromToken: fromToken.address, toToken: toToken.address, fromAmount: parseUnits(fromAmount, fromToken.decimals) });
+      if (!publicClient) throw new Error("Unable to verify the swap router.");
+      await validateSwapRouter(executableQuote, name => publicClient.readContract(swapRegistryRead(name)));
       setSwapStage("swapping");
       const hash = await sendTransactionAsync({
         to: executableQuote.transaction.to,
@@ -380,7 +403,7 @@ export default function TradePage() {
       setSwapError(friendlyError(err));
       setSwapStage("idle");
     }
-  }, [address, fetchExecutableQuote, fromAmount, fromToken, publicClient, refetchObn, refetchUsdc, refetchEurc, sendTransactionAsync, signTypedDataAsync, writeContractAsync]);
+  }), [tx, address, fetchExecutableQuote, fromAmount, fromToken, toToken, publicClient, refetchObn, refetchUsdc, refetchEurc, sendTransactionAsync, signTypedDataAsync, writeContractAsync]);
 
   const maxAmount = useMemo(() => {
     if (selectedBalance === undefined) return "";
@@ -397,7 +420,7 @@ export default function TradePage() {
   const isBusy = swapStage !== "idle";
   const estimatedOut = quote?.toAmount ? formatTokenAmount(BigInt(quote.toAmount), toToken.decimals, 6) : "";
   const minimumOut = quote?.minToAmount ? formatTokenAmount(BigInt(quote.minToAmount), toToken.decimals, 6) : "";
-  const buttonLabel = swapStage === "approving" ? `Approve ${fromToken.symbol}`
+  const buttonLabel = swapStage === "quoting" ? "Checking quote" : swapStage === "approving" ? `Approve ${fromToken.symbol}`
     : swapStage === "signing" ? "Confirm permit"
       : swapStage === "swapping" ? "Submitting swap" : "Swap";
 
@@ -449,9 +472,10 @@ export default function TradePage() {
               <button onClick={() => setShowSwap(false)} disabled={isBusy} aria-label="Close swap" className="w-8 h-8 flex items-center justify-center rounded-lg text-base hover:opacity-70 transition-opacity disabled:opacity-40" style={{ color: "var(--card-subtext)" }}>✕</button>
             </div>
 
+            <TransactionRecovery control={tx} />
             {swapHash ? (
               <div className="text-center py-6">
-                <p className="text-green-500 font-semibold text-lg">Swap submitted!</p>
+                <p className="text-green-500 font-semibold text-lg">Swap confirmed!</p>
                 <a href={`https://basescan.org/tx/${swapHash}`} target="_blank" rel="noopener noreferrer" className="inline-block text-sm mt-2 underline" style={{ color: "var(--card-subtext)" }}>View on BaseScan</a>
               </div>
             ) : (
@@ -462,12 +486,12 @@ export default function TradePage() {
                     {selectedBalance !== undefined && (
                       <div className="flex items-center gap-2">
                         <span className="text-xs" style={{ color: "var(--card-subtext)" }}>{formatTokenAmount(selectedBalance, fromToken.decimals)} {fromToken.symbol} {fromToken.symbol === "OBN" && <ObnUsd amount={selectedBalance} />}</span>
-                        <button onClick={() => setFromAmount(maxAmount)} className="text-xs font-semibold hover:opacity-70" style={{ color: "#16a34a" }}>Max</button>
+                        <button disabled={isBusy} onClick={() => setFromAmount(maxAmount)} className="text-xs font-semibold hover:opacity-70" style={{ color: "#16a34a" }}>Max</button>
                       </div>
                     )}
                   </div>
                   <div className="flex items-center gap-2">
-                    <input type="number" min="0" step="any" inputMode="decimal" placeholder="0.0" value={fromAmount} onChange={(event) => setFromAmount(event.target.value)} className="flex-1 bg-transparent text-2xl font-semibold outline-none min-w-0" style={{ color: "var(--card-text)" }} aria-label={`Amount of ${fromToken.symbol} to sell`} />
+                    <input disabled={isBusy} type="number" min="0" step="any" inputMode="decimal" placeholder="0.0" value={fromAmount} onChange={(event) => setFromAmount(event.target.value)} className="flex-1 bg-transparent text-2xl font-semibold outline-none min-w-0" style={{ color: "var(--card-text)" }} aria-label={`Amount of ${fromToken.symbol} to sell`} />
                     {fromToken.symbol === "OBN" ? (
                       <div className="flex items-center gap-2 pl-1.5 pr-3 py-1.5 rounded-full font-semibold text-sm shrink-0" style={{ backgroundColor: "var(--card-bg)", color: "var(--card-text)", border: "1px solid var(--card-border)" }}>
                         {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -483,7 +507,7 @@ export default function TradePage() {
                 {showGasWarning && <p className="text-xs text-yellow-500 px-1 mb-1 -mt-0.5">Leave enough ETH to cover the network fee.</p>}
 
                 <div className="flex justify-center my-1">
-                  <button onClick={() => setDirection(direction === "buy" ? "sell" : "buy")} aria-label="Reverse trade direction" className="p-1.5 rounded-lg" style={{ backgroundColor: "var(--card-bg)", border: "1px solid var(--card-border)" }}>
+                  <button disabled={isBusy} onClick={() => setDirection(direction === "buy" ? "sell" : "buy")} aria-label="Reverse trade direction" className="p-1.5 rounded-lg" style={{ backgroundColor: "var(--card-bg)", border: "1px solid var(--card-border)" }}>
                     <ArrowUpDown className="w-4 h-4" style={{ color: "var(--card-subtext)" }} />
                   </button>
                 </div>
@@ -516,9 +540,10 @@ export default function TradePage() {
                 )}
 
                 {fromToken.symbol !== "ETH" && quote?.issues?.allowance && <p className="text-xs text-center mb-3" style={{ color: "var(--card-subtext)" }}>Your wallet will request a one-time {fromToken.symbol} approval before the swap.</p>}
+                {address && chainId !== CHAIN_ID && <p role="alert" className="text-xs text-red-500 mb-3">Switch your wallet to {CHAIN_ID === 8453 ? "Base" : "Base Sepolia"} to trade.</p>}
                 {swapError && <p className="text-xs text-red-500 mb-3 text-center" role="alert">{swapError}</p>}
 
-                <button onClick={address ? handleSwap : () => openConnectModal?.()} disabled={isBusy || (!!address && (!quote || !fromAmount || Number(fromAmount) <= 0 || isLoadingPrice))} className="w-full py-3.5 rounded-xl font-semibold text-white flex items-center justify-center gap-2 transition-opacity disabled:opacity-50" style={{ backgroundColor: "#16a34a" }}>
+                <button onClick={address ? handleSwap : () => openConnectModal?.()} disabled={isBusy || (!!address && chainId !== CHAIN_ID) || (!!address && (!quote || !fromAmount || Number(fromAmount) <= 0 || isLoadingPrice))} className="w-full py-3.5 rounded-xl font-semibold text-white flex items-center justify-center gap-2 transition-opacity disabled:opacity-50" style={{ backgroundColor: "#16a34a" }}>
                   {isBusy ? <><Loader2 className="w-4 h-4 animate-spin" /><span>{buttonLabel}...</span></> : !address ? <span>Connect Wallet</span> : <><ArrowUpDown className="w-4 h-4" /><span>Swap</span></>}
                 </button>
               </>
