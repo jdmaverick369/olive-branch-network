@@ -3,7 +3,6 @@ import { useDisplayText } from "@/hooks/useDisplayText";
 import { ObnPrimary, ObnUsd } from "@/components/ObnUsd";
 
 import Image from "next/image";
-import Link from "next/link";
 import { useMonthlyAutoClaim, AutoClaimButton, AutoClaimDialog } from "@/components/MonthlyAutoClaim";
 import { Web2Deposit } from "@/components/Web2Deposit";
 import { useDisplayMode } from "@/hooks/useDisplayMode";
@@ -89,8 +88,6 @@ const fmtRewards = (n: number): string => {
 
 // Back and Share sit side by side on pool pages; same size, colour differs.
 const NAV_BUTTON_CLASS = "w-16 py-2 rounded-lg text-xs font-semibold text-white text-center whitespace-nowrap cursor-pointer transition hover:opacity-80";
-// Same height as Back/Share; sized to its label so it sits in that row without adding a line.
-const ASK_OLIVER_CLASS = "px-3 py-2 rounded-lg text-xs font-semibold text-white text-center whitespace-nowrap cursor-pointer transition hover:opacity-80 bg-[#2563eb]";
 
 export default function PoolDetailPage() {
   const displayText = useDisplayText();
@@ -630,7 +627,6 @@ export default function PoolDetailPage() {
                     >
                       Back
                     </button>
-                    <Link href={`/ask?pool=${pid}`} className={ASK_OLIVER_CLASS} style={{ color: "#ffffff" }} aria-label={`Ask Oliver about ${title}`}>Oliver</Link>
                     {isInMiniApp && (
                       <ShareToFarcaster
                         text={`I'm supporting ${meta?.name ?? "a nonprofit"} on the Olive Branch Network 🌿`}
@@ -699,7 +695,6 @@ export default function PoolDetailPage() {
                       >
                         Back
                       </button>
-                      <Link href={`/ask?pool=${pid}`} className={ASK_OLIVER_CLASS} style={{ color: "#ffffff" }} aria-label={`Ask Oliver about ${title}`}>Oliver</Link>
                       {isInMiniApp && (
                         <ShareToFarcaster
                           text={`I'm earning $OBN while supporting ${meta?.name ?? "a nonprofit"} on the Olive Branch Network 🌿`}
@@ -772,7 +767,6 @@ export default function PoolDetailPage() {
                       >
                         Back
                       </button>
-                      <Link href={`/ask?pool=${pid}`} className={ASK_OLIVER_CLASS} style={{ color: "#ffffff" }} aria-label={`Ask Oliver about ${title}`}>Oliver</Link>
                       {isInMiniApp && (
                         <ShareToFarcaster
                           text={`I'm earning $OBN while supporting ${meta?.name ?? "a nonprofit"} on the Olive Branch Network 🌿`}

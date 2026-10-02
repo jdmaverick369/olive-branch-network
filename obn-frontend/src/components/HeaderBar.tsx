@@ -16,6 +16,7 @@ import { isCoinbaseWalletBrowser } from "@/lib/coinbaseWalletBrowser";
 import type { Address } from "viem";
 import { FittedAddress } from "@/components/FittedAddress";
 import { AccountPill } from "@/components/AccountPill";
+import { getPoolMeta } from "@/lib/pools";
 
 const DEV_MODE = process.env.NODE_ENV === "development";
 
@@ -80,6 +81,10 @@ const STORAGE_KEY = "obnTheme"; // ← same as ThemeInitScript
 export default function HeaderBar() {
   const displayText = useDisplayText();
   const pathname = usePathname();
+  // On a nonprofit's pool page, Oliver opens already set up for that nonprofit.
+  const poolPid = Number(pathname?.match(/^\/stake-earn-contribute\/(\d+)\/?$/)?.[1] ?? NaN);
+  const oliverPool = Number.isInteger(poolPid) ? getPoolMeta(poolPid) : undefined;
+  const oliverLabel = oliverPool ? `Ask Oliver about ${oliverPool.name}` : "Ask Oliver";
   const { displayMode, toggleDisplayMode } = useDisplayMode();
   // The server render can't see the wallet's in-app browser, so it renders the standard account button.
   const inCoinbaseApp = useSyncExternalStore(noSubscription, isCoinbaseWalletBrowser, () => false);
@@ -358,9 +363,9 @@ export default function HeaderBar() {
 
           {/* Oliver: same size and style as the theme toggle; always his light-mode look. */}
           <Link
-            href="/ask"
-            aria-label="Ask Oliver"
-            title="Ask Oliver"
+            href={oliverPool ? `/ask?pool=${oliverPool.pid}` : "/ask"}
+            aria-label={oliverLabel}
+            title={oliverLabel}
             className="group flex items-center justify-center rounded-md p-[3px]
                        border border-white/70
                        hover:bg-white
