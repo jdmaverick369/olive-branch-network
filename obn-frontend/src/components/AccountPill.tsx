@@ -7,8 +7,14 @@ import { useState, type ButtonHTMLAttributes, type ReactNode } from "react";
  * the same size as the browser-wallet pill on phones. Used for the Farcaster and Coinbase Wallet
  * app accounts; `children` can overlay badges on the pill.
  */
-export function AccountPill({ portrait, label, mono = false, className = "", children, ...button }:
-  ButtonHTMLAttributes<HTMLButtonElement> & { portrait?: string | null; label: ReactNode; mono?: boolean }) {
+export function AccountPill({ portrait, round = false, label, mono = false, className = "", children, ...button }:
+  ButtonHTMLAttributes<HTMLButtonElement> & {
+    portrait?: string | null;
+    /** Crop the portrait to a circle. Farcaster pictures are made for circles; many are a round logo on a dark square. */
+    round?: boolean;
+    label: ReactNode;
+    mono?: boolean;
+  }) {
   const [failed, setFailed] = useState<string | null>(null);
   const image = portrait && failed !== portrait ? portrait : null;
   return (
@@ -19,7 +25,7 @@ export function AccountPill({ portrait, label, mono = false, className = "", chi
     >
       {image && (
         // eslint-disable-next-line @next/next/no-img-element
-        <img src={image} alt="" referrerPolicy="no-referrer" onError={() => setFailed(image)} className="h-6 w-6 shrink-0 rounded-lg object-cover" />
+        <img src={image} alt="" referrerPolicy="no-referrer" onError={() => setFailed(image)} className={`h-6 w-6 shrink-0 object-cover ${round ? "rounded-full" : "rounded-lg"}`} />
       )}
       <span className={`min-w-0 text-[13px] font-bold leading-none ${mono ? "overflow-hidden whitespace-nowrap font-mono" : "truncate"}`}>{label}</span>
       {children}

@@ -91,6 +91,7 @@ export function FarcasterHeaderUser({ onMiniAppDetected }: Props) {
         aria-expanded={open}
         aria-label={viewOnly && viewAddress ? `Viewing ${shortAddress(viewAddress)} (view only). Open wallet menu` : undefined}
         portrait={user.pfpUrl}
+        round
         mono={!!viewAddress}
         label={viewAddress ? <FittedAddress address={viewAddress} separator="..." /> : user.username ? `@${user.username}` : `FID ${user.fid}`}
       >
