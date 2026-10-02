@@ -2,7 +2,7 @@
 "use client";
 
 import { useDisplayText } from "@/hooks/useDisplayText";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { usePathname } from "next/navigation";
 import { ConnectButton } from "@rainbow-me/rainbowkit";
 import Image from "next/image";
@@ -12,8 +12,51 @@ import { FarcasterHeaderUser } from "@/components/FarcasterHeaderUser";
 import { isMiniAppRuntime } from "@/lib/miniapp";
 import MarketTicker from "@/components/MarketTicker";
 import { useDisplayMode } from "@/hooks/useDisplayMode";
+import { useBasename } from "@/hooks/useBasename";
+import { isCoinbaseWalletBrowser } from "@/lib/coinbaseWalletBrowser";
+import type { Address } from "viem";
+import { shortAddress } from "@/components/MiniAppWalletProvider";
 
 const DEV_MODE = process.env.NODE_ENV === "development";
+
+const noSubscription = () => () => {};
+
+/**
+ * The connected account inside the Coinbase Wallet app, styled like the Farcaster user: the Basename
+ * and its avatar (or the short address). The app manages the connection, so a tap only copies the address.
+ */
+function CoinbaseAppAccount({ address }: { address: Address }) {
+  const { name, avatar } = useBasename(address);
+  const [avatarFailed, setAvatarFailed] = useState<string | null>(null);
+  const [copied, setCopied] = useState(false);
+  useEffect(() => {
+    if (!copied) return;
+    const id = window.setTimeout(() => setCopied(false), 1_500);
+    return () => window.clearTimeout(id);
+  }, [copied]);
+  const copy = async () => {
+    try { await navigator.clipboard.writeText(address); setCopied(true); } catch { /* The address stays in the title. */ }
+  };
+  return (
+    <button
+      type="button"
+      onClick={() => void copy()}
+      title={address}
+      aria-label={`Copy wallet address ${address}`}
+      className="relative flex items-center gap-2 hover:opacity-80 transition-opacity cursor-pointer"
+    >
+      {avatar && avatarFailed !== avatar && (
+        <div className="flex items-center justify-center rounded-md p-0.5 border border-white/70 bg-white dark:border-white/60">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src={avatar} alt="" referrerPolicy="no-referrer" onError={() => setAvatarFailed(avatar)} className="h-5 w-5 rounded-full object-cover" />
+        </div>
+      )}
+      <span className="max-w-24.5 sm:max-w-37.5 truncate text-sm text-white" aria-live="polite">
+        {copied ? "Address copied" : name ?? shortAddress(address)}
+      </span>
+    </button>
+  );
+}
 
 const STORAGE_KEY = "obnTheme"; // ← same as ThemeInitScript
 
@@ -21,6 +64,8 @@ export default function HeaderBar() {
   const displayText = useDisplayText();
   const pathname = usePathname();
   const { displayMode, toggleDisplayMode } = useDisplayMode();
+  // The server render can't see the wallet's in-app browser, so it renders the standard account button.
+  const inCoinbaseApp = useSyncExternalStore(noSubscription, isCoinbaseWalletBrowser, () => false);
 
   const [mounted, setMounted] = useState(false);
   const [open, setOpen] = useState(false);
@@ -345,6 +390,8 @@ export default function HeaderBar() {
                           </button>
                         );
                       }
+
+                      if (inCoinbaseApp) return <CoinbaseAppAccount address={account.address as Address} />;
 
                       if (chain.unsupported) {
                         return (
