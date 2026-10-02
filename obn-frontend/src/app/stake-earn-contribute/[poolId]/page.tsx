@@ -745,6 +745,7 @@ export default function PoolDetailPage() {
                     onCollect={() => void handleClaim()}
                     // Popup wallets (Base Account, Coinbase smart wallet) need a click to open; others can be prompted directly.
                     autoFinish={!!wagmiAddress && !miniWallet.viewOnly && connector?.id !== "baseAccount" && connector?.id !== "coinbaseWalletSDK"}
+                    offerAutoClaim={autoClaim.visible && !autoClaim.viewOnly && autoClaim.known && !autoClaim.enabled && autoClaim.available}
                   />
                   <div className="flex items-center gap-2 justify-center w-full mt-5 mb-3">
                     <button

@@ -2,9 +2,9 @@
   "schema": 1,
   "chainId": 8453,
   "contract": "0x2C4Bd5B2a48a76f288d7F2DB23aFD3a03b9E7cD2",
-  "generatedAt": "2026-10-01T07:52:54.851Z",
-  "throughBlock": 52025445,
-  "throughTimestamp": "2026-10-01T07:37:17.000Z",
+  "generatedAt": "2026-10-02T07:51:13.321Z",
+  "throughBlock": 52068469,
+  "throughTimestamp": "2026-10-02T07:31:25.000Z",
   "definitions": {
     "activeStakers": "Distinct wallets with positive stake across all pools, including nonprofit bootstrap stakes.",
     "totalStaked": "OBN currently staked across all pools.",
@@ -2354,8 +2354,14 @@
     {
       "day": "2026-10-01",
       "activeStakers": 205,
-      "totalStaked": 136230211.7703997,
-      "totalContributed": 621052.9123770434
+      "totalStaked": 186230211.7703997,
+      "totalContributed": 693099.5145054302
+    },
+    {
+      "day": "2026-10-02",
+      "activeStakers": 205,
+      "totalStaked": 186230211.7703997,
+      "totalContributed": 693100.7252034895
     }
   ],
   "pools": {
@@ -3926,6 +3932,10 @@
         },
         {
           "day": "2026-10-01",
+          "activeStakers": 34
+        },
+        {
+          "day": "2026-10-02",
           "activeStakers": 34
         }
       ]
@@ -5498,6 +5508,10 @@
         {
           "day": "2026-10-01",
           "activeStakers": 19
+        },
+        {
+          "day": "2026-10-02",
+          "activeStakers": 19
         }
       ]
     },
@@ -7068,6 +7082,10 @@
         },
         {
           "day": "2026-10-01",
+          "activeStakers": 18
+        },
+        {
+          "day": "2026-10-02",
           "activeStakers": 18
         }
       ]
@@ -8640,6 +8658,10 @@
         {
           "day": "2026-10-01",
           "activeStakers": 26
+        },
+        {
+          "day": "2026-10-02",
+          "activeStakers": 26
         }
       ]
     },
@@ -10211,6 +10233,10 @@
         {
           "day": "2026-10-01",
           "activeStakers": 28
+        },
+        {
+          "day": "2026-10-02",
+          "activeStakers": 28
         }
       ]
     },
@@ -11781,12 +11807,16 @@
         },
         {
           "day": "2026-10-01",
-          "activeStakers": 29
+          "activeStakers": 30
+        },
+        {
+          "day": "2026-10-02",
+          "activeStakers": 30
         }
       ]
     },
     "6": {
-      "contributions": 9763.872598077614,
+      "contributions": 9781.426783883824,
       "seedClaims": 32056.67881592,
       "annualAwards": 0,
       "rows": [
@@ -13353,11 +13383,15 @@
         {
           "day": "2026-10-01",
           "activeStakers": 23
+        },
+        {
+          "day": "2026-10-02",
+          "activeStakers": 23
         }
       ]
     },
     "7": {
-      "contributions": 52959.20511159582,
+      "contributions": 52960.30574619516,
       "seedClaims": 32056.46116464,
       "annualAwards": 0,
       "rows": [
@@ -14923,6 +14957,10 @@
         },
         {
           "day": "2026-10-01",
+          "activeStakers": 30
+        },
+        {
+          "day": "2026-10-02",
           "activeStakers": 30
         }
       ]
@@ -16495,6 +16533,10 @@
         {
           "day": "2026-10-01",
           "activeStakers": 87
+        },
+        {
+          "day": "2026-10-02",
+          "activeStakers": 87
         }
       ]
     },
@@ -17858,11 +17900,15 @@
         {
           "day": "2026-10-01",
           "activeStakers": 27
+        },
+        {
+          "day": "2026-10-02",
+          "activeStakers": 27
         }
       ]
     },
     "10": {
-      "contributions": 6679.9483339997805,
+      "contributions": 72159.30517399978,
       "seedClaims": 0,
       "annualAwards": 0,
       "rows": [
@@ -18664,6 +18710,10 @@
         },
         {
           "day": "2026-10-01",
+          "activeStakers": 18
+        },
+        {
+          "day": "2026-10-02",
           "activeStakers": 18
         }
       ]

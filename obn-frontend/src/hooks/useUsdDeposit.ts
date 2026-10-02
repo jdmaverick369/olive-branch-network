@@ -1,12 +1,15 @@
 "use client";
 
 import { useCallback, useState } from "react";
-import { useCapabilities, usePublicClient, useReadContract } from "wagmi";
-import { concat, encodeFunctionData, erc20Abi, numberToHex, parseAbi, parseSignature, size, type Address, type Hex } from "viem";
+import { useBalance, useCapabilities, usePublicClient, useReadContract } from "wagmi";
+import { concat, encodeFunctionData, erc20Abi, numberToHex, parseAbi, parseEther, parseSignature, size, zeroAddress, type Address, type Hex, type PublicClient } from "viem";
+import { estimateL1Fee } from "viem/op-stack";
 import { toast } from "sonner";
 import { stakingAbi } from "@/lib/stakingAbi";
 import { DATA_SUFFIX } from "@/lib/builderCode";
-import { validateSwapQuote, validateSwapRouter, swapRegistryRead, type ExecutableSwapQuote } from "@/lib/swapQuoteValidation";
+import { validateSwapQuote, validateSwapRouter, swapRegistryRead, NATIVE_TOKEN, type ExecutableSwapQuote } from "@/lib/swapQuoteValidation";
+import { autoClaimAbi } from "@/lib/autoClaimAbi";
+import { STAKING_PROXY } from "@/lib/contracts";
 import type { useWalletTransaction } from "@/hooks/useWalletTransaction";
 
 const CHAIN_ID = Number(process.env.NEXT_PUBLIC_CHAIN_ID || 8453);
@@ -17,6 +20,34 @@ export const USDC_ADDRESS = (CHAIN_ID === 84532
   ? "0x036CbD53842c5426634e7929541eC2318f3dCF7e"
   : "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913") as Address;
 const SLIPPAGE_BPS = 100;
+
+/** What a card purchase delivers: ETH, which also pays the network fees (USDC for purchases made before that). */
+export type DepositSource = "USDC" | "ETH";
+
+// Gas ceilings for an ETH purchase's transactions. A step that needs more is not sent.
+const GAS_CAP = { swap: 900_000n, approve: 120_000n, deposit: 450_000n, autoclaim: 150_000n } as const;
+const PLANNED_GAS = GAS_CAP.swap + GAS_CAP.approve + GAS_CAP.deposit + GAS_CAP.autoclaim;
+const L1_FEE_FALLBACK = parseEther("0.000002"); // Base's L1 data fee per transaction, when it can't be estimated
+const KEEP_PURCHASE = "Your purchase is still in your wallet; tap Finish deposit to try again later.";
+
+// One fee plan per ETH purchase, shared by the page's estimate and the spending guard: the ETH kept
+// from the purchase covers every step at its gas ceiling and twice today's fee (headroom for rises while
+// the steps confirm), plus Base's L1 data fees. What the steps don't use stays in the wallet for a later
+// withdrawal or claim. Above RESERVE_MAX (a fee spike) the deposit waits rather than eat a small purchase.
+const RESERVE_MIN = parseEther("0.00003");
+const RESERVE_MAX = parseEther("0.0003");
+type EthFeePlan = { maxFeePerGas: bigint; maxPriorityFeePerGas: bigint; keep: bigint };
+async function ethFeePlan(client: PublicClient): Promise<EthFeePlan> {
+  const fees = await client.estimateFeesPerGas();
+  const maxFeePerGas = fees.maxFeePerGas * 2n;
+  const maxPriorityFeePerGas = fees.maxPriorityFeePerGas < maxFeePerGas ? fees.maxPriorityFeePerGas : maxFeePerGas;
+  const planned = PLANNED_GAS * maxFeePerGas + 4n * L1_FEE_FALLBACK;
+  return { maxFeePerGas, maxPriorityFeePerGas, keep: planned > RESERVE_MIN ? planned : RESERVE_MIN };
+}
+/** The ETH an ETH purchase keeps for network fees right now (the deposit recomputes it when it runs). */
+export async function ethGasReserve(client: PublicClient | undefined) {
+  try { return (await ethFeePlan(client!)).keep; } catch { return RESERVE_MAX; }
+}
 const permitAbi = parseAbi([
   "function nonces(address owner) view returns (uint256)",
   "function eip712Domain() view returns (bytes1, string, string, uint256, address, bytes32, uint256[])",
@@ -30,21 +61,25 @@ type Quote = ExecutableSwapQuote & {
   issues?: { allowance?: { spender: Address }; balance?: unknown };
 };
 
-export type DepositStage = "idle" | "quoting" | "approving" | "signing" | "swapping" | "depositing";
+export type DepositStage = "idle" | "quoting" | "approving" | "signing" | "swapping" | "depositing" | "autoclaim";
+
+/** Gas limit and fee caps for one transaction, from the ETH spending guard. */
+type FeeLimits = { gas: bigint; maxFeePerGas: bigint; maxPriorityFeePerGas: bigint };
+type SpendGuard = (request: { to: Address; data: Hex; value?: bigint }, cap: bigint) => Promise<FeeLimits>;
 
 function friendlyError(err: unknown) {
   const message = err instanceof Error ? err.message : String(err);
   const lower = message.toLowerCase();
   if (lower.includes("user rejected") || lower.includes("user denied") || lower.includes("rejected the request")) return "Cancelled.";
-  if (lower.includes("insufficient funds")) return "Your wallet needs a small amount of ETH on Base to pay network fees.";
+  if (lower.includes("insufficient funds")) return "Your wallet doesn't have enough ETH on Base to pay network fees.";
   return message.length > 180 ? "The deposit could not be completed. Please try again." : message;
 }
 
 /**
- * Web2 deposit: spend an exact USDC amount, swap it to OBN, and deposit the OBN
- * into a pool. Base Account (batch + paymaster) does it in one sponsored step and
- * deposits the quote's guaranteed minimum; other wallets swap first and then
- * deposit exactly the OBN the swap produced.
+ * Web2 deposit: spend an exact USDC or ETH amount, swap it to OBN, deposit the OBN into a pool,
+ * and optionally turn on monthly autoclaim. Wallets that batch (Base Account sponsors the gas) do it
+ * in one step and deposit the quote's guaranteed minimum; other wallets swap first and then deposit
+ * exactly the OBN the swap produced.
  */
 export function useUsdDeposit({ pid, account, tx, canBatch, onComplete }: {
   pid: number;
@@ -63,6 +98,9 @@ export function useUsdDeposit({ pid, account, tx, canBatch, onComplete }: {
   const chainCapabilities = capabilities?.[CHAIN_ID] as { atomic?: { status?: string }; atomicBatch?: { supported?: boolean } } | undefined;
   const canBundle = canBatch || chainCapabilities?.atomic?.status === "supported" || chainCapabilities?.atomicBatch?.supported === true;
 
+  const { data: ethBalance, refetch: refetchEth } = useBalance({
+    address: account, chainId: CHAIN_ID, query: { enabled: !!account, staleTime: 15_000 },
+  });
   const { data: usdcBalance, refetch: refetchUsdc } = useReadContract({
     address: USDC_ADDRESS,
     abi: erc20Abi,
@@ -71,21 +109,21 @@ export function useUsdDeposit({ pid, account, tx, canBatch, onComplete }: {
     query: { enabled: !!account, staleTime: 15_000 },
   });
 
-  const fetchQuote = useCallback(async (owner: Address, usdcAmount: bigint) => {
+  const fetchQuote = useCallback(async (owner: Address, fromToken: Address, amount: bigint) => {
     const response = await fetch("/api/swap/quote", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ fromToken: USDC_ADDRESS, toToken: OBN_TOKEN_ADDRESS, fromAmount: usdcAmount.toString(), taker: owner, slippageBps: SLIPPAGE_BPS }),
+      body: JSON.stringify({ fromToken, toToken: OBN_TOKEN_ADDRESS, fromAmount: amount.toString(), taker: owner, slippageBps: SLIPPAGE_BPS }),
     });
     const quote = await response.json() as Quote;
     if (!response.ok) throw new Error(quote.error || "Unable to price this deposit right now.");
     if (!quote.liquidityAvailable) throw new Error("Deposits are temporarily unavailable. Please try again shortly.");
-    if (quote.issues?.balance) throw new Error("Your wallet doesn't have enough USDC for this amount.");
+    if (quote.issues?.balance) throw new Error(`Your wallet doesn't have enough ${fromToken === NATIVE_TOKEN ? "ETH" : "USDC"} for this amount.`);
     return quote;
   }, []);
 
-  const verify = useCallback(async (quote: Quote, owner: Address, usdcAmount: bigint) => {
-    validateSwapQuote(quote, { chainId: CHAIN_ID, account: owner, fromToken: USDC_ADDRESS, toToken: OBN_TOKEN_ADDRESS, fromAmount: usdcAmount });
+  const verify = useCallback(async (quote: Quote, owner: Address, fromToken: Address, amount: bigint) => {
+    validateSwapQuote(quote, { chainId: CHAIN_ID, account: owner, fromToken, toToken: OBN_TOKEN_ADDRESS, fromAmount: amount });
     if (!publicClient) throw new Error("Unable to verify the swap route.");
     await validateSwapRouter(quote, name => publicClient.readContract(swapRegistryRead(name)));
   }, [publicClient]);
@@ -110,22 +148,48 @@ export function useUsdDeposit({ pid, account, tx, canBatch, onComplete }: {
     throw new Error("Your approval is confirmed but the network hasn't caught up yet. Please tap the button again in a moment.");
   }, [publicClient]);
 
-  /** Deposit OBN a swap just produced: one bundle, a free permit + one transaction, or approve + deposit. */
-  const stakeObn = useCallback(async (owner: Address, amount: bigint) => {
-    if (canBundle) {
-      setStage("depositing");
-      await tx.sendCallsAsync({
-        calls: [
-          { to: OBN_TOKEN_ADDRESS, data: encodeFunctionData({ abi: erc20Abi, functionName: "approve", args: [STAKING_CONTRACT, amount] }) },
-          { to: STAKING_CONTRACT, data: encodeFunctionData({ abi: stakingAbi, functionName: "deposit", args: [BigInt(pid), amount] }) },
-        ],
-        capabilities: canBatch
-          ? { paymasterService: { url: PAYMASTER_URL }, dataSuffix: { value: DATA_SUFFIX, optional: true } }
-          : { dataSuffix: { value: DATA_SUFFIX, optional: true } },
-        forceAtomic: true,
-      });
-      return;
+  /** The autoclaim opt-in call, when monthly autoclaim is live and this wallet hasn't turned it on yet. */
+  const autoClaimCall = useCallback(async (owner: Address) => {
+    try {
+      const [[enabled], executor] = await Promise.all([
+        publicClient!.readContract({ address: STAKING_PROXY, abi: autoClaimAbi, functionName: "autoClaimPreference", args: [owner] }),
+        publicClient!.readContract({ address: STAKING_PROXY, abi: autoClaimAbi, functionName: "autoClaimExecutor" }),
+      ]);
+      if (enabled || executor === zeroAddress) return null;
+      return { to: STAKING_PROXY, data: encodeFunctionData({ abi: autoClaimAbi, functionName: "setAutoClaimEnabled", args: [true] }) };
+    } catch {
+      return null; // Autoclaim is optional: never block a deposit on it.
     }
+  }, [publicClient]);
+
+  /**
+   * Spending guard for a card purchase paid in ETH: the workflow may spend only the purchased ETH
+   * (`budget`), never ETH the wallet already held. Every transaction gets an explicit gas limit and the
+   * plan's fee caps, so its worst-case cost is fixed before it's sent, and it isn't sent if that cost
+   * could reach the wallet's own ETH.
+   */
+  const ethSpendGuard = useCallback(async (owner: Address, budget: bigint, { maxFeePerGas, maxPriorityFeePerGas }: EthFeePlan): Promise<SpendGuard> => {
+    const client = publicClient!;
+    const start = await client.getBalance({ address: owner });
+    const ownEth = start > budget ? start - budget : 0n;
+    return async ({ to, data, value = 0n }, cap) => {
+      const sent = concat([data, DATA_SUFFIX]); // What the wallet actually sends.
+      const estimate = await client.estimateGas({ account: owner, to, data: sent, value });
+      if (estimate > cap) throw new Error(`This step needs more network fees than planned. ${KEEP_PURCHASE}`);
+      const padded = estimate * 5n / 4n;
+      const gas = padded < cap ? padded : cap;
+      let l1Fee = L1_FEE_FALLBACK;
+      try { l1Fee = await estimateL1Fee(client, { account: owner, chain: client.chain, to, data: sent, value }) * 2n; } catch { /* Fallback. */ }
+      const balance = await client.getBalance({ address: owner });
+      if (balance < ownEth + value + gas * maxFeePerGas + l1Fee) {
+        throw new Error(`Stopped so this deposit doesn't use ETH you already had. ${KEEP_PURCHASE}`);
+      }
+      return { gas, maxFeePerGas, maxPriorityFeePerGas };
+    };
+  }, [publicClient]);
+
+  /** Deposit OBN a swap just produced: a free permit + one transaction, or approve + deposit. */
+  const stakeObn = useCallback(async (owner: Address, amount: bigint, limit: SpendGuard | null) => {
     // OBN supports EIP-2612, so a plain wallet signs a free approval and deposits in one
     // transaction (depositWithPermit pulls from the sender and credits the beneficiary).
     // Smart contract wallets can't produce that signature and use approve + deposit.
@@ -157,62 +221,91 @@ export function useUsdDeposit({ pid, account, tx, canBatch, onComplete }: {
     }
     setStage("depositing");
     if (permit) {
-      await tx.writeContractAsync({ address: STAKING_CONTRACT, abi: stakingAbi, functionName: "depositWithPermit",
-        args: [BigInt(pid), amount, owner, permit.deadline, permit.v, permit.r, permit.s], dataSuffix: DATA_SUFFIX });
+      const args = [BigInt(pid), amount, owner, permit.deadline, permit.v, permit.r, permit.s] as const;
+      const limits = limit ? await limit({ to: STAKING_CONTRACT, data: encodeFunctionData({ abi: stakingAbi, functionName: "depositWithPermit", args }) }, GAS_CAP.deposit) : {};
+      await tx.writeContractAsync({ address: STAKING_CONTRACT, abi: stakingAbi, functionName: "depositWithPermit", args, dataSuffix: DATA_SUFFIX, ...limits });
     } else {
-      await tx.writeContractAsync({ address: OBN_TOKEN_ADDRESS, abi: erc20Abi, functionName: "approve", args: [STAKING_CONTRACT, amount], dataSuffix: DATA_SUFFIX });
+      const approveLimits = limit ? await limit({ to: OBN_TOKEN_ADDRESS, data: encodeFunctionData({ abi: erc20Abi, functionName: "approve", args: [STAKING_CONTRACT, amount] }) }, GAS_CAP.approve) : {};
+      await tx.writeContractAsync({ address: OBN_TOKEN_ADDRESS, abi: erc20Abi, functionName: "approve", args: [STAKING_CONTRACT, amount], dataSuffix: DATA_SUFFIX, ...approveLimits });
       await waitForAllowance(OBN_TOKEN_ADDRESS, owner, STAKING_CONTRACT, amount);
-      await tx.writeContractAsync({ address: STAKING_CONTRACT, abi: stakingAbi, functionName: "deposit", args: [BigInt(pid), amount], dataSuffix: DATA_SUFFIX });
+      const depositLimits = limit ? await limit({ to: STAKING_CONTRACT, data: encodeFunctionData({ abi: stakingAbi, functionName: "deposit", args: [BigInt(pid), amount] }) }, GAS_CAP.deposit) : {};
+      await tx.writeContractAsync({ address: STAKING_CONTRACT, abi: stakingAbi, functionName: "deposit", args: [BigInt(pid), amount], dataSuffix: DATA_SUFFIX, ...depositLimits });
     }
-  }, [canBundle, canBatch, publicClient, tx, pid, waitForAllowance]);
+  }, [publicClient, tx, pid, waitForAllowance]);
 
   /**
-   * Swap exactly `usdcAmount` (6 decimals) of USDC and deposit only the OBN that swap produced.
-   * Callers pass only newly purchased USDC; other wallet funds are never touched. Resolves true on success.
+   * Deposit newly purchased funds and only the OBN their swap produced; other wallet funds are never
+   * touched. USDC: swap exactly `amount` (6 decimals). ETH: `amount` is the purchased ETH (wei); part is
+   * kept for network fees (ethFeePlan), the rest is swapped, and the swap plus every fee stays inside
+   * `amount` (ethSpendGuard). With `enableAutoClaim`, monthly autoclaim is turned on in the same batch, or
+   * as a last step for wallets that can't batch. Resolves true once the deposit succeeds, whether or not
+   * autoclaim was turned on.
    */
-  const deposit = useCallback(async (usdcAmount: bigint) => {
+  const deposit = useCallback(async (source: DepositSource, amount: bigint, { enableAutoClaim = false } = {}) => {
+    const fromToken = source === "ETH" ? NATIVE_TOKEN : USDC_ADDRESS;
+    // A batch can't carry fee caps, so ETH purchases batch only when the paymaster pays every fee.
+    const bundle = source === "ETH" ? canBatch : canBundle;
     let succeeded = false;
     await tx.run("Deposit", async () => {
-    if (!account || !publicClient || usdcAmount <= 0n) return;
+    if (!account || !publicClient || amount <= 0n) return;
+    let autoClaimed = false;
     try {
       setStage("quoting");
-      let quote = await fetchQuote(account, usdcAmount);
+      let spend = amount;
+      let plan: EthFeePlan | null = null;
+      if (source === "ETH") {
+        plan = await ethFeePlan(publicClient);
+        if (plan.keep > RESERVE_MAX) throw new Error(`Network fees are unusually high right now. ${KEEP_PURCHASE}`);
+        spend = amount - plan.keep;
+        if (spend <= 0n) throw new Error("This purchase is too small to cover network fees.");
+      }
+      let quote = await fetchQuote(account, fromToken, spend);
       const allowance = quote.issues?.allowance;
+      const autoClaim = enableAutoClaim ? await autoClaimCall(account) : null;
 
-      if (canBundle && quote.transaction) {
-        // One atomic batch (gas-sponsored when available): [approve USDC] → swap → approve OBN → deposit(minimum received).
-        await verify(quote, account, usdcAmount);
+      if (bundle && quote.transaction) {
+        // One atomic batch (gas-sponsored when available):
+        // [approve USDC] → swap → approve OBN → deposit(minimum received) → [turn on autoclaim].
+        // For ETH this path is sponsored, so the only ETH spent is the swap's value: part of the purchase.
+        await verify(quote, account, fromToken, spend);
         const swapData = await signedSwapData(quote);
-        await verify(quote, account, usdcAmount);
+        await verify(quote, account, fromToken, spend);
         const total = BigInt(quote.minToAmount!);
         setStage("depositing");
         await tx.sendCallsAsync({
           calls: [
-            ...(allowance ? [{ to: USDC_ADDRESS, data: encodeFunctionData({ abi: erc20Abi, functionName: "approve", args: [allowance.spender, usdcAmount] }) }] : []),
-            { to: quote.transaction.to, data: swapData },
+            ...(allowance ? [{ to: USDC_ADDRESS, data: encodeFunctionData({ abi: erc20Abi, functionName: "approve", args: [allowance.spender, spend] }) }] : []),
+            { to: quote.transaction.to, data: swapData, value: BigInt(quote.transaction.value) },
             { to: OBN_TOKEN_ADDRESS, data: encodeFunctionData({ abi: erc20Abi, functionName: "approve", args: [STAKING_CONTRACT, total] }) },
             { to: STAKING_CONTRACT, data: encodeFunctionData({ abi: stakingAbi, functionName: "deposit", args: [BigInt(pid), total] }) },
+            ...(autoClaim ? [autoClaim] : []),
           ],
           capabilities: canBatch
             ? { paymasterService: { url: PAYMASTER_URL }, dataSuffix: { value: DATA_SUFFIX, optional: true } }
             : { dataSuffix: { value: DATA_SUFFIX, optional: true } },
           forceAtomic: true,
         });
+        autoClaimed = !!autoClaim;
       } else {
+        // ETH needs no approval: native swaps carry the amount as the transaction value.
+        // Every ETH step is fee-capped so the whole workflow stays inside the purchased ETH.
+        const limit = plan ? await ethSpendGuard(account, amount, plan) : null;
         if (allowance) {
-          await verify(quote, account, usdcAmount);
+          await verify(quote, account, fromToken, spend);
           setStage("approving");
-          await tx.writeContractAsync({ address: USDC_ADDRESS, abi: erc20Abi, functionName: "approve", args: [allowance.spender, usdcAmount], dataSuffix: DATA_SUFFIX });
-          await waitForAllowance(USDC_ADDRESS, account, allowance.spender, usdcAmount);
-          quote = await fetchQuote(account, usdcAmount);
+          await tx.writeContractAsync({ address: USDC_ADDRESS, abi: erc20Abi, functionName: "approve", args: [allowance.spender, spend], dataSuffix: DATA_SUFFIX });
+          await waitForAllowance(USDC_ADDRESS, account, allowance.spender, spend);
+          quote = await fetchQuote(account, fromToken, spend);
         }
-        await verify(quote, account, usdcAmount);
+        await verify(quote, account, fromToken, spend);
         const swapData = await signedSwapData(quote);
-        await verify(quote, account, usdcAmount);
+        await verify(quote, account, fromToken, spend);
 
         const obnBefore = await publicClient.readContract({ address: OBN_TOKEN_ADDRESS, abi: erc20Abi, functionName: "balanceOf", args: [account] });
         setStage("swapping");
-        await tx.sendTransactionAsync({ to: quote.transaction!.to, data: swapData, value: 0n, dataSuffix: DATA_SUFFIX });
+        const swap = { to: quote.transaction!.to, data: swapData, value: BigInt(quote.transaction!.value) };
+        const swapLimits = limit ? await limit(swap, GAS_CAP.swap) : {};
+        await tx.sendTransactionAsync({ ...swap, dataSuffix: DATA_SUFFIX, ...swapLimits });
         // The swap is confirmed, but a load-balanced RPC node can briefly serve an older block.
         let received = 0n;
         for (let attempt = 0; attempt < 6 && received <= 0n; attempt++) {
@@ -221,20 +314,34 @@ export function useUsdDeposit({ pid, account, tx, canBatch, onComplete }: {
           received = obnAfter - obnBefore;
         }
         if (received <= 0n) throw new Error("The swap finished but no OBN arrived yet. Refresh in a moment; your funds are in your wallet balance.");
-        await stakeObn(account, received);
+        await stakeObn(account, received, limit);
+        if (autoClaim) {
+          // Its own step: the deposit already succeeded, so a cancel or failure here only skips autoclaim.
+          try {
+            setStage("autoclaim");
+            const autoLimits = limit ? await limit(autoClaim, GAS_CAP.autoclaim) : {};
+            await tx.writeContractAsync({ address: STAKING_PROXY, abi: autoClaimAbi, functionName: "setAutoClaimEnabled", args: [true], dataSuffix: DATA_SUFFIX, ...autoLimits });
+            autoClaimed = true;
+          } catch {
+            toast.message("Monthly autoclaim wasn't turned on. You can turn it on anytime with the Auto button.");
+          }
+        }
       }
       succeeded = true;
-      toast.success("Deposit complete. Thank you for supporting this nonprofit!");
+      toast.success(autoClaimed
+        ? "Deposit complete and monthly autoclaim is on. Thank you for supporting this nonprofit!"
+        : "Deposit complete. Thank you for supporting this nonprofit!");
     } catch (err) {
       toast.error(friendlyError(err));
     } finally {
       setStage("idle");
       void refetchUsdc();
+      void refetchEth();
       void onComplete();
     }
     });
     return succeeded;
-  }, [account, publicClient, tx, pid, canBatch, canBundle, fetchQuote, verify, signedSwapData, waitForAllowance, stakeObn, refetchUsdc, onComplete]);
+  }, [account, publicClient, tx, pid, canBatch, canBundle, fetchQuote, verify, signedSwapData, waitForAllowance, ethSpendGuard, stakeObn, autoClaimCall, refetchUsdc, refetchEth, onComplete]);
 
-  return { usdcBalance, refetchUsdc, stage, busy: stage !== "idle", deposit };
+  return { usdcBalance, refetchUsdc, ethBalance: ethBalance?.value, refetchEth, stage, busy: stage !== "idle", deposit };
 }

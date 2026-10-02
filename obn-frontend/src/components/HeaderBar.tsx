@@ -227,7 +227,7 @@ export default function HeaderBar() {
                          dark:border-white/60 dark:hover:bg-white dark:hover:text-green-900"
             >
               <Image
-                src="/logo.png"
+                src="/obn-logo-32x32.svg"
                 alt="Menu"
                 width={20}
                 height={20}

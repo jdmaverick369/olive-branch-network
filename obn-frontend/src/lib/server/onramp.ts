@@ -2,7 +2,7 @@ import { generateJwt } from "@coinbase/cdp-sdk/auth";
 import { getPoolMeta } from "@/lib/pools";
 import { ApiError, createResourceGuard, isRecord } from "./http";
 
-// Coinbase Headless Onramp, embedded orders: one request creates an Apple Pay order and returns a
+// Coinbase Headless Onramp, embedded orders: one request creates an Apple Pay or Google Pay order and returns a
 // payment link that the page embeds in an iframe. Coinbase itself collects and verifies the buyer's
 // phone, email and one-time codes inside that frame.
 // https://docs.cdp.coinbase.com/onramp/headless-onramp/overview
@@ -14,20 +14,34 @@ export const ONRAMP_MAX_USD = 500;
 const AUTH_TOKEN_COOKIE = "obn_onramp_auth";
 const AUTH_TOKEN_TTL_S = 60 * 24 * 60 * 60; // Coinbase keeps returning-buyer tokens valid for 60 days.
 
-export type OnrampInput = { address: string; amountUsd: number; poolId: number };
+// Coinbase documents Google Pay for Android; the page picks the wallet for the buyer's device.
+const PAYMENT_METHODS = {
+  apple_pay: { provider: "GUEST_CHECKOUT_APPLE_PAY", label: "Apple Pay" },
+  google_pay: { provider: "GUEST_CHECKOUT_GOOGLE_PAY", label: "Google Pay" },
+} as const;
+export type OnrampPaymentMethod = keyof typeof PAYMENT_METHODS;
+
+// USDC for wallets with sponsored gas; ETH for the rest, so the purchase also pays the deposit's network fees.
+const PURCHASE_ASSETS = ["USDC", "ETH"] as const;
+export type OnrampAsset = (typeof PURCHASE_ASSETS)[number];
+
+export type OnrampInput = { address: string; amountUsd: number; poolId: number; paymentMethod: OnrampPaymentMethod; asset: OnrampAsset };
 
 export function parseOnrampInput(value: unknown): OnrampInput {
-  if (!isRecord(value) || Object.keys(value).some((key) => !["address", "amountUsd", "poolId"].includes(key))) {
+  if (!isRecord(value) || Object.keys(value).some((key) => !["address", "amountUsd", "poolId", "paymentMethod", "asset"].includes(key))) {
     throw new ApiError(400, "Invalid onramp parameters");
   }
-  const { address, amountUsd, poolId } = value;
+  // Apple Pay and USDC when omitted, for pages loaded before these options were added.
+  const { address, amountUsd, poolId, paymentMethod = "apple_pay", asset = "USDC" } = value;
   if (typeof address !== "string" || !ADDRESS.test(address) ||
+      typeof paymentMethod !== "string" || !Object.hasOwn(PAYMENT_METHODS, paymentMethod) ||
+      typeof asset !== "string" || !(PURCHASE_ASSETS as readonly string[]).includes(asset) ||
       typeof amountUsd !== "number" || !Number.isFinite(amountUsd) ||
       amountUsd < ONRAMP_MIN_USD || amountUsd > ONRAMP_MAX_USD || Math.round(amountUsd * 100) !== amountUsd * 100 ||
       typeof poolId !== "number" || !Number.isSafeInteger(poolId) || !getPoolMeta(poolId)?.live) {
     throw new ApiError(400, "Invalid onramp parameters");
   }
-  return { address, amountUsd, poolId };
+  return { address, amountUsd, poolId, paymentMethod: paymentMethod as OnrampPaymentMethod, asset: asset as OnrampAsset };
 }
 
 // Coinbase rejects private and loopback addresses (e.g. ::1 from a local dev server).
@@ -74,15 +88,15 @@ function buyerTokenCookie(token: string) {
 }
 
 // Coinbase's error codes, rewritten for people who have never used crypto.
-const PROVIDER_ERRORS: Record<string, [number, string]> = {
-  guest_transaction_limit: [429, "This is over your weekly Apple Pay limit with Coinbase. Try a smaller amount."],
-  guest_transaction_count: [429, "You've reached Coinbase's limit on Apple Pay purchases for this account."],
-  guest_region_forbidden: [400, "Apple Pay purchases through Coinbase aren't available in your region. They're currently US-only."],
-  guest_permission_denied: [400, "Coinbase couldn't approve an Apple Pay purchase for you right now."],
-  network_not_tradable: [400, "Buying USDC on Base isn't available in your region right now."],
-  rate_limit_exceeded: [429, "Too many attempts. Please try again in a minute."],
-  // Our Coinbase app isn't approved for live orders yet (e.g. pending Headless Onramp access).
-  forbidden: [503, "Apple Pay deposits aren't switched on yet. Please check back soon."],
+const PROVIDER_ERRORS: Record<string, (wallet: string, asset: string) => [number, string]> = {
+  guest_transaction_limit: (wallet) => [429, `This is over your weekly ${wallet} limit with Coinbase. Try a smaller amount.`],
+  guest_transaction_count: (wallet) => [429, `You've reached Coinbase's limit on ${wallet} purchases for this account.`],
+  guest_region_forbidden: (wallet) => [400, `${wallet} purchases through Coinbase aren't available in your region. They're currently US-only.`],
+  guest_permission_denied: (wallet) => [400, `Coinbase couldn't approve a ${wallet} purchase for you right now.`],
+  network_not_tradable: (_, asset) => [400, `Buying ${asset} on Base isn't available in your region right now.`],
+  rate_limit_exceeded: () => [429, "Too many attempts. Please try again in a minute."],
+  // Our Coinbase app isn't approved for live orders yet (e.g. pending Headless Onramp or Google Pay access).
+  forbidden: (wallet) => [503, `${wallet} deposits aren't switched on yet. Please check back soon.`],
 };
 
 // Orders are single-use and per buyer: never cache or coalesce them.
@@ -96,6 +110,7 @@ async function requestOrder(input: OnrampInput, headers: Headers) {
     requestHost: "api.cdp.coinbase.com", requestPath: ORDER_PATH, expiresIn: 120 });
   const ip = clientIp(headers);
   const returning = returningBuyerToken(headers);
+  const method = PAYMENT_METHODS[input.paymentMethod];
 
   let response: Response;
   let text: string;
@@ -109,8 +124,8 @@ async function requestOrder(input: OnrampInput, headers: Headers) {
       body: JSON.stringify({
         paymentAmount: input.amountUsd.toFixed(2),
         paymentCurrency: "USD",
-        purchaseCurrency: "USDC",
-        paymentMethod: "GUEST_CHECKOUT_APPLE_PAY",
+        purchaseCurrency: input.asset,
+        paymentMethod: method.provider,
         destinationAddress: input.address,
         destinationNetwork: "base",
         // Ties orders to the wallet for Coinbase's transaction history; the prefix selects sandbox.
@@ -130,7 +145,7 @@ async function requestOrder(input: OnrampInput, headers: Headers) {
 
   if (!response.ok) {
     const code = isRecord(data) && typeof data.errorType === "string" ? data.errorType : "";
-    const mapped = PROVIDER_ERRORS[code];
+    const mapped = Object.hasOwn(PROVIDER_ERRORS, code) ? PROVIDER_ERRORS[code](method.label, input.asset) : null;
     if (mapped) throw new ApiError(mapped[0], mapped[1]);
     throw new ApiError(502, "Card purchases are unavailable");
   }
@@ -142,7 +157,7 @@ async function requestOrder(input: OnrampInput, headers: Headers) {
     throw new ApiError(502, "Card purchases are unavailable");
   }
   // Sandbox Apple Pay on the web needs this flag; Coinbase ignores it for real orders, which never get it.
-  if (onrampSandbox()) url.searchParams.set("useApplePaySandbox", "true");
+  if (onrampSandbox() && input.paymentMethod === "apple_pay") url.searchParams.set("useApplePaySandbox", "true");
   const decimal = (value: unknown) => typeof value === "string" && /^\d{1,12}(?:\.\d{1,18})?$/.test(value) ? value : null;
   const nextToken = isRecord(data) && typeof data.userAuthToken === "string" && /^[A-Za-z0-9+/=_-]{16,4096}$/.test(data.userAuthToken)
     ? data.userAuthToken : undefined;

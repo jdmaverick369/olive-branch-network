@@ -3,10 +3,10 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { formatUnits, parseUnits, type Address } from "viem";
 import { toast } from "sonner";
-import { useSignMessage } from "wagmi";
+import { usePublicClient, useSignMessage } from "wagmi";
 import { ensureWalletSession } from "@/lib/walletSession";
 import { useMarketPrices } from "@/hooks/useMarketPrices";
-import { useUsdDeposit, type DepositStage } from "@/hooks/useUsdDeposit";
+import { ethGasReserve, useUsdDeposit, type DepositSource, type DepositStage } from "@/hooks/useUsdDeposit";
 import type { useWalletTransaction } from "@/hooks/useWalletTransaction";
 
 const PRESETS = [5, 10, 20, 50] as const;
@@ -18,10 +18,21 @@ const GREEN = "#0D9921";
 // Set to null once full Onramp access is approved.
 const EARLY_ACCESS_NOTE: string | null = "Card deposits are in early access: Coinbase currently limits each purchase to $5, and spots are limited.";
 
-type CardIntent = { pid: number; amountUsd: number; startingUsdc: string; at: number; sandbox?: boolean };
+// `starting` is the wallet's balance of `asset` before paying; `expected` is what Coinbase quoted (base units).
+type CardIntent = { pid: number; amountUsd: number; asset: DepositSource; starting: string; expected?: string; autoClaim?: boolean; at: number; sandbox?: boolean };
+const DECIMALS: Record<DepositSource, number> = { USDC: 6, ETH: 18 };
 
-type Checkout = { url: string; amountUsd: number; paymentTotal: string | null; purchaseAmount: string | null };
+type Wallet = "apple_pay" | "google_pay";
+const WALLET_LABEL: Record<Wallet, string> = { apple_pay: "Apple Pay", google_pay: "Google Pay" };
+
+type Checkout = { url: string; wallet: Wallet; amountUsd: number; paymentTotal: string | null; purchaseAmount: string | null };
 const COINBASE_ORIGIN = "https://pay.coinbase.com";
+
+/** Coinbase offers Google Pay on Android; everywhere else it's Apple Pay (in Safari, or a code to scan with an iPhone). */
+function deviceWallet(): Wallet {
+  const nav = navigator as Navigator & { userAgentData?: { platform?: string } };
+  return nav.userAgentData?.platform === "Android" || /Android/i.test(nav.userAgent) ? "google_pay" : "apple_pay";
+}
 
 const usd = (value: number) => new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(value);
 const usdcToUsd = (value: bigint) => Number(formatUnits(value, 6));
@@ -33,14 +44,17 @@ const stageLabel: Record<DepositStage, string> = {
   signing: "Confirm in your wallet…",
   swapping: "Converting…",
   depositing: "Depositing…",
+  autoclaim: "Turning on autoclaim…",
 };
 
 function readIntent(pid: number): CardIntent | null {
   try {
     // localStorage: survives reloads and new tabs while the purchase is delivered.
-    const intent = JSON.parse(localStorage.getItem(INTENT_KEY) ?? "null") as CardIntent | null;
+    const stored = JSON.parse(localStorage.getItem(INTENT_KEY) ?? "null") as (CardIntent & { startingUsdc?: string }) | null;
+    // Purchases saved before ETH purchases existed were USDC.
+    const intent = stored && !stored.asset && stored.startingUsdc ? { ...stored, asset: "USDC" as const, starting: stored.startingUsdc } : stored;
     // A card purchase usually lands within minutes; stale intents are ignored.
-    return intent && intent.pid === pid && Date.now() - intent.at < 2 * 60 * 60 * 1000 ? intent : null;
+    return intent && intent.pid === pid && intent.starting && Date.now() - intent.at < 2 * 60 * 60 * 1000 ? intent : null;
   } catch { return null; }
 }
 
@@ -49,7 +63,7 @@ function clearIntent() {
 }
 
 export function Web2Deposit({
-  pid, account, tx, canBatch, busy: pageBusy, stakeRaw, requireWallet, onRefresh, onWithdraw, onCollect, autoFinish,
+  pid, account, tx, canBatch, busy: pageBusy, stakeRaw, requireWallet, onRefresh, onWithdraw, onCollect, autoFinish, offerAutoClaim,
 }: {
   pid: number;
   account: Address | undefined;
@@ -64,8 +78,23 @@ export function Web2Deposit({
   onCollect: () => void;
   /** Start the finish step on arrival; only for wallets that can open a prompt without a click. */
   autoFinish: boolean;
+  /** Monthly autoclaim is available and not yet on for this wallet. */
+  offerAutoClaim: boolean;
 }) {
-  const { usdcBalance, refetchUsdc, stage, busy: depositing, deposit } = useUsdDeposit({ pid, account, tx, canBatch, onComplete: onRefresh });
+  const { usdcBalance, refetchUsdc, ethBalance, refetchEth, stage, busy: depositing, deposit } = useUsdDeposit({ pid, account, tx, canBatch, onComplete: onRefresh });
+  const publicClient = usePublicClient({ chainId: Number(process.env.NEXT_PUBLIC_CHAIN_ID || 8453) });
+  // Card purchases buy ETH: swapping it needs no approval (the fewest wallet steps) and it pays its own
+  // network fees, so it works for wallets with no ETH and without gas sponsorship. The swap and every
+  // fee come only from the purchased ETH; a fee reserve is kept from it, and ETH the wallet already
+  // held is never spent. (Earlier USDC purchases still finish.)
+  const [reserve, setReserve] = useState<bigint | null>(null);
+  useEffect(() => {
+    let live = true;
+    void ethGasReserve(publicClient).then(value => { if (live) setReserve(value); });
+    return () => { live = false; };
+  }, [publicClient]);
+  const source: DepositSource = "ETH";
+  const [autoClaim, setAutoClaim] = useState(true);
   const [selected, setSelected] = useState<number | null>(10);
   const [custom, setCustom] = useState("");
   const [openingCheckout, setOpeningCheckout] = useState(false);
@@ -73,34 +102,56 @@ export function Web2Deposit({
   const { signMessageAsync } = useSignMessage();
   const [intent, setIntent] = useState<CardIntent | null>(null);
   const [checkout, setCheckout] = useState<Checkout | null>(null);
+  // Decided after mount: the server render can't see the device.
+  const [wallet, setWallet] = useState<Wallet>("apple_pay");
+  useEffect(() => setWallet(deviceWallet()), []);
+  const walletLabel = WALLET_LABEL[wallet];
   const [showWithdraw, setShowWithdraw] = useState(false);
   const [withdrawUsd, setWithdrawUsd] = useState("");
   const [withdrawAll, setWithdrawAll] = useState(false);
   const prices = useMarketPrices();
   const obnPrice = prices.data?.find(item => item.symbol === "OBN")?.priceUsd;
+  const ethPrice = prices.data?.find(item => item.symbol === "ETH")?.priceUsd;
 
   const amountUsd = selected ?? (custom ? Number(custom) : NaN);
   const validAmount = Number.isFinite(amountUsd) && amountUsd >= MIN_USD && amountUsd <= MAX_USD;
-  const available = usdcBalance ?? 0n;
+  const balanceOf = (asset: DepositSource) => asset === "ETH" ? ethBalance : usdcBalance;
   const busy = pageBusy || depositing || openingCheckout || checkout !== null;
+  // The starting ETH balance is needed to recognize the purchase when it arrives.
+  const checkingWallet = !!account && ethBalance === undefined;
 
-  // After paying: watch for the purchased USDC to arrive (also resumes after a reload).
+  // After paying: watch for the purchased USDC or ETH to arrive (also resumes after a reload).
   useEffect(() => {
     // Any recent purchase for this pool resumes, even if the buyer came back without the return link.
     const restored = readIntent(pid);
     if (restored) setIntent(restored);
   }, [pid]);
 
-  const arrived = intent && usdcBalance !== undefined ? usdcBalance - BigInt(intent.startingUsdc) : 0n;
-  const fundsArrived = arrived > 0n;
+  const intentBalance = intent ? balanceOf(intent.asset) : undefined;
+  const received = intent && intentBalance !== undefined ? intentBalance - BigInt(intent.starting) : 0n;
+  // Never spend more than this purchase delivered, even if the wallet received other funds meanwhile.
+  const arrived = intent?.expected && received > BigInt(intent.expected) ? BigInt(intent.expected) : received;
+  const fundsArrived = intent?.asset === "ETH" ? reserve !== null && arrived > reserve : arrived > 0n;
   useEffect(() => {
     if (!intent || fundsArrived || intent.sandbox) return;
-    const id = window.setInterval(() => void refetchUsdc(), 5_000);
+    const refetch = intent.asset === "ETH" ? refetchEth : refetchUsdc;
+    const id = window.setInterval(() => void refetch(), 5_000);
     return () => window.clearInterval(id);
-  }, [intent, fundsArrived, refetchUsdc]);
+  }, [intent, fundsArrived, refetchUsdc, refetchEth]);
 
   const startCardCheckout = async () => {
     if (!requireWallet() || !account || !validAmount) return;
+    // The starting balance must be known, or a wallet's existing funds could be mistaken for the purchase.
+    const asset = source;
+    if (balanceOf(asset) === undefined) { toast.error("Still loading your wallet balance. Try again in a moment."); return; }
+    // Fees can only be capped on standard (or EIP-7702) accounts; other contract wallets need our paymaster.
+    if (!canBatch) {
+      const code = await publicClient?.getCode({ address: account }).catch(() => undefined);
+      if (code && code !== "0x" && !code.toLowerCase().startsWith("0xef0100")) {
+        toast.error("Card deposits aren't available for this wallet type yet. Try a standard wallet or Base Account.");
+        return;
+      }
+    }
     setOpeningCheckout(true);
     try {
       setSigningIn(true);
@@ -112,15 +163,18 @@ export function Web2Deposit({
       const response = await fetch("/api/onramp/order", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ address: account, amountUsd: Number(amountUsd.toFixed(2)), poolId: pid }),
+        body: JSON.stringify({ address: account, amountUsd: Number(amountUsd.toFixed(2)), poolId: pid, paymentMethod: wallet, asset }),
       });
       const data = await response.json() as { paymentLinkUrl?: string; paymentTotal?: string | null; purchaseAmount?: string | null; sandbox?: boolean; error?: string };
       if (!response.ok || !data.paymentLinkUrl) throw new Error(data.error || "Card purchases are unavailable right now.");
+      let expected: string | undefined;
+      try { expected = data.purchaseAmount ? parseUnits(data.purchaseAmount, DECIMALS[asset]).toString() : undefined; } catch { /* Uncapped. */ }
       try {
-        localStorage.setItem(INTENT_KEY, JSON.stringify({ pid, amountUsd, startingUsdc: available.toString(), at: Date.now(), sandbox: data.sandbox === true } satisfies CardIntent));
+        localStorage.setItem(INTENT_KEY, JSON.stringify({ pid, amountUsd, asset, starting: (balanceOf(asset) ?? 0n).toString(), expected,
+          autoClaim: offerAutoClaim && autoClaim, at: Date.now(), sandbox: data.sandbox === true } satisfies CardIntent));
       } catch { /* The purchase still completes; the deposit just won't resume after a reload. */ }
       setIntent(readIntent(pid));
-      setCheckout({ url: data.paymentLinkUrl, amountUsd, paymentTotal: data.paymentTotal ?? null, purchaseAmount: data.purchaseAmount ?? null });
+      setCheckout({ url: data.paymentLinkUrl, wallet, amountUsd, paymentTotal: data.paymentTotal ?? null, purchaseAmount: data.purchaseAmount ?? null });
     } catch (err) {
       const message = err instanceof Error ? err.message : "";
       toast.error(/user rejected|user denied|rejected the request/i.test(message) ? "Sign-in cancelled."
@@ -130,8 +184,8 @@ export function Web2Deposit({
     }
   };
 
-  // Always pay through Coinbase (Apple Pay), even when the wallet already holds USDC:
-  // only the newly purchased USDC is deposited afterwards.
+  // Always pay through Coinbase (Apple Pay or Google Pay), even when the wallet already holds funds:
+  // only the newly purchased USDC or ETH is deposited afterwards.
   const handlePrimary = () => {
     if (!requireWallet() || !validAmount) return;
     void startCardCheckout();
@@ -139,11 +193,13 @@ export function Web2Deposit({
 
   const finishCardDeposit = async () => {
     if (!requireWallet() || !intent) return;
-    // Card fees come out of the purchase, so deposit what actually arrived, capped at the intended amount.
+    // ETH: the whole purchase is the budget; the deposit keeps part for network fees and never spends
+    // more than arrived. USDC: card fees come out of the purchase, so deposit what actually arrived,
+    // capped at the intended amount.
     const intended = parseUnits(intent.amountUsd.toFixed(2), 6);
-    const spend = arrived < intended ? arrived : intended;
+    const amount = intent.asset === "ETH" ? arrived : arrived < intended ? arrived : intended;
     // Keep the banner after a failure so the buyer can simply try again.
-    if (await deposit(spend)) {
+    if (await deposit(intent.asset, amount, { enableAutoClaim: intent.autoClaim === true })) {
       clearIntent();
       setIntent(null);
     }
@@ -167,7 +223,8 @@ export function Web2Deposit({
 
   const primaryLabel = depositing ? stageLabel[stage]
     : signingIn ? "Sign in with your wallet…"
-    : openingCheckout ? "Preparing Apple Pay…"
+    : openingCheckout ? `Preparing ${walletLabel}…`
+    : checkingWallet ? "Checking your wallet…"
     : !validAmount ? `Choose ${usd(MIN_USD)}–${usd(MAX_USD)}`
     : `Deposit ${usd(amountUsd)}`;
 
@@ -176,15 +233,16 @@ export function Web2Deposit({
       {intent && (
         <div role="status" className="w-full rounded-xl border p-3 text-center text-sm" style={{ borderColor: GREEN, backgroundColor: "var(--card-bg)", color: "var(--card-text)" }}>
           {checkout ? (
-            <p>Complete your {usd(intent.amountUsd)} payment in the Apple Pay window.</p>
+            <p>Complete your {usd(intent.amountUsd)} payment in the {WALLET_LABEL[checkout.wallet]} window.</p>
           ) : intent.sandbox ? (
-            <p>Test purchase complete (Coinbase sandbox). No money was charged and no USDC is delivered, so there is nothing to deposit.</p>
+            <p>Test purchase complete (Coinbase sandbox). No money was charged and nothing is delivered, so there is nothing to deposit.</p>
           ) : fundsArrived ? (
             <>
-              <p className="mb-2">Your {usd(usdcToUsd(arrived))} purchase arrived.{autoFinish ? " Confirm the deposit in your wallet." : ""}</p>
+              <p className="mb-2">Your {intent.asset === "USDC" ? usd(usdcToUsd(arrived)) : usd(intent.amountUsd)} purchase arrived.{autoFinish ? " Confirm the deposit in your wallet." : ""}</p>
               <button type="button" disabled={busy} onClick={() => void finishCardDeposit()}
                 className="w-full rounded-lg py-2.5 font-semibold text-white disabled:opacity-60" style={{ backgroundColor: GREEN }}>
-                {depositing ? stageLabel[stage] : `Finish ${usd(Math.min(usdcToUsd(arrived), intent.amountUsd))} deposit`}
+                {depositing ? stageLabel[stage]
+                  : intent.asset === "USDC" ? `Finish ${usd(Math.min(usdcToUsd(arrived), intent.amountUsd))} deposit` : "Finish deposit"}
               </button>
             </>
           ) : (
@@ -221,13 +279,23 @@ export function Web2Deposit({
           className="w-full min-w-0 border-0 bg-transparent p-0 outline-none text-inherit" />
       </label>
 
-      <button type="button" disabled={busy || !validAmount} onClick={handlePrimary}
+      <button type="button" disabled={busy || !validAmount || checkingWallet} onClick={handlePrimary}
         className="w-full rounded-lg py-3 font-semibold text-white transition hover:opacity-90 disabled:opacity-60" style={{ backgroundColor: GREEN }}>
         {primaryLabel}
       </button>
 
+      {offerAutoClaim && (
+        <label className="flex w-full items-start gap-2 text-xs cursor-pointer" style={{ color: "var(--card-text)" }}>
+          <input type="checkbox" className="mt-0.5 accent-green-600" checked={autoClaim} disabled={busy} onChange={event => setAutoClaim(event.target.checked)} />
+          <span>Also turn on monthly autoclaim: OBN claims your rewards for you on the 14th of each month and pays those fees. Turn it off anytime.</span>
+        </label>
+      )}
+
       <p className="text-xs text-center" style={{ color: "var(--card-subtext)" }}>
-        Pay securely with Apple Pay through Coinbase, using any debit card in your Apple Wallet. Your dollars are converted to OBN and deposited in this pool.
+        Pay securely with {walletLabel} through Coinbase, using any debit card in your {wallet === "google_pay" ? "Google Wallet" : "Apple Wallet"}. Your dollars are converted to OBN and deposited in this pool.
+        {reserve !== null && (ethPrice
+          ? ` About ${usd(Number(formatUnits(reserve, 18)) * ethPrice)} of it pays the network fees, and what's left stays in your wallet as ETH for a future withdrawal.`
+          : " A few cents of it pay the network fees, and what's left stays in your wallet as ETH for a future withdrawal.")}
       </p>
 
       {EARLY_ACCESS_NOTE && (
@@ -252,7 +320,7 @@ export function Web2Deposit({
           checkout={checkout}
           onPaid={() => {
             setCheckout(null);
-            toast.success("Payment complete. Depositing your purchase…");
+            toast.success(intent?.sandbox ? "Test payment complete (sandbox). Nothing was charged." : "Payment complete. Depositing your purchase…");
             void refetchUsdc();
           }}
           onClose={(reason) => {
@@ -295,7 +363,7 @@ export function Web2Deposit({
 type SheetEvent = { eventName?: string; data?: { errorCode?: string; errorMessage?: string } };
 
 /**
- * Coinbase's embedded order page (Apple Pay, plus the phone/email verification Coinbase runs itself),
+ * Coinbase's embedded order page (Apple Pay or Google Pay, plus the phone/email verification Coinbase runs itself),
  * shown over the pool page. Coinbase reports progress through postMessage events.
  * https://docs.cdp.coinbase.com/onramp/headless-onramp/overview
  */
@@ -307,6 +375,7 @@ function PaymentSheet({ checkout, onPaid, onClose }: {
   const [loaded, setLoaded] = useState(false);
   const [status, setStatus] = useState<string | null>(null);
   const [charged, setCharged] = useState(false);
+  const walletLabel = WALLET_LABEL[checkout.wallet];
   const callbacks = useRef({ onPaid, onClose });
   useEffect(() => { callbacks.current = { onPaid, onClose }; });
 
@@ -339,16 +408,16 @@ function PaymentSheet({ checkout, onPaid, onClose }: {
         case "onramp_api.commit_error":
         case "onramp_api.validate_merchant_error":
         case "onramp_api.session_error":
-          setStatus(detail || "Apple Pay couldn't complete this purchase. You weren't charged.");
+          setStatus(detail || `${walletLabel} couldn't complete this purchase. You weren't charged.`);
           break;
       }
     };
     window.addEventListener("message", onMessage);
     return () => window.removeEventListener("message", onMessage);
-  }, []);
+  }, [walletLabel]);
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/60 p-0 sm:p-4" role="dialog" aria-modal="true" aria-label="Pay with Apple Pay">
+    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/60 p-0 sm:p-4" role="dialog" aria-modal="true" aria-label={`Pay with ${walletLabel}`}>
       <div className="w-full sm:max-w-md max-h-dvh overflow-y-auto rounded-t-2xl sm:rounded-2xl p-4 flex flex-col gap-3"
         style={{ backgroundColor: "var(--card-bg)", color: "var(--card-text)" }}>
         <div className="flex items-start justify-between gap-3">
@@ -369,10 +438,10 @@ function PaymentSheet({ checkout, onPaid, onClose }: {
 
         {status && <p role="status" className="text-sm rounded-lg border p-2" style={{ borderColor: "var(--card-border)" }}>{status}</p>}
 
-        {!loaded && !status && <p className="text-sm text-center" style={{ color: "var(--card-subtext)" }}>Loading Apple Pay…</p>}
+        {!loaded && !status && <p className="text-sm text-center" style={{ color: "var(--card-subtext)" }}>Loading {walletLabel}…</p>}
         <iframe
           src={checkout.url}
-          title="Coinbase Apple Pay checkout"
+          title={`Coinbase ${walletLabel} checkout`}
           sandbox="allow-scripts allow-same-origin"
           referrerPolicy="no-referrer"
           allow="payment"
@@ -385,7 +454,7 @@ function PaymentSheet({ checkout, onPaid, onClose }: {
           <a className="underline" href="https://www.coinbase.com/legal/guest-checkout/us" target="_blank" rel="noopener noreferrer">Guest Checkout Terms</a>,{" "}
           <a className="underline" href="https://www.coinbase.com/legal/user_agreement/united_states" target="_blank" rel="noopener noreferrer">User Agreement</a>, and{" "}
           <a className="underline" href="https://www.coinbase.com/legal/privacy" target="_blank" rel="noopener noreferrer">Privacy Policy</a>.
-          Available to US residents 18+. Outside Safari, Apple Pay shows a code to scan with your iPhone.
+          Available to US residents 18+.{checkout.wallet === "apple_pay" ? " Outside Safari, Apple Pay shows a code to scan with your iPhone." : ""}
         </p>
       </div>
     </div>

@@ -74,7 +74,7 @@ const TOKENS: Record<TokenSymbol, SwapToken> = {
   ETH: { symbol: "ETH", address: ETH_ADDRESS, decimals: 18, image: ETH_IMAGE },
   USDC: { symbol: "USDC", address: USDC_ADDRESS, decimals: 6, image: USDC_IMAGE },
   EURC: { symbol: "EURC", address: EURC_ADDRESS, decimals: 6, image: "/eurc.svg" },
-  OBN: { symbol: "OBN", address: OBN_TOKEN_ADDRESS, decimals: 18, image: "/logo.png" },
+  OBN: { symbol: "OBN", address: OBN_TOKEN_ADDRESS, decimals: 18, image: "/obn-logo-32x32.svg" },
 };
 
 function SettlementTokenSelect({ value, onChange, label, disabled }: {

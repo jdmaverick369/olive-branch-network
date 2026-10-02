@@ -83,7 +83,9 @@ test('onramp orders validate input, build an embedded Apple Pay order, and never
   const valid = { address: TAKER, amountUsd: 5, poolId: 0 };
   for (const body of [{ address: 'bad', amountUsd: 10, poolId: 0 }, { address: TAKER, amountUsd: 1, poolId: 0 },
     { address: TAKER, amountUsd: 501, poolId: 0 }, { address: TAKER, amountUsd: 10.001, poolId: 0 }, { address: TAKER, amountUsd: 4.99, poolId: 0 },
-    { address: TAKER, amountUsd: 10, poolId: 9999 }, { address: TAKER, amountUsd: 10, poolId: 0, extra: 1 }]) {
+    { address: TAKER, amountUsd: 10, poolId: 9999 }, { address: TAKER, amountUsd: 10, poolId: 0, extra: 1 },
+    { ...valid, paymentMethod: 'GUEST_CHECKOUT_APPLE_PAY' }, { ...valid, paymentMethod: 'card' }, { ...valid, paymentMethod: 'toString' },
+    { ...valid, paymentMethod: null }, { ...valid, asset: 'BTC' }, { ...valid, asset: 'eth' }, { ...valid, asset: 1 }]) {
     assert.equal((await post(body)).status, 400);
   }
   assert.equal(calls.length, 0);
@@ -118,7 +120,20 @@ test('onramp orders validate input, build an embedded Apple Pay order, and never
   env.VERCEL_ENV = 'production'; // Never sandbox on the live site, even if misconfigured.
   await post(valid);
   assert.equal(calls.at(-1).body.partnerUserRef, TAKER.toLowerCase());
-  delete env.ONRAMP_SANDBOX; delete env.VERCEL_ENV;
+  delete env.VERCEL_ENV;
+  // Google Pay: same order, other wallet; the Apple Pay sandbox flag stays off its link.
+  const googleSandbox = await (await post({ ...valid, paymentMethod: 'google_pay' })).json();
+  assert.equal(calls.at(-1).body.paymentMethod, 'GUEST_CHECKOUT_GOOGLE_PAY');
+  assert.equal(calls.at(-1).body.partnerUserRef, 'sandbox-' + TAKER.toLowerCase());
+  assert.equal(new URL(googleSandbox.paymentLinkUrl).searchParams.has('useApplePaySandbox'), false);
+  delete env.ONRAMP_SANDBOX;
+  await post({ ...valid, paymentMethod: 'apple_pay' });
+  assert.equal(calls.at(-1).body.paymentMethod, 'GUEST_CHECKOUT_APPLE_PAY');
+  // Wallets without sponsored gas buy ETH, which also pays the deposit's network fees.
+  await post({ ...valid, asset: 'ETH', paymentMethod: 'google_pay' });
+  assert.equal(calls.at(-1).body.purchaseCurrency, 'ETH'); assert.equal(calls.at(-1).body.destinationNetwork, 'base');
+  await post({ ...valid, asset: 'USDC' });
+  assert.equal(calls.at(-1).body.purchaseCurrency, 'USDC');
 
   for (const ip of ['::1', '127.0.0.1', '10.1.2.3', '192.168.1.5', '172.20.0.1', 'fd00::1']) {
     assert.equal((await post(valid, { 'x-forwarded-for': ip })).status, 200);
@@ -139,6 +154,11 @@ test('onramp orders validate input, build an embedded Apple Pay order, and never
   assert.equal(limited.status, 429);
   const limitedText = await limited.text();
   assert.match(limitedText, /limit on Apple Pay purchases/); assert.ok(!limitedText.includes('SECRET_SENTINEL'));
+  assert.match(await (await post({ ...valid, paymentMethod: 'google_pay' })).text(), /limit on Google Pay purchases/);
+  reply = () => Response.json({ errorType: 'network_not_tradable' }, { status: 400 });
+  assert.match(await (await post({ ...valid, asset: 'ETH' })).text(), /Buying ETH on Base/);
+  reply = () => Response.json({ errorType: 'constructor' }, { status: 400 });
+  assert.equal((await post(valid)).status, 502);
   reply = () => Response.json({ errorType: 'forbidden', errorMessage: 'SECRET_SENTINEL app id' }, { status: 403 });
   const notApproved = await post(valid);
   assert.equal(notApproved.status, 503);
