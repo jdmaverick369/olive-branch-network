@@ -21,7 +21,7 @@ export function AccountPill({ portrait, round = false, label, mono = false, clas
     <button
       type="button"
       {...button}
-      className={`relative flex min-w-0 max-w-full items-center justify-center gap-1.5 rounded-xl bg-white text-gray-900 shadow-sm hover:shadow-lg hover:scale-105 transition-all ${image ? "py-[3px] pl-[3px] pr-3 max-[359px]:pr-2.5" : "px-3 py-2 max-[359px]:px-2.5"} ${className}`}
+      className={`relative flex min-w-0 max-w-full items-center justify-center gap-1.5 rounded-xl bg-white text-gray-900 shadow-sm hover:shadow-lg hover:scale-105 transition-all ${image ? "py-0.75 pl-0.75 pr-3 max-[359px]:pr-2.5" : "px-3 py-2 max-[359px]:px-2.5"} ${className}`}
     >
       {image && (
         // eslint-disable-next-line @next/next/no-img-element

@@ -61,7 +61,7 @@ function BrowserAccount({ address, onClick }: { address: Address; onClick: () =>
     <button
       onClick={onClick}
       type="button"
-      className={`flex min-w-0 max-w-full items-center justify-center gap-1.5 rounded-xl bg-white text-gray-900 shadow-sm hover:shadow-lg hover:scale-105 transition-all ${portrait ? "py-[3px] pl-[3px] pr-3 max-[359px]:pr-2.5 lg:px-3 lg:py-2" : "px-3 py-2 max-[359px]:px-2.5"}`}
+      className={`flex min-w-0 max-w-full items-center justify-center gap-1.5 rounded-xl bg-white text-gray-900 shadow-sm hover:shadow-lg hover:scale-105 transition-all ${portrait ? "py-0.75 pl-0.75 pr-3 max-[359px]:pr-2.5 lg:px-3 lg:py-2" : "px-3 py-2 max-[359px]:px-2.5"}`}
       title="Click to disconnect"
     >
       {portrait && (
@@ -366,7 +366,7 @@ export default function HeaderBar() {
             href={oliverPool ? `/ask?pool=${oliverPool.pid}` : "/ask"}
             aria-label={oliverLabel}
             title={oliverLabel}
-            className="group flex items-center justify-center rounded-md p-[3px]
+            className="group flex items-center justify-center rounded-md p-0.75
                        border border-white/70
                        hover:bg-white
                        focus:outline-none focus-visible:ring-2 focus-visible:ring-white/70
