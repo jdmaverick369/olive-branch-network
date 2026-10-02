@@ -14,7 +14,7 @@ import { useDisplayMode } from "@/hooks/useDisplayMode";
 import { useBasename } from "@/hooks/useBasename";
 import { isCoinbaseWalletBrowser } from "@/lib/coinbaseWalletBrowser";
 import type { Address } from "viem";
-import { shortAddress } from "@/components/MiniAppWalletProvider";
+import { FittedAddress } from "@/components/FittedAddress";
 
 const DEV_MODE = process.env.NODE_ENV === "development";
 
@@ -42,16 +42,43 @@ function CoinbaseAppAccount({ address }: { address: Address }) {
       onClick={() => void copy()}
       title={address}
       aria-label={`Copy wallet address ${address}`}
-      className="relative flex items-center gap-2 hover:opacity-80 transition-opacity cursor-pointer"
+      className="relative flex min-w-0 max-w-full items-center gap-2 hover:opacity-80 transition-opacity cursor-pointer"
     >
       {avatar && avatarFailed !== avatar && (
-        <div className="flex items-center justify-center rounded-md p-0.5 border border-white/70 bg-white dark:border-white/60">
+        <div className="flex shrink-0 items-center justify-center rounded-md p-[2px] md:p-0.5 border border-white/70 bg-white dark:border-white/60">
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={avatar} alt="" referrerPolicy="no-referrer" onError={() => setAvatarFailed(avatar)} className="h-5 w-5 rounded-full object-cover" />
+          <img src={avatar} alt="" referrerPolicy="no-referrer" onError={() => setAvatarFailed(avatar)} className="h-6 w-6 md:h-5 md:w-5 rounded-full object-cover" />
         </div>
       )}
-      <span className="max-w-24.5 sm:max-w-37.5 truncate text-sm text-white" aria-live="polite">
-        {copied ? "Address copied" : name ?? shortAddress(address)}
+      <span className="min-w-0 truncate md:max-w-37.5 text-sm text-white" aria-live="polite">
+        {copied ? "Address copied" : name ?? <FittedAddress address={address} />}
+      </span>
+    </button>
+  );
+}
+
+/**
+ * Browser wallets: the white account pill. Below lg it shows the address's Basename portrait and name
+ * when it has one, otherwise as much of the address as fits; lg and up keep the full address.
+ */
+function BrowserAccount({ address, onClick }: { address: Address; onClick: () => void }) {
+  const { name, avatar } = useBasename(address);
+  const [avatarFailed, setAvatarFailed] = useState<string | null>(null);
+  const portrait = avatar && avatarFailed !== avatar ? avatar : null;
+  return (
+    <button
+      onClick={onClick}
+      type="button"
+      className={`flex min-w-0 max-w-full items-center justify-center gap-1.5 rounded-xl bg-white text-gray-900 shadow-sm hover:shadow-lg hover:scale-105 transition-all ${portrait ? "py-[3px] pl-[3px] pr-3 lg:px-3 lg:py-2" : "px-3 py-2"}`}
+      title="Click to disconnect"
+    >
+      {portrait && (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img src={portrait} alt="" referrerPolicy="no-referrer" onError={() => setAvatarFailed(portrait)} className="h-6 w-6 shrink-0 rounded-lg object-cover lg:hidden" />
+      )}
+      {name && <span className="min-w-0 truncate text-[13px] font-bold leading-none lg:hidden">{name}</span>}
+      <span className={`font-mono whitespace-nowrap text-[13px] font-bold leading-none ${name ? "hidden lg:inline" : "min-w-0 overflow-hidden"}`}>
+        <FittedAddress address={address} separator="..." wide="full" />
       </span>
     </button>
   );
@@ -244,7 +271,7 @@ export default function HeaderBar() {
 
   return (
     <div className="fixed top-0 left-0 w-full text-white z-50 " style={{ backgroundColor: "#0D9921" }}>
-      <div className={`relative w-full px-4 md:px-8 py-3 grid grid-cols-[auto_minmax(0,1fr)_auto] items-center md:flex md:justify-between ${!isInMiniApp && !likelyMiniApp ? "lg:grid lg:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)]" : ""}`}>
+      <div className={`relative w-full px-4 md:px-8 py-3 grid grid-cols-[auto_minmax(0,1fr)_minmax(0,max-content)] gap-x-2 items-center md:flex md:justify-between ${!isInMiniApp && !likelyMiniApp ? "lg:grid lg:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)]" : ""}`}>
 
         {/* Left: Menu button + Theme toggle */}
         <div className="flex items-center gap-2 z-10">
@@ -359,7 +386,7 @@ export default function HeaderBar() {
         <div className="min-w-0 md:flex-1" />
 
         {/* Right: User info */}
-        <div className="flex items-center gap-3 z-10 justify-self-end">
+        <div className="flex min-w-0 max-w-full items-center gap-3 z-10 justify-self-end">
 
           {/* Priority 1: Farcaster MiniApp user */}
           <FarcasterHeaderUser onMiniAppDetected={handleMiniAppDetected} />
@@ -381,6 +408,7 @@ export default function HeaderBar() {
 
                 return (
                   <div
+                    className="min-w-0 max-w-full"
                     {...(!ready && {
                       "aria-hidden": true,
                       style: {
@@ -419,19 +447,7 @@ export default function HeaderBar() {
                         );
                       }
 
-                      return (
-                        <button
-                          onClick={openModal}
-                          type="button"
-                          className="flex items-center justify-center px-3 py-2 rounded-xl bg-white text-gray-900 shadow-sm hover:shadow-lg hover:scale-105 transition-all"
-                          title="Click to disconnect"
-                        >
-                          <span className="font-mono whitespace-nowrap text-[13px] font-bold leading-none">
-                            <span className="lg:hidden">{`${account.address.slice(0, 6)}...${account.address.slice(-4)}`}</span>
-                            <span className="hidden lg:inline">{account.address}</span>
-                          </span>
-                        </button>
-                      );
+                      return <BrowserAccount address={account.address as Address} onClick={openModal} />;
                     })()}
                   </div>
                 );

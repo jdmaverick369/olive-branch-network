@@ -622,7 +622,8 @@ export default function AskPage() {
           {actions.busy && <p className="self-start text-xs" style={{ color: "var(--card-subtext)" }}>Waiting for your wallet…</p>}
         </div>
 
-        <form onSubmit={onSubmit} className="flex shrink-0 gap-2 pt-2 pb-3">
+        {/* Lifted clear of rounded screen corners and the home indicator on phones. */}
+        <form onSubmit={onSubmit} className="flex shrink-0 gap-2 pt-2" style={{ paddingBottom: "max(1.5rem, calc(env(safe-area-inset-bottom) + 0.75rem))" }}>
           <input
             value={input}
             onChange={e => setInput(e.target.value)}
