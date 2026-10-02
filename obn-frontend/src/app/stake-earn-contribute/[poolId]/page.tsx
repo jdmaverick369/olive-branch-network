@@ -3,6 +3,7 @@ import { useDisplayText } from "@/hooks/useDisplayText";
 import { ObnPrimary, ObnUsd } from "@/components/ObnUsd";
 
 import Image from "next/image";
+import Link from "next/link";
 import { useMonthlyAutoClaim, AutoClaimButton, AutoClaimDialog } from "@/components/MonthlyAutoClaim";
 import { Web2Deposit } from "@/components/Web2Deposit";
 import { useDisplayMode } from "@/hooks/useDisplayMode";
@@ -15,9 +16,8 @@ import {
   useAccount,
   useReadContract,
   usePublicClient,
-  useCapabilities,
 } from "wagmi";
-import { parseUnits, formatUnits, encodeFunctionData } from "viem";
+import { parseUnits, formatUnits } from "viem";
 import { stakingAbi } from "@/lib/stakingAbi";
 import { lensAbi } from "@/lib/lensAbi";
 import { oliveAbi } from "@/lib/oliveAbi";
@@ -25,8 +25,8 @@ import { getPoolMeta, type PoolMeta } from "@/lib/pools";
 import { ShareToFarcaster } from "@/components/ShareToFarcaster";
 import { sdk } from "@farcaster/miniapp-sdk";
 import { toast } from "sonner";
-import { useWalletTransaction, TransactionRecovery } from "@/hooks/useWalletTransaction";
-import { DATA_SUFFIX } from "@/lib/builderCode";
+import { TransactionRecovery } from "@/hooks/useWalletTransaction";
+import { useStakeActions } from "@/hooks/useStakeActions";
 import { useTheme } from "@/hooks/useTheme";
 import { isMiniAppRuntime } from "@/lib/miniapp";
 import { useConnectModal } from "@rainbow-me/rainbowkit";
@@ -37,24 +37,7 @@ const LENS_CONTRACT = (process.env.NEXT_PUBLIC_LENS_CONTRACT || undefined) as `0
 
 const OLIVE_NFT = process.env.NEXT_PUBLIC_OLIVE_NFT as `0x${string}`;
 const ZERO_ADDR = "0x0000000000000000000000000000000000000000" as const;
-const PAYMASTER_URL = process.env.NEXT_PUBLIC_PAYMASTER_URL as string;
 const CHAIN_ID = Number(process.env.NEXT_PUBLIC_CHAIN_ID || 8453);
-
-const approveAbi = [{
-  type: "function",
-  name: "approve",
-  inputs: [{ name: "spender", type: "address" }, { name: "amount", type: "uint256" }],
-  outputs: [{ name: "", type: "bool" }],
-  stateMutability: "nonpayable",
-}] as const;
-
-const allowanceAbi = [{
-  type: "function",
-  name: "allowance",
-  inputs: [{ name: "owner", type: "address" }, { name: "spender", type: "address" }],
-  outputs: [{ name: "", type: "uint256" }],
-  stateMutability: "view",
-}] as const;
 
 // Smart formatter that adjusts decimals to ensure " OBN" suffix always fits
 const fmtStaked = (n: number): string => {
@@ -106,6 +89,8 @@ const fmtRewards = (n: number): string => {
 
 // Back and Share sit side by side on pool pages; same size, colour differs.
 const NAV_BUTTON_CLASS = "w-16 py-2 rounded-lg text-xs font-semibold text-white text-center whitespace-nowrap cursor-pointer transition hover:opacity-80";
+// Same height as Back/Share; sized to its label so it sits in that row without adding a line.
+const ASK_OLIVER_CLASS = "px-3 py-2 rounded-lg text-xs font-semibold text-white text-center whitespace-nowrap cursor-pointer transition hover:opacity-80 bg-[#2563eb]";
 
 export default function PoolDetailPage() {
   const displayText = useDisplayText();
@@ -371,14 +356,9 @@ export default function PoolDetailPage() {
     ]);
   };
 
-  // EIP-5792 batch + paymaster (Base Account only)
-  const { data: walletCapabilities } = useCapabilities({
-    account: userAddr,
-    query: { enabled: !!currentAddress && connector?.id !== 'metaMask' && connector?.id !== 'io.metamask' },
-  });
-  const canBatch = !!(walletCapabilities?.[CHAIN_ID]?.paymasterService?.supported && PAYMASTER_URL);
-  const tx = useWalletTransaction(CHAIN_ID, currentAddress);
-  const { writeContractAsync, sendCallsAsync } = tx;
+  // Wallet writes go through the same hook as Ask Oliver (approve + deposit batched on Base Account).
+  const actions = useStakeActions((currentAddress ?? undefined) as `0x${string}` | undefined);
+  const { tx, canBatch } = actions;
 
   const handleOpenUrl = (url: string) => {
     if (isInMiniApp) {
@@ -388,10 +368,8 @@ export default function PoolDetailPage() {
     }
   };
 
-  // Staking flow: approve + deposit (batch for Base Account, sequential for others)
   const handleStake = async () => {
     if (needsConnect()) return;
-    return tx.run("Stake", async () => {
     if (loading) return;
     if (!currentAddress) {
       // isMiniAppLayout is the sync-seeded guess, so an early tap inside
@@ -399,165 +377,63 @@ export default function PoolDetailPage() {
       if (!isMiniAppLayout) openConnectModal?.();
       return;
     }
-    if (!Number.isFinite(pid) || !publicClient) return;
-    if (!amount) return;
-
+    if (!Number.isFinite(pid) || !publicClient || !amount) return;
     const n = Number(amount);
     if (!Number.isFinite(n) || n <= 0) return;
-
     const amt = parseUnits(amount, 18);
-
-    if (!obnBal || amt > obnBal.value) {
-      return;
-    }
+    if (!obnBal || amt > obnBal.value) return;
 
     setProcessingAction('stake');
     try {
-      if (canBatch) {
-        await sendCallsAsync({
-          calls: [
-            {
-              to: OBN_TOKEN_ADDRESS,
-              data: encodeFunctionData({ abi: approveAbi, functionName: "approve", args: [STAKING_CONTRACT, amt] }),
-            },
-            {
-              to: STAKING_CONTRACT,
-              data: encodeFunctionData({ abi: stakingAbi, functionName: "deposit", args: [effectivePid, amt] }),
-            },
-          ],
-          capabilities: { paymasterService: { url: PAYMASTER_URL }, dataSuffix: { value: DATA_SUFFIX, optional: true } },
-        });
-        await postTxnRefresh();
-        toast.success(displayText("Stake successful!"));
-        void autoClaim.promptAfterSuccess(userAddr);
-        return;
-      }
-
-      // Sequential path (MiniApp / standard wallets)
-      await writeContractAsync({
-        address: OBN_TOKEN_ADDRESS,
-        abi: approveAbi,
-        functionName: "approve",
-        args: [STAKING_CONTRACT, amt],
-        dataSuffix: DATA_SUFFIX,
-      });
-
-      // Poll allowance to handle RPC lag
-      let allowanceConfirmed = false;
-      let pollAttempts = 0;
-      while (!allowanceConfirmed && pollAttempts < 10) {
-        try {
-          const allowance = await publicClient.readContract({
-            address: OBN_TOKEN_ADDRESS,
-            abi: allowanceAbi,
-            functionName: "allowance",
-            args: [userAddr, STAKING_CONTRACT],
-          }) as bigint;
-          if (allowance >= amt) { allowanceConfirmed = true; }
-          else { pollAttempts++; await new Promise(r => setTimeout(r, 500)); }
-        } catch { pollAttempts++; await new Promise(r => setTimeout(r, 500)); }
-      }
-      if (!allowanceConfirmed) throw new Error("Allowance not confirmed after polling.");
-
-      await writeContractAsync({
-        address: STAKING_CONTRACT,
-        abi: stakingAbi,
-        functionName: "deposit",
-        args: [effectivePid, amt],
-        dataSuffix: DATA_SUFFIX,
-      });
-
+      if (!(await actions.stake(pid, amt))) return;
       await postTxnRefresh();
-      toast.success(displayText("Stake successful!")); void autoClaim.promptAfterSuccess(userAddr);
-    } catch (err) {
-      console.error("Stake error:", err);
-      toast.error(err instanceof Error ? err.message : displayText("Stake failed. Check wallet activity."));
-      setProcessingAction(null);
+      toast.success(displayText("Stake successful!"));
+      void autoClaim.promptAfterSuccess(userAddr);
     } finally {
       setProcessingAction(null);
     }
-  });
   };
 
   // Web2 mode passes its own amount; the Web3 controls use the shared input.
   const handleUnstake = async (amountOverride?: string) => {
     if (needsConnect()) return;
     const value = amountOverride ?? amount;
-    return tx.run("Unstake", async () => {
     if (loading) return;
     if (!currentAddress) {
-      // isMiniAppLayout is the sync-seeded guess, so an early tap inside
-      // Farcaster can never flash the RainbowKit modal
       if (!isMiniAppLayout) openConnectModal?.();
       return;
     }
-    if (!Number.isFinite(pid) || !publicClient) return;
-    if (!value) return;
-
+    if (!Number.isFinite(pid) || !publicClient || !value) return;
     const n = Number(value);
     if (!Number.isFinite(n) || n <= 0) return;
 
     setProcessingAction('unstake');
     try {
-      const amt = parseUnits(value, 18);
-      if (canBatch) {
-        await sendCallsAsync({
-          calls: [{ to: STAKING_CONTRACT, data: encodeFunctionData({ abi: stakingAbi, functionName: "withdraw", args: [effectivePid, amt] }) }],
-          capabilities: { paymasterService: { url: PAYMASTER_URL }, dataSuffix: { value: DATA_SUFFIX, optional: true } },
-        });
-        await postTxnRefresh();
-        toast.success(displayText("Unstake successful!"));
-
-        return;
-      }
-      await writeContractAsync({ address: STAKING_CONTRACT, abi: stakingAbi, functionName: "withdraw", args: [effectivePid, amt], dataSuffix: DATA_SUFFIX });
+      if (!(await actions.unstake(pid, parseUnits(value, 18)))) return;
       await postTxnRefresh();
       toast.success(displayText("Unstake successful!"));
-    } catch (err) {
-      console.error(err);
-      toast.error(err instanceof Error ? err.message : displayText("Unstake failed. Check wallet activity."));
-      setProcessingAction(null);
     } finally {
       setProcessingAction(null);
     }
-  });
   };
 
   const handleClaim = async () => {
     if (needsConnect()) return;
-    return tx.run("Claim rewards", async () => {
     if (loading) return;
     if (!currentAddress) {
-      // isMiniAppLayout is the sync-seeded guess, so an early tap inside
-      // Farcaster can never flash the RainbowKit modal
       if (!isMiniAppLayout) openConnectModal?.();
       return;
     }
     if (!Number.isFinite(pid) || !publicClient) return;
     setProcessingAction('claim');
     try {
-      if (canBatch) {
-        await sendCallsAsync({
-          calls: [{ to: STAKING_CONTRACT, data: encodeFunctionData({ abi: stakingAbi, functionName: "claim", args: [effectivePid] }) }],
-          capabilities: { paymasterService: { url: PAYMASTER_URL }, dataSuffix: { value: DATA_SUFFIX, optional: true } },
-        });
-        await postTxnRefresh();
-        toast.success("Rewards claimed!");
-        void autoClaim.promptAfterSuccess(userAddr);
-        return;
-      }
-      await writeContractAsync({ address: STAKING_CONTRACT, abi: stakingAbi, functionName: "claim", args: [effectivePid], dataSuffix: DATA_SUFFIX });
+      if (!(await actions.claim(pid))) return;
       await postTxnRefresh();
-      toast.success("Rewards claimed!"); void autoClaim.promptAfterSuccess(userAddr);
-    } catch (err) {
-      console.error(err);
-      const msg = err instanceof Error ? err.message : String(err);
-      toast.error(`Claim failed: ${msg}`);
-      setProcessingAction(null);
+      toast.success("Rewards claimed!");
+      void autoClaim.promptAfterSuccess(userAddr);
     } finally {
       setProcessingAction(null);
     }
-  });
   };
 
   const handleBack = () => router.back();
@@ -754,6 +630,7 @@ export default function PoolDetailPage() {
                     >
                       Back
                     </button>
+                    <Link href={`/ask?pool=${pid}`} className={ASK_OLIVER_CLASS} style={{ color: "#ffffff" }} aria-label={`Ask Oliver about ${title}`}>Oliver</Link>
                     {isInMiniApp && (
                       <ShareToFarcaster
                         text={`I'm supporting ${meta?.name ?? "a nonprofit"} on the Olive Branch Network 🌿`}
@@ -822,6 +699,7 @@ export default function PoolDetailPage() {
                       >
                         Back
                       </button>
+                      <Link href={`/ask?pool=${pid}`} className={ASK_OLIVER_CLASS} style={{ color: "#ffffff" }} aria-label={`Ask Oliver about ${title}`}>Oliver</Link>
                       {isInMiniApp && (
                         <ShareToFarcaster
                           text={`I'm earning $OBN while supporting ${meta?.name ?? "a nonprofit"} on the Olive Branch Network 🌿`}
@@ -894,6 +772,7 @@ export default function PoolDetailPage() {
                       >
                         Back
                       </button>
+                      <Link href={`/ask?pool=${pid}`} className={ASK_OLIVER_CLASS} style={{ color: "#ffffff" }} aria-label={`Ask Oliver about ${title}`}>Oliver</Link>
                       {isInMiniApp && (
                         <ShareToFarcaster
                           text={`I'm earning $OBN while supporting ${meta?.name ?? "a nonprofit"} on the Olive Branch Network 🌿`}

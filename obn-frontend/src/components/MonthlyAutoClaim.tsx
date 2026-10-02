@@ -7,6 +7,7 @@ import { useWalletTransaction, TransactionRecovery } from "@/hooks/useWalletTran
 import { autoClaimAbi } from "@/lib/autoClaimAbi";
 import { readTransaction } from "@/lib/transactionGuard";
 import { STAKING_PROXY } from "@/lib/contracts";
+import { DATA_SUFFIX } from "@/lib/builderCode";
 import { useMiniAppWallet } from "@/components/MiniAppWalletProvider";
 
 const CHAIN_ID = 8453;
@@ -144,10 +145,10 @@ export function useMonthlyAutoClaim() {
             const calls = [{ to: STAKING_PROXY, data: encodeFunctionData({ abi: autoClaimAbi, functionName: "setAutoClaimEnabled", args: [desired] }) }];
             const paymasterUrl = process.env.NEXT_PUBLIC_PAYMASTER_URL;
             if (capabilities?.[CHAIN_ID]?.paymasterService?.supported && paymasterUrl && walletClient) {
-              await sendCallsAsync({ account: wallet, chainId: CHAIN_ID, calls, capabilities: { paymasterService: { url: paymasterUrl } } });
+              await sendCallsAsync({ account: wallet, chainId: CHAIN_ID, calls, capabilities: { paymasterService: { url: paymasterUrl }, dataSuffix: { value: DATA_SUFFIX, optional: true } } });
             } else {
               await writeContractAsync({ account: wallet, address: STAKING_PROXY, abi: autoClaimAbi,
-                functionName: "setAutoClaimEnabled", args: [desired], chainId: CHAIN_ID });
+                functionName: "setAutoClaimEnabled", args: [desired], chainId: CHAIN_ID, dataSuffix: DATA_SUFFIX });
             }
           }
           const confirmed = await client.readContract({address: STAKING_PROXY, abi: autoClaimAbi, functionName: "autoClaimPreference", args: [wallet]});

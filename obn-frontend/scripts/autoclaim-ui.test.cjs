@@ -16,6 +16,7 @@ const A = '0x1111111111111111111111111111111111111111';
 const B = '0x2222222222222222222222222222222222222222';
 const EXECUTOR = '0x3333333333333333333333333333333333333333';
 const STAKING = '0x2C4Bd5B2a48a76f288d7F2DB23aFD3a03b9E7cD2';
+const BUILDER_SUFFIX = '0x62635f79386777317961610b0080218021802180218021802180218021';
 const source = fs.readFileSync(path.join(root, 'src/components/MonthlyAutoClaim.tsx'), 'utf8');
 const compiled = ts.transpileModule(source, {
   compilerOptions: { target: ts.ScriptTarget.ES2022, module: ts.ModuleKind.CommonJS, jsx: ts.JsxEmit.ReactJSX },
@@ -132,6 +133,7 @@ function harness(options = {}) {
     '@/hooks/useWalletTransaction': { useWalletTransaction: () => tx, TransactionRecovery: () => null },
     '@/lib/transactionGuard': { readTransaction: () => state.journal ?? null },
     '@/lib/autoClaimAbi': { autoClaimAbi: abi }, '@/lib/contracts': { STAKING_PROXY: STAKING },
+    '@/lib/builderCode': { DATA_SUFFIX: BUILDER_SUFFIX },
     '@/components/MiniAppWalletProvider': { useMiniAppWallet: () => ({
       viewAddress: state.viewed, viewOnly: state.viewOnly, connectViewed: async () => { state.connections++; },
     }) },
@@ -285,6 +287,9 @@ test('normal and sponsored changes bind Base/account and confirm both enable and
     const h = harness({ sponsored, enabled }); h.render().open(); await h.render().confirm();
     assert.equal(h.state.enabled, !enabled); assert.equal(h.state.requests.length, 1);
     assert.equal(h.state.requests[0].account, A); assert.equal(h.state.requests[0].chainId, 8453);
+    // Builder-code attribution on both wallet paths.
+    if (sponsored) assert.deepEqual(h.state.requests[0].capabilities.dataSuffix, { value: BUILDER_SUFFIX, optional: true });
+    else assert.equal(h.state.requests[0].dataSuffix, BUILDER_SUFFIX);
     assert.equal(h.render().prompt, null); assert.equal(h.render().busy, false);
     if (!enabled) assert.ok(h.state.reads.some(args => args.functionName === 'activePoolCount' && args.args[0] === A));
   }

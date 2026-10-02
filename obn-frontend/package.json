@@ -10,6 +10,7 @@
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
     "test:security": "node --test scripts/api-security.test.cjs scripts/server-security.test.cjs scripts/transaction-security.test.cjs scripts/autoclaim-ui.test.cjs scripts/security-headers.test.cjs scripts/dependency-compat.test.mjs scripts/swap.test.mjs scripts/market-ticker.test.mjs",
+    "test:commands": "node --experimental-strip-types --no-warnings --test scripts/command-parser.test.mjs scripts/ask-stats.test.mjs",
     "test:analytics": "node --test scripts/analytics/*.test.mjs",
     "analytics:update": "node --env-file-if-exists=.env.local scripts/analytics/run.mjs",
     "validate:env": "node --env-file-if-exists=.env.local scripts/validate-env.mjs",
