@@ -2,6 +2,7 @@
 import { connectorsForWallets, getDefaultWallets } from "@rainbow-me/rainbowkit";
 import { createConfig, createStorage, http, fallback, type Config } from "wagmi";
 import { walletConnect, baseAccount } from "@wagmi/connectors";
+import { withBaseAccountReconnect } from "@/lib/baseAccountConnector";
 import { base, baseSepolia, type Chain } from "wagmi/chains";
 
 // NOTE: This package likely exports a factory function
@@ -32,10 +33,11 @@ const webConnectors = connectorsForWallets(wallets, {
 
 export const wagmiWebConfig: Config = createConfig({
   chains: [targetChain],
+  // Every Base Account connector (ours and RainbowKit's) reconnects without a popup.
   connectors: [
     ...webConnectors,
     baseAccount({ appName: "Olive Branch Network" }),
-  ],
+  ].map(withBaseAccountReconnect),
   storage: createStorage({ storage: typeof window !== "undefined" ? sessionStorage : undefined }),
   transports: { [targetChain.id]: transport },
   ssr: true,
