@@ -1,13 +1,14 @@
 "use client";
 
 import { useEffect, useRef, useState, type CSSProperties } from "react";
-import { useAccount, usePublicClient, useReadContract, useCapabilities, useWalletClient } from "wagmi";
+import { useAccount, usePublicClient, useReadContract, useCapabilities } from "wagmi";
 import { encodeFunctionData, zeroAddress, type Address } from "viem";
 import { useWalletTransaction, TransactionRecovery } from "@/hooks/useWalletTransaction";
 import { autoClaimAbi } from "@/lib/autoClaimAbi";
 import { readTransaction } from "@/lib/transactionGuard";
 import { STAKING_PROXY } from "@/lib/contracts";
 import { DATA_SUFFIX } from "@/lib/builderCode";
+import { canQueryCapabilities } from "@/lib/walletCapabilities";
 import { useMiniAppWallet } from "@/components/MiniAppWalletProvider";
 
 const CHAIN_ID = 8453;
@@ -36,11 +37,11 @@ function isUserCancellation(error: unknown) {
 }
 
 export function useMonthlyAutoClaim() {
-  const { address, chainId } = useAccount();
+  const { address, chainId, connector } = useAccount();
   const client = usePublicClient({ chainId: CHAIN_ID });
 
-  const { data: walletClient } = useWalletClient();
-  const { data: capabilities } = useCapabilities();
+  // Asked only of wallets that answer in-page; MetaMask's mobile SDK would open MetaMask on every page load.
+  const { data: capabilities } = useCapabilities({ query: { enabled: !!address && canQueryCapabilities(connector?.id) } });
   // In the mini app a user may view a verified wallet that is not the signer.
   const miniWallet = useMiniAppWallet();
   const viewed = (miniWallet.viewAddress ?? address) as Address | undefined;
@@ -144,7 +145,7 @@ export function useMonthlyAutoClaim() {
             }
             const calls = [{ to: STAKING_PROXY, data: encodeFunctionData({ abi: autoClaimAbi, functionName: "setAutoClaimEnabled", args: [desired] }) }];
             const paymasterUrl = process.env.NEXT_PUBLIC_PAYMASTER_URL;
-            if (capabilities?.[CHAIN_ID]?.paymasterService?.supported && paymasterUrl && walletClient) {
+            if (capabilities?.[CHAIN_ID]?.paymasterService?.supported && paymasterUrl) {
               await sendCallsAsync({ account: wallet, chainId: CHAIN_ID, calls, capabilities: { paymasterService: { url: paymasterUrl }, dataSuffix: { value: DATA_SUFFIX, optional: true } } });
             } else {
               await writeContractAsync({ account: wallet, address: STAKING_PROXY, abi: autoClaimAbi,

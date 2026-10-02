@@ -18,6 +18,7 @@ import { Loader } from "lucide-react";
 import { POOLS, PoolMeta } from "@/lib/pools";
 import { stakingAbi } from "@/lib/stakingAbi";
 import { useMonthlyAutoClaim, AutoClaimButton, AutoClaimDialog } from "@/components/MonthlyAutoClaim";
+import { canQueryCapabilities } from "@/lib/walletCapabilities";
 import { useMiniAppWallet } from "@/components/MiniAppWalletProvider";
 import { lensAbi } from "@/lib/lensAbi";
 import { oliveAbi } from "@/lib/oliveAbi";
@@ -209,7 +210,7 @@ export default function UserPage() {
   const { openConnectModal } = useConnectModal();
   const publicClient = usePublicClient({ chainId: CHAIN_ID });
 
-  const { data: walletCapabilities } = useCapabilities({ account: address, query: { enabled: !!address && connector?.id !== 'metaMask' && connector?.id !== 'io.metamask' } });
+  const { data: walletCapabilities } = useCapabilities({ account: address, query: { enabled: !!address && canQueryCapabilities(connector?.id) } });
   const canBatch = !!(walletCapabilities?.[CHAIN_ID]?.paymasterService?.supported && PAYMASTER_URL);
 
   const theme = useTheme();

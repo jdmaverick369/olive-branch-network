@@ -18,6 +18,12 @@ const EXECUTOR = '0x3333333333333333333333333333333333333333';
 const STAKING = '0x2C4Bd5B2a48a76f288d7F2DB23aFD3a03b9E7cD2';
 const BUILDER_SUFFIX = '0x62635f79386777317961610b0080218021802180218021802180218021';
 const source = fs.readFileSync(path.join(root, 'src/components/MonthlyAutoClaim.tsx'), 'utf8');
+const walletCapabilities = (() => {
+  const js = ts.transpileModule(fs.readFileSync(path.join(root, 'src/lib/walletCapabilities.ts'), 'utf8'), { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2020 } }).outputText;
+  const module = { exports: {} };
+  new Function('module', 'exports', js)(module, module.exports);
+  return module.exports;
+})();
 const compiled = ts.transpileModule(source, {
   compilerOptions: { target: ts.ScriptTarget.ES2022, module: ts.ModuleKind.CommonJS, jsx: ts.JsxEmit.ReactJSX },
 }).outputText;
@@ -43,7 +49,7 @@ function findElement(node, predicate) {
 function harness(options = {}) {
   const state = {
     address: A, chainId: 8453, enabled: false, known: true, executor: EXECUTOR,
-    stake: true, stakeKnown: true, viewOnly: false, viewed: null, sponsored: false,
+    stake: true, stakeKnown: true, viewOnly: false, viewed: null, sponsored: false, connectorId: 'baseAccount', capabilityQueries: 0,
     requests: [], reads: [], refetches: [], connections: 0, guardErrors: [], ...options,
   };
   const storage = new Map();
@@ -90,9 +96,14 @@ function harness(options = {}) {
     return state.stakeError;
   }
   const wagmi = {
-    useAccount: () => ({ address: state.address, chainId: state.chainId }),
+    useAccount: () => ({ address: state.address, chainId: state.chainId, connector: { id: state.connectorId } }),
     useWalletClient: () => ({ data: state.walletUnavailable ? undefined : {} }),
-    useCapabilities: () => ({ data: state.sponsored ? { 8453: { paymasterService: { supported: true } } } : {} }),
+    // Like wagmi: a disabled query never reaches the wallet and has no data.
+    useCapabilities: (args) => {
+      if (args?.query?.enabled === false) return { data: undefined };
+      state.capabilityQueries++;
+      return { data: state.sponsored ? { 8453: { paymasterService: { supported: true } } } : {} };
+    },
     usePublicClient: () => ({ readContract: async args => {
       state.reads.push(args);
       if (state.readGate && (!state.readGateName || state.readGateName === args.functionName)) await state.readGate.promise;
@@ -134,6 +145,7 @@ function harness(options = {}) {
     '@/lib/transactionGuard': { readTransaction: () => state.journal ?? null },
     '@/lib/autoClaimAbi': { autoClaimAbi: abi }, '@/lib/contracts': { STAKING_PROXY: STAKING },
     '@/lib/builderCode': { DATA_SUFFIX: BUILDER_SUFFIX },
+    '@/lib/walletCapabilities': walletCapabilities,
     '@/components/MiniAppWalletProvider': { useMiniAppWallet: () => ({
       viewAddress: state.viewed, viewOnly: state.viewOnly, connectViewed: async () => { state.connections++; },
     }) },
@@ -280,6 +292,19 @@ test('an in-flight confirmation preflight is invalidated after context changes a
     const restore = change(h.state); h.render(); restore(); h.render(); gate.resolve(); await pending;
     assert.equal(h.state.requests.length, 0); assert.equal(h.render().prompt, null); assert.equal(h.render().busy, false);
   }
+});
+
+test('wallets that relay requests through their app are never asked for capabilities on load', async () => {
+  for (const connectorId of ['metaMask', 'metaMaskSDK', 'io.metamask', 'walletConnect']) {
+    const h = harness({ sponsored: true, connectorId }); h.render().open(); await h.render().confirm();
+    assert.equal(h.state.capabilityQueries, 0, connectorId);
+    // Without capabilities it uses the ordinary transaction, which still carries the builder code.
+    assert.equal(h.state.requests.length, 1, connectorId);
+    assert.equal(h.state.requests[0].capabilities, undefined, connectorId);
+    assert.equal(h.state.requests[0].dataSuffix, BUILDER_SUFFIX, connectorId);
+  }
+  const base = harness({ sponsored: true }); base.render();
+  assert.ok(base.state.capabilityQueries > 0, 'Base Account is still asked, so sponsored claims keep working');
 });
 
 test('normal and sponsored changes bind Base/account and confirm both enable and disable', async () => {

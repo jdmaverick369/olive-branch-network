@@ -6,6 +6,7 @@ import { encodeFunctionData, erc20Abi } from "viem";
 import { stakingAbi } from "@/lib/stakingAbi";
 import { DATA_SUFFIX } from "@/lib/builderCode";
 import { useWalletTransaction } from "@/hooks/useWalletTransaction";
+import { canQueryCapabilities } from "@/lib/walletCapabilities";
 
 const OBN_TOKEN_ADDRESS = process.env.NEXT_PUBLIC_OBN_TOKEN as `0x${string}`;
 const STAKING_CONTRACT = process.env.NEXT_PUBLIC_STAKING_CONTRACT as `0x${string}`;
@@ -22,7 +23,7 @@ export function useStakeActions(account: `0x${string}` | undefined) {
   const publicClient = usePublicClient({ chainId: CHAIN_ID });
   const { data: capabilities } = useCapabilities({
     account,
-    query: { enabled: !!account && connector?.id !== "metaMask" && connector?.id !== "io.metamask" },
+    query: { enabled: !!account && canQueryCapabilities(connector?.id) },
   });
   const canBatch = !!(capabilities?.[CHAIN_ID]?.paymasterService?.supported && PAYMASTER_URL);
   const tx = useWalletTransaction(CHAIN_ID, account);

@@ -1,7 +1,8 @@
 "use client";
 
 import { useCallback, useState } from "react";
-import { useBalance, useCapabilities, usePublicClient, useReadContract } from "wagmi";
+import { useAccount, useBalance, useCapabilities, usePublicClient, useReadContract } from "wagmi";
+import { canQueryCapabilities } from "@/lib/walletCapabilities";
 import { concat, encodeFunctionData, erc20Abi, numberToHex, parseAbi, parseEther, parseSignature, size, zeroAddress, type Address, type Hex, type PublicClient } from "viem";
 import { estimateL1Fee } from "viem/op-stack";
 import { toast } from "sonner";
@@ -94,7 +95,8 @@ export function useUsdDeposit({ pid, account, tx, canBatch, onComplete }: {
   // Bundle the whole deposit into one confirmation whenever the wallet already executes
   // atomic batches (EIP-5792 "supported"; legacy atomicBatch). "ready" would first ask the
   // user to upgrade their account, which is confusing here, so it takes the step-by-step path.
-  const { data: capabilities } = useCapabilities({ account, query: { enabled: !!account, retry: false } });
+  const { connector } = useAccount();
+  const { data: capabilities } = useCapabilities({ account, query: { enabled: !!account && canQueryCapabilities(connector?.id), retry: false } });
   const chainCapabilities = capabilities?.[CHAIN_ID] as { atomic?: { status?: string }; atomicBatch?: { supported?: boolean } } | undefined;
   const canBundle = canBatch || chainCapabilities?.atomic?.status === "supported" || chainCapabilities?.atomicBatch?.supported === true;
 
