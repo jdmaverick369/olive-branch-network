@@ -4,7 +4,6 @@
 import Link from "next/link";
 import Image from "next/image";
 import clsx from "clsx";
-import { useTheme } from "@/hooks/useTheme";
 
 interface PoolCardProps {
   pid: number;
@@ -15,19 +14,15 @@ interface PoolCardProps {
 }
 
 export default function PoolCard({ pid, logo, name, description, live }: PoolCardProps) {
-  const theme = useTheme();
-
   const CardContent = (
     <div
       className={clsx(
         "pool-list-card flex items-center gap-3 rounded-xl border px-4 py-3 w-full transition-colors",
         live ? "cursor-pointer hover:opacity-90" : "opacity-60 cursor-not-allowed"
       )}
-      style={{
-        color: "var(--card-text)",
-        backgroundColor: theme === "dark" ? "var(--card-bg)" : "#ecfdf5",
-        borderColor: theme === "dark" ? "var(--card-border)" : "#10b981",
-      }}
+      // Colors live in globals.css (.pool-list-card) so they follow the <html> theme
+      // class directly; a JS theme check here can desync from the DOM after hydration.
+      style={{ color: "var(--card-text)" }}
     >
       {/* Logo */}
       <div className="shrink-0">

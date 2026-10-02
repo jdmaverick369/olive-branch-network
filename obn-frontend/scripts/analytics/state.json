@@ -4,8 +4,8 @@
   "contract": "0x2C4Bd5B2a48a76f288d7F2DB23aFD3a03b9E7cD2",
   "governance": "0x1135d5fEA8098b09b4ED3AFbfFDc7B248359D270",
   "startBlock": 35165256,
-  "cursor": 51982246,
-  "blockHash": "0xf63bf01b0517861b39e97bb6f9b02cacad80470c262020097a5d8e743b01faf7",
+  "cursor": 52025445,
+  "blockHash": "0xa7a51fbf5bd115e384bbf67196bec3dd4b6c29fc54d17d4111d3a037b0f9fda2",
   "balances": {
     "0:0x750ef1d7a0b4ab1c97b7a623d7917cceb5ea779c": "1000000000000000000000000",
     "1:0xe04063602b8b6b5d3526e6af873d2a4777e12d92": "1000000000000000000000000",
@@ -347,7 +347,7 @@
     "4:0x0c120474844257f03de3ffcfa3ec8e1dad49915e": "10000000000000000000000",
     "7:0x4753b8c3623e985434c22000966dfd6c9c0bc3e3": "13630000000000000000000"
   },
-  "contributed": "616701877180367354702213",
+  "contributed": "621052912377043411602213",
   "charityWallets": {
     "0": "0x750ef1d7a0b4ab1c97b7a623d7917cceb5ea779c",
     "1": "0xe04063602b8b6b5d3526e6af873d2a4777e12d92",
@@ -365,7 +365,7 @@
   "seedClaims": "307948127726800000000000",
   "pools": {
     "0": {
-      "contributions": "33794144188814049943492",
+      "contributions": "33804225759704549943492",
       "seedClaims": "32059190231200000000000",
       "annualAwards": "0",
       "wallets": [
@@ -1927,11 +1927,15 @@
         {
           "day": "2026-09-29",
           "activeStakers": 34
+        },
+        {
+          "day": "2026-09-30",
+          "activeStakers": 34
         }
       ]
     },
     "1": {
-      "contributions": "6730910301215992200000",
+      "contributions": "6740991872106392200000",
       "seedClaims": "32057716872720000000000",
       "annualAwards": "0",
       "wallets": [
@@ -3493,11 +3497,15 @@
         {
           "day": "2026-09-29",
           "activeStakers": 19
+        },
+        {
+          "day": "2026-09-30",
+          "activeStakers": 19
         }
       ]
     },
     "2": {
-      "contributions": "27145483304358173005000",
+      "contributions": "27155564875251673005000",
       "seedClaims": "32057515950240000000000",
       "annualAwards": "0",
       "wallets": [
@@ -5059,11 +5067,15 @@
         {
           "day": "2026-09-29",
           "activeStakers": 18
+        },
+        {
+          "day": "2026-09-30",
+          "activeStakers": 18
         }
       ]
     },
     "3": {
-      "contributions": "7781002346559012580980",
+      "contributions": "7791083917448412580980",
       "seedClaims": "32057242428640000000000",
       "annualAwards": "0",
       "wallets": [
@@ -6625,11 +6637,15 @@
         {
           "day": "2026-09-29",
           "activeStakers": 26
+        },
+        {
+          "day": "2026-09-30",
+          "activeStakers": 26
         }
       ]
     },
     "4": {
-      "contributions": "90489759676411580000000",
+      "contributions": "90499841247299980000000",
       "seedClaims": "32057119715280000000000",
       "annualAwards": "0",
       "wallets": [
@@ -8191,11 +8207,15 @@
         {
           "day": "2026-09-29",
           "activeStakers": 28
+        },
+        {
+          "day": "2026-09-30",
+          "activeStakers": 28
         }
       ]
     },
     "5": {
-      "contributions": "12527212724710767285699",
+      "contributions": "16381883558247346285699",
       "seedClaims": "32026848758080000000000",
       "annualAwards": "0",
       "wallets": [
@@ -9758,11 +9778,15 @@
         {
           "day": "2026-09-29",
           "activeStakers": 29
+        },
+        {
+          "day": "2026-09-30",
+          "activeStakers": 29
         }
       ]
     },
     "6": {
-      "contributions": "9753791027189214100000",
+      "contributions": "9763872598077614100000",
       "seedClaims": "32056678815920000000000",
       "annualAwards": "0",
       "wallets": [
@@ -11324,11 +11348,15 @@
         {
           "day": "2026-09-29",
           "activeStakers": 23
+        },
+        {
+          "day": "2026-09-30",
+          "activeStakers": 23
         }
       ]
     },
     "7": {
-      "contributions": "52949123540706513377800",
+      "contributions": "52959205111595813377800",
       "seedClaims": "32056461164640000000000",
       "annualAwards": "0",
       "wallets": [
@@ -12890,11 +12918,15 @@
         {
           "day": "2026-09-29",
           "activeStakers": 30
+        },
+        {
+          "day": "2026-09-30",
+          "activeStakers": 30
         }
       ]
     },
     "8": {
-      "contributions": "25349517018092356931045",
+      "contributions": "25359598588975656931045",
       "seedClaims": "32032147826800000000000",
       "annualAwards": "0",
       "wallets": [
@@ -14456,11 +14488,15 @@
         {
           "day": "2026-09-29",
           "activeStakers": 87
+        },
+        {
+          "day": "2026-09-30",
+          "activeStakers": 87
         }
       ]
     },
     "9": {
-      "contributions": "7494415884801382232548",
+      "contributions": "7504497455695882232548",
       "seedClaims": "19487205963280000000000",
       "annualAwards": "0",
       "wallets": [
@@ -15814,11 +15850,15 @@
         {
           "day": "2026-09-29",
           "activeStakers": 27
+        },
+        {
+          "day": "2026-09-30",
+          "activeStakers": 27
         }
       ]
     },
     "10": {
-      "contributions": "6669866763111280800000",
+      "contributions": "6679948333999780800000",
       "seedClaims": "0",
       "annualAwards": "0",
       "wallets": [
@@ -16616,12 +16656,16 @@
         {
           "day": "2026-09-29",
           "activeStakers": 18
+        },
+        {
+          "day": "2026-09-30",
+          "activeStakers": 18
         }
       ]
     }
   },
   "annualCycles": {},
-  "day": "2026-09-30",
+  "day": "2026-10-01",
   "rows": [
     {
       "day": "2025-09-06",
@@ -18956,6 +19000,12 @@
       "activeStakers": 205,
       "totalStaked": 136230211.7703997,
       "totalContributed": 616701.8771803674
+    },
+    {
+      "day": "2026-09-30",
+      "activeStakers": 205,
+      "totalStaked": 136230211.7703997,
+      "totalContributed": 620930.9253692806
     }
   ],
   "logRange": 1250,

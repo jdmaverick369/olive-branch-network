@@ -110,6 +110,17 @@ video {
   flex-wrap: wrap;
 }
 
+.pool-list-card {
+  background-color: #ecfdf5;
+  border-color: #10b981;
+}
+
+.dark .pool-list-card,
+[data-theme="dark"] .pool-list-card {
+  background-color: var(--card-bg);
+  border-color: var(--card-border);
+}
+
 .pool-list-card > :last-child {
   flex: 1 1 9em;
 }

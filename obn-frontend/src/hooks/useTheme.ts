@@ -1,33 +1,27 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useSyncExternalStore } from "react";
 
-export function useTheme(): "light" | "dark" {
-  const [theme, setTheme] = useState<"light" | "dark">(() => {
-    if (typeof document === "undefined") return "light";
-    return document.documentElement.classList.contains("dark") ||
-      document.documentElement.getAttribute("data-theme") === "dark"
-      ? "dark"
-      : "light";
+function readTheme(): "light" | "dark" {
+  return document.documentElement.classList.contains("dark") ||
+    document.documentElement.getAttribute("data-theme") === "dark"
+    ? "dark"
+    : "light";
+}
+
+function subscribe(onChange: () => void) {
+  const observer = new MutationObserver(onChange);
+  observer.observe(document.documentElement, {
+    attributes: true,
+    attributeFilter: ["class", "data-theme"],
   });
+  return () => observer.disconnect();
+}
 
-  useEffect(() => {
-    const detect = () => {
-      const isDark =
-        document.documentElement.classList.contains("dark") ||
-        document.documentElement.getAttribute("data-theme") === "dark";
-      setTheme(isDark ? "dark" : "light");
-    };
-
-    detect();
-
-    const observer = new MutationObserver(detect);
-    observer.observe(document.documentElement, {
-      attributes: true,
-      attributeFilter: ["class", "data-theme"],
-    });
-    return () => observer.disconnect();
-  }, []);
-
-  return theme;
+// The server always renders "light". useSyncExternalStore hydrates with that same
+// value and then re-renders with the real theme, so React patches any theme-based
+// inline styles. (Reading the DOM in a useState initializer returned "dark" during
+// hydration, React kept the server's light styles, and nothing ever re-rendered.)
+export function useTheme(): "light" | "dark" {
+  return useSyncExternalStore(subscribe, readTheme, () => "light");
 }

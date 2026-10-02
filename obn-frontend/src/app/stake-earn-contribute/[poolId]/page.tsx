@@ -4,6 +4,9 @@ import { ObnPrimary, ObnUsd } from "@/components/ObnUsd";
 
 import Image from "next/image";
 import { useMonthlyAutoClaim, AutoClaimButton, AutoClaimDialog } from "@/components/MonthlyAutoClaim";
+import { Web2Deposit } from "@/components/Web2Deposit";
+import { useDisplayMode } from "@/hooks/useDisplayMode";
+import { usePreviewAccess } from "@/hooks/usePreviewAccess";
 import { useMiniAppWallet } from "@/components/MiniAppWalletProvider";
 
 import { useParams, useRouter } from "next/navigation";
@@ -476,8 +479,10 @@ export default function PoolDetailPage() {
   });
   };
 
-  const handleUnstake = async () => {
+  // Web2 mode passes its own amount; the Web3 controls use the shared input.
+  const handleUnstake = async (amountOverride?: string) => {
     if (needsConnect()) return;
+    const value = amountOverride ?? amount;
     return tx.run("Unstake", async () => {
     if (loading) return;
     if (!currentAddress) {
@@ -487,14 +492,14 @@ export default function PoolDetailPage() {
       return;
     }
     if (!Number.isFinite(pid) || !publicClient) return;
-    if (!amount) return;
+    if (!value) return;
 
-    const n = Number(amount);
+    const n = Number(value);
     if (!Number.isFinite(n) || n <= 0) return;
 
     setProcessingAction('unstake');
     try {
-      const amt = parseUnits(amount, 18);
+      const amt = parseUnits(value, 18);
       if (canBatch) {
         await sendCallsAsync({
           calls: [{ to: STAKING_CONTRACT, data: encodeFunctionData({ abi: stakingAbi, functionName: "withdraw", args: [effectivePid, amt] }) }],
@@ -556,6 +561,19 @@ export default function PoolDetailPage() {
   };
 
   const handleBack = () => router.back();
+
+  // Web2 (cash) mode replaces the staking controls with dollar deposits — private preview only for now.
+  const { displayMode } = useDisplayMode();
+  const previewAccess = usePreviewAccess();
+  const web2Deposit = previewAccess && displayMode === "normal" && !isThisPoolsNonprofitWallet;
+  const requireWallet = () => {
+    if (needsConnect()) return false;
+    if (!wagmiAddress) {
+      if (!isMiniAppLayout) openConnectModal?.();
+      return false;
+    }
+    return true;
+  };
 
   // Reusable card style that matches highlighted pool cards
   const cardStyle: CSSProperties = {
@@ -712,58 +730,23 @@ export default function PoolDetailPage() {
 
             {/* Controls */}
             <div className="flex flex-col items-center w-full shrink-0" style={{ maxWidth: !isMiniAppLayout && !isMobileBrowser ? "400px" : "448px", marginTop: !isMiniAppLayout && !isMobileBrowser ? "32px" : "16px" }}>
-              <div className="w-50 max-w-full mb-4 flex flex-col gap-1">
-                <label
-                  className="flex items-baseline justify-center gap-1 w-full border rounded-lg px-3.5 py-2.5 text-sm focus-within:ring-2 focus-within:ring-green-500 cursor-text"
-                  style={{ borderColor: "var(--card-border)", color: "var(--card-text)", backgroundColor: "var(--card-bg)" }}
-                >
-                  <span className="relative min-w-0 overflow-hidden">
-                    <span aria-hidden="true" className="invisible whitespace-pre">{amount || "Enter amount"}</span>
-                    <input
-                      type="text"
-                      inputMode="decimal"
-                      value={amount}
-                      onChange={(e) => {
-                        const value = e.target.value;
-                        if (/^\d*\.?\d*$/.test(value)) setAmount(value);
-                      }}
-                      placeholder="Enter amount"
-                      aria-label="OBN amount"
-                      aria-describedby={amount ? "amount-usd-estimate" : undefined}
-                      className="absolute inset-0 w-full min-w-0 border-0 bg-transparent p-0 text-right text-inherit outline-none"
-                    />
-                  </span>
-                  <span aria-hidden="true" className="shrink-0">OBN</span>
-                </label>
-                {amount && (
-                  <div id="amount-usd-estimate">
-                    <ObnUsd amount={amount} block size="text-xs" />
-                  </div>
-                )}
-              </div>
-              {isThisPoolsNonprofitWallet ? (
-                <div className="flex flex-col items-center gap-2">
-                  <div className="flex items-center gap-2">
-                  <button
-                    disabled={loading}
-                    onClick={handleClaim}
-                    className="px-5 py-2.5 rounded-lg font-semibold border transition text-sm"
-                    style={{ borderColor: "#2563eb", color: "#2563eb" }}
-                    onMouseEnter={(e) => {
-                      (e.currentTarget as HTMLButtonElement).style.backgroundColor = "#2563eb";
-                      (e.currentTarget as HTMLButtonElement).style.color = "#ffffff";
-                    }}
-                    onMouseLeave={(e) => {
-                      (e.currentTarget as HTMLButtonElement).style.backgroundColor = "transparent";
-                      (e.currentTarget as HTMLButtonElement).style.color = "#2563eb";
-                    }}
-                  >
-                    {processingAction === 'claim' ? "Processing..." : "Claim"}
-                  </button>
-                  <AutoClaimButton control={autoClaim} disabled={loading} className="px-5 py-2.5 text-sm" />
-                  </div>
-
-                  <div className="flex items-center gap-2 justify-center w-full">
+              {web2Deposit ? (
+                <>
+                  <Web2Deposit
+                    pid={pid}
+                    account={(currentAddress ?? undefined) as `0x${string}` | undefined}
+                    tx={tx}
+                    canBatch={canBatch}
+                    busy={loading}
+                    stakeRaw={(userStakeData as bigint | undefined) ?? 0n}
+                    requireWallet={requireWallet}
+                    onRefresh={postTxnRefresh}
+                    onWithdraw={(obnAmount) => void handleUnstake(obnAmount)}
+                    onCollect={() => void handleClaim()}
+                    // Popup wallets (Base Account, Coinbase smart wallet) need a click to open; others can be prompted directly.
+                    autoFinish={!!wagmiAddress && !miniWallet.viewOnly && connector?.id !== "baseAccount" && connector?.id !== "coinbaseWalletSDK"}
+                  />
+                  <div className="flex items-center gap-2 justify-center w-full mt-5 mb-3">
                     <button
                       onClick={handleBack}
                       className={`${NAV_BUTTON_CLASS} bg-[#0D9921]`}
@@ -772,53 +755,51 @@ export default function PoolDetailPage() {
                     </button>
                     {isInMiniApp && (
                       <ShareToFarcaster
-                        text={`I'm earning $OBN while supporting ${meta?.name ?? "a nonprofit"} on the Olive Branch Network 🌿`}
+                        text={`I'm supporting ${meta?.name ?? "a nonprofit"} on the Olive Branch Network 🌿`}
                         className={`${NAV_BUTTON_CLASS} bg-purple-600`}
                       />
                     )}
                   </div>
-                </div>
+                </>
               ) : (
-                <>
-                  <div className="w-full">
-                  <div className="pool-actions flex gap-2 justify-center">
-                    <button
-                      disabled={loading}
-                      onClick={handleStake}
-                      className="px-2 sm:px-3 py-2 rounded-lg font-semibold border transition text-xs flex-1 min-w-0 whitespace-nowrap"
-                      style={{ borderColor: "#0D9921", color: "#0D9921", minWidth: 0 }}
-                      onMouseEnter={(e) => {
-                        (e.currentTarget as HTMLButtonElement).style.backgroundColor = "#0D9921";
-                        (e.currentTarget as HTMLButtonElement).style.color = "#ffffff";
-                      }}
-                      onMouseLeave={(e) => {
-                        (e.currentTarget as HTMLButtonElement).style.backgroundColor = "transparent";
-                        (e.currentTarget as HTMLButtonElement).style.color = "#0D9921";
-                      }}
-                    >
-                      {processingAction === 'stake' ? "Processing..." : displayText("Stake")}
-                    </button>
-                    <button
-                      disabled={loading}
-                      onClick={handleUnstake}
-                      className="px-2 sm:px-3 py-2 rounded-lg font-semibold border transition text-xs flex-1 min-w-0 whitespace-nowrap"
-                      style={{ borderColor: "#dc2626", color: "#dc2626", minWidth: 0 }}
-                      onMouseEnter={(e) => {
-                        (e.currentTarget as HTMLButtonElement).style.backgroundColor = "#dc2626";
-                        (e.currentTarget as HTMLButtonElement).style.color = "#ffffff";
-                      }}
-                      onMouseLeave={(e) => {
-                        (e.currentTarget as HTMLButtonElement).style.backgroundColor = "transparent";
-                        (e.currentTarget as HTMLButtonElement).style.color = "#dc2626";
-                      }}
-                    >
-                      {processingAction === 'unstake' ? "Processing..." : displayText("Unstake")}
-                    </button>
+              <>
+                <div className="w-50 max-w-full mb-4 flex flex-col gap-1">
+                  <label
+                    className="flex items-baseline justify-center gap-1 w-full border rounded-lg px-3.5 py-2.5 text-sm focus-within:ring-2 focus-within:ring-green-500 cursor-text"
+                    style={{ borderColor: "var(--card-border)", color: "var(--card-text)", backgroundColor: "var(--card-bg)" }}
+                  >
+                    <span className="relative min-w-0 overflow-hidden">
+                      <span aria-hidden="true" className="invisible whitespace-pre">{amount || "Enter amount"}</span>
+                      <input
+                        type="text"
+                        inputMode="decimal"
+                        value={amount}
+                        onChange={(e) => {
+                          const value = e.target.value;
+                          if (/^\d*\.?\d*$/.test(value)) setAmount(value);
+                        }}
+                        placeholder="Enter amount"
+                        aria-label="OBN amount"
+                        aria-describedby={amount ? "amount-usd-estimate" : undefined}
+                        className="absolute inset-0 w-full min-w-0 border-0 bg-transparent p-0 text-right text-inherit outline-none"
+                      />
+                    </span>
+                    <span aria-hidden="true" className="shrink-0">OBN</span>
+                  </label>
+                  {amount && (
+                    <div id="amount-usd-estimate">
+                      <ObnUsd amount={amount} block size="text-xs" />
+                    </div>
+                  )}
+                </div>
+                {isThisPoolsNonprofitWallet ? (
+                  <div className="flex flex-col items-center gap-2">
+                    <div className="flex items-center gap-2">
                     <button
                       disabled={loading}
                       onClick={handleClaim}
-                      className="px-2 sm:px-3 py-2 rounded-lg font-semibold border transition text-xs flex-1 min-w-0 whitespace-nowrap"
-                      style={{ borderColor: "#2563eb", color: "#2563eb", minWidth: 0 }}
+                      className="px-5 py-2.5 rounded-lg font-semibold border transition text-sm"
+                      style={{ borderColor: "#2563eb", color: "#2563eb" }}
                       onMouseEnter={(e) => {
                         (e.currentTarget as HTMLButtonElement).style.backgroundColor = "#2563eb";
                         (e.currentTarget as HTMLButtonElement).style.color = "#ffffff";
@@ -830,26 +811,98 @@ export default function PoolDetailPage() {
                     >
                       {processingAction === 'claim' ? "Processing..." : "Claim"}
                     </button>
-                    <AutoClaimButton control={autoClaim} disabled={loading} className="px-2 sm:px-3 py-2 text-xs flex-1 min-w-0" />
-                  </div>
+                    <AutoClaimButton control={autoClaim} disabled={loading} className="px-5 py-2.5 text-sm" />
+                    </div>
 
+                    <div className="flex items-center gap-2 justify-center w-full">
+                      <button
+                        onClick={handleBack}
+                        className={`${NAV_BUTTON_CLASS} bg-[#0D9921]`}
+                      >
+                        Back
+                      </button>
+                      {isInMiniApp && (
+                        <ShareToFarcaster
+                          text={`I'm earning $OBN while supporting ${meta?.name ?? "a nonprofit"} on the Olive Branch Network 🌿`}
+                          className={`${NAV_BUTTON_CLASS} bg-purple-600`}
+                        />
+                      )}
+                    </div>
                   </div>
+                ) : (
+                  <>
+                    <div className="w-full">
+                    <div className="pool-actions flex gap-2 justify-center">
+                      <button
+                        disabled={loading}
+                        onClick={handleStake}
+                        className="px-2 sm:px-3 py-2 rounded-lg font-semibold border transition text-xs flex-1 min-w-0 whitespace-nowrap"
+                        style={{ borderColor: "#0D9921", color: "#0D9921", minWidth: 0 }}
+                        onMouseEnter={(e) => {
+                          (e.currentTarget as HTMLButtonElement).style.backgroundColor = "#0D9921";
+                          (e.currentTarget as HTMLButtonElement).style.color = "#ffffff";
+                        }}
+                        onMouseLeave={(e) => {
+                          (e.currentTarget as HTMLButtonElement).style.backgroundColor = "transparent";
+                          (e.currentTarget as HTMLButtonElement).style.color = "#0D9921";
+                        }}
+                      >
+                        {processingAction === 'stake' ? "Processing..." : displayText("Stake")}
+                      </button>
+                      <button
+                        disabled={loading}
+                        onClick={() => handleUnstake()}
+                        className="px-2 sm:px-3 py-2 rounded-lg font-semibold border transition text-xs flex-1 min-w-0 whitespace-nowrap"
+                        style={{ borderColor: "#dc2626", color: "#dc2626", minWidth: 0 }}
+                        onMouseEnter={(e) => {
+                          (e.currentTarget as HTMLButtonElement).style.backgroundColor = "#dc2626";
+                          (e.currentTarget as HTMLButtonElement).style.color = "#ffffff";
+                        }}
+                        onMouseLeave={(e) => {
+                          (e.currentTarget as HTMLButtonElement).style.backgroundColor = "transparent";
+                          (e.currentTarget as HTMLButtonElement).style.color = "#dc2626";
+                        }}
+                      >
+                        {processingAction === 'unstake' ? "Processing..." : displayText("Unstake")}
+                      </button>
+                      <button
+                        disabled={loading}
+                        onClick={handleClaim}
+                        className="px-2 sm:px-3 py-2 rounded-lg font-semibold border transition text-xs flex-1 min-w-0 whitespace-nowrap"
+                        style={{ borderColor: "#2563eb", color: "#2563eb", minWidth: 0 }}
+                        onMouseEnter={(e) => {
+                          (e.currentTarget as HTMLButtonElement).style.backgroundColor = "#2563eb";
+                          (e.currentTarget as HTMLButtonElement).style.color = "#ffffff";
+                        }}
+                        onMouseLeave={(e) => {
+                          (e.currentTarget as HTMLButtonElement).style.backgroundColor = "transparent";
+                          (e.currentTarget as HTMLButtonElement).style.color = "#2563eb";
+                        }}
+                      >
+                        {processingAction === 'claim' ? "Processing..." : "Claim"}
+                      </button>
+                      <AutoClaimButton control={autoClaim} disabled={loading} className="px-2 sm:px-3 py-2 text-xs flex-1 min-w-0" />
+                    </div>
 
-                  <div className="flex items-center gap-2 justify-center w-full mt-5 mb-3">
-                    <button
-                      onClick={handleBack}
-                      className={`${NAV_BUTTON_CLASS} bg-[#0D9921]`}
-                    >
-                      Back
-                    </button>
-                    {isInMiniApp && (
-                      <ShareToFarcaster
-                        text={`I'm earning $OBN while supporting ${meta?.name ?? "a nonprofit"} on the Olive Branch Network 🌿`}
-                        className={`${NAV_BUTTON_CLASS} bg-purple-600`}
-                      />
-                    )}
-                  </div>
-                </>
+                    </div>
+
+                    <div className="flex items-center gap-2 justify-center w-full mt-5 mb-3">
+                      <button
+                        onClick={handleBack}
+                        className={`${NAV_BUTTON_CLASS} bg-[#0D9921]`}
+                      >
+                        Back
+                      </button>
+                      {isInMiniApp && (
+                        <ShareToFarcaster
+                          text={`I'm earning $OBN while supporting ${meta?.name ?? "a nonprofit"} on the Olive Branch Network 🌿`}
+                          className={`${NAV_BUTTON_CLASS} bg-purple-600`}
+                        />
+                      )}
+                    </div>
+                  </>
+                )}
+              </>
               )}
             </div>
           </>
