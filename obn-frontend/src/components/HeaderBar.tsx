@@ -69,7 +69,7 @@ function BrowserAccount({ address, onClick }: { address: Address; onClick: () =>
     <button
       onClick={onClick}
       type="button"
-      className={`flex min-w-0 max-w-full items-center justify-center gap-1.5 rounded-xl bg-white text-gray-900 shadow-sm hover:shadow-lg hover:scale-105 transition-all ${portrait ? "py-[3px] pl-[3px] pr-3 lg:px-3 lg:py-2" : "px-3 py-2"}`}
+      className={`flex min-w-0 max-w-full items-center justify-center gap-1.5 rounded-xl bg-white text-gray-900 shadow-sm hover:shadow-lg hover:scale-105 transition-all ${portrait ? "py-[3px] pl-[3px] pr-3 max-[359px]:pr-2.5 lg:px-3 lg:py-2" : "px-3 py-2 max-[359px]:px-2.5"}`}
       title="Click to disconnect"
     >
       {portrait && (
@@ -271,7 +271,7 @@ export default function HeaderBar() {
 
   return (
     <div className="fixed top-0 left-0 w-full text-white z-50 " style={{ backgroundColor: "#0D9921" }}>
-      <div className={`relative w-full px-4 md:px-8 py-3 grid grid-cols-[auto_minmax(0,1fr)_minmax(0,max-content)] gap-x-2 items-center md:flex md:justify-between ${!isInMiniApp && !likelyMiniApp ? "lg:grid lg:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)]" : ""}`}>
+      <div className={`relative w-full px-4 md:px-8 py-3 grid grid-cols-[auto_minmax(0,1fr)] gap-x-2 items-center md:flex md:justify-between ${!isInMiniApp && !likelyMiniApp ? "lg:grid lg:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)]" : ""}`}>
 
         {/* Left: Menu button + Theme toggle */}
         <div className="flex items-center gap-2 z-10">
@@ -382,11 +382,12 @@ export default function HeaderBar() {
           </Link>
         </div>
 
-        {/* Center: spacer that keeps the account controls on the right */}
-        <div className="min-w-0 md:flex-1" />
+        {/* Center: from md up, a spacer that keeps the account controls on the right.
+            On phones the account follows Oliver with the same 8px gap as the buttons. */}
+        <div className="hidden min-w-0 md:block md:flex-1" />
 
         {/* Right: User info */}
-        <div className="flex min-w-0 max-w-full items-center gap-3 z-10 justify-self-end">
+        <div className="flex min-w-0 max-w-full items-center gap-3 z-10 justify-self-start md:justify-self-end">
 
           {/* Priority 1: Farcaster MiniApp user */}
           <FarcasterHeaderUser onMiniAppDetected={handleMiniAppDetected} />

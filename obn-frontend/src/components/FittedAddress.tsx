@@ -6,7 +6,8 @@ export function FittedAddress({ address, separator = "…", wide = "short" }: { 
   const cut = (head: number, tail: number) => `${address.slice(0, head)}${separator}${address.slice(-tail)}`;
   return (
     <>
-      <span className="min-[360px]:hidden">{cut(6, 4)}</span>
+      {/* The narrowest phones always get the one-character ellipsis, which saves two characters of width. */}
+      <span className="min-[360px]:hidden">{`${address.slice(0, 6)}…${address.slice(-4)}`}</span>
       <span className="hidden min-[360px]:inline min-[430px]:hidden">{cut(8, 6)}</span>
       <span className="hidden min-[430px]:inline md:hidden">{cut(10, 8)}</span>
       <span className="hidden md:inline lg:hidden">{wide === "full" ? cut(10, 8) : cut(6, 4)}</span>
