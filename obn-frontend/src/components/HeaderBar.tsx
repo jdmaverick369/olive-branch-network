@@ -10,7 +10,6 @@ import Link from "next/link";
 import { ChevronDown, Moon, Sun } from "lucide-react";
 import { FarcasterHeaderUser } from "@/components/FarcasterHeaderUser";
 import { isMiniAppRuntime } from "@/lib/miniapp";
-import MarketTicker from "@/components/MarketTicker";
 import { useDisplayMode } from "@/hooks/useDisplayMode";
 import { useBasename } from "@/hooks/useBasename";
 import { isCoinbaseWalletBrowser } from "@/lib/coinbaseWalletBrowser";
@@ -338,12 +337,26 @@ export default function HeaderBar() {
           >
             {theme === "dark" ? <Moon className="h-4 w-4" /> : <Sun className="h-4 w-4" />}
           </button>
+
+          {/* Oliver: same size and style as the theme toggle; always his light-mode look. */}
+          <Link
+            href="/ask"
+            aria-label="Ask Oliver"
+            title="Ask Oliver"
+            className="group flex items-center justify-center rounded-md p-[3px]
+                       border border-white/70
+                       hover:bg-white
+                       focus:outline-none focus-visible:ring-2 focus-visible:ring-white/70
+                       transition-colors
+                       dark:border-white/60 dark:hover:bg-white"
+          >
+            <Image src="/oliver.png" alt="" width={22} height={22} priority
+              className="transition-transform duration-200 ease-out group-hover:scale-110" />
+          </Link>
         </div>
 
-        {/* Center: rotating market prices */}
-        <div className="min-w-0 overflow-hidden px-1 flex justify-center md:flex-1 md:px-4">
-          <MarketTicker />
-        </div>
+        {/* Center: spacer that keeps the account controls on the right */}
+        <div className="min-w-0 md:flex-1" />
 
         {/* Right: User info */}
         <div className="flex items-center gap-3 z-10 justify-self-end">
