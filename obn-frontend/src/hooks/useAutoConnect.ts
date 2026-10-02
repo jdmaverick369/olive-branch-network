@@ -4,18 +4,28 @@ import { useAccount } from "wagmi";
 import { isMiniAppRuntime, detectMiniApp } from "@/lib/miniapp";
 import { isBaseAccountConnector } from "@/lib/baseAccountConnector";
 
+// Other wallets' in-app browsers and extensions often also claim isCoinbaseWallet for compatibility.
+const OTHER_WALLET_FLAGS = [
+  "isRainbow", "isTrust", "isTrustWallet", "isPhantom", "isOkxWallet", "isOKExWallet", "isRabby", "isZerion",
+  "isBraveWallet", "isTokenPocket", "isBitKeep", "isExodus", "isCoin98", "isSafePal", "isMEWwallet", "isImToken",
+] as const;
+
+/**
+ * Only the in-app browser of the Coinbase Wallet (Base) mobile app, the way Coinbase's own SDK detects
+ * it (isCoinbaseBrowser). isCoinbaseWallet alone isn't enough: the desktop extension sets it, and so do
+ * other wallets' in-app browsers (e.g. Rainbow) for compatibility. Everyone else connects manually.
+ */
 function isCoinbaseWalletBrowser(): boolean {
   if (typeof window === "undefined") return false;
-  return Boolean(
-    (window as { ethereum?: { isCoinbaseWallet?: boolean } }).ethereum
-      ?.isCoinbaseWallet
-  );
+  const ethereum = (window as { ethereum?: Record<string, unknown> }).ethereum;
+  if (!ethereum || ethereum.isCoinbaseBrowser !== true) return false;
+  return !OTHER_WALLET_FLAGS.some((flag) => ethereum[flag]);
 }
 
 /**
  * Auto-connects to the appropriate wallet based on the runtime environment:
  * - Farcaster Mini App: connects via the Farcaster connector
- * - Base App / Coinbase Wallet browser: connects via the baseAccount connector
+ * - Base App / Coinbase Wallet mobile in-app browser: connects via the baseAccount connector
  * - Standard web: does nothing (manual connection via ConnectButton)
  *
  * Uses a ref to track if we've already attempted connection to avoid
