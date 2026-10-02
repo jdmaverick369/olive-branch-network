@@ -3,6 +3,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { FittedAddress } from "@/components/FittedAddress";
+import { AccountPill } from "@/components/AccountPill";
 import { sdk } from "@farcaster/miniapp-sdk";
 import type { Address } from "viem";
 import { Eye } from "lucide-react";
@@ -84,29 +85,16 @@ export function FarcasterHeaderUser({ onMiniAppDetected }: Props) {
 
   return (
     <div ref={menuRef} className="relative min-w-0 max-w-full">
-      <button
-        type="button"
+      <AccountPill
         onClick={() => setOpen((v) => !v)}
         aria-haspopup="menu"
         aria-expanded={open}
         aria-label={viewOnly && viewAddress ? `Viewing ${shortAddress(viewAddress)} (view only). Open wallet menu` : undefined}
-        className="relative flex min-w-0 max-w-full items-center gap-2 hover:opacity-80 transition-opacity cursor-pointer"
+        portrait={user.pfpUrl}
+        mono={!!viewAddress}
+        label={viewAddress ? <FittedAddress address={viewAddress} separator="..." /> : user.username ? `@${user.username}` : `FID ${user.fid}`}
       >
-        {user.pfpUrl && (
-          <div className="flex shrink-0 items-center justify-center rounded-md p-[2px] md:p-0.5 border border-white/70 bg-white dark:border-white/60">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src={user.pfpUrl}
-              alt="Profile"
-              className="h-6 w-6 md:h-5 md:w-5 rounded-full object-cover"
-            />
-          </div>
-        )}
-        {/* Below md the name uses whatever room the header has left (see HeaderBar's grid). */}
-        <span className="min-w-0 truncate md:max-w-37.5 text-sm text-white">
-          {viewAddress ? <FittedAddress address={viewAddress} /> : user.username ? `@${user.username}` : `FID ${user.fid}`}
-        </span>
-        {/* Overlaid on the avatar corner so it adds no width to the header row. */}
+        {/* Overlaid on the pill's corner so it adds no width to the header row. */}
         {viewOnly && (
           <span
             aria-hidden="true"
@@ -116,7 +104,7 @@ export function FarcasterHeaderUser({ onMiniAppDetected }: Props) {
             <Eye className="h-2.5 w-2.5" strokeWidth={3} />
           </span>
         )}
-      </button>
+      </AccountPill>
 
       {open && (
         <div

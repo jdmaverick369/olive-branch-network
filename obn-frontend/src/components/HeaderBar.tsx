@@ -15,6 +15,7 @@ import { useBasename } from "@/hooks/useBasename";
 import { isCoinbaseWalletBrowser } from "@/lib/coinbaseWalletBrowser";
 import type { Address } from "viem";
 import { FittedAddress } from "@/components/FittedAddress";
+import { AccountPill } from "@/components/AccountPill";
 
 const DEV_MODE = process.env.NODE_ENV === "development";
 
@@ -26,7 +27,6 @@ const noSubscription = () => () => {};
  */
 function CoinbaseAppAccount({ address }: { address: Address }) {
   const { name, avatar } = useBasename(address);
-  const [avatarFailed, setAvatarFailed] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
   useEffect(() => {
     if (!copied) return;
@@ -37,23 +37,14 @@ function CoinbaseAppAccount({ address }: { address: Address }) {
     try { await navigator.clipboard.writeText(address); setCopied(true); } catch { /* The address stays in the title. */ }
   };
   return (
-    <button
-      type="button"
+    <AccountPill
       onClick={() => void copy()}
       title={address}
       aria-label={`Copy wallet address ${address}`}
-      className="relative flex min-w-0 max-w-full items-center gap-2 hover:opacity-80 transition-opacity cursor-pointer"
-    >
-      {avatar && avatarFailed !== avatar && (
-        <div className="flex shrink-0 items-center justify-center rounded-md p-[2px] md:p-0.5 border border-white/70 bg-white dark:border-white/60">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={avatar} alt="" referrerPolicy="no-referrer" onError={() => setAvatarFailed(avatar)} className="h-6 w-6 md:h-5 md:w-5 rounded-full object-cover" />
-        </div>
-      )}
-      <span className="min-w-0 truncate md:max-w-37.5 text-sm text-white" aria-live="polite">
-        {copied ? "Address copied" : name ?? <FittedAddress address={address} />}
-      </span>
-    </button>
+      portrait={avatar}
+      mono={!copied && !name}
+      label={<span aria-live="polite">{copied ? "Address copied" : name ?? <FittedAddress address={address} separator="..." />}</span>}
+    />
   );
 }
 
