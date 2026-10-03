@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
+import { Info } from "lucide-react";
 import { formatUnits, parseUnits, type Address } from "viem";
 import { toast } from "sonner";
 import { usePublicClient, useSignMessage } from "wagmi";
@@ -291,12 +292,21 @@ export function Web2Deposit({
         </label>
       )}
 
-      <p className="text-[11px] leading-snug text-center" style={{ color: "var(--card-subtext)" }}>
-        Pay securely with {walletLabel} through Coinbase, using any debit card in your {wallet === "google_pay" ? "Google Wallet" : "Apple Wallet"}. Your dollars are converted to OBN and deposited in this pool.
-        {reserve !== null && (ethPrice
-          ? ` About ${usd(Number(formatUnits(reserve, 18)) * ethPrice)} of it pays the network fees, and what's left stays in your wallet as ETH for a future withdrawal.`
-          : " A few cents of it pay the network fees, and what's left stays in your wallet as ETH for a future withdrawal.")}
-      </p>
+      {/* One line of essentials; the full explanation is a tap away so the form stays uncluttered. */}
+      <details className="w-full text-center text-[11px] leading-snug" style={{ color: "var(--card-subtext)" }}>
+        <summary className="cursor-pointer list-none [&::-webkit-details-marker]:hidden">
+          Pay with Apple Pay or Google Pay via Coinbase{" "}
+          <Info className="inline h-3.5 w-3.5 -mt-0.5 align-middle" style={{ color: "var(--card-text)" }} aria-hidden="true" />
+          <span className="sr-only">How it works</span>
+        </summary>
+        <p className="mt-1.5">
+          Pay through Coinbase using a debit card saved in Apple Pay or Google Pay. Your dollars are converted to OBN and deposited in this pool.
+          {reserve !== null && (ethPrice
+            ? ` About ${usd(Number(formatUnits(reserve, 18)) * ethPrice)} covers network fees, and what's left stays in your wallet as ETH for a future withdrawal.`
+            : " A few cents cover network fees, and what's left stays in your wallet as ETH for a future withdrawal.")}
+          {" "}The OBN you receive depends on its price at the time, and your deposit&apos;s dollar value goes up and down with the price of OBN.
+        </p>
+      </details>
 
 
       <div className="flex items-center gap-4 text-xs">

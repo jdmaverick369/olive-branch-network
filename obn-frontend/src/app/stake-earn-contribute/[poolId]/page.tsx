@@ -602,7 +602,7 @@ export default function PoolDetailPage() {
             </section>
 
             {/* Controls */}
-            <div className="flex flex-col items-center w-full shrink-0" style={{ maxWidth: !isMiniAppLayout && !isMobileBrowser ? "400px" : "448px", marginTop: !isMiniAppLayout && !isMobileBrowser ? "32px" : "16px" }}>
+            <div className="flex flex-col items-center w-full shrink-0" style={{ maxWidth: !isMiniAppLayout && !isMobileBrowser ? "400px" : "448px", marginTop: !isMiniAppLayout && !isMobileBrowser ? (web2Deposit ? "12px" : "32px") : "16px" }}>
               {web2Deposit ? (
                 <>
                   <Web2Deposit
