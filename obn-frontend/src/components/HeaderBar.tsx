@@ -361,29 +361,14 @@ export default function HeaderBar() {
             {theme === "dark" ? <Moon className="h-4 w-4" /> : <Sun className="h-4 w-4" />}
           </button>
 
-          {/* Oliver: same size and style as the theme toggle; always his light-mode look. */}
-          <Link
-            href={oliverPool ? `/ask?pool=${oliverPool.pid}` : "/ask"}
-            aria-label={oliverLabel}
-            title={oliverLabel}
-            className="group flex items-center justify-center rounded-md p-0.75
-                       border border-white/70
-                       hover:bg-white
-                       focus:outline-none focus-visible:ring-2 focus-visible:ring-white/70
-                       transition-colors
-                       dark:border-white/60 dark:hover:bg-white"
-          >
-            <Image src="/oliver.png" alt="" width={22} height={22} priority
-              className="transition-transform duration-200 ease-out group-hover:scale-110" />
-          </Link>
         </div>
 
-        {/* Center: from md up, a spacer that keeps the account controls on the right.
-            On phones the account follows Oliver with the same 8px gap as the buttons. */}
+        {/* Center: from md up, a spacer that keeps the account controls on the right
+            (on phones the grid's second column does the same). */}
         <div className="hidden min-w-0 md:block md:flex-1" />
 
         {/* Right: User info */}
-        <div className="flex min-w-0 max-w-full items-center gap-3 z-10 justify-self-start md:justify-self-end">
+        <div className="flex min-w-0 max-w-full items-center gap-2 z-10 justify-self-end">
 
           {/* Priority 1: Farcaster MiniApp user */}
           <FarcasterHeaderUser onMiniAppDetected={handleMiniAppDetected} />
@@ -452,6 +437,21 @@ export default function HeaderBar() {
             </ConnectButton.Custom>
           )}
 
+          {/* Oliver: last item in the header, right after the account; same size and style as the theme toggle. */}
+          <Link
+            href={oliverPool ? `/ask?pool=${oliverPool.pid}` : "/ask"}
+            aria-label={oliverLabel}
+            title={oliverLabel}
+            className="group flex shrink-0 items-center justify-center rounded-md p-0.75
+                       border border-white/70
+                       hover:bg-white
+                       focus:outline-none focus-visible:ring-2 focus-visible:ring-white/70
+                       transition-colors
+                       dark:border-white/60 dark:hover:bg-white"
+          >
+            <Image src="/oliver.png" alt="" width={22} height={22} priority
+              className="transition-transform duration-200 ease-out group-hover:scale-110" />
+          </Link>
         </div>
       </div>
     </div>
