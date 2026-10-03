@@ -4,10 +4,11 @@
 
 export type FaqTopic =
   | "about" | "chain" | "buy" | "howToStake" | "apy" | "governance" | "nft" | "minimum" | "unstakeAnytime"
-  | "rewards" | "autoclaimWhat" | "autoclaimWhen" | "autoclaimHow" | "multiplePools" | "fees" | "safety" | "contact";
+  | "rewards" | "autoclaimWhat" | "autoclaimWhen" | "autoclaimHow" | "multiplePools" | "fees" | "safety" | "contact"
+  | "emissions" | "recipients" | "selection" | "charityWallets" | "seed" | "charter" | "allocation" | "terms" | "token" | "campaigns";
 
 export type FaqAnswer = {
-  faqQuestion: string;                      // the FAQ entry this summarizes, verbatim
+  faqQuestion?: string;                     // the FAQ entry this summarizes, verbatim, when applicable
   lines: string[];
   links?: { label: string; href: string }[];
   chips?: string[];                         // follow-ups Oliver can do right away
@@ -56,7 +57,7 @@ export const FAQ: Record<FaqTopic, FaqAnswer> = {
       "• Years 1-2: 10%", "• Years 3-4: 7.5%", "• Years 5-6: 5%", "• Years 7-8: 2.5%", "• Years 9-10: 1.25%",
       "Each pool's rewards are split: 88% to stakers, 10% to the nonprofit, 1% to ExtendOliveBranch and 1% to TheOffering.",
     ],
-    links: [{ label: "Read more in the FAQ", href: "/faq" }],
+    links: [{ label: "Current pool rates", href: "/stake-earn-contribute" }, { label: "Read more in the FAQ", href: "/faq" }],
   },
   governance: {
     faqQuestion: "What are ExtendOliveBranch, TheOffering, and Annual Governance?",
@@ -65,7 +66,7 @@ export const FAQ: Record<FaqTopic, FaqAnswer> = {
       "TheOffering also gets 1%; stakers vote whether it's burned or added to ExtendOliveBranch.",
       "Annual Governance is that yearly vote. You need an OliveNFT in your voting wallet, and voting power follows how much OBN you have staked.",
     ],
-    links: [{ label: "Governance", href: "/governance/extend" }],
+    links: [{ label: "Protocol Funds", href: "/protocol-funds" }],
   },
   nft: {
     faqQuestion: "What is the Olive NFT?",
@@ -140,5 +141,58 @@ export const FAQ: Record<FaqTopic, FaqAnswer> = {
     faqQuestion: "What if I have more questions?",
     lines: ["Join the Discord community to ask questions and connect with other stakers."],
     links: [{ label: "Discord", href: "https://discord.gg/KfMSCsss2z" }, { label: "FAQ", href: "/faq" }],
+  },
+  // Source: WHITEPAPER.md §§3.2, 4.1, 11; THESIS.md §4.3. Triggers/synonyms: FAQ_PATTERNS.emissions.
+  emissions: {
+    lines: ["Rewards come from new OBN tokens issued by the staking contract under its emission schedule. They build up with the amount and time staked and are distributed when rewards are settled. They are not interest from lending your stake, and their money value depends on OBN's market price."],
+    links: [{ label: "Current pool rates", href: "/stake-earn-contribute" }],
+    chips: ["how are rewards divided?"],
+  },
+  // Source: WHITEPAPER.md §5.1; terms-of-service/page.tsx §5; FAQ reward split.
+  recipients: {
+    faqQuestion: "What is APY and how is it calculated?",
+    lines: ["Of each settled reward, 88% goes to the staker, 10% to the chosen nonprofit, and 1% each to ExtendOliveBranch and TheOffering. These shares come from rewards, not a contribution of your staked principal. The same split applies across pools."],
+    links: [{ label: "Protocol Funds", href: "/protocol-funds" }],
+  },
+  // Source: WHITEPAPER.md §§6.2, 6.4, 7.2; docs/commentary/COMMENTARY.md Article IV.
+  selection: {
+    lines: ["OBN lists nonprofit pools using independently checkable organization and wallet information; listing does not imply endorsement or affiliation. Authorized protocol governance manages pool additions and removals. Closing a pool to new stakes still allows existing users to claim and withdraw; removal requires an empty pool."],
+    links: [{ label: "Nonprofits and verification links", href: "/stake-earn-contribute" }],
+  },
+  // Source: WHITEPAPER.md §§5.1, 6.1–6.2; pools.ts verification links.
+  charityWallets: {
+    lines: ["Each nonprofit pool has a designated charity wallet. When rewards are settled, the contract sends the nonprofit's share directly to that wallet in OBN. A pool's page shows its wallet and available verification links; OBN does not automatically convert those tokens to cash."],
+    links: [{ label: "View nonprofit pools", href: "/stake-earn-contribute" }],
+  },
+  // Source: WHITEPAPER.md §§5.2–5.3, 6.3. Community Seed implementation is not established as public/live.
+  seed: {
+    lines: ["The Charity Genesis Reserve is an initial token allocation intended to help approved nonprofits start earning through permanently locked bootstrap stakes. That locked principal differs from an ordinary user's withdrawable stake. I can't confirm a live community seed pool from the public app; check the FAQ or ask the team about availability."],
+    links: [{ label: "FAQ", href: "/faq" }],
+  },
+  // Source: docs/charter/CHARTER.md Articles I–X; docs/README.md Publication status; AUTHORITY-TAXONOMY.md.
+  charter: {
+    lines: ["OBN's published draft Charter describes voluntary participation, control of principal, accountable recipients, and publicly checkable contributions and decisions. It is frozen at draft v0.1 pending validation, rather than a claim that every proposed rule is live. Participants decide the annual protocol-fund outcomes; authorized operators currently manage recipient eligibility and administration."],
+    links: [{ label: "Protocol Funds", href: "/protocol-funds" }, { label: "Public Charter", href: "https://github.com/jdmaverick369/olive-branch-network/blob/main/docs/charter/CHARTER.md" }],
+  },
+  // Source: WHITEPAPER.md §§3.4–3.6; protocol-funds/page.tsx. Avoid disputed full-balance/cutoff details.
+  allocation: {
+    lines: ["TheOffering and ExtendOliveBranch receive separate shares of staking rewards. Annual governance decides whether TheOffering's allocation is burned or added to ExtendOliveBranch, then selects a nonprofit for the distribution. The public Protocol Funds page shows balances and voting status; I don't have a verified answer here for a specific cycle's final allocation."],
+    links: [{ label: "Protocol Funds", href: "/protocol-funds" }],
+  },
+  // Source: terms-of-service/page.tsx §§8–9; WHITEPAPER.md §6.4. No individualized tax advice.
+  terms: {
+    lines: ["OBN does not provide investment, financial, or legal advice, and rewards are not guaranteed. Staking and an onchain contribution record are not a donation receipt or a promise of tax deductibility. Smart-contract, market, network and wallet-access risks remain; consult qualified advisors about your circumstances."],
+    links: [{ label: "Terms of Service", href: "/terms-of-service" }],
+  },
+  // Source: WHITEPAPER.md §§3.1, 11; FAQ 'What is Olive Branch Network?' (public token address).
+  token: {
+    faqQuestion: "What is Olive Branch Network?",
+    lines: [`OBN is the Olive Branch Network token on Base: ${OBN_TOKEN}. Supply changes as staking rewards are minted and tokens are burned, so an initial supply figure is not today's total. Use the token explorer for current supply and the Trade page to acquire OBN.`],
+    links: [{ label: "OBN token and supply", href: `https://basescan.org/token/${OBN_TOKEN}` }, { label: "Trade OBN", href: "/trade" }],
+  },
+  // Source: README.md 'How It Works'; WHITEPAPER.md §10. Campaign prototypes are not public feature evidence.
+  campaigns: {
+    lines: ["I don't have a verified public answer about a specific campaign or its availability. The supported flow here is to choose a nonprofit pool, review your stake, and sign in your wallet. Check the FAQ or ask the team about campaign details."],
+    links: [{ label: "FAQ", href: "/faq" }, { label: "Nonprofit pools", href: "/stake-earn-contribute" }],
   },
 };

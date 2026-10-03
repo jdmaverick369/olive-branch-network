@@ -3,6 +3,7 @@ export type PoolCategory = "humanitarian" | "environment" | "animals";
 export type PoolMeta = {
   pid: number;
   name: string;
+  shortName: string;
   logo: string;               // path or URL
   ethereumAddress: string;
   listDescription: string;    // shown on /stake-earn-contribute
@@ -19,6 +20,7 @@ export const POOLS: PoolMeta[] = [
   {
     pid: 0,
     name: "Give Directly",
+    shortName: "GiveDirectly",
     logo: "/nonprofit-logos/GiveDirectly.png",
     ethereumAddress: "0x750EF1D7a0b4Ab1c97B7A623D7917CcEb5ea779C",
     listDescription:
@@ -34,6 +36,7 @@ export const POOLS: PoolMeta[] = [
   {
     pid: 1,
     name: "Heifer International",
+    shortName: "Heifer",
     logo: "/nonprofit-logos/HeiferInternational.png",
     ethereumAddress: "0xE04063602B8b6B5d3526e6af873d2A4777E12d92",
     listDescription:
@@ -49,6 +52,7 @@ export const POOLS: PoolMeta[] = [
   {
     pid: 2,
     name: "Last Door",
+    shortName: "Last Door",
     logo: "/nonprofit-logos/LastDoor.png",
     ethereumAddress: "0xAB739D4F2B44F3f4ed8236070A8f97119eaEd4aB",
     listDescription:
@@ -64,6 +68,7 @@ export const POOLS: PoolMeta[] = [
   {
     pid: 3,
     name: "Freedom of Press",
+    shortName: "Freedom of the Press",
     logo: "/nonprofit-logos/FreedomOfPress.png",
     ethereumAddress: "0x998F25Be40241CA5D8F5fCaF3591B5ED06EF3Be7",
     listDescription:
@@ -79,6 +84,7 @@ export const POOLS: PoolMeta[] = [
   {
     pid: 4,
     name: "Khan Academy",
+    shortName: "Khan Academy",
     logo: "/nonprofit-logos/KhanAcademy.png",
     ethereumAddress: "0x891432Ab6414EFff5d986E14848eCD1e6b2961ae",
     listDescription:
@@ -94,6 +100,7 @@ export const POOLS: PoolMeta[] = [
   {
     pid: 5,
     name: "Rainforest Foundation US",
+    shortName: "Rainforest",
     logo: "/nonprofit-logos/RainforestFoundationUS.png",
     ethereumAddress: "0x0A60e17d5c98D491809CD8A15370C53806EEc1ec",
     listDescription:
@@ -110,6 +117,7 @@ export const POOLS: PoolMeta[] = [
   {
     pid: 6,
     name: "Tor Project",
+    shortName: "Tor",
     logo: "/nonprofit-logos/TorProject.png",
     ethereumAddress: "0x532Fb5D00f40ced99B16d1E295C77Cda2Eb1BB4F",
     listDescription:
@@ -125,6 +133,7 @@ export const POOLS: PoolMeta[] = [
   {
     pid: 7,
     name: "St. Jude Children's Research Hospital",
+    shortName: "St Jude",
     logo: "/nonprofit-logos/StJudeChildrensResearchHospital.png",
     ethereumAddress: "0x92EE2370b56DC32794A6CD72585dC01d4288D314",
     listDescription:
@@ -140,6 +149,7 @@ export const POOLS: PoolMeta[] = [
   {
     pid: 8,
     name: "charity: water",
+    shortName: "charity: water",
     logo: "/nonprofit-logos/charitywater.png",
     ethereumAddress: "0x718A03C0b38889D57224B5A4eC853953f7B1Aa18",
     listDescription:
@@ -155,6 +165,7 @@ export const POOLS: PoolMeta[] = [
   {
     pid: 9,
     name: "Internet Archive",
+    shortName: "Internet Archive",
     logo: "/nonprofit-logos/InternetArchive.png",
     ethereumAddress: "0xa23fa5a73C6366f6a829aC1F452A24eFdc5EcFF7",
     listDescription:
@@ -170,6 +181,7 @@ export const POOLS: PoolMeta[] = [
   {
     pid: 10,
     name: "K9 Rescue International",
+    shortName: "K9 Rescue",
     logo: "/nonprofit-logos/K9RescueInternational.png",
     ethereumAddress: "0x859D4d3096928048dE53cF256A640aBd428f9bC9",
     listDescription:

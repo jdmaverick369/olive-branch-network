@@ -18,6 +18,13 @@ const snapshot = {
 const data = { snapshot, poolStaked: new Map([[7, 12_000_000], [6, 500], [8, 2_000_000]]), price: 0.00002, change24h: -1.28 };
 const ask = (cmd) => answerStats({ kind: "stats", pids: [], rank: null, limit: null, days: null, ...cmd }, POOLS, data);
 
+test("category scopes restrict ranks and total only the selected pools", () => {
+  assert.deepEqual(ask({ metric: "staked", pids: [7, 8], rank: "least", limit: 1 }), ["Fewest staked:", "1. charity: water: 2M OBN (~$40.00)"]);
+  assert.match(ask({ metric: "staked", pids: [7, 8] })[0], /^14M OBN.*these 2 nonprofits/);
+  assert.match(ask({ metric: "staked", pids: [7, 5] })[0], /can't load/);
+  assert.equal(ask({ metric: "pools", pids: [6] }).length, 2);
+});
+
 test("stakers per nonprofit, with change over time", () => {
   assert.deepEqual(ask({ metric: "stakers", pids: [7] }), ["30 people are staking with St. Jude Children's Research Hospital (as of Oct 2)."]);
   assert.deepEqual(ask({ metric: "stakers", pids: [6] }), ["1 person is staking with Tor Project (as of Oct 2)."]);

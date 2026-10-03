@@ -68,14 +68,15 @@ export function answerStats(cmd: Stats, pools: CommandPool[], data: StatsData): 
   }
 
   if (cmd.metric === "pools") {
-    return [`There are ${live.length} nonprofits you can stake with:`, ...live.map(p => `• ${p.name}`)];
+    const selected = live.filter(p => !cmd.pids.length || cmd.pids.includes(p.pid));
+    return [`There are ${selected.length} nonprofits you can stake with:`, ...selected.map(p => `• ${p.name}`)];
   }
 
   // Rankings
   if (cmd.rank) {
     const metric = cmd.metric === "overview" ? "staked" : cmd.metric;
     const value = metric === "stakers" ? poolStakers : metric === "contributed" ? poolContributed : poolStaked;
-    const rows = live.map(p => ({ pid: p.pid, v: value(p.pid) })).filter((r): r is { pid: number; v: number } => r.v !== null);
+    const rows = live.filter(p => !cmd.pids.length || cmd.pids.includes(p.pid)).map(p => ({ pid: p.pid, v: value(p.pid) })).filter((r): r is { pid: number; v: number } => r.v !== null);
     if (rows.length === 0) return unavailable;
     rows.sort((a, b) => cmd.rank === "least" ? a.v - b.v : b.v - a.v);
     const shown = rows.slice(0, cmd.limit ?? 3);
@@ -89,6 +90,17 @@ export function answerStats(cmd: Stats, pools: CommandPool[], data: StatsData): 
 
   // Several nonprofits side by side
   if (cmd.pids.length > 1) {
+    if (cmd.metric === "staked" || cmd.metric === "contributed") {
+      const value = cmd.metric === "staked" ? poolStaked : poolContributed;
+      const values = cmd.pids.map(value);
+      if (values.some(v => v === null)) return unavailable;
+      const total = values.reduce<number>((sum, v) => sum + v!, 0);
+      return [
+        `${obn(total)}${usd(total, data.price)} ${cmd.metric === "staked" ? "is staked across" : "has been contributed across"} these ${cmd.pids.length} nonprofits${cmd.metric === "contributed" ? asOf : ""}.`,
+        ...cmd.pids.map(pid => `${name(pid)}: ${obn(value(pid)!)}`),
+        ...(cmd.days ? ["I don't have a historical breakdown for this group of nonprofits."] : []),
+      ];
+    }
     return cmd.pids.map(pid => {
       const parts = [
         poolStakers(pid) !== null ? `${count(poolStakers(pid)!)} stakers` : null,

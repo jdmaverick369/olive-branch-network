@@ -1,0 +1,1467 @@
+{
+  "total": 352,
+  "passed": 261,
+  "percent": 74.1,
+  "failures": [
+    {
+      "input": "don't move 100 from Give Directly to Tor",
+      "expected": {
+        "kind": "unknown",
+        "reason": "negated"
+      },
+      "actual": {
+        "kind": "move",
+        "from": 0,
+        "to": 6,
+        "amount": {
+          "unit": "obn",
+          "value": "100"
+        }
+      }
+    },
+    {
+      "input": "what happens if I unstake everything from Give Directly?",
+      "expected": {
+        "kind": "unknown"
+      },
+      "actual": {
+        "kind": "status",
+        "pid": 0
+      }
+    },
+    {
+      "input": "don't move 100 from Heifer International to Tor",
+      "expected": {
+        "kind": "unknown",
+        "reason": "negated"
+      },
+      "actual": {
+        "kind": "move",
+        "from": 1,
+        "to": 6,
+        "amount": {
+          "unit": "obn",
+          "value": "100"
+        }
+      }
+    },
+    {
+      "input": "what happens if I unstake everything from Heifer International?",
+      "expected": {
+        "kind": "unknown"
+      },
+      "actual": {
+        "kind": "status",
+        "pid": 1
+      }
+    },
+    {
+      "input": "don't move 100 from Last Door to Tor",
+      "expected": {
+        "kind": "unknown",
+        "reason": "negated"
+      },
+      "actual": {
+        "kind": "move",
+        "from": 2,
+        "to": 6,
+        "amount": {
+          "unit": "obn",
+          "value": "100"
+        }
+      }
+    },
+    {
+      "input": "what happens if I unstake everything from Last Door?",
+      "expected": {
+        "kind": "unknown"
+      },
+      "actual": {
+        "kind": "status",
+        "pid": 2
+      }
+    },
+    {
+      "input": "don't move 100 from Freedom of Press to Tor",
+      "expected": {
+        "kind": "unknown",
+        "reason": "negated"
+      },
+      "actual": {
+        "kind": "move",
+        "from": 3,
+        "to": 6,
+        "amount": {
+          "unit": "obn",
+          "value": "100"
+        }
+      }
+    },
+    {
+      "input": "what happens if I unstake everything from Freedom of Press?",
+      "expected": {
+        "kind": "unknown"
+      },
+      "actual": {
+        "kind": "status",
+        "pid": 3
+      }
+    },
+    {
+      "input": "don't move 100 from Khan Academy to Tor",
+      "expected": {
+        "kind": "unknown",
+        "reason": "negated"
+      },
+      "actual": {
+        "kind": "move",
+        "from": 4,
+        "to": 6,
+        "amount": {
+          "unit": "obn",
+          "value": "100"
+        }
+      }
+    },
+    {
+      "input": "what happens if I unstake everything from Khan Academy?",
+      "expected": {
+        "kind": "unknown"
+      },
+      "actual": {
+        "kind": "status",
+        "pid": 4
+      }
+    },
+    {
+      "input": "don't move 100 from Rainforest Foundation US to Tor",
+      "expected": {
+        "kind": "unknown",
+        "reason": "negated"
+      },
+      "actual": {
+        "kind": "move",
+        "from": 5,
+        "to": 6,
+        "amount": {
+          "unit": "obn",
+          "value": "100"
+        }
+      }
+    },
+    {
+      "input": "what happens if I unstake everything from Rainforest Foundation US?",
+      "expected": {
+        "kind": "unknown"
+      },
+      "actual": {
+        "kind": "status",
+        "pid": 5
+      }
+    },
+    {
+      "input": "don't move 100 from Tor Project to Tor",
+      "expected": {
+        "kind": "unknown",
+        "reason": "negated"
+      },
+      "actual": {
+        "kind": "move",
+        "from": 6,
+        "to": null,
+        "amount": {
+          "unit": "obn",
+          "value": "100"
+        }
+      }
+    },
+    {
+      "input": "what happens if I unstake everything from Tor Project?",
+      "expected": {
+        "kind": "unknown"
+      },
+      "actual": {
+        "kind": "status",
+        "pid": 6
+      }
+    },
+    {
+      "input": "don't move 100 from St. Jude Children's Research Hospital to Tor",
+      "expected": {
+        "kind": "unknown",
+        "reason": "negated"
+      },
+      "actual": {
+        "kind": "move",
+        "from": 7,
+        "to": 6,
+        "amount": {
+          "unit": "obn",
+          "value": "100"
+        }
+      }
+    },
+    {
+      "input": "what happens if I unstake everything from St. Jude Children's Research Hospital?",
+      "expected": {
+        "kind": "unknown"
+      },
+      "actual": {
+        "kind": "status",
+        "pid": 7
+      }
+    },
+    {
+      "input": "don't move 100 from charity: water to Tor",
+      "expected": {
+        "kind": "unknown",
+        "reason": "negated"
+      },
+      "actual": {
+        "kind": "move",
+        "from": 8,
+        "to": 6,
+        "amount": {
+          "unit": "obn",
+          "value": "100"
+        }
+      }
+    },
+    {
+      "input": "what happens if I unstake everything from charity: water?",
+      "expected": {
+        "kind": "unknown"
+      },
+      "actual": {
+        "kind": "status",
+        "pid": 8
+      }
+    },
+    {
+      "input": "don't move 100 from Internet Archive to Tor",
+      "expected": {
+        "kind": "unknown",
+        "reason": "negated"
+      },
+      "actual": {
+        "kind": "move",
+        "from": 9,
+        "to": 6,
+        "amount": {
+          "unit": "obn",
+          "value": "100"
+        }
+      }
+    },
+    {
+      "input": "what happens if I unstake everything from Internet Archive?",
+      "expected": {
+        "kind": "unknown"
+      },
+      "actual": {
+        "kind": "status",
+        "pid": 9
+      }
+    },
+    {
+      "input": "don't move 100 from K9 Rescue International to Tor",
+      "expected": {
+        "kind": "unknown",
+        "reason": "negated"
+      },
+      "actual": {
+        "kind": "move",
+        "from": 10,
+        "to": 6,
+        "amount": {
+          "unit": "obn",
+          "value": "100"
+        }
+      }
+    },
+    {
+      "input": "what happens if I unstake everything from K9 Rescue International?",
+      "expected": {
+        "kind": "unknown"
+      },
+      "actual": {
+        "kind": "status",
+        "pid": 10
+      }
+    },
+    {
+      "input": "stake 1 000 000 to tor",
+      "expected": {
+        "kind": "stake",
+        "pid": 6,
+        "amount": {
+          "unit": "obn",
+          "value": "1000000"
+        }
+      },
+      "actual": {
+        "kind": "stake",
+        "pid": 6,
+        "amount": null
+      }
+    },
+    {
+      "input": "please stake 1 000 000 to tor",
+      "expected": {
+        "kind": "stake",
+        "pid": 6,
+        "amount": {
+          "unit": "obn",
+          "value": "1000000"
+        }
+      },
+      "actual": {
+        "kind": "stake",
+        "pid": 6,
+        "amount": null
+      }
+    },
+    {
+      "input": "can you stake 1 000 000 to tor?",
+      "expected": {
+        "kind": "stake",
+        "pid": 6,
+        "amount": {
+          "unit": "obn",
+          "value": "1000000"
+        }
+      },
+      "actual": {
+        "kind": "stake",
+        "pid": 6,
+        "amount": null
+      }
+    },
+    {
+      "input": "stake -100 to tor",
+      "expected": {
+        "kind": "stake",
+        "pid": 6,
+        "amount": null
+      },
+      "actual": {
+        "kind": "stake",
+        "pid": 6,
+        "amount": {
+          "unit": "obn",
+          "value": "100"
+        }
+      }
+    },
+    {
+      "input": "stake 1e3 to tor",
+      "expected": {
+        "kind": "stake",
+        "pid": 6,
+        "amount": null
+      },
+      "actual": {
+        "kind": "stake",
+        "pid": 6,
+        "amount": {
+          "unit": "obn",
+          "value": "3"
+        }
+      }
+    },
+    {
+      "input": "🫒",
+      "expected": {
+        "kind": "unknown"
+      },
+      "actual": {
+        "kind": "help"
+      }
+    },
+    {
+      "input": "???",
+      "expected": {
+        "kind": "unknown"
+      },
+      "actual": {
+        "kind": "help"
+      }
+    },
+    {
+      "input": "never move 100 from tor to khan",
+      "expected": {
+        "kind": "unknown",
+        "reason": "negated"
+      },
+      "actual": {
+        "kind": "move",
+        "from": 6,
+        "to": 4,
+        "amount": {
+          "unit": "obn",
+          "value": "100"
+        }
+      }
+    },
+    {
+      "input": "what if I claim all?",
+      "expected": {
+        "kind": "unknown"
+      },
+      "actual": {
+        "kind": "status",
+        "pid": null
+      }
+    },
+    {
+      "input": "suppose I stake 100 to tor",
+      "expected": {
+        "kind": "unknown"
+      },
+      "actual": {
+        "kind": "stake",
+        "pid": 6,
+        "amount": {
+          "unit": "obn",
+          "value": "100"
+        }
+      }
+    },
+    {
+      "input": "stake 100 more to it",
+      "expected": {
+        "kind": "stake",
+        "pid": 6,
+        "amount": {
+          "unit": "obn",
+          "value": "100"
+        }
+      },
+      "context": {
+        "lastPid": 6
+      },
+      "actual": {
+        "kind": "stake",
+        "pid": null,
+        "amount": {
+          "unit": "obn",
+          "value": "100"
+        }
+      }
+    },
+    {
+      "input": "stake 100 to that one",
+      "expected": {
+        "kind": "stake",
+        "pid": 6,
+        "amount": {
+          "unit": "obn",
+          "value": "100"
+        }
+      },
+      "context": {
+        "lastPid": 6
+      },
+      "actual": {
+        "kind": "stake",
+        "pid": null,
+        "amount": {
+          "unit": "obn",
+          "value": "100"
+        }
+      }
+    },
+    {
+      "input": "stake 100 to the same one",
+      "expected": {
+        "kind": "stake",
+        "pid": 6,
+        "amount": {
+          "unit": "obn",
+          "value": "100"
+        }
+      },
+      "context": {
+        "lastPid": 6
+      },
+      "actual": {
+        "kind": "stake",
+        "pid": null,
+        "amount": {
+          "unit": "obn",
+          "value": "100"
+        }
+      }
+    },
+    {
+      "input": "which nonprofits are humanitarian?",
+      "expected": {
+        "kind": "category",
+        "category": "humanitarian",
+        "pid": null
+      },
+      "actual": {
+        "kind": "stats",
+        "metric": "pools",
+        "pids": [],
+        "rank": null,
+        "limit": null,
+        "days": null
+      }
+    },
+    {
+      "input": "list humanitarian nonprofits",
+      "expected": {
+        "kind": "category",
+        "category": "humanitarian",
+        "pid": null
+      },
+      "actual": {
+        "kind": "stats",
+        "metric": "pools",
+        "pids": [],
+        "rank": null,
+        "limit": null,
+        "days": null
+      }
+    },
+    {
+      "input": "show humanitarian causes",
+      "expected": {
+        "kind": "category",
+        "category": "humanitarian",
+        "pid": null
+      },
+      "actual": {
+        "kind": "stats",
+        "metric": "pools",
+        "pids": [],
+        "rank": null,
+        "limit": null,
+        "days": null
+      }
+    },
+    {
+      "input": "stake 1,000 to each humanitarian nonprofit",
+      "expected": {
+        "kind": "stakeEach",
+        "pids": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          6,
+          7,
+          8,
+          9
+        ],
+        "split": false,
+        "amount": {
+          "unit": "obn",
+          "value": "1000"
+        }
+      },
+      "actual": {
+        "kind": "stakeEach",
+        "amount": {
+          "unit": "obn",
+          "value": "1000"
+        },
+        "pids": [],
+        "split": false
+      }
+    },
+    {
+      "input": "split 10k across humanitarian",
+      "expected": {
+        "kind": "stakeEach",
+        "pids": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          6,
+          7,
+          8,
+          9
+        ],
+        "split": true,
+        "amount": {
+          "unit": "obn",
+          "value": "10000"
+        }
+      },
+      "actual": {
+        "kind": "stake",
+        "pid": null,
+        "amount": {
+          "unit": "obn",
+          "value": "10000"
+        }
+      }
+    },
+    {
+      "input": "how much is staked in humanitarian?",
+      "expected": {
+        "kind": "stats",
+        "metric": "staked",
+        "pids": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          6,
+          7,
+          8,
+          9
+        ],
+        "rank": null,
+        "limit": null,
+        "days": null
+      },
+      "actual": {
+        "kind": "stats",
+        "metric": "staked",
+        "pids": [],
+        "rank": null,
+        "limit": null,
+        "days": null
+      }
+    },
+    {
+      "input": "stake 100 to the humanitarian nonprofit with the least stake",
+      "expected": {
+        "kind": "stake",
+        "pid": null,
+        "amount": {
+          "unit": "obn",
+          "value": "100"
+        },
+        "pick": {
+          "order": "least",
+          "by": "staked",
+          "pids": [
+            0,
+            1,
+            2,
+            3,
+            4,
+            6,
+            7,
+            8,
+            9
+          ]
+        }
+      },
+      "actual": {
+        "kind": "stake",
+        "pid": null,
+        "amount": {
+          "unit": "obn",
+          "value": "100"
+        },
+        "pick": {
+          "order": "least",
+          "by": "staked"
+        }
+      }
+    },
+    {
+      "input": "which nonprofits are environment?",
+      "expected": {
+        "kind": "category",
+        "category": "environment",
+        "pid": null
+      },
+      "actual": {
+        "kind": "stats",
+        "metric": "pools",
+        "pids": [],
+        "rank": null,
+        "limit": null,
+        "days": null
+      }
+    },
+    {
+      "input": "list environment nonprofits",
+      "expected": {
+        "kind": "category",
+        "category": "environment",
+        "pid": null
+      },
+      "actual": {
+        "kind": "stats",
+        "metric": "pools",
+        "pids": [],
+        "rank": null,
+        "limit": null,
+        "days": null
+      }
+    },
+    {
+      "input": "show environment causes",
+      "expected": {
+        "kind": "category",
+        "category": "environment",
+        "pid": null
+      },
+      "actual": {
+        "kind": "stats",
+        "metric": "pools",
+        "pids": [],
+        "rank": null,
+        "limit": null,
+        "days": null
+      }
+    },
+    {
+      "input": "stake 1,000 to each environment nonprofit",
+      "expected": {
+        "kind": "stakeEach",
+        "pids": [
+          5
+        ],
+        "split": false,
+        "amount": {
+          "unit": "obn",
+          "value": "1000"
+        }
+      },
+      "actual": {
+        "kind": "stakeEach",
+        "amount": {
+          "unit": "obn",
+          "value": "1000"
+        },
+        "pids": [],
+        "split": false
+      }
+    },
+    {
+      "input": "split 10k across environment",
+      "expected": {
+        "kind": "stakeEach",
+        "pids": [
+          5
+        ],
+        "split": true,
+        "amount": {
+          "unit": "obn",
+          "value": "10000"
+        }
+      },
+      "actual": {
+        "kind": "stake",
+        "pid": null,
+        "amount": {
+          "unit": "obn",
+          "value": "10000"
+        }
+      }
+    },
+    {
+      "input": "how much is staked in environment?",
+      "expected": {
+        "kind": "stats",
+        "metric": "staked",
+        "pids": [
+          5
+        ],
+        "rank": null,
+        "limit": null,
+        "days": null
+      },
+      "actual": {
+        "kind": "stats",
+        "metric": "staked",
+        "pids": [],
+        "rank": null,
+        "limit": null,
+        "days": null
+      }
+    },
+    {
+      "input": "stake 100 to the environment nonprofit with the least stake",
+      "expected": {
+        "kind": "stake",
+        "pid": null,
+        "amount": {
+          "unit": "obn",
+          "value": "100"
+        },
+        "pick": {
+          "order": "least",
+          "by": "staked",
+          "pids": [
+            5
+          ]
+        }
+      },
+      "actual": {
+        "kind": "stake",
+        "pid": null,
+        "amount": {
+          "unit": "obn",
+          "value": "100"
+        },
+        "pick": {
+          "order": "least",
+          "by": "staked"
+        }
+      }
+    },
+    {
+      "input": "which nonprofits are animals?",
+      "expected": {
+        "kind": "category",
+        "category": "animals",
+        "pid": null
+      },
+      "actual": {
+        "kind": "stats",
+        "metric": "pools",
+        "pids": [
+          10
+        ],
+        "rank": null,
+        "limit": null,
+        "days": null
+      }
+    },
+    {
+      "input": "list animals nonprofits",
+      "expected": {
+        "kind": "category",
+        "category": "animals",
+        "pid": null
+      },
+      "actual": {
+        "kind": "stats",
+        "metric": "pools",
+        "pids": [
+          10
+        ],
+        "rank": null,
+        "limit": null,
+        "days": null
+      }
+    },
+    {
+      "input": "show animals causes",
+      "expected": {
+        "kind": "category",
+        "category": "animals",
+        "pid": null
+      },
+      "actual": {
+        "kind": "stats",
+        "metric": "pools",
+        "pids": [
+          10
+        ],
+        "rank": null,
+        "limit": null,
+        "days": null
+      }
+    },
+    {
+      "input": "stake 1,000 to each animals nonprofit",
+      "expected": {
+        "kind": "stakeEach",
+        "pids": [
+          10
+        ],
+        "split": false,
+        "amount": {
+          "unit": "obn",
+          "value": "1000"
+        }
+      },
+      "actual": {
+        "kind": "stake",
+        "pid": 10,
+        "amount": {
+          "unit": "obn",
+          "value": "1000"
+        }
+      }
+    },
+    {
+      "input": "split 10k across animals",
+      "expected": {
+        "kind": "stakeEach",
+        "pids": [
+          10
+        ],
+        "split": true,
+        "amount": {
+          "unit": "obn",
+          "value": "10000"
+        }
+      },
+      "actual": {
+        "kind": "stake",
+        "pid": 10,
+        "amount": {
+          "unit": "obn",
+          "value": "10000"
+        }
+      }
+    },
+    {
+      "input": "stake 100 to the animals nonprofit with the least stake",
+      "expected": {
+        "kind": "stake",
+        "pid": null,
+        "amount": {
+          "unit": "obn",
+          "value": "100"
+        },
+        "pick": {
+          "order": "least",
+          "by": "staked",
+          "pids": [
+            10
+          ]
+        }
+      },
+      "actual": {
+        "kind": "stake",
+        "pid": 10,
+        "amount": {
+          "unit": "obn",
+          "value": "100"
+        }
+      }
+    },
+    {
+      "input": "what categories are there?",
+      "expected": {
+        "kind": "category",
+        "category": null,
+        "pid": null
+      },
+      "actual": {
+        "kind": "stats",
+        "metric": "overview",
+        "pids": [],
+        "rank": null,
+        "limit": null,
+        "days": null
+      }
+    },
+    {
+      "input": "what kinds of nonprofits do you support?",
+      "expected": {
+        "kind": "category",
+        "category": null,
+        "pid": null
+      },
+      "actual": {
+        "kind": "stats",
+        "metric": "pools",
+        "pids": [],
+        "rank": null,
+        "limit": null,
+        "days": null
+      }
+    },
+    {
+      "input": "list categories",
+      "expected": {
+        "kind": "category",
+        "category": null,
+        "pid": null
+      },
+      "actual": {
+        "kind": "stats",
+        "metric": "overview",
+        "pids": [],
+        "rank": null,
+        "limit": null,
+        "days": null
+      }
+    },
+    {
+      "input": "what category is Tor in?",
+      "expected": {
+        "kind": "category",
+        "category": null,
+        "pid": 6
+      },
+      "actual": {
+        "kind": "stats",
+        "metric": "overview",
+        "pids": [
+          6
+        ],
+        "rank": null,
+        "limit": null,
+        "days": null
+      }
+    },
+    {
+      "input": "which category is Tor?",
+      "expected": {
+        "kind": "category",
+        "category": null,
+        "pid": 6
+      },
+      "actual": {
+        "kind": "stats",
+        "metric": "overview",
+        "pids": [
+          6
+        ],
+        "rank": null,
+        "limit": null,
+        "days": null
+      }
+    },
+    {
+      "input": "Tor category",
+      "expected": {
+        "kind": "category",
+        "category": null,
+        "pid": 6
+      },
+      "actual": {
+        "kind": "stats",
+        "metric": "overview",
+        "pids": [
+          6
+        ],
+        "rank": null,
+        "limit": null,
+        "days": null
+      }
+    },
+    {
+      "input": "where does the yield come from?",
+      "expected": {
+        "kind": "faq",
+        "topic": "emissions"
+      },
+      "actual": {
+        "kind": "faq",
+        "topic": "apy"
+      }
+    },
+    {
+      "input": "where do rewards come from?",
+      "expected": {
+        "kind": "faq",
+        "topic": "emissions"
+      },
+      "actual": {
+        "kind": "stats",
+        "metric": "overview",
+        "pids": [],
+        "rank": null,
+        "limit": null,
+        "days": null
+      }
+    },
+    {
+      "input": "explain staking emissions",
+      "expected": {
+        "kind": "faq",
+        "topic": "emissions"
+      },
+      "actual": {
+        "kind": "faq",
+        "topic": "apy"
+      }
+    },
+    {
+      "input": "what do nonprofits get?",
+      "expected": {
+        "kind": "faq",
+        "topic": "recipients"
+      },
+      "actual": {
+        "kind": "stats",
+        "metric": "pools",
+        "pids": [],
+        "rank": null,
+        "limit": null,
+        "days": null
+      }
+    },
+    {
+      "input": "what do stakers get?",
+      "expected": {
+        "kind": "faq",
+        "topic": "recipients"
+      },
+      "actual": {
+        "kind": "stats",
+        "metric": "stakers",
+        "pids": [],
+        "rank": null,
+        "limit": null,
+        "days": null
+      }
+    },
+    {
+      "input": "how are rewards divided?",
+      "expected": {
+        "kind": "faq",
+        "topic": "recipients"
+      },
+      "actual": {
+        "kind": "stats",
+        "metric": "overview",
+        "pids": [],
+        "rank": null,
+        "limit": null,
+        "days": null
+      }
+    },
+    {
+      "input": "how are nonprofits chosen?",
+      "expected": {
+        "kind": "faq",
+        "topic": "selection"
+      },
+      "actual": {
+        "kind": "stats",
+        "metric": "pools",
+        "pids": [],
+        "rank": null,
+        "limit": null,
+        "days": null
+      }
+    },
+    {
+      "input": "how are pools added?",
+      "expected": {
+        "kind": "faq",
+        "topic": "selection"
+      },
+      "actual": {
+        "kind": "stats",
+        "metric": "pools",
+        "pids": [],
+        "rank": null,
+        "limit": null,
+        "days": null
+      }
+    },
+    {
+      "input": "can a nonprofit be removed?",
+      "expected": {
+        "kind": "faq",
+        "topic": "selection"
+      },
+      "actual": {
+        "kind": "unstake",
+        "pid": null,
+        "amount": null
+      }
+    },
+    {
+      "input": "what is a charity wallet?",
+      "expected": {
+        "kind": "faq",
+        "topic": "charityWallets"
+      },
+      "actual": {
+        "kind": "stats",
+        "metric": "stakers",
+        "pids": [],
+        "rank": null,
+        "limit": null,
+        "days": null
+      }
+    },
+    {
+      "input": "how does a nonprofit receive funds?",
+      "expected": {
+        "kind": "faq",
+        "topic": "charityWallets"
+      },
+      "actual": {
+        "kind": "stats",
+        "metric": "contributed",
+        "pids": [],
+        "rank": null,
+        "limit": null,
+        "days": null
+      }
+    },
+    {
+      "input": "where do nonprofit rewards go?",
+      "expected": {
+        "kind": "faq",
+        "topic": "charityWallets"
+      },
+      "actual": {
+        "kind": "stats",
+        "metric": "overview",
+        "pids": [],
+        "rank": null,
+        "limit": null,
+        "days": null
+      }
+    },
+    {
+      "input": "what is the community seed pool?",
+      "expected": {
+        "kind": "faq",
+        "topic": "seed"
+      },
+      "actual": {
+        "kind": "stats",
+        "metric": "overview",
+        "pids": [],
+        "rank": null,
+        "limit": null,
+        "days": null
+      }
+    },
+    {
+      "input": "explain the genesis reserve",
+      "expected": {
+        "kind": "faq",
+        "topic": "seed"
+      },
+      "actual": {
+        "kind": "unknown"
+      }
+    },
+    {
+      "input": "how are nonprofits bootstrapped?",
+      "expected": {
+        "kind": "faq",
+        "topic": "seed"
+      },
+      "actual": {
+        "kind": "stats",
+        "metric": "pools",
+        "pids": [],
+        "rank": null,
+        "limit": null,
+        "days": null
+      }
+    },
+    {
+      "input": "what is the charter?",
+      "expected": {
+        "kind": "faq",
+        "topic": "charter"
+      },
+      "actual": {
+        "kind": "stats",
+        "metric": "overview",
+        "pids": [],
+        "rank": null,
+        "limit": null,
+        "days": null
+      }
+    },
+    {
+      "input": "who decides what?",
+      "expected": {
+        "kind": "faq",
+        "topic": "charter"
+      },
+      "actual": {
+        "kind": "stats",
+        "metric": "stakers",
+        "pids": [],
+        "rank": null,
+        "limit": null,
+        "days": null
+      }
+    },
+    {
+      "input": "explain the protocol constitution",
+      "expected": {
+        "kind": "faq",
+        "topic": "charter"
+      },
+      "actual": {
+        "kind": "unknown"
+      }
+    },
+    {
+      "input": "what is annual allocation?",
+      "expected": {
+        "kind": "faq",
+        "topic": "allocation"
+      },
+      "actual": {
+        "kind": "stats",
+        "metric": "overview",
+        "pids": [],
+        "rank": null,
+        "limit": null,
+        "days": null
+      }
+    },
+    {
+      "input": "how are protocol funds allocated?",
+      "expected": {
+        "kind": "faq",
+        "topic": "allocation"
+      },
+      "actual": {
+        "kind": "stats",
+        "metric": "overview",
+        "pids": [],
+        "rank": null,
+        "limit": null,
+        "days": null
+      }
+    },
+    {
+      "input": "what are protocol funds?",
+      "expected": {
+        "kind": "faq",
+        "topic": "allocation"
+      },
+      "actual": {
+        "kind": "stats",
+        "metric": "overview",
+        "pids": [],
+        "rank": null,
+        "limit": null,
+        "days": null
+      }
+    },
+    {
+      "input": "is this a donation receipt?",
+      "expected": {
+        "kind": "faq",
+        "topic": "terms"
+      },
+      "actual": {
+        "kind": "stats",
+        "metric": "contributed",
+        "pids": [],
+        "rank": null,
+        "limit": null,
+        "days": null
+      }
+    },
+    {
+      "input": "is this financial advice?",
+      "expected": {
+        "kind": "faq",
+        "topic": "terms"
+      },
+      "actual": {
+        "kind": "stats",
+        "metric": "overview",
+        "pids": [],
+        "rank": null,
+        "limit": null,
+        "days": null
+      }
+    },
+    {
+      "input": "are contributions tax deductible?",
+      "expected": {
+        "kind": "faq",
+        "topic": "terms"
+      },
+      "actual": {
+        "kind": "stats",
+        "metric": "contributed",
+        "pids": [],
+        "rank": null,
+        "limit": null,
+        "days": null
+      }
+    },
+    {
+      "input": "what is the token supply?",
+      "expected": {
+        "kind": "faq",
+        "topic": "token"
+      },
+      "actual": {
+        "kind": "stats",
+        "metric": "overview",
+        "pids": [],
+        "rank": null,
+        "limit": null,
+        "days": null
+      }
+    },
+    {
+      "input": "what is the OBN contract?",
+      "expected": {
+        "kind": "faq",
+        "topic": "token"
+      },
+      "actual": {
+        "kind": "stats",
+        "metric": "overview",
+        "pids": [],
+        "rank": null,
+        "limit": null,
+        "days": null
+      }
+    },
+    {
+      "input": "explain token basics",
+      "expected": {
+        "kind": "faq",
+        "topic": "token"
+      },
+      "actual": {
+        "kind": "unknown"
+      }
+    },
+    {
+      "input": "what are campaigns?",
+      "expected": {
+        "kind": "faq",
+        "topic": "campaigns"
+      },
+      "actual": {
+        "kind": "stats",
+        "metric": "overview",
+        "pids": [],
+        "rank": null,
+        "limit": null,
+        "days": null
+      }
+    },
+    {
+      "input": "how do campaigns work?",
+      "expected": {
+        "kind": "faq",
+        "topic": "campaigns"
+      },
+      "actual": {
+        "kind": "stats",
+        "metric": "overview",
+        "pids": [],
+        "rank": null,
+        "limit": null,
+        "days": null
+      }
+    },
+    {
+      "input": "tell me about campaigns",
+      "expected": {
+        "kind": "faq",
+        "topic": "campaigns"
+      },
+      "actual": {
+        "kind": "stats",
+        "metric": "overview",
+        "pids": [],
+        "rank": null,
+        "limit": null,
+        "days": null
+      }
+    }
+  ]
+}

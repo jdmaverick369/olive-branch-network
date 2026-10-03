@@ -10,7 +10,7 @@ import { useConnectModal } from "@rainbow-me/rainbowkit";
 import { POOLS, getPoolMeta } from "@/lib/pools";
 import { stakingAbi } from "@/lib/stakingAbi";
 import { lensAbi } from "@/lib/lensAbi";
-import { ambiguousPools, parseCommand, type Command, type CommandAmount } from "@/lib/commandParser";
+import { CATEGORY_LABELS, commandSuggestions, mergeCommandDraft, parseCommand, type Command, type CommandAmount } from "@/lib/commandParser";
 import { answerStats } from "@/lib/askStats";
 import { fetchAnalytics } from "@/lib/analytics";
 import { useStakeActions } from "@/hooks/useStakeActions";
@@ -30,11 +30,6 @@ const STAKING_CONTRACT = process.env.NEXT_PUBLIC_STAKING_CONTRACT as `0x${string
 const LENS_CONTRACT = (process.env.NEXT_PUBLIC_LENS_CONTRACT || undefined) as `0x${string}` | undefined;
 const LIVE_POOLS = POOLS.filter(p => p.live);
 const EXAMPLES = ["stake 10,000 OBN to St Jude", "unstake $5 from St Jude", "turn on auto claim", "how many people stake with St Jude?"];
-// Names short enough for a reply chip; the parser understands all of them.
-const SHORT: Record<number, string> = {
-  0: "GiveDirectly", 1: "Heifer", 2: "Last Door", 3: "Freedom of the Press", 4: "Khan Academy", 5: "Rainforest",
-  6: "Tor", 7: "St Jude", 8: "charity: water", 9: "Internet Archive", 10: "K9 Rescue",
-};
 
 type Message = { id: number; from: "user" | "bot"; body: ReactNode; chips?: string[] };
 type Action = {
@@ -56,7 +51,7 @@ const fmt = (raw: bigint) => {
   return n.toLocaleString(undefined, { maximumFractionDigits: n !== 0 && n < 1 ? 6 : 2 });
 };
 const poolName = (pid: number) => getPoolMeta(pid)?.name ?? `Pool ${pid}`;
-const short = (pid: number) => SHORT[pid] ?? poolName(pid);
+const short = (pid: number) => getPoolMeta(pid)?.shortName ?? poolName(pid);
 
 /** Strip anything identifying before a message is recorded for improving Oliver. */
 const scrub = (text: string) => text
@@ -135,6 +130,9 @@ export default function AskPage() {
   const [autoWaiting, setAutoWaiting] = useState<"on" | "off" | "status" | null>(null); // waiting on the wallet
   const autoWatch = useRef<"on" | "off" | null>(null);                    // the change the open dialog was asked for
   const [confirm, setConfirm] = useState<Action | null>(null);
+  const reviewDraft = useRef<Draft | null>(null);
+  const lastPid = useRef<number | null>(null);
+  const submitting = useRef(false);
   const scroller = useRef<HTMLDivElement>(null);  // the conversation; the title and message box stay put
   const confirmCard = useRef<HTMLDivElement>(null);
   const shownMessages = useRef(0);
@@ -242,7 +240,7 @@ export default function AskPage() {
     const pick = cmd.pick!;
     const own = (pid: number) => getPoolMeta(pid)?.ethereumAddress.toLowerCase() === account!.toLowerCase();
     // Unstakes and claims only make sense where the user has something; stakes can go anywhere but their own nonprofit.
-    const candidates = LIVE_POOLS.map(p => p.pid).filter(pid =>
+    const candidates = LIVE_POOLS.filter(p => !pick.pids || pick.pids.includes(p.pid)).map(p => p.pid).filter(pid =>
       cmd.kind === "unstake" || pick.by === "mine" ? (positions.get(pid)?.staked ?? 0n) > 0n
       : cmd.kind === "claim" ? (positions.get(pid)?.pending ?? 0n) > 0n
       : !own(pid));
@@ -267,9 +265,14 @@ export default function AskPage() {
       return by === "stakers" ? p.rows.at(-1)?.activeStakers ?? null : p.contributions + p.seedClaims + p.annualAwards;
     };
     const ranked = candidates.map(pid => ({ pid, v: value(pid) })).filter((r): r is { pid: number; v: number } => r.v !== null);
-    if (ranked.length === 0) return say("bot", "I can't load those numbers right now. Try naming the nonprofit instead.");
+    if (ranked.length !== candidates.length) return say("bot", "I can't load all of those numbers right now. Try naming the nonprofit instead.");
     ranked.sort((a, b) => pick.order === "least" ? a.v - b.v : b.v - a.v);
     const chosen = ranked[0];
+    const tied = ranked.filter(row => row.v === chosen.v);
+    if (tied.length > 1) {
+      setDraft({ ...cmd, pick: undefined });
+      return say("bot", "Those nonprofits are tied. Which one do you mean?", tied.map(row => short(row.pid)));
+    }
     const amount = by === "stakers" ? `${chosen.v.toLocaleString("en-US")} ${chosen.v === 1 ? "staker" : "stakers"}` : `${compact.format(chosen.v)} OBN`;
     const label = {
       staked: `the ${pick.order} staked`, stakers: `the ${pick.order === "least" ? "fewest" : "most"} stakers`, contributed: `the ${pick.order} contributed so far`,
@@ -281,6 +284,9 @@ export default function AskPage() {
 
   /** Turn a complete-or-partial command into a confirm card, a follow-up question, or an answer. */
   const resolve = (cmd: Draft) => {
+    reviewDraft.current = cmd;
+    if ("pid" in cmd && cmd.pid !== null) lastPid.current = cmd.pid;
+    else if (cmd.kind === "move" || cmd.kind === "stakeEach") lastPid.current = null;
     if (!account || !loaded) {
       setWaiting(cmd);
       if (!account) { say("bot", "Connect your wallet and I'll pick this up right after."); connect(); }
@@ -370,6 +376,7 @@ export default function AskPage() {
   };
 
   const stats = (cmd: Stats) => {
+    lastPid.current = cmd.pids.length === 1 ? cmd.pids[0] : null;
     const needsHistory = cmd.metric !== "price" && cmd.metric !== "pools";
     if (needsHistory && !analytics.data && !analytics.isError) {
       setWantHistory(true);
@@ -456,6 +463,7 @@ export default function AskPage() {
     const pid = Number(params.get("pool"));
     if (params.get("pool") !== null && LIVE_POOLS.some(p => p.pid === pid)) {
       const name = short(pid);
+      lastPid.current = pid;
       say("bot", `What would you like to do with ${poolName(pid)}?`, [`stake to ${name}`, `unstake from ${name}`, `claim from ${name}`, `how is ${name} doing?`]);
     }
     const q = params.get("q");
@@ -490,40 +498,31 @@ export default function AskPage() {
   ]), EXAMPLES);
 
   const submit = (text: string) => {
-    const trimmed = text.trim().slice(0, 280);
-    if (!trimmed || actions.busy) return;
+    const trimmed = text.trim();
+    if (!trimmed || actions.busy || submitting.current) return;
     say("user", trimmed);
     setInput("");
-    let cmd = parseCommand(trimmed, POOLS, { pending: draft?.kind ?? null });
+    const pendingDraft = draft ?? waiting ?? (confirm ? reviewDraft.current : null);
+    let cmd = parseCommand(trimmed, POOLS, { pending: pendingDraft?.kind ?? null, lastPid: lastPid.current });
 
     if (cmd.kind === "confirm") {
       if (confirm) return void run(confirm);
       return say("bot", "There's nothing waiting for you to confirm.");
     }
     if (cmd.kind === "cancel") {
+      reviewDraft.current = null;
+      setDraft(null); setWaiting(null); setAutoWaiting(null);
       if (confirm) { setConfirm(null); return say("bot", confirm.step === 2 ? displayText("Okay, I won't stake it. The unstaked OBN is in your wallet.") : "Cancelled. Nothing was sent to your wallet."); }
-      if (draft || waiting || autoWaiting) { setDraft(null); setWaiting(null); setAutoWaiting(null); return say("bot", "Okay, dropped that."); }
+      if (draft || waiting || autoWaiting) return say("bot", "Okay, dropped that.");
       return say("bot", "Nothing to cancel.");
     }
     setConfirm(null);
+    setWaiting(null);
+    setAutoWaiting(null);
+    reviewDraft.current = null;
 
     // Merge a follow-up ("St Jude", "$5") into the request it completes.
-    if (draft && cmd.kind === draft.kind) {
-      if (cmd.kind === "move" && draft.kind === "move") {
-        // A reply names one nonprofit: it fills whichever end of the move was missing.
-        const both = cmd.from !== null && cmd.to !== null;
-        const given = cmd.from ?? cmd.to;
-        const from = both ? cmd.from : draft.from ?? given;
-        const to = both ? cmd.to : draft.from === null ? draft.to : draft.to ?? given;
-        cmd = { kind: "move", from, to, amount: cmd.amount ?? draft.amount };
-      } else if (cmd.kind === "stakeEach" && draft.kind === "stakeEach") {
-        cmd = { ...draft, amount: cmd.amount ?? draft.amount };
-      } else if (cmd.kind === "claim" && draft.kind === "claim") {
-        cmd = { kind: "claim", pid: cmd.pid ?? draft.pid, ...(cmd.all ? { all: true as const } : {}) };
-      } else if ((cmd.kind === "stake" || cmd.kind === "unstake") && (draft.kind === "stake" || draft.kind === "unstake")) {
-        cmd = { kind: draft.kind, pid: cmd.pid ?? draft.pid, amount: cmd.amount ?? draft.amount };
-      }
-    }
+    cmd = mergeCommandDraft(trimmed, cmd, pendingDraft);
     if (cmd.kind !== "unknown") setDraft(null);
 
     switch (cmd.kind) {
@@ -533,66 +532,86 @@ export default function AskPage() {
       case "thanks": return say("bot", "You're welcome!");
       case "status": return status(cmd.pid);
       case "stats": return stats(cmd);
+      case "category": {
+        if (cmd.pid !== null) {
+          const pool = getPoolMeta(cmd.pid)!;
+          lastPid.current = pool.pid;
+          return say("bot", `${pool.name} is in ${CATEGORY_LABELS[pool.category]}.`, [`list ${pool.category} nonprofits`]);
+        }
+        lastPid.current = null;
+        if (cmd.category === null) return say("bot", lines(Object.entries(CATEGORY_LABELS).map(([key, label]) =>
+          `${label}: ${LIVE_POOLS.filter(p => p.category === key).length} nonprofits`)), Object.keys(CATEGORY_LABELS).map(key => `list ${key} nonprofits`));
+        const members = LIVE_POOLS.filter(p => p.category === cmd.category);
+        return say("bot", <>{CATEGORY_LABELS[cmd.category]} nonprofits:{members.map(p => <span key={p.pid}><br /><Link className="underline" href={`/stake-earn-contribute/${p.pid}`}>{p.name}</Link></span>)}</>, members.map(p => `how is ${short(p.pid)} doing?`));
+      }
+      case "clarify": {
+        if (pendingDraft) setDraft(pendingDraft);
+        return say("bot", "Which nonprofit do you mean?", cmd.pids.map(pid => cmd.input.replace("{pool}", short(pid))));
+      }
       case "autoclaim": return handleAutoclaim(cmd.mode);
       case "unknown": {
         if (cmd.reason === "transfer") return say("bot", "I can't send OBN to other wallets. I can only stake, unstake and claim with the nonprofits here.");
         if (cmd.reason === "swap") return say("bot", <>I can&apos;t buy or swap tokens, but the <Link className="underline" href="/trade">Trade page</Link> can.</>);
         if (cmd.reason === "multiple") return say("bot", "One thing at a time, please: one action with one nonprofit per message.");
-        if (cmd.reason === "negated") return say("bot", "Okay, I won't do that.");
+        if (cmd.reason === "negated") { setDraft(null); return say("bot", "Okay, I won't do that."); }
         // Anonymous record of what people ask that Oliver can't read yet, to teach him later.
         try { track("oliver_unrecognized", { text: scrub(trimmed) }); } catch { /* analytics is optional */ }
-        return say("bot", "I didn't catch that. Here are some things you can try:", EXAMPLES);
+        return say("bot", <>I don&apos;t know how to answer that yet. Try one of these commands, or read the <Link className="underline" href="/faq">FAQ</Link>.</>, commandSuggestions(trimmed, POOLS));
       }
       case "move": return resolve(cmd);
       case "stakeEach": return resolve(cmd);
       case "stake":
       case "unstake":
       case "claim": {
-        // A typo that could be two nonprofits: ask rather than guess.
-        const options = cmd.pid === null ? ambiguousPools(trimmed, POOLS) : [];
-        if (options.length > 1) { setDraft(cmd); return say("bot", "Did you mean:", options.map(short)); }
         return resolve(cmd);
       }
     }
   };
 
   const run = async (action: Action) => {
+    if (submitting.current || actions.busy) return;
+    submitting.current = true;
+    reviewDraft.current = null;
     setConfirm(null);
-    if (action.kind === "claimAll") {
-      const pids = action.pids ?? [];
-      const { done } = await actions.claimMany(pids);
-      if (done.length === 0) return say("bot", "That didn't go through. Nothing was changed.");
-      await new Promise(r => setTimeout(r, 1_250));
-      await reads.refetch();
-      return say("bot", done.length === pids.length
-        ? `Claimed your rewards from ${done.length} nonprofits.`
-        : `Claimed from ${done.map(poolName).join(", ")}. The rest didn't go through; say "claim all" to try them again.`);
-    }
-    if (action.kind === "stakeEach") {
-      const items = action.items ?? [];
-      const { done } = await actions.stakeMany(items);
-      if (done.length === 0) return say("bot", "That didn't go through. Nothing was changed.");
+    try {
+      if (action.kind === "claimAll") {
+        const pids = action.pids ?? [];
+        const { done } = await actions.claimMany(pids);
+        if (done.length === 0) return say("bot", "That didn't go through. Nothing was changed.");
+        await new Promise(r => setTimeout(r, 1_250));
+        await reads.refetch();
+        return say("bot", done.length === pids.length
+          ? `Claimed your rewards from ${done.length} nonprofits.`
+          : `Claimed from ${done.map(poolName).join(", ")}. The rest didn't go through; say "claim all" to try them again.`);
+      }
+      if (action.kind === "stakeEach") {
+        const items = action.items ?? [];
+        const { done } = await actions.stakeMany(items);
+        if (done.length === 0) return say("bot", "That didn't go through. Nothing was changed.");
+        await new Promise(r => setTimeout(r, 1_250));
+        await Promise.all([reads.refetch(), poolInfo.refetch()]);
+        const per = items[0]?.amount ?? 0n;
+        return say("bot", displayText(done.length === items.length
+          ? `Staked ${fmt(per)} OBN to each of ${done.length} nonprofits (${fmt(per * BigInt(done.length))} OBN in total).`
+          : `Staked ${fmt(per)} OBN to ${done.map(poolName).join(", ")}. The others didn't go through; ask me again to stake to the rest.`),
+          autoClaim.visible && autoClaim.known && !autoClaim.enabled ? ["turn on auto claim"] : undefined);
+      }
+      const ok = action.kind === "stake" ? await actions.stake(action.pid, action.amount)
+        : action.kind === "unstake" ? await actions.unstake(action.pid, action.amount)
+        : await actions.claim(action.pid);
+      if (!ok) return say("bot", action.step === 2 ? displayText("The stake didn't go through. The unstaked OBN is still in your wallet.") : "That didn't go through. Nothing was changed.");
+      lastPid.current = action.pid;
       await new Promise(r => setTimeout(r, 1_250));
       await Promise.all([reads.refetch(), poolInfo.refetch()]);
-      const per = items[0]?.amount ?? 0n;
-      return say("bot", displayText(done.length === items.length
-        ? `Staked ${fmt(per)} OBN to each of ${done.length} nonprofits (${fmt(per * BigInt(done.length))} OBN in total).`
-        : `Staked ${fmt(per)} OBN to ${done.map(poolName).join(", ")}. The others didn't go through; ask me again to stake to the rest.`),
-        autoClaim.visible && autoClaim.known && !autoClaim.enabled ? ["turn on auto claim"] : undefined);
-    }
-    const ok = action.kind === "stake" ? await actions.stake(action.pid, action.amount)
-      : action.kind === "unstake" ? await actions.unstake(action.pid, action.amount)
-      : await actions.claim(action.pid);
-    if (!ok) return say("bot", action.step === 2 ? displayText("The stake didn't go through. The unstaked OBN is still in your wallet.") : "That didn't go through. Nothing was changed.");
-    await new Promise(r => setTimeout(r, 1_250));
-    await Promise.all([reads.refetch(), poolInfo.refetch()]);
-    if (action.moveTo !== undefined) {
-      say("bot", displayText(`Step 1 done: unstaked ${fmt(action.amount)} OBN from ${poolName(action.pid)}. Now confirm step 2 to stake it into ${poolName(action.moveTo)}.`));
-      return setConfirm({ kind: "stake", pid: action.moveTo, amount: action.amount, step: 2 });
-    }
-    const verb = { stake: "Staked", unstake: "Unstaked", claim: "Claimed" }[action.kind];
-    say("bot", <>{displayText(verb)} {fmt(action.amount)} OBN{action.kind === "stake" ? " to " : " from "}{poolName(action.pid)}. <Link className="underline" href={`/stake-earn-contribute/${action.pid}`}>View pool</Link></>,
-      action.kind === "stake" && autoClaim.visible && autoClaim.known && !autoClaim.enabled ? ["turn on auto claim"] : undefined);
+      if (action.moveTo !== undefined) {
+        say("bot", displayText(`Step 1 done: unstaked ${fmt(action.amount)} OBN from ${poolName(action.pid)}. Now confirm step 2 to stake it into ${poolName(action.moveTo)}.`));
+        reviewDraft.current = { kind: "stake", pid: action.moveTo, amount: { unit: "obn", value: formatUnits(action.amount, 18) } };
+        return setConfirm({ kind: "stake", pid: action.moveTo, amount: action.amount, step: 2 });
+      }
+      const verb = { stake: "Staked", unstake: "Unstaked", claim: "Claimed" }[action.kind];
+      say("bot", <>{displayText(verb)} {fmt(action.amount)} OBN{action.kind === "stake" ? " to " : " from "}{poolName(action.pid)}. <Link className="underline" href={`/stake-earn-contribute/${action.pid}`}>View pool</Link></>,
+        action.kind === "stake" && autoClaim.visible && autoClaim.known && !autoClaim.enabled ? ["turn on auto claim"] : undefined);
+    } finally { submitting.current = false; }
   };
 
   const onSubmit = (e: FormEvent) => { e.preventDefault(); submit(input); };

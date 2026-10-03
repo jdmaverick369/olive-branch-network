@@ -278,7 +278,10 @@ test("every Oliver FAQ answer still matches a question on the FAQ page", async (
   const fs = await import("node:fs");
   const faqPage = fs.readFileSync(new URL("../src/app/faq/page.tsx", import.meta.url), "utf8");
   for (const [topic, entry] of Object.entries(FAQ)) {
-    assert.ok(faqPage.includes(`"${entry.faqQuestion}"`), `${topic}: "${entry.faqQuestion}" is no longer on /faq; update Oliver's answer`);
+    if (entry.faqQuestion !== undefined) {
+      assert.equal(typeof entry.faqQuestion, "string", topic);
+      assert.ok(faqPage.includes(`"${entry.faqQuestion}"`), `${topic}: "${entry.faqQuestion}" is no longer on /faq; update Oliver's answer`);
+    }
     assert.ok(entry.lines.length > 0, topic);
   }
 });

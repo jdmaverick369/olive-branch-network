@@ -4,8 +4,9 @@
 // wallet: the page checks balances, shows a confirm card, and the user signs.
 
 import type { FaqTopic } from "./oliverFaq";
+import type { PoolCategory } from "./pools";
 
-export type CommandPool = { pid: number; name: string; live: boolean };
+export type CommandPool = { pid: number; name: string; live: boolean; shortName?: string; category?: PoolCategory };
 
 export type CommandAmount =
   | { unit: "obn"; value: string }     // decimal string, safe for parseUnits
@@ -26,6 +27,8 @@ export type Command =
   | { kind: "autoclaim"; mode: "on" | "off" | "status" }
   | { kind: "stats"; metric: StatsMetric; pids: number[]; rank: "most" | "least" | null; limit: number | null; days: number | null }
   | { kind: "faq"; topic: FaqTopic }                                   // a question the FAQ answers
+  | { kind: "category"; category: PoolCategory | null; pid: number | null }
+  | { kind: "clarify"; pids: number[]; input: string }
   | { kind: "confirm" }
   | { kind: "cancel" }
   | { kind: "greet" }
@@ -34,9 +37,16 @@ export type Command =
   | { kind: "unknown"; reason?: "transfer" | "swap" | "multiple" | "negated" };
 
 /** "the nonprofit with the least stake": which pool to pick once the page has the numbers. */
-export type PoolPick = { order: "most" | "least"; by: "staked" | "stakers" | "contributed" | "mine" };
+export type PoolPick = { order: "most" | "least"; by: "staked" | "stakers" | "contributed" | "mine"; pids?: number[] };
 
-export type ParseContext = { pending?: "stake" | "unstake" | "claim" | "move" | "stakeEach" | null };
+export type ParseContext = { pending?: "stake" | "unstake" | "claim" | "move" | "stakeEach" | null; lastPid?: number | null };
+
+export const CATEGORY_LABELS: Record<PoolCategory, string> = { humanitarian: "Humanitarian", environment: "Environmental", animals: "Animal Welfare" };
+const CATEGORY_WORDS: [PoolCategory, RegExp][] = [
+  ["humanitarian", /\b(?:humanitarian(?: causes)?|human|people)\b/g],
+  ["environment", /\b(?:environmental|environment|climate|nature|planet|green|conservation)\b/g],
+  ["animals", /\b(?:animal welfare|animals?|pets|dogs|wildlife)\b/g],
+];
 
 // ---------------------------------------------------------------------------------------
 // Pools
@@ -64,12 +74,12 @@ const POOL_TOPICS: Record<number, string[]> = {
   2: ["addiction", "recovery", "rehab"],
   3: ["journalism", "journalists", "free press", "press freedom"],
   4: ["education", "free education", "online learning"],
-  5: ["rainforests", "forests", "climate", "indigenous"],
+  5: ["rainforests", "forests", "indigenous"],
   6: ["privacy", "online privacy", "anonymity"],
   7: ["childhood cancer", "cancer", "childrens hospital", "kids hospital", "childrens research"],
   8: ["clean water", "water"],
   9: ["wayback machine", "wayback", "digital library"],
-  10: ["dogs", "dog", "animals", "animal", "strays", "pets", "cats"],
+  10: ["dog", "strays", "cats"],
 };
 
 // Words that are never part of a nonprofit's name, so typo matching skips them.
@@ -104,6 +114,7 @@ function findPools(text: string, pools: CommandPool[]) {
   const liveIds = new Set(live.map(p => p.pid));
   const hits: { pid: number; at: number; role: "from" | "to" | null }[] = [];
   let rest = text;
+  let ambiguousText = "";
   const take = (pid: number, at: number, span: string) => {
     // "from Tor" is where funds leave; "to / into St Jude" is where they go.
     const before = text.slice(Math.max(0, at - 16), at);
@@ -118,10 +129,15 @@ function findPools(text: string, pools: CommandPool[]) {
     if (liveIds.has(pid)) take(pid, m.index!, m[0]);
   }
 
-  const names = live.flatMap(p => [p.name, ...(POOL_ALIASES[p.pid] ?? [])].map(alias => ({ pid: p.pid, alias: normalizeName(alias) })))
+  const names = live.flatMap(p => [p.name, ...(p.shortName ? [p.shortName] : []), ...(POOL_ALIASES[p.pid] ?? [])].map(alias => ({ pid: p.pid, alias: normalizeName(alias) })))
     .sort((a, b) => b.alias.length - a.alias.length); // longest first: "internet archive" before "archive"
+  const collisions = new Set<number>();
   for (const n of names) {
-    for (let at = rest.indexOf(` ${n.alias} `); at >= 0; at = rest.indexOf(` ${n.alias} `, at + 1)) take(n.pid, at + 1, n.alias);
+    for (let at = rest.indexOf(` ${n.alias} `); at >= 0; at = rest.indexOf(` ${n.alias} `, at + 1)) {
+      const candidates = names.filter(other => other.alias === n.alias);
+      if (new Set(candidates.map(other => other.pid)).size > 1) { candidates.forEach(other => collisions.add(other.pid)); ambiguousText = n.alias; }
+      take(n.pid, at + 1, n.alias);
+    }
   }
 
   if (hits.length === 0) {
@@ -133,8 +149,16 @@ function findPools(text: string, pools: CommandPool[]) {
     }
   }
 
-  let ambiguous: number[] = [];
-  if (hits.length === 0) {
+  let ambiguous: number[] = [...collisions];
+  if (ambiguous.length === 0) {
+    for (const word of rest.trim().split(" ")) {
+      if (word.length < 4 || COMMON.has(word)) continue;
+      const candidates = [...new Set(names.filter(n => spaced(n.alias).includes(` ${word} `)).map(n => n.pid))];
+      if (candidates.length > 1) { ambiguous = candidates; ambiguousText = word; break; }
+      if (candidates.length === 1) { take(candidates[0], rest.indexOf(` ${word} `) + 1, word); break; }
+    }
+  }
+  if (ambiguous.length === 0) {
     // Typo fallback: compare every 1-4 word phrase against names of 5+ letters.
     const words = rest.trim().split(" ").filter(Boolean);
     let best: { d: number; pids: Set<number>; phrase: string } | null = null;
@@ -154,11 +178,11 @@ function findPools(text: string, pools: CommandPool[]) {
       }
     }
     if (best?.pids.size === 1) take([...best.pids][0], rest.indexOf(` ${best.phrase} `) + 1, best.phrase);
-    else if (best) ambiguous = [...best.pids];
+    else if (best) { ambiguous = [...best.pids]; ambiguousText = best.phrase; }
   }
 
   hits.sort((a, b) => a.at - b.at);
-  return { pids: [...new Set(hits.map(h => h.pid))], hits, rest: spaced(rest), ambiguous };
+  return { pids: [...new Set(hits.map(h => h.pid))], hits, rest: spaced(rest), ambiguous, ambiguousText };
 }
 
 // ---------------------------------------------------------------------------------------
@@ -268,7 +292,7 @@ function normalize(input: string, pools: CommandPool[]) {
     .replace(/\s+/g, " ");
   s = wordsToNumbers(correctSpelling(s.trim(), pools))
     .replace(/\ba (?:dollar|buck)\b/g, "1 dollar")
-    .replace(/\b(\d+(?:\.\d+)?) ?cents?\b/g, (_, n: string) => `$${(Number(n) / 100).toString()}`);
+    .replace(/\b(\d+(?:\.\d+)?) ?cents?\b/g, (_, n: string) => `$${shiftDecimal(n, -2)}`);
   return spaced(s);
 }
 
@@ -324,7 +348,7 @@ function findAmount(text: string): CommandAmount | null {
     const usd = !!m[1] || (!!m[4] && !/^(?:obn|tokens?)$/.test(m[4])) || m[3] === "grand";
     found.push({ unit: usd ? "usd" : "obn", value });
   }
-  const valid = found.filter(a => a.unit === "all" || (/^\d+(?:\.\d+)?$/.test(a.value) && Number(a.value) > 0));
+  const valid = found.filter(a => a.unit === "all" || (/^\d+(?:\.\d+)?$/.test(a.value) && Number.isFinite(Number(a.value)) && Number(a.value) > 0));
   const distinct = new Map(valid.map(a => [a.unit === "all" ? "all" : `${a.unit}:${a.value}`, a]));
   if (distinct.size !== 1 || valid.length !== found.length) return null;
   return [...distinct.values()][0];
@@ -378,6 +402,16 @@ function statsCommand(text: string, pids: number[]): Command {
 
 // Which FAQ entry a question is about. Most specific first; the first match wins.
 const FAQ_PATTERNS: [FaqTopic, RegExp][] = [
+  ["emissions", /\b(?:where (?:does|do) (?:the )?(?:yield|rewards?) come from|staking emissions|source of (?:yield|rewards))\b/],
+  ["recipients", /\b(?:what do (?:nonprofits|stakers) (?:get|receive)|rewards (?:divided|distributed)|how are rewards divided)\b/],
+  ["selection", /\b(?:how are (?:nonprofits|pools) (?:chosen|selected|added)|nonprofit (?:be )?removed|pool (?:shutdown|removal)|add a nonprofit)\b/],
+  ["charityWallets", /\b(?:charity wallets?|nonprofit receive funds|nonprofit rewards go)\b/],
+  ["seed", /\b(?:community seed pool|genesis reserve|bootstrapp?ed|bootstrap)\b/],
+  ["charter", /\b(?:charter|who decides what|protocol constitution)\b/],
+  ["allocation", /\b(?:annual allocation|protocol funds)\b/],
+  ["terms", /\b(?:donation receipt|financial advice|investment advice|tax deductible|tax receipt)\b/],
+  ["token", /\b(?:token supply|obn contract|token basics|token address)\b/],
+  ["campaigns", /\bcampaigns?\b/],
   ["autoclaimHow", /\bhow (?:do|can|would) (?:i|you|we) (?:turn|switch|enable|disable|set up|setup|start|stop|activate|cancel)(?: (?:on|off))? (?:the )?(?:monthly )?auto ?claim/],
   ["autoclaimWhen", /\bwhen (?:does|is|will|do) (?:the )?(?:monthly )?auto ?claim|\bauto ?claim (?:\w+ )?(?:schedule|date|day|run)\b|\b(?:claim|claiming) manually\b|\bmanual(?:ly)? claim/],
   ["autoclaimWhat", /\b(?:what is|whats|what does|explain|how does|tell me about) (?:the )?(?:sponsored )?(?:monthly )?auto ?claim\w*|\bauto ?claim\w* (?:do|mean|work|works)\b/],
@@ -421,7 +455,7 @@ function poolPick(text: string): PoolPick | null {
   return { order, by: "staked" };
 }
 
-export function parseCommand(input: string, pools: CommandPool[], context: ParseContext = {}): Command {
+function parseIntent(input: string, pools: CommandPool[], context: ParseContext = {}): Command {
   const asked = input.trim().endsWith("?");
   const raw = normalize(input, pools).trim();
   const text = stripFiller(normalize(input, pools));
@@ -440,7 +474,7 @@ export function parseCommand(input: string, pools: CommandPool[], context: Parse
 
   // FAQ questions. Anything with an amount is a command, never a question.
   // A question word up front ("what are the fees to stake 100?") still makes it a question.
-  const topic = faqTopic(text);
+  const topic = faqTopic(spaced(normalizeName(input))) ?? faqTopic(text);
   const opensAsQuestion = /^ (?:what|whats|which|who|how|hows|why|when|where|is|are|does|do|will|would|should) /.test(text) && !/^ (?:can|could) (?:i|you) /.test(text);
   if (topic && (opensAsQuestion || !findAmount(findPools(text, pools).rest))) return { kind: "faq", topic };
 
@@ -506,7 +540,7 @@ export function parseCommand(input: string, pools: CommandPool[], context: Parse
   }
   if (actions === 1 && pids.length > 1) return { kind: "unknown", reason: "multiple" };
 
-  if (!actions && context.pending === "stakeEach") return { kind: "stakeEach", amount: findAmount(rest), pids: pids.length > 1 ? pids : [], split: false };
+  if (!actions && context.pending === "stakeEach") return { kind: "stakeEach", amount: findAmount(rest), pids, split: false };
   const pending = context.pending === "stakeEach" ? null : context.pending ?? null; // stakeEach replies return above
   const kind = claimVerb ? "claim" : unstakeVerb ? "unstake" : stakeVerb ? "stake" : pending;
   if (!kind) {
@@ -525,6 +559,166 @@ export function parseCommand(input: string, pools: CommandPool[], context: Parse
   }
   const amount = findAmount(pick ? ranked : rest);
   return pick ? { kind, pid, amount, pick } : { kind, pid, amount };
+}
+
+/** Validate before punctuation removal or spelling correction can change an instruction. */
+export function parseCommand(input: string, pools: CommandPool[], context: ParseContext = {}): Command {
+  if (input.length > 2000) return { kind: "unknown" };
+  let text = input.toLowerCase().replace(/[’'`]/g, "").trim();
+  if (!text) return { kind: "help" };
+  if (!/[a-z0-9]/.test(text)) return { kind: "unknown" };
+  if (/\b0x[0-9a-f]+|\b[\w-]+\.(?:base\.)?eth\b/.test(text)) return { kind: "unknown", reason: "transfer" };
+  const correction = !!context.pending && /^(?:no\s*,?\s*(?:i meant|make)|i meant|actually|make it)|\binstead\b/.test(text);
+  const stopAuto = /^(?:please )?stop auto ?claim(?:ing)?[.! ]*$/.test(text);
+  if (/\bno\b/.test(text) && !correction && !/^no[.! ]*$/.test(text)) return { kind: "unknown", reason: "negated" };
+  if (!stopAuto && /\b(?:dont|do not|never|not|no longer|stop|cannot|cant|wont|wouldnt|shouldnt|without|avoid|rather than)\b/.test(text)
+    && !/^(?:never mind|nevermind|dont|stop)[.! ]*$/.test(text)) return { kind: "unknown", reason: "negated" };
+  if (/\b(?:if|suppose|imagine|hypothetically|maybe|might)\b/.test(text)) return { kind: "unknown" };
+  if (/^(?:i|we)\s+(?:(?:have|had|already|just)\s+)*(?:staked|unstaked|claimed|deposited|withdrew|moved)\b/.test(text)) return { kind: "unknown" };
+  if (/^(?:how much can|how much could|should i|would i)\b/.test(text)) return { kind: "unknown" };
+  if (correction) text = text.replace(/^(?:no\s*,?\s*)?(?:i meant|actually|make it)\s*/, "").replace(/\binstead\b/g, "");
+  text = text.replace(/\b(?:dollars?|bucks?)\s+(?=\d)/g, "usd ").replace(/\busd(?=\d)/g, "usd ");
+
+  // Only explicit pronouns reuse context. A missing pool is still a question.
+  if (/\b(?:to|from|with|into) (?:it|that one|the same one)\b/.test(text)) {
+    if (!pools.some(p => p.live && p.pid === context.lastPid)) return { kind: "unknown" };
+    text = text.replace(/\b(to|from|with|into) (?:it|that one|the same one)\b/g, `$1 pool ${context.lastPid}`);
+  }
+  // Space-grouped thousands are accepted only as complete groups.
+  text = text.replace(/\b\d{1,3}(?: \d{3})+(?:\.\d+)?\b/g, n => n.replace(/ /g, ""));
+  const normalized = stripFiller(normalize(text, pools));
+  const matches = findPools(normalized, pools);
+  if (matches.ambiguous.length > 1) return clarifyPool(text, pools, matches.ambiguousText, matches.ambiguous);
+  if (/\b(?:pool|pid)\s*#?\s*(\d+)\b|#\d+/.test(text)) {
+    const ids = [...text.matchAll(/\b(?:pool|pid)\s*#?\s*(\d+)\b|#(\d+)/g)].map(m => Number(m[1] ?? m[2]));
+    if (ids.some(pid => !pools.some(p => p.live && p.pid === pid))) return { kind: "unknown" };
+  }
+
+  const categories = CATEGORY_WORDS.filter(([, re]) => new RegExp(re.source).test(text)
+    && !(re.source.includes("people") && /\b(?:how many|number of|most|least|fewest) people\b/.test(text)));
+  const categoryQuestion = /\b(?:categor(?:y|ies)|kinds of nonprofits)\b/.test(text);
+  if (categoryQuestion && !/\b(?:stake|unstake|claim|move|split)\b/.test(text)) {
+    if (matches.pids.length > 1 || categories.length > 1) return { kind: "unknown" };
+    return { kind: "category", category: categories[0]?.[0] ?? null, pid: matches.pids[0] ?? null };
+  }
+  if (categories.length > 1) return { kind: "unknown", reason: "multiple" };
+  let cmd: Command;
+  if (categories.length === 1) {
+    const [category, words] = categories[0];
+    const pids = pools.filter(p => p.live && p.category === category).map(p => p.pid);
+    if (!pids.length) return { kind: "unknown" };
+    const rest = text.replace(words, " ");
+    const explicit = findPools(stripFiller(normalize(rest, pools)), pools).pids;
+    if (explicit.length && explicit.some(pid => !pids.includes(pid))) return { kind: "unknown" };
+    cmd = parseIntent(rest, pools, context);
+    const rank = poolPick(spaced(rest));
+    if (cmd.kind === "stake" || cmd.kind === "unstake" || cmd.kind === "claim") {
+      if (rank && !explicit.length) cmd = { ...cmd, pid: null, pick: { ...rank, pids } };
+      else if (cmd.kind === "stake" && /\b(?:each|every|all|across|split|between|among)\b/.test(rest)) {
+        cmd = { kind: "stakeEach", pids, amount: findAmount(spaced(rest.replace(/\b(?:all|each|every)\b/g, " "))), split: /\b(?:split|across|between|among|evenly)\b/.test(rest) && !/\beach\b/.test(rest) };
+      } else if (!explicit.length) {
+        if (pids.length > 1) return { kind: "clarify", pids, input: text.replace(words, "{pool}") };
+        cmd = { ...cmd, pid: pids[0] };
+      }
+    } else if (cmd.kind === "stakeEach") cmd = { ...cmd, pids };
+    else if (/\b(?:staked|stake|stakers|contributed|received|least|most)\b/.test(rest)) {
+      cmd = statsCommand(spaced(rest), []);
+      if (cmd.kind === "stats") cmd = { ...cmd, pids };
+    } else return { kind: "category", category, pid: null };
+  } else cmd = parseIntent(text, pools, context);
+  if (cmd.kind === "unknown" && correction && context.pending && /\d/.test(text) && malformedAmount(text, pools)) {
+    if (context.pending === "stake" || context.pending === "unstake") cmd = { kind: context.pending, pid: null, amount: null };
+    if (context.pending === "move") cmd = { kind: "move", from: null, to: null, amount: null };
+    if (context.pending === "stakeEach") cmd = { kind: "stakeEach", pids: [], split: false, amount: null };
+  }
+
+  // Never turn an unsupported multi-step instruction into its first recognized action.
+  if (isActionCommand(cmd)) {
+    if (/^(?:what|how|why|when|where|who|which|is|are|does|did|should|would i)\b/.test(text)
+      || /\b(?:explain|example|yesterday|previously|used to|planning|thinking|considering|how to|want to know|wondering|what happens)\b/.test(text)) return { kind: "unknown" };
+    if (/\b(?:swap|buy|sell|trade|bridge|exchange|convert|purchase)\b/.test(text) && !/\bswap (?:my )?(?:stake|position)\b/.test(text)) return { kind: "unknown", reason: "swap" };
+    if (/\b(?:or|then)\b/.test(text) && !/\d\s+or\s+\d/.test(text)) return { kind: "unknown", reason: "multiple" };
+    if (/\b(?:send|tip|pay|airdrop)\b/.test(text)) return { kind: "unknown", reason: "transfer" };
+    if (cmd.kind === "move" && matches.pids.length > 2) return { kind: "unknown", reason: "multiple" };
+    if (cmd.kind === "move" && CLAIM_VERBS.test(normalized)) return { kind: "unknown", reason: "multiple" };
+    if (cmd.kind === "move" && (matches.hits.filter(h => h.role === "from").length > 1 || matches.hits.filter(h => h.role === "to").length > 1
+      || (matches.pids.length > 1 && matches.hits.every(h => h.role === null)))) return { kind: "unknown" };
+    if (cmd.kind === "autoclaim" && (/\b(?:stake|unstake|move|deposit|withdraw)\b/.test(normalized)
+      || (/\b(?:on|enable|start)\b/.test(text) && /\b(?:off|disable|stop)\b/.test(text)))) return { kind: "unknown", reason: "multiple" };
+    if (/\band\b/.test(matches.rest) && matches.pids.length === 1 && cmd.kind !== "move" && !/\b(?:hundred|thousand|million) and\b/.test(text)) return { kind: "unknown", reason: "multiple" };
+    if (cmd.kind === "stakeEach" && [...normalized.matchAll(/\d[\d,.]*\s*(?:k|m|b)?\s*(?:obn|usd)?\s*(?:to\s+)?each\b/g)].length > 1) return { kind: "unknown", reason: "multiple" };
+    if ("amount" in cmd && malformedAmount(text, pools)) cmd = { ...cmd, amount: null };
+  }
+  if (cmd.kind === "stats" && !matches.pids.length && !categories.length && !/\b(?:stake\w*|people|tvl|contribut\w*|rewards?|price|worth|nonprofits?|charit\w*|pools?|stats?|statistics|analytics|leaderboard|rank\w*|raised|received|earn\w*|donat\w*)\b/.test(normalized)) return { kind: "unknown" };
+  return cmd;
+}
+
+export function isActionCommand(cmd: Command) {
+  return ["stake", "unstake", "claim", "move", "stakeEach"].includes(cmd.kind) || (cmd.kind === "autoclaim" && cmd.mode !== "status");
+}
+
+function clarifyPool(input: string, pools: CommandPool[], phrase: string, pids: number[]): Command {
+  // Preserve raw numbers and currency: a clarification must not sanitize an invalid amount.
+  const words = [...input.matchAll(/[a-z0-9]+(?:[’'][a-z]+)?/gi)];
+  for (let i = 0; i < words.length; i++) for (let n = 1; n <= 4 && i + n <= words.length; n++) {
+    const start = words[i].index!;
+    const end = words[i + n - 1].index! + words[i + n - 1][0].length;
+    if (normalize(input.slice(start, end), pools).trim() === phrase) {
+      return { kind: "clarify", pids, input: input.slice(0, start) + "{pool}" + input.slice(end) };
+    }
+  }
+  return { kind: "unknown" };
+}
+
+export type CommandDraft = Extract<Command, { kind: "stake" | "unstake" | "claim" | "move" | "stakeEach" }>;
+
+/** A new instruction replaces the draft; a short answer or correction edits it. */
+export function mergeCommandDraft(input: string, cmd: Command, draft: CommandDraft | null): Command {
+  if (!draft || cmd.kind !== draft.kind) return cmd;
+  const text = input.toLowerCase();
+  const correction = /^(?:no\b|actually\b|i meant\b|make it\b)|\binstead\b/.test(text);
+  if (!correction && /\b(?:stake|unstake|deposit|withdraw|claim|collect|move|switch|split|spread|divide)\b/.test(text)) return cmd;
+  const amountText = text.replace(/\bk[- ]?9\b|\b(?:pool|pid)\s*#?\s*\d+|#\d+/g, " ");
+  const amountGiven = /[\d$%]|\b(?:all|everything|half|third|quarter|hundred|thousand|million|one|two|three|four|five|six|seven|eight|nine|ten)\b/.test(amountText);
+  if (cmd.kind === "move" && draft.kind === "move") {
+    const given = cmd.from ?? cmd.to;
+    if (given !== null && correction && draft.from !== null && draft.to !== null && !/\b(?:from|to|into)\b/.test(text)) return { kind: "unknown" };
+    const from = cmd.to !== null ? draft.from : cmd.from !== null && (draft.from === null || /\bfrom\b/.test(text)) ? cmd.from : draft.from;
+    const to = cmd.to ?? (draft.from !== null && draft.to === null ? given : draft.to);
+    return { kind: "move", from, to, amount: amountGiven ? cmd.amount : cmd.amount ?? draft.amount };
+  }
+  if (cmd.kind === "stakeEach" && draft.kind === "stakeEach") return { ...draft, pids: cmd.pids.length ? cmd.pids : draft.pids, amount: amountGiven ? cmd.amount : cmd.amount ?? draft.amount };
+  if (cmd.kind === "claim" && draft.kind === "claim") return cmd.all ? cmd : { ...cmd, pid: cmd.pid ?? draft.pid };
+  if ((cmd.kind === "stake" || cmd.kind === "unstake") && (draft.kind === "stake" || draft.kind === "unstake")) {
+    return { ...cmd, pid: cmd.pid ?? draft.pid, amount: amountGiven ? cmd.amount : cmd.amount ?? draft.amount, ...(cmd.pick ? { pick: cmd.pick } : cmd.pid === null && draft.pick ? { pick: draft.pick } : {}) };
+  }
+  return cmd;
+}
+
+function malformedAmount(input: string, pools: CommandPool[]) {
+  if (/[€£¥]|\b(?:euros?|eur|gbp|eth|usdc|eurc)\b/.test(input)) return true;
+  let text = input.replace(/\bk-9\b/g, "k9");
+  for (const pool of pools) for (const name of [pool.name, pool.shortName ?? "", ...(POOL_ALIASES[pool.pid] ?? [])].filter(Boolean).sort((a, b) => b.length - a.length)) text = text.replaceAll(name.toLowerCase(), " ");
+  text = text.replace(/\b(?:pool|pid)\s*#?\s*\d+|#\d+/g, " ");
+  if (/[-−+]\s*\d|\d\s*\/\s*\d|\d[.,]\d*[.,]\d|\d+(?:\.\d+)?(?:e[+-]?\d+|kk|mm)\b/i.test(text.replace(/\b\d{1,3}(?:,\d{3})+(?:\.\d+)?\b/g, " "))) return true;
+  for (const token of text.match(/\d[\d,]*(?:\.\d+)?[a-z]*/g) ?? []) {
+    if (!/^\d+(?:\.\d+)?(?:k|m|b|obn|usd)?$|^\d{1,3}(?:,\d{3})+(?:\.\d+)?(?:k|m|b)?$/.test(token)) return true;
+  }
+  return false;
+}
+
+/** Suggestions are explicit new requests; a chip never confirms a transaction. */
+export function commandSuggestions(input: string, pools: CommandPool[]): string[] {
+  if (input.length > 2000) return ["help"];
+  const text = stripFiller(normalize(input, pools));
+  const pids = findPools(text, pools).pids;
+  const name = pools.find(p => p.pid === pids[0])?.shortName ?? pools.find(p => p.pid === pids[0])?.name;
+  if (name) return [`stake to ${name}`, `unstake from ${name}`, `claim from ${name}`];
+  if (/\bauto/.test(text)) return ["what is auto claim?", "is auto claim on?"];
+  if (UNSTAKE_VERBS.test(text)) return ["what am I staking?", "unstake"];
+  if (CLAIM_VERBS.test(text)) return ["claim all", "what am I staking?"];
+  if (STAKE_VERBS.test(text)) return ["stake", "list the charities", "how do I start staking?"];
+  return ["help", "what is OBN?", "list the charities"];
 }
 
 /** Pools a typo could refer to, for "did you mean…" replies. */
