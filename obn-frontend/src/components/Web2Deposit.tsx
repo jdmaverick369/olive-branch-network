@@ -265,14 +265,18 @@ export function Web2Deposit({
         })}
       </div>
 
-      <label className="flex w-full items-center gap-1 rounded-lg border px-3.5 py-2.5 text-sm focus-within:ring-2 focus-within:ring-green-500 cursor-text"
+      {/* "$" and the amount stay centered together, sized to what's typed (same pattern as the staking amount box). */}
+      <label className="flex w-full items-center justify-center gap-1 rounded-lg border px-3.5 py-2.5 text-sm focus-within:ring-2 focus-within:ring-green-500 cursor-text"
         style={{ borderColor: selected === null && custom ? GREEN : "var(--card-border)", backgroundColor: "var(--card-bg)", color: "var(--card-text)" }}>
         <span aria-hidden="true">$</span>
-        <input type="text" inputMode="decimal" placeholder="Other amount" aria-label="Custom deposit amount in US dollars" disabled={busy}
-          value={custom}
-          onFocus={() => setSelected(null)}
-          onChange={event => { if (/^\d{0,4}(\.\d{0,2})?$/.test(event.target.value)) { setCustom(event.target.value); setSelected(null); } }}
-          className="w-full min-w-0 border-0 bg-transparent p-0 outline-none text-inherit" />
+        <span className="relative min-w-0 overflow-hidden">
+          <span aria-hidden="true" className="invisible whitespace-pre">{custom || "Other amount"}</span>
+          <input type="text" inputMode="decimal" placeholder="Other amount" aria-label="Custom deposit amount in US dollars" disabled={busy}
+            value={custom}
+            onFocus={() => setSelected(null)}
+            onChange={event => { if (/^\d{0,4}(\.\d{0,2})?$/.test(event.target.value)) { setCustom(event.target.value); setSelected(null); } }}
+            className="absolute inset-0 w-full min-w-0 border-0 bg-transparent p-0 outline-none text-inherit" />
+        </span>
       </label>
 
       <button type="button" disabled={busy || !validAmount || checkingWallet} onClick={handlePrimary}
@@ -287,7 +291,7 @@ export function Web2Deposit({
         </label>
       )}
 
-      <p className="text-xs text-center" style={{ color: "var(--card-subtext)" }}>
+      <p className="text-[11px] leading-snug text-center" style={{ color: "var(--card-subtext)" }}>
         Pay securely with {walletLabel} through Coinbase, using any debit card in your {wallet === "google_pay" ? "Google Wallet" : "Apple Wallet"}. Your dollars are converted to OBN and deposited in this pool.
         {reserve !== null && (ethPrice
           ? ` About ${usd(Number(formatUnits(reserve, 18)) * ethPrice)} of it pays the network fees, and what's left stays in your wallet as ETH for a future withdrawal.`
