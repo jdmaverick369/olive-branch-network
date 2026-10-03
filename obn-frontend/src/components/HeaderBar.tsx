@@ -325,7 +325,6 @@ export default function HeaderBar() {
               >
                 <MenuItem href="/profile" label="Profile" />
                 <MenuItem href="/stake-earn-contribute" label={displayText("Stake, Earn, Contribute")} />
-                <MenuItem href="/ask" label="Ask Oliver" />
                 <MenuItem href="/protocol-funds" label="Protocol Funds" />
                 <MenuItem href="/trade" label="Trade OBN" />
                 <MenuItem href="/analytics" label="Analytics" />
