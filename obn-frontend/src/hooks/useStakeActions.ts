@@ -47,22 +47,45 @@ export function useStakeActions(account: `0x${string}` | undefined) {
     capabilities: { paymasterService: { url: PAYMASTER_URL }, dataSuffix: { value: DATA_SUFFIX, optional: true } },
   }).then(() => undefined);
 
-  const stake = (pid: number, amount: bigint) => guarded("Stake", async () => {
-    if (!account || !publicClient) throw new Error("Connect your wallet first.");
-    const approve = encodeFunctionData({ abi: erc20Abi, functionName: "approve", args: [STAKING_CONTRACT, amount] });
-    const deposit = encodeFunctionData({ abi: stakingAbi, functionName: "deposit", args: [BigInt(pid), amount] });
-    if (canBatch) return batch([{ to: OBN_TOKEN_ADDRESS, data: approve }, { to: STAKING_CONTRACT, data: deposit }]);
+  const allowance = () => publicClient!.readContract({ address: OBN_TOKEN_ADDRESS, abi: erc20Abi, functionName: "allowance", args: [account!, STAKING_CONTRACT] });
 
-    await tx.writeContractAsync({ address: OBN_TOKEN_ADDRESS, abi: erc20Abi, functionName: "approve", args: [STAKING_CONTRACT, amount], dataSuffix: DATA_SUFFIX });
-    // Poll allowance to ride out RPC lag before depositing.
-    for (let attempt = 0; ; attempt++) {
-      const allowance = await publicClient.readContract({ address: OBN_TOKEN_ADDRESS, abi: erc20Abi, functionName: "allowance", args: [account, STAKING_CONTRACT] }).catch(() => 0n);
-      if (allowance >= amount) break;
-      if (attempt >= 10) throw new Error("Allowance not confirmed after polling.");
-      await new Promise(r => setTimeout(r, 500));
-    }
-    await tx.writeContractAsync({ address: STAKING_CONTRACT, abi: stakingAbi, functionName: "deposit", args: [BigInt(pid), amount], dataSuffix: DATA_SUFFIX });
-  });
+  /**
+   * Stake into one or more pools. The approval is skipped when the existing one already covers the
+   * total (one fewer wallet prompt, which matters on hardware wallets); otherwise a single approval
+   * covers every pool. Base Account sends it all as one batch. `done` lists pools that were staked.
+   */
+  const stakeMany = async (items: { pid: number; amount: bigint }[]) => {
+    const done: number[] = [];
+    const ok = await guarded("Stake", async () => {
+      if (!account || !publicClient) throw new Error("Connect your wallet first.");
+      const total = items.reduce((sum, item) => sum + item.amount, 0n);
+      const approved = await allowance().catch(() => 0n);
+      const needsApproval = approved < total;
+      const approveCall = { to: OBN_TOKEN_ADDRESS, data: encodeFunctionData({ abi: erc20Abi, functionName: "approve", args: [STAKING_CONTRACT, total] }) };
+      const deposits = items.map(item => ({ to: STAKING_CONTRACT, data: encodeFunctionData({ abi: stakingAbi, functionName: "deposit", args: [BigInt(item.pid), item.amount] }) }));
+      if (canBatch) {
+        await batch(needsApproval ? [approveCall, ...deposits] : deposits);
+        done.push(...items.map(item => item.pid));
+        return;
+      }
+      if (needsApproval) {
+        await tx.writeContractAsync({ address: OBN_TOKEN_ADDRESS, abi: erc20Abi, functionName: "approve", args: [STAKING_CONTRACT, total], dataSuffix: DATA_SUFFIX });
+        // Poll allowance to ride out RPC lag before depositing.
+        for (let attempt = 0; ; attempt++) {
+          if ((await allowance().catch(() => 0n)) >= total) break;
+          if (attempt >= 10) throw new Error("Allowance not confirmed after polling.");
+          await new Promise(r => setTimeout(r, 500));
+        }
+      }
+      for (const item of items) {
+        await tx.writeContractAsync({ address: STAKING_CONTRACT, abi: stakingAbi, functionName: "deposit", args: [BigInt(item.pid), item.amount], dataSuffix: DATA_SUFFIX });
+        done.push(item.pid);
+      }
+    });
+    return { ok, done };
+  };
+
+  const stake = async (pid: number, amount: bigint) => (await stakeMany([{ pid, amount }])).ok;
 
   const unstake = (pid: number, amount: bigint) => guarded("Unstake", async () => {
     if (canBatch) return batch([{ to: STAKING_CONTRACT, data: encodeFunctionData({ abi: stakingAbi, functionName: "withdraw", args: [BigInt(pid), amount] }) }]);
@@ -91,5 +114,5 @@ export function useStakeActions(account: `0x${string}` | undefined) {
     return { ok, done };
   };
 
-  return { stake, unstake, claim, claimMany, busy, canBatch, tx };
+  return { stake, stakeMany, unstake, claim, claimMany, busy, canBatch, tx };
 }

@@ -200,6 +200,27 @@ test("pools picked by ranking instead of by name", () => cases([
   ["top 3 by stakers", stats("stakers", [], { rank: "most", limit: 3 })],
 ]));
 
+const each = (amount, pids = [], split = false) => ({ kind: "stakeEach", amount, pids, split });
+test("staking into several nonprofits at once", () => cases([
+  ["I have 12M OBN and there are a 11 nonprofits. I want to stake 1M more OBN to each of them resulting in 11M OBN being staked.", each(obn("1000000"))],
+  ["stake 1M to each nonprofit", each(obn("1000000"))],
+  ["stake 1,000 OBN to every charity", each(obn("1000"))],
+  ["stake $5 to each nonprofit", each(usd("5"))],
+  ["stake to all nonprofits", each(null)],
+  ["split 11M across all nonprofits", each(obn("11000000"), [], true)],
+  ["spread 50% of my OBN evenly across all the pools", each(pct("50"), [], true)],
+  ["stake everything evenly across all nonprofits", each(ALL, [], true)],
+  ["stake 100 each to tor and khan", each(obn("100"), [6, 4])],
+  ["divide 3000 between tor, khan and heifer", each(obn("3000"), [6, 4, 1], true)],
+  // Still one nonprofit, or still refused
+  ["stake all my obn to st jude", action("stake", 7, ALL)],
+  ["stake 100 to tor and khan", { kind: "unknown", reason: "multiple" }],
+]));
+test("a reply fills in a pending stake-to-each", () => {
+  assert.deepEqual(parse("1,000", { pending: "stakeEach" }), each(obn("1000")));
+  assert.deepEqual(parse("$2", { pending: "stakeEach" }), each(usd("2")));
+});
+
 const faq = topic => ({ kind: "faq", topic });
 test("FAQ questions get the matching FAQ answer", () => cases([
   ["what is olive branch network", faq("about")], ["what is obn?", faq("about")], ["who are you", faq("about")],

@@ -38,15 +38,16 @@ const SHORT: Record<number, string> = {
 
 type Message = { id: number; from: "user" | "bot"; body: ReactNode; chips?: string[] };
 type Action = {
-  kind: "stake" | "unstake" | "claim" | "claimAll";
+  kind: "stake" | "unstake" | "claim" | "claimAll" | "stakeEach";
   pid: number;
   amount: bigint;
   share?: number;      // % of the wallet (stake) or of the pool stake (unstake)
   pids?: number[];     // claimAll: every pool being claimed
+  items?: { pid: number; amount: bigint }[]; // stakeEach: what goes into each pool (amount = the total)
   moveTo?: number;     // a move: after this unstake, offer to stake the same amount here
   step?: 1 | 2;        // a move's step, shown on the card
 };
-type Draft = Extract<Command, { kind: "stake" | "unstake" | "claim" | "move" }>;
+type Draft = Extract<Command, { kind: "stake" | "unstake" | "claim" | "move" | "stakeEach" }>;
 type Stats = Extract<Command, { kind: "stats" }>;
 type Position = { staked: bigint; pending: bigint; contributed: bigint };
 
@@ -169,6 +170,34 @@ export default function AskPage() {
     return parseUnits(`${int}.${frac.slice(0, 18) || "0"}`, 18);
   };
 
+  /** "1M to each nonprofit" / "split 11M across all": one card, one approval at most, a deposit per nonprofit. */
+  const resolveEach = (cmd: Extract<Draft, { kind: "stakeEach" }>) => {
+    const own = (pid: number) => getPoolMeta(pid)?.ethereumAddress.toLowerCase() === account!.toLowerCase();
+    const requested = cmd.pids.length ? cmd.pids : LIVE_POOLS.map(p => p.pid);
+    const targets = requested.filter(pid => !own(pid)); // a nonprofit's own wallet can't stake into its own pool
+    if (targets.length === 0) return say("bot", "There's no nonprofit this wallet can stake into.");
+    const n = BigInt(targets.length);
+    // all / percent always mean a total of the wallet shared evenly; "split" makes any amount a total.
+    const asTotal = cmd.split || cmd.amount?.unit === "all" || cmd.amount?.unit === "percent";
+    if (!cmd.amount) {
+      setDraft(cmd);
+      return say("bot", displayText(asTotal
+        ? `How much in total do you want to split across ${targets.length} nonprofits?`
+        : `How much do you want to stake to each of the ${targets.length} nonprofits? Say an OBN or dollar amount.`), asTotal ? ["25%", "50%", "all"] : undefined);
+    }
+    setDraft(null);
+    const raw = toRaw(cmd.amount, "stake", targets[0]);
+    if (typeof raw === "string") return say("bot", raw);
+    const per = asTotal ? raw / n : raw;
+    const total = per * n;
+    if (per <= 0n) return say("bot", balance === 0n ? "You don't have any OBN in your wallet to stake." : "That amount is too small to split that many ways.");
+    if (total > balance) {
+      return say("bot", displayText(`That's ${fmt(total)} OBN in total (${fmt(per)} × ${targets.length}), but you have ${fmt(balance)} OBN${usd(balance)} in your wallet.`));
+    }
+    if (targets.length < requested.length) say("bot", `I left out ${requested.filter(own).map(poolName).join(", ")}, since this is its own nonprofit wallet.`);
+    setConfirm({ kind: "stakeEach", pid: -1, amount: total, items: targets.map(pid => ({ pid, amount: per })), share: Number(total * 10_000n / balance) / 100 });
+  };
+
   /** A move is an unstake from one nonprofit, then (as a second confirmation) a stake into another. */
   const resolveMove = (cmd: Extract<Draft, { kind: "move" }>) => {
     const own = (pid: number | null) => pid !== null && getPoolMeta(pid)?.ethereumAddress.toLowerCase() === account!.toLowerCase();
@@ -261,6 +290,7 @@ export default function AskPage() {
     const ownPool = (pid: number | null) => pid !== null && getPoolMeta(pid)?.ethereumAddress.toLowerCase() === account.toLowerCase();
     const ownRefusal = (pid: number) => say("bot", displayText(`This is ${poolName(pid)}'s nonprofit wallet, so it can only claim from ${poolName(pid)}, not stake or unstake there.`));
     if (cmd.kind === "move") return resolveMove(cmd);
+    if (cmd.kind === "stakeEach") return resolveEach(cmd);
     if (cmd.pid === null && cmd.pick) return resolvePick(cmd);
     if (cmd.kind !== "claim" && ownPool(cmd.pid)) return ownRefusal(cmd.pid!);
     if (cmd.kind === "claim" && cmd.pid === null && cmd.all) {
@@ -450,6 +480,7 @@ export default function AskPage() {
     displayText("• Stake: \"stake 10,000 OBN to St Jude\" or \"stake $5 to charity water\""),
     displayText("• Unstake: \"unstake half from Tor\" or \"unstake $5 from St Jude\""),
     displayText("• Move: \"move 100 from Tor to St Jude\""),
+    displayText("• Several at once: \"stake 1,000 OBN to each nonprofit\" or \"split 10,000 across all\""),
     "• Claim rewards: \"claim from Khan Academy\" or \"claim all\"",
     "• Auto-claim: \"turn on auto claim\" or \"is auto claim on?\"",
     displayText("• Your positions: \"what am I staking?\""),
@@ -485,6 +516,8 @@ export default function AskPage() {
         const from = both ? cmd.from : draft.from ?? given;
         const to = both ? cmd.to : draft.from === null ? draft.to : draft.to ?? given;
         cmd = { kind: "move", from, to, amount: cmd.amount ?? draft.amount };
+      } else if (cmd.kind === "stakeEach" && draft.kind === "stakeEach") {
+        cmd = { ...draft, amount: cmd.amount ?? draft.amount };
       } else if (cmd.kind === "claim" && draft.kind === "claim") {
         cmd = { kind: "claim", pid: cmd.pid ?? draft.pid, ...(cmd.all ? { all: true as const } : {}) };
       } else if ((cmd.kind === "stake" || cmd.kind === "unstake") && (draft.kind === "stake" || draft.kind === "unstake")) {
@@ -511,6 +544,7 @@ export default function AskPage() {
         return say("bot", "I didn't catch that. Here are some things you can try:", EXAMPLES);
       }
       case "move": return resolve(cmd);
+      case "stakeEach": return resolve(cmd);
       case "stake":
       case "unstake":
       case "claim": {
@@ -534,6 +568,18 @@ export default function AskPage() {
         ? `Claimed your rewards from ${done.length} nonprofits.`
         : `Claimed from ${done.map(poolName).join(", ")}. The rest didn't go through; say "claim all" to try them again.`);
     }
+    if (action.kind === "stakeEach") {
+      const items = action.items ?? [];
+      const { done } = await actions.stakeMany(items);
+      if (done.length === 0) return say("bot", "That didn't go through. Nothing was changed.");
+      await new Promise(r => setTimeout(r, 1_250));
+      await Promise.all([reads.refetch(), poolInfo.refetch()]);
+      const per = items[0]?.amount ?? 0n;
+      return say("bot", displayText(done.length === items.length
+        ? `Staked ${fmt(per)} OBN to each of ${done.length} nonprofits (${fmt(per * BigInt(done.length))} OBN in total).`
+        : `Staked ${fmt(per)} OBN to ${done.map(poolName).join(", ")}. The others didn't go through; ask me again to stake to the rest.`),
+        autoClaim.visible && autoClaim.known && !autoClaim.enabled ? ["turn on auto claim"] : undefined);
+    }
     const ok = action.kind === "stake" ? await actions.stake(action.pid, action.amount)
       : action.kind === "unstake" ? await actions.unstake(action.pid, action.amount)
       : await actions.claim(action.pid);
@@ -552,6 +598,7 @@ export default function AskPage() {
   const onSubmit = (e: FormEvent) => { e.preventDefault(); submit(input); };
   const confirmLabel = !confirm ? null
     : confirm.kind === "claimAll" ? `Claim ${fmt(confirm.amount)} OBN${usd(confirm.amount)} in rewards from ${confirm.pids?.length} nonprofits`
+    : confirm.kind === "stakeEach" ? displayText(`Stake ${fmt(confirm.items?.[0]?.amount ?? 0n)} OBN to each of ${confirm.items?.length} nonprofits (${fmt(confirm.amount)} OBN${usd(confirm.amount)} in total)`)
     : displayText(`${confirm.step ? `Step ${confirm.step} of 2: ` : ""}${{ stake: "Stake", unstake: "Unstake", claim: "Claim" }[confirm.kind]} ${fmt(confirm.amount)} OBN${usd(confirm.amount)} ${confirm.kind === "stake" ? "to" : "from"} ${poolName(confirm.pid)}`);
   const busy = actions.busy;
   const chipStyle = { borderColor: "var(--card-border)", backgroundColor: "var(--card-bg)", color: "var(--card-text)" };
@@ -604,12 +651,18 @@ export default function AskPage() {
           {confirm && (
             <div ref={confirmCard} className="self-stretch rounded-xl border p-3 text-sm" style={{ borderColor: "#0D9921", backgroundColor: "var(--card-bg)", color: "var(--card-text)" }}>
               <p className="font-semibold mb-2">{confirmLabel}?</p>
+              {confirm.kind === "stakeEach" && (
+                <p className="mb-2 text-xs" style={{ color: "var(--card-subtext)" }}>
+                  {confirm.items?.map(item => short(item.pid)).join(" · ")}
+                  {!actions.canBatch && <><br />Your wallet will ask you to confirm once per nonprofit ({confirm.items?.length} times), plus one approval if needed.</>}
+                </p>
+              )}
               {confirm.kind === "claimAll" && !actions.canBatch && (
                 <p className="mb-2 text-xs" style={{ color: "var(--card-subtext)" }}>Your wallet will ask you to confirm {confirm.pids?.length} times, once per nonprofit.</p>
               )}
               {confirm.share !== undefined && confirm.share >= 50 && (
                 <p className="mb-2 text-xs font-semibold" style={{ color: theme === "dark" ? "#fbbf24" : "#d97706" }}>
-                  {displayText(`That's ${confirm.share >= 99.99 ? "all" : `${Math.round(confirm.share)}%`} of ${confirm.kind === "stake" ? "the OBN in your wallet" : `your stake in ${poolName(confirm.pid)}`}.`)}
+                  {displayText(`That's ${confirm.share >= 99.99 ? "all" : `${Math.round(confirm.share)}%`} of ${confirm.kind === "stake" || confirm.kind === "stakeEach" ? "the OBN in your wallet" : `your stake in ${poolName(confirm.pid)}`}.`)}
                 </p>
               )}
               <div className="flex gap-2">

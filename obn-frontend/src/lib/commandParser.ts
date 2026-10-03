@@ -19,6 +19,9 @@ export type Command =
   | { kind: "stake" | "unstake"; amount: CommandAmount | null; pid: number | null; pick?: PoolPick }
   | { kind: "claim"; pid: number | null; all?: true; pick?: PoolPick } // all: every pool with rewards
   | { kind: "move"; from: number | null; to: number | null; amount: CommandAmount | null }
+  // Stake into several nonprofits at once. pids empty = every nonprofit. split: the amount is a total
+  // shared evenly ("split 11M across all"); otherwise each nonprofit gets the amount ("1M to each").
+  | { kind: "stakeEach"; amount: CommandAmount | null; pids: number[]; split: boolean }
   | { kind: "status"; pid: number | null }                         // the user's own positions
   | { kind: "autoclaim"; mode: "on" | "off" | "status" }
   | { kind: "stats"; metric: StatsMetric; pids: number[]; rank: "most" | "least" | null; limit: number | null; days: number | null }
@@ -33,7 +36,7 @@ export type Command =
 /** "the nonprofit with the least stake": which pool to pick once the page has the numbers. */
 export type PoolPick = { order: "most" | "least"; by: "staked" | "stakers" | "contributed" | "mine" };
 
-export type ParseContext = { pending?: "stake" | "unstake" | "claim" | "move" | null };
+export type ParseContext = { pending?: "stake" | "unstake" | "claim" | "move" | "stakeEach" | null };
 
 // ---------------------------------------------------------------------------------------
 // Pools
@@ -293,6 +296,12 @@ function shiftDecimal(value: string, places: number) {
 
 const SUFFIX: Record<string, number> = { k: 3, thousand: 3, grand: 3, m: 6, mil: 6, million: 6, b: 9, billion: 9 };
 
+/** The amount tied to "each" ("1M more OBN to each", "$5 each"), even when the message has other numbers in it. */
+function eachAmount(text: string): CommandAmount | null {
+  const m = text.match(new RegExp(`((?:\\$\\s*)?${NUM}\\s*(?:k|m|b|thousand|million|billion|mil)?\\b\\s*(?:more\\s+)?(?:obn|tokens?|dollars?|bucks?|usd)?\\s*(?:more\\s+)?)(?:to|into|in|for|with)?\\s*(?:each|every|apiece|per\\s+(?:nonprofit|charity|pool|org))\\b`));
+  return m ? findAmount(spaced(m[1])) : null;
+}
+
 /** The single amount in the text, or null. Two different amounts ("100 or 200") also give null. */
 function findAmount(text: string): CommandAmount | null {
   const found: CommandAmount[] = [];
@@ -329,7 +338,7 @@ const has = (re: RegExp, s: string) => re.test(s);
 const REWARD_WORDS = /\b(?:rewards?|earnings?|yield|interest|profits?|gains?|returns?|what ive earned|what i earned)\b/;
 const CLAIM_VERBS = /\b(?:claim|collect|harvest|redeem)\b/;
 const UNSTAKE_VERBS = /\b(?:unstake|withdraw|remove|unlock|pull|take out|take back|cash out|exit|leave|reduce|decrease|lower|get (?:\w+ ){0,4}back|take (?:\w+ ){0,3}out|pull (?:\w+ ){0,3}out)\b/;
-const STAKE_VERBS = /\b(?:stake|deposit|put|add|give|support|back|lock|fund|donate|delegate|invest|commit|contribute|increase|top up|allocate)\b/;
+const STAKE_VERBS = /\b(?:stake|deposit|put|add|give|support|back|lock|fund|donate|delegate|invest|commit|contribute|increase|top up|allocate|split|spread|divide|distribute)\b/;
 const NEGATION = /\b(?:dont|do not|never|not|no longer|stop)\b/;
 
 function autoclaimMode(text: string): "on" | "off" | "status" {
@@ -484,9 +493,22 @@ export function parseCommand(input: string, pools: CommandPool[], context: Parse
 
   if (actions > 1) return { kind: "unknown", reason: "multiple" };
   if (actions === 1 && has(NEGATION, verbs)) return { kind: "unknown", reason: "negated" };
+  // Several nonprofits at once: "1M to each nonprofit", "split 11M across all of them", "100 each to Tor and Khan".
+  if (actions === 1 && stakeVerb) {
+    const allPools = /\b(?:each|every|all)\s+(?:of\s+)?(?:the\s+|my\s+|these\s+|those\s+)?(?:\d+\s+)?(?:nonprofits?|charities|charity|pools?|orgs?|organizations?|causes?|ones|them)\b|\bacross\s+(?:all|every|the board)\b|\b(?:to|into|in|for)\s+each\b/;
+    const together = /\b(?:each|evenly|split|spread|divide|divided|between|among|across)\b/;
+    if ((pids.length === 0 && has(allPools, verbs)) || (pids.length > 1 && has(together, verbs))) {
+      const split = has(/\b(?:split|spread|divide|divided|evenly|between|among|total|across)\b/, verbs) && !has(/\beach\b/, verbs);
+      // Drop the "all the nonprofits" phrase so its "all" isn't read as "stake all my OBN".
+      const amountText = spaced(rest.replace(new RegExp(allPools.source, "g"), " ").replace(/\b(?:each|every)\b/g, " "));
+      return { kind: "stakeEach", amount: eachAmount(rest) ?? findAmount(amountText), pids: pids.length > 1 ? pids : [], split };
+    }
+  }
   if (actions === 1 && pids.length > 1) return { kind: "unknown", reason: "multiple" };
 
-  const kind = claimVerb ? "claim" : unstakeVerb ? "unstake" : stakeVerb ? "stake" : context.pending ?? null;
+  if (!actions && context.pending === "stakeEach") return { kind: "stakeEach", amount: findAmount(rest), pids: pids.length > 1 ? pids : [], split: false };
+  const pending = context.pending === "stakeEach" ? null : context.pending ?? null; // stakeEach replies return above
+  const kind = claimVerb ? "claim" : unstakeVerb ? "unstake" : stakeVerb ? "stake" : pending;
   if (!kind) {
     // A bare nonprofit name is a request to hear about it.
     if (pids.length > 0 && !findAmount(rest)) return statsCommand(text, pids);
