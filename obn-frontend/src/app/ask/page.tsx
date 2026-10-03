@@ -33,16 +33,16 @@ const EXAMPLES = ["stake 10,000 OBN to St Jude", "unstake $5 from St Jude", "tur
 
 type Message = { id: number; from: "user" | "bot"; body: ReactNode; chips?: string[] };
 type Action = {
-  kind: "stake" | "unstake" | "claim" | "claimAll" | "stakeEach";
+  kind: "stake" | "unstake" | "claim" | "claimAll" | "stakeEach" | "unstakeEach";
   pid: number;
   amount: bigint;
   share?: number;      // % of the wallet (stake) or of the pool stake (unstake)
   pids?: number[];     // claimAll: every pool being claimed
-  items?: { pid: number; amount: bigint }[]; // stakeEach: what goes into each pool (amount = the total)
+  items?: { pid: number; amount: bigint }[]; // stakeEach / unstakeEach: the amount for each pool (amount = the total)
   moveTo?: number;     // a move: after this unstake, offer to stake the same amount here
   step?: 1 | 2;        // a move's step, shown on the card
 };
-type Draft = Extract<Command, { kind: "stake" | "unstake" | "claim" | "move" | "stakeEach" }>;
+type Draft = Extract<Command, { kind: "stake" | "unstake" | "claim" | "move" | "stakeEach" | "unstakeEach" }>;
 type Stats = Extract<Command, { kind: "stats" }>;
 type Position = { staked: bigint; pending: bigint; contributed: bigint };
 
@@ -196,6 +196,45 @@ export default function AskPage() {
     setConfirm({ kind: "stakeEach", pid: -1, amount: total, items: targets.map(pid => ({ pid, amount: per })), share: Number(total * 10_000n / balance) / 100 });
   };
 
+  /** "100 from each nonprofit" / "everything from all of them": one card, a withdrawal per nonprofit the user has a stake in. */
+  const resolveUnstakeEach = (cmd: Extract<Draft, { kind: "unstakeEach" }>) => {
+    const own = (pid: number) => getPoolMeta(pid)?.ethereumAddress.toLowerCase() === account!.toLowerCase();
+    const staked = (pid: number) => positions.get(pid)?.staked ?? 0n;
+    const requested = cmd.pids.length ? cmd.pids : LIVE_POOLS.map(p => p.pid);
+    const targets = requested.filter(pid => !own(pid) && staked(pid) > 0n);
+    if (targets.length === 0) return say("bot", displayText(cmd.pids.length ? "You don't have anything staked in those nonprofits." : "You don't have anything staked yet."));
+    if (!cmd.amount) {
+      setDraft(cmd);
+      return say("bot", displayText(cmd.split
+        ? `How much in total do you want to unstake across ${targets.length} nonprofits?`
+        : `How much do you want to unstake from each of the ${targets.length} nonprofits you have a stake in? Say an amount, a percentage or "all".`), ["25%", "50%", "all"]);
+    }
+    setDraft(null);
+    let items: { pid: number; amount: bigint }[];
+    if (cmd.amount.unit === "all" || cmd.amount.unit === "percent") {
+      // Taken from each stake on its own: "half" halves every stake, "all" empties each one.
+      const amount = cmd.amount;
+      items = targets.map(pid => ({ pid, amount: toRaw(amount, "unstake", pid) as bigint }));
+    } else {
+      const raw = toRaw(cmd.amount, "unstake", targets[0]);
+      if (typeof raw === "string") return say("bot", raw);
+      const per = cmd.split ? raw / BigInt(targets.length) : raw;
+      const tooSmall = targets.filter(pid => staked(pid) < per);
+      if (tooSmall.length) {
+        return say("bot", displayText(`You have less than ${fmt(per)} OBN staked in ${tooSmall.map(poolName).join(", ")}. Name the nonprofits you want, or unstake everything from each.`),
+          cmd.pids.length ? undefined : ["unstake everything from each nonprofit"]);
+      }
+      items = targets.map(pid => ({ pid, amount: per }));
+    }
+    items = items.filter(item => item.amount > 0n);
+    if (items.length === 0) return say("bot", "That amount is too small to unstake.");
+    const total = items.reduce((sum, item) => sum + item.amount, 0n);
+    const stakedTotal = targets.reduce((sum, pid) => sum + staked(pid), 0n);
+    const skipped = requested.filter(pid => !targets.includes(pid));
+    if (cmd.pids.length && skipped.length) say("bot", displayText(`I left out ${skipped.map(poolName).join(", ")}, since you don't have anything staked there.`));
+    setConfirm({ kind: "unstakeEach", pid: -1, amount: total, items, share: Number(total * 10_000n / stakedTotal) / 100 });
+  };
+
   /** A move is an unstake from one nonprofit, then (as a second confirmation) a stake into another. */
   const resolveMove = (cmd: Extract<Draft, { kind: "move" }>) => {
     const own = (pid: number | null) => pid !== null && getPoolMeta(pid)?.ethereumAddress.toLowerCase() === account!.toLowerCase();
@@ -286,7 +325,7 @@ export default function AskPage() {
   const resolve = (cmd: Draft) => {
     reviewDraft.current = cmd;
     if ("pid" in cmd && cmd.pid !== null) lastPid.current = cmd.pid;
-    else if (cmd.kind === "move" || cmd.kind === "stakeEach") lastPid.current = null;
+    else if (cmd.kind === "move" || cmd.kind === "stakeEach" || cmd.kind === "unstakeEach") lastPid.current = null;
     if (!account || !loaded) {
       setWaiting(cmd);
       if (!account) { say("bot", "Connect your wallet and I'll pick this up right after."); connect(); }
@@ -297,6 +336,7 @@ export default function AskPage() {
     const ownRefusal = (pid: number) => say("bot", displayText(`This is ${poolName(pid)}'s nonprofit wallet, so it can only claim from ${poolName(pid)}, not stake or unstake there.`));
     if (cmd.kind === "move") return resolveMove(cmd);
     if (cmd.kind === "stakeEach") return resolveEach(cmd);
+    if (cmd.kind === "unstakeEach") return resolveUnstakeEach(cmd);
     if (cmd.pid === null && cmd.pick) return resolvePick(cmd);
     if (cmd.kind !== "claim" && ownPool(cmd.pid)) return ownRefusal(cmd.pid!);
     if (cmd.kind === "claim" && cmd.pid === null && cmd.all) {
@@ -488,7 +528,7 @@ export default function AskPage() {
     displayText("• Stake: \"stake 10,000 OBN to St Jude\" or \"stake $5 to charity water\""),
     displayText("• Unstake: \"unstake half from Tor\" or \"unstake $5 from St Jude\""),
     displayText("• Move: \"move 100 from Tor to St Jude\""),
-    displayText("• Several at once: \"stake 1,000 OBN to each nonprofit\" or \"split 10,000 across all\""),
+    displayText("• Several at once: \"stake 1,000 OBN to each nonprofit\", \"split 10,000 across all\" or \"unstake 100 from each nonprofit\""),
     "• Claim rewards: \"claim from Khan Academy\" or \"claim all\"",
     "• Auto-claim: \"turn on auto claim\" or \"is auto claim on?\"",
     displayText("• Your positions: \"what am I staking?\""),
@@ -559,7 +599,8 @@ export default function AskPage() {
         return say("bot", <>I don&apos;t know how to answer that yet. Try one of these commands, or read the <Link className="underline" href="/faq">FAQ</Link>.</>, commandSuggestions(trimmed, POOLS));
       }
       case "move": return resolve(cmd);
-      case "stakeEach": return resolve(cmd);
+      case "stakeEach":
+      case "unstakeEach": return resolve(cmd);
       case "stake":
       case "unstake":
       case "claim": {
@@ -596,6 +637,18 @@ export default function AskPage() {
           : `Staked ${fmt(per)} OBN to ${done.map(poolName).join(", ")}. The others didn't go through; ask me again to stake to the rest.`),
           autoClaim.visible && autoClaim.known && !autoClaim.enabled ? ["turn on auto claim"] : undefined);
       }
+      if (action.kind === "unstakeEach") {
+        const items = action.items ?? [];
+        const { done } = await actions.unstakeMany(items);
+        if (done.length === 0) return say("bot", "That didn't go through. Nothing was changed.");
+        await new Promise(r => setTimeout(r, 1_250));
+        await Promise.all([reads.refetch(), poolInfo.refetch()]);
+        const total = items.filter(item => done.includes(item.pid)).reduce((sum, item) => sum + item.amount, 0n);
+        const rest = items.filter(item => !done.includes(item.pid)).map(item => poolName(item.pid));
+        return say("bot", displayText(rest.length === 0
+          ? `Unstaked ${fmt(total)} OBN from ${done.length} nonprofits. It's back in your wallet.`
+          : `Unstaked ${fmt(total)} OBN from ${done.map(poolName).join(", ")}. These didn't go through: ${rest.join(", ")}.`));
+      }
       const ok = action.kind === "stake" ? await actions.stake(action.pid, action.amount)
         : action.kind === "unstake" ? await actions.unstake(action.pid, action.amount)
         : await actions.claim(action.pid);
@@ -617,6 +670,9 @@ export default function AskPage() {
   const onSubmit = (e: FormEvent) => { e.preventDefault(); submit(input); };
   const confirmLabel = !confirm ? null
     : confirm.kind === "claimAll" ? `Claim ${fmt(confirm.amount)} OBN${usd(confirm.amount)} in rewards from ${confirm.pids?.length} nonprofits`
+    : confirm.kind === "unstakeEach" ? displayText(confirm.items?.every(item => item.amount === confirm.items![0].amount)
+      ? `Unstake ${fmt(confirm.items[0].amount)} OBN from each of ${confirm.items.length} nonprofits (${fmt(confirm.amount)} OBN${usd(confirm.amount)} in total)`
+      : `Unstake ${fmt(confirm.amount)} OBN${usd(confirm.amount)} from ${confirm.items?.length} nonprofits`)
     : confirm.kind === "stakeEach" ? displayText(`Stake ${fmt(confirm.items?.[0]?.amount ?? 0n)} OBN to each of ${confirm.items?.length} nonprofits (${fmt(confirm.amount)} OBN${usd(confirm.amount)} in total)`)
     : displayText(`${confirm.step ? `Step ${confirm.step} of 2: ` : ""}${{ stake: "Stake", unstake: "Unstake", claim: "Claim" }[confirm.kind]} ${fmt(confirm.amount)} OBN${usd(confirm.amount)} ${confirm.kind === "stake" ? "to" : "from"} ${poolName(confirm.pid)}`);
   const busy = actions.busy;
@@ -676,12 +732,20 @@ export default function AskPage() {
                   {!actions.canBatch && <><br />Your wallet will ask you to confirm once per nonprofit ({confirm.items?.length} times), plus one approval if needed.</>}
                 </p>
               )}
+              {confirm.kind === "unstakeEach" && (
+                <p className="mb-2 text-xs" style={{ color: "var(--card-subtext)" }}>
+                  {confirm.items?.every(item => item.amount === confirm.items![0].amount)
+                    ? confirm.items.map(item => short(item.pid)).join(" · ")
+                    : confirm.items?.map(item => `${short(item.pid)}: ${fmt(item.amount)}`).join(" · ")}
+                  {!actions.canBatch && (confirm.items?.length ?? 0) > 1 && <><br />Your wallet will ask you to confirm once per nonprofit ({confirm.items?.length} times).</>}
+                </p>
+              )}
               {confirm.kind === "claimAll" && !actions.canBatch && (
                 <p className="mb-2 text-xs" style={{ color: "var(--card-subtext)" }}>Your wallet will ask you to confirm {confirm.pids?.length} times, once per nonprofit.</p>
               )}
               {confirm.share !== undefined && confirm.share >= 50 && (
                 <p className="mb-2 text-xs font-semibold" style={{ color: theme === "dark" ? "#fbbf24" : "#d97706" }}>
-                  {displayText(`That's ${confirm.share >= 99.99 ? "all" : `${Math.round(confirm.share)}%`} of ${confirm.kind === "stake" || confirm.kind === "stakeEach" ? "the OBN in your wallet" : `your stake in ${poolName(confirm.pid)}`}.`)}
+                  {displayText(`That's ${confirm.share >= 99.99 ? "all" : `${Math.round(confirm.share)}%`} of ${confirm.kind === "stake" || confirm.kind === "stakeEach" ? "the OBN in your wallet" : confirm.kind === "unstakeEach" ? "your stake in those nonprofits" : `your stake in ${poolName(confirm.pid)}`}.`)}
                 </p>
               )}
               <div className="flex gap-2">

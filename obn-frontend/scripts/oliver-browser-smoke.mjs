@@ -136,6 +136,14 @@ try {
   await expectCard(/10,000 OBN to each of 1 nonprofits/);
   assert.match(await cardText(), /Rainforest/);
   assert.doesNotMatch(await cardText(), /Tor|Khan|Heifer|GiveDirectly|St Jude|K9/);
+  // The fixture has 5,000 OBN staked in every pool.
+  await ask("Can you unstake 100 OBn from all the nonprofits..");
+  await expectCard(new RegExp(`Unstake 100 OBN from each of ${POOLS.filter(p => p.live).length} nonprofits`));
+  await askExpectingNoCard("unstake 6000 from each nonprofit", /less than 6,000 OBN staked/);
+  await ask("unstake half from each environmental nonprofit");
+  await expectCard(/Unstake 2,500 OBN from each of 1 nonprofits/);
+  assert.match(await cardText(), /Rainforest/);
+  await page.getByRole("button", { name: "Cancel", exact: true }).click();
   await askExpectingNoCard("should I stake 100 to Tor?", /know how to answer that yet/);
   await askExpectingNoCard("send 100 to 0x123456", /can't send OBN to other wallets/);
   await page.setViewportSize({ width: 390, height: 844 });

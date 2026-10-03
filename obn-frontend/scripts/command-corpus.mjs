@@ -30,6 +30,12 @@ variants(['claim all', 'collect everything', 'please harvest all rewards'], { ki
 variants(['move 100 from tor to khan', 'shift 100 from tor to khan', 'please move 100 from tor to khan'], { kind: 'move', from: 6, to: 4, amount: obn('100') });
 variants(['stake 1M to each nonprofit', 'deposit 1M to every nonprofit', 'please stake 1M to each nonprofit'], { kind: 'stakeEach', pids: [], split: false, amount: obn('1000000') });
 variants(['my balance', 'show my positions', 'what am I staking?'], { kind: 'status', pid: null });
+variants(['Can you unstake 100 OBn from all the nonprofits..', 'unstake 100 from each nonprofit', 'withdraw 100 from every pool', 'please unstake 100 OBN from all of them'], { kind: 'unstakeEach', pids: [], split: false, amount: obn('100') });
+variants(['unstake everything from all nonprofits', 'withdraw all from each nonprofit'], { kind: 'unstakeEach', pids: [], split: false, amount: { unit: 'all' } });
+add('unstake 50% from each nonprofit', { kind: 'unstakeEach', pids: [], split: false, amount: { unit: 'percent', value: '50' } });
+add('unstake 100 each from tor and khan', { kind: 'unstakeEach', pids: [6, 4], split: false, amount: obn('100') });
+add("don't unstake from all the nonprofits", { kind: 'unknown', reason: 'negated' });
+add('what happens if I unstake 100 from each nonprofit?', { kind: 'unknown' });
 variants(['enable autoclaim', 'turn on auto claim', 'please enable auto claim'], { kind: 'autoclaim', mode: 'on' });
 variants(['disable autoclaim', 'turn off auto claim', 'stop auto claiming'], { kind: 'autoclaim', mode: 'off' });
 variants(['auto claim', 'is auto claim on?', 'show autoclaim status'], { kind: 'autoclaim', mode: 'status' });
@@ -52,6 +58,7 @@ for (const category of ['humanitarian', 'environment', 'animals']) {
   variants([`which nonprofits are ${category}?`, `list ${category} nonprofits`, `show ${category} causes`], { kind: 'category', category, pid: null });
   add(`stake 1,000 to each ${category} nonprofit`, { kind: 'stakeEach', pids, split: false, amount: obn('1000') });
   add(`split 10k across ${category}`, { kind: 'stakeEach', pids, split: true, amount: obn('10000') });
+  add(`unstake 100 from all ${category} nonprofits`, { kind: 'unstakeEach', pids, split: false, amount: obn('100') });
   add(`how much is staked in ${category}?`, stats('staked', pids));
   add(`stake 100 to the ${category} nonprofit with the least stake`, { kind: 'stake', pid: null, amount: obn('100'), pick: { order: 'least', by: 'staked', pids } });
 }

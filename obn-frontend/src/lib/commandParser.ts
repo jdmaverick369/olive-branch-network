@@ -23,6 +23,9 @@ export type Command =
   // Stake into several nonprofits at once. pids empty = every nonprofit. split: the amount is a total
   // shared evenly ("split 11M across all"); otherwise each nonprofit gets the amount ("1M to each").
   | { kind: "stakeEach"; amount: CommandAmount | null; pids: number[]; split: boolean }
+  // Unstake from several nonprofits at once ("100 from each nonprofit"). pids empty = every nonprofit
+  // the user has a stake in. split: the amount is a total taken evenly; all / percent apply to each stake.
+  | { kind: "unstakeEach"; amount: CommandAmount | null; pids: number[]; split: boolean }
   | { kind: "status"; pid: number | null }                         // the user's own positions
   | { kind: "autoclaim"; mode: "on" | "off" | "status" }
   | { kind: "stats"; metric: StatsMetric; pids: number[]; rank: "most" | "least" | null; limit: number | null; days: number | null }
@@ -39,7 +42,7 @@ export type Command =
 /** "the nonprofit with the least stake": which pool to pick once the page has the numbers. */
 export type PoolPick = { order: "most" | "least"; by: "staked" | "stakers" | "contributed" | "mine"; pids?: number[] };
 
-export type ParseContext = { pending?: "stake" | "unstake" | "claim" | "move" | "stakeEach" | null; lastPid?: number | null };
+export type ParseContext = { pending?: "stake" | "unstake" | "claim" | "move" | "stakeEach" | "unstakeEach" | null; lastPid?: number | null };
 
 export const CATEGORY_LABELS: Record<PoolCategory, string> = { humanitarian: "Humanitarian", environment: "Environmental", animals: "Animal Welfare" };
 const CATEGORY_WORDS: [PoolCategory, RegExp][] = [
@@ -527,21 +530,22 @@ function parseIntent(input: string, pools: CommandPool[], context: ParseContext 
 
   if (actions > 1) return { kind: "unknown", reason: "multiple" };
   if (actions === 1 && has(NEGATION, verbs)) return { kind: "unknown", reason: "negated" };
-  // Several nonprofits at once: "1M to each nonprofit", "split 11M across all of them", "100 each to Tor and Khan".
-  if (actions === 1 && stakeVerb) {
-    const allPools = /\b(?:each|every|all)\s+(?:of\s+)?(?:the\s+|my\s+|these\s+|those\s+)?(?:\d+\s+)?(?:nonprofits?|charities|charity|pools?|orgs?|organizations?|causes?|ones|them)\b|\bacross\s+(?:all|every|the board)\b|\b(?:to|into|in|for)\s+each\b/;
+  // Several nonprofits at once: "1M to each nonprofit", "split 11M across all of them", "100 each to Tor and Khan",
+  // "unstake 100 from all the nonprofits".
+  if (actions === 1 && (stakeVerb || unstakeVerb)) {
+    const allPools = /\b(?:each|every|all)\s+(?:of\s+)?(?:the\s+|my\s+|these\s+|those\s+)?(?:\d+\s+)?(?:nonprofits?|charities|charity|pools?|orgs?|organizations?|causes?|ones|them)\b|\bacross\s+(?:all|every|the board)\b|\b(?:to|into|in|for|from)\s+each\b/;
     const together = /\b(?:each|evenly|split|spread|divide|divided|between|among|across)\b/;
     if ((pids.length === 0 && has(allPools, verbs)) || (pids.length > 1 && has(together, verbs))) {
       const split = has(/\b(?:split|spread|divide|divided|evenly|between|among|total|across)\b/, verbs) && !has(/\beach\b/, verbs);
       // Drop the "all the nonprofits" phrase so its "all" isn't read as "stake all my OBN".
       const amountText = spaced(rest.replace(new RegExp(allPools.source, "g"), " ").replace(/\b(?:each|every)\b/g, " "));
-      return { kind: "stakeEach", amount: eachAmount(rest) ?? findAmount(amountText), pids: pids.length > 1 ? pids : [], split };
+      return { kind: unstakeVerb ? "unstakeEach" : "stakeEach", amount: eachAmount(rest) ?? findAmount(amountText), pids: pids.length > 1 ? pids : [], split };
     }
   }
   if (actions === 1 && pids.length > 1) return { kind: "unknown", reason: "multiple" };
 
-  if (!actions && context.pending === "stakeEach") return { kind: "stakeEach", amount: findAmount(rest), pids, split: false };
-  const pending = context.pending === "stakeEach" ? null : context.pending ?? null; // stakeEach replies return above
+  if (!actions && (context.pending === "stakeEach" || context.pending === "unstakeEach")) return { kind: context.pending, amount: findAmount(rest), pids, split: false };
+  const pending = context.pending === "stakeEach" || context.pending === "unstakeEach" ? null : context.pending ?? null; // replies to those return above
   const kind = claimVerb ? "claim" : unstakeVerb ? "unstake" : stakeVerb ? "stake" : pending;
   if (!kind) {
     // A bare nonprofit name is a request to hear about it.
@@ -614,13 +618,13 @@ export function parseCommand(input: string, pools: CommandPool[], context: Parse
     const rank = poolPick(spaced(rest));
     if (cmd.kind === "stake" || cmd.kind === "unstake" || cmd.kind === "claim") {
       if (rank && !explicit.length) cmd = { ...cmd, pid: null, pick: { ...rank, pids } };
-      else if (cmd.kind === "stake" && /\b(?:each|every|all|across|split|between|among)\b/.test(rest)) {
-        cmd = { kind: "stakeEach", pids, amount: findAmount(spaced(rest.replace(/\b(?:all|each|every)\b/g, " "))), split: /\b(?:split|across|between|among|evenly)\b/.test(rest) && !/\beach\b/.test(rest) };
+      else if ((cmd.kind === "stake" || cmd.kind === "unstake") && /\b(?:each|every|all|across|split|between|among)\b/.test(rest)) {
+        cmd = { kind: cmd.kind === "unstake" ? "unstakeEach" : "stakeEach", pids, amount: findAmount(spaced(rest.replace(/\b(?:all|each|every)\b/g, " "))), split: /\b(?:split|across|between|among|evenly)\b/.test(rest) && !/\beach\b/.test(rest) };
       } else if (!explicit.length) {
         if (pids.length > 1) return { kind: "clarify", pids, input: text.replace(words, "{pool}") };
         cmd = { ...cmd, pid: pids[0] };
       }
-    } else if (cmd.kind === "stakeEach") cmd = { ...cmd, pids };
+    } else if (cmd.kind === "stakeEach" || cmd.kind === "unstakeEach") cmd = { ...cmd, pids };
     else if (/\b(?:staked|stake|stakers|contributed|received|least|most)\b/.test(rest)) {
       cmd = statsCommand(spaced(rest), []);
       if (cmd.kind === "stats") cmd = { ...cmd, pids };
@@ -629,7 +633,7 @@ export function parseCommand(input: string, pools: CommandPool[], context: Parse
   if (cmd.kind === "unknown" && correction && context.pending && /\d/.test(text) && malformedAmount(text, pools)) {
     if (context.pending === "stake" || context.pending === "unstake") cmd = { kind: context.pending, pid: null, amount: null };
     if (context.pending === "move") cmd = { kind: "move", from: null, to: null, amount: null };
-    if (context.pending === "stakeEach") cmd = { kind: "stakeEach", pids: [], split: false, amount: null };
+    if (context.pending === "stakeEach" || context.pending === "unstakeEach") cmd = { kind: context.pending, pids: [], split: false, amount: null };
   }
 
   // Never turn an unsupported multi-step instruction into its first recognized action.
@@ -646,7 +650,7 @@ export function parseCommand(input: string, pools: CommandPool[], context: Parse
     if (cmd.kind === "autoclaim" && (/\b(?:stake|unstake|move|deposit|withdraw)\b/.test(normalized)
       || (/\b(?:on|enable|start)\b/.test(text) && /\b(?:off|disable|stop)\b/.test(text)))) return { kind: "unknown", reason: "multiple" };
     if (/\band\b/.test(matches.rest) && matches.pids.length === 1 && cmd.kind !== "move" && !/\b(?:hundred|thousand|million) and\b/.test(text)) return { kind: "unknown", reason: "multiple" };
-    if (cmd.kind === "stakeEach" && [...normalized.matchAll(/\d[\d,.]*\s*(?:k|m|b)?\s*(?:obn|usd)?\s*(?:to\s+)?each\b/g)].length > 1) return { kind: "unknown", reason: "multiple" };
+    if ((cmd.kind === "stakeEach" || cmd.kind === "unstakeEach") && [...normalized.matchAll(/\d[\d,.]*\s*(?:k|m|b)?\s*(?:obn|usd)?\s*(?:to\s+)?each\b/g)].length > 1) return { kind: "unknown", reason: "multiple" };
     if ("amount" in cmd && malformedAmount(text, pools)) cmd = { ...cmd, amount: null };
   }
   if (cmd.kind === "stats" && !matches.pids.length && !categories.length && !/\b(?:stake\w*|people|tvl|contribut\w*|rewards?|price|worth|nonprofits?|charit\w*|pools?|stats?|statistics|analytics|leaderboard|rank\w*|raised|received|earn\w*|donat\w*)\b/.test(normalized)) return { kind: "unknown" };
@@ -654,7 +658,7 @@ export function parseCommand(input: string, pools: CommandPool[], context: Parse
 }
 
 export function isActionCommand(cmd: Command) {
-  return ["stake", "unstake", "claim", "move", "stakeEach"].includes(cmd.kind) || (cmd.kind === "autoclaim" && cmd.mode !== "status");
+  return ["stake", "unstake", "claim", "move", "stakeEach", "unstakeEach"].includes(cmd.kind) || (cmd.kind === "autoclaim" && cmd.mode !== "status");
 }
 
 function clarifyPool(input: string, pools: CommandPool[], phrase: string, pids: number[]): Command {
@@ -670,7 +674,7 @@ function clarifyPool(input: string, pools: CommandPool[], phrase: string, pids: 
   return { kind: "unknown" };
 }
 
-export type CommandDraft = Extract<Command, { kind: "stake" | "unstake" | "claim" | "move" | "stakeEach" }>;
+export type CommandDraft = Extract<Command, { kind: "stake" | "unstake" | "claim" | "move" | "stakeEach" | "unstakeEach" }>;
 
 /** A new instruction replaces the draft; a short answer or correction edits it. */
 export function mergeCommandDraft(input: string, cmd: Command, draft: CommandDraft | null): Command {
@@ -687,7 +691,7 @@ export function mergeCommandDraft(input: string, cmd: Command, draft: CommandDra
     const to = cmd.to ?? (draft.from !== null && draft.to === null ? given : draft.to);
     return { kind: "move", from, to, amount: amountGiven ? cmd.amount : cmd.amount ?? draft.amount };
   }
-  if (cmd.kind === "stakeEach" && draft.kind === "stakeEach") return { ...draft, pids: cmd.pids.length ? cmd.pids : draft.pids, amount: amountGiven ? cmd.amount : cmd.amount ?? draft.amount };
+  if ((cmd.kind === "stakeEach" && draft.kind === "stakeEach") || (cmd.kind === "unstakeEach" && draft.kind === "unstakeEach")) return { ...draft, pids: cmd.pids.length ? cmd.pids : draft.pids, amount: amountGiven ? cmd.amount : cmd.amount ?? draft.amount };
   if (cmd.kind === "claim" && draft.kind === "claim") return cmd.all ? cmd : { ...cmd, pid: cmd.pid ?? draft.pid };
   if ((cmd.kind === "stake" || cmd.kind === "unstake") && (draft.kind === "stake" || draft.kind === "unstake")) {
     return { ...cmd, pid: cmd.pid ?? draft.pid, amount: amountGiven ? cmd.amount : cmd.amount ?? draft.amount, ...(cmd.pick ? { pick: cmd.pick } : cmd.pid === null && draft.pick ? { pick: draft.pick } : {}) };

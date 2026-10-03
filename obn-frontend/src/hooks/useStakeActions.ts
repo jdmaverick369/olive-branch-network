@@ -92,6 +92,24 @@ export function useStakeActions(account: `0x${string}` | undefined) {
     await tx.writeContractAsync({ address: STAKING_CONTRACT, abi: stakingAbi, functionName: "withdraw", args: [BigInt(pid), amount], dataSuffix: DATA_SUFFIX });
   });
 
+  /** Unstake from several pools: one batched request on Base Account, otherwise one wallet prompt per pool. */
+  const unstakeMany = async (items: { pid: number; amount: bigint }[]) => {
+    const done: number[] = [];
+    const ok = await guarded("Unstake", async () => {
+      const withdrawals = items.map(item => ({ to: STAKING_CONTRACT, data: encodeFunctionData({ abi: stakingAbi, functionName: "withdraw", args: [BigInt(item.pid), item.amount] }) }));
+      if (canBatch) {
+        await batch(withdrawals);
+        done.push(...items.map(item => item.pid));
+        return;
+      }
+      for (const item of items) {
+        await tx.writeContractAsync({ address: STAKING_CONTRACT, abi: stakingAbi, functionName: "withdraw", args: [BigInt(item.pid), item.amount], dataSuffix: DATA_SUFFIX });
+        done.push(item.pid);
+      }
+    });
+    return { ok, done };
+  };
+
   const claim = (pid: number) => guarded("Claim rewards", async () => {
     if (canBatch) return batch([{ to: STAKING_CONTRACT, data: encodeFunctionData({ abi: stakingAbi, functionName: "claim", args: [BigInt(pid)] }) }]);
     await tx.writeContractAsync({ address: STAKING_CONTRACT, abi: stakingAbi, functionName: "claim", args: [BigInt(pid)], dataSuffix: DATA_SUFFIX });
@@ -114,5 +132,5 @@ export function useStakeActions(account: `0x${string}` | undefined) {
     return { ok, done };
   };
 
-  return { stake, stakeMany, unstake, claim, claimMany, busy, canBatch, tx };
+  return { stake, stakeMany, unstake, unstakeMany, claim, claimMany, busy, canBatch, tx };
 }
