@@ -14,10 +14,6 @@ const MIN_USD = 5; // Coinbase's minimum purchase
 const MAX_USD = 500;
 const INTENT_KEY = "obnCardDeposit";
 const GREEN = "#0D9921";
-// Coinbase Onramp trial access: $5 per purchase, limited total purchases.
-// Set to null once full Onramp access is approved.
-const EARLY_ACCESS_NOTE: string | null = "Card deposits are in early access: Coinbase currently limits each purchase to $5, and spots are limited.";
-
 // `starting` is the wallet's balance of `asset` before paying; `expected` is what Coinbase quoted (base units).
 type CardIntent = { pid: number; amountUsd: number; asset: DepositSource; starting: string; expected?: string; autoClaim?: boolean; at: number; sandbox?: boolean };
 const DECIMALS: Record<DepositSource, number> = { USDC: 6, ETH: 18 };
@@ -298,12 +294,6 @@ export function Web2Deposit({
           : " A few cents of it pay the network fees, and what's left stays in your wallet as ETH for a future withdrawal.")}
       </p>
 
-      {EARLY_ACCESS_NOTE && (
-        <p className="w-full rounded-lg border px-3 py-2 text-xs text-center" role="note"
-          style={{ borderColor: "#f59e0b", backgroundColor: "rgba(245, 158, 11, 0.1)", color: "var(--card-text)" }}>
-          {EARLY_ACCESS_NOTE}
-        </p>
-      )}
 
       <div className="flex items-center gap-4 text-xs">
         <button type="button" className="underline disabled:opacity-60" style={{ color: "var(--card-subtext)" }} disabled={busy}
