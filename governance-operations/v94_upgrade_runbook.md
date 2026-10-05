@@ -1,7 +1,5 @@
 # OBN — v9.4 Upgrade: Community-Funded Pool Seeding (Seed contract)
 
-Reserve update: consolidation is complete. The 300M OBN allocation includes 11M already seeded and 289M remaining at consolidation for 289 additional 1M seeds. A separate 50M OBN protocol reserve remains. This reserve capacity is not a pool cap and does not itself imply the v9.4/Seed contracts have been deployed.
-
 Release order: deploy [V9.3.1 monthly autoclaim](v931_autoclaim_runbook.md) first.
 V9.4 must preserve `MonthlyAutoClaimUpgradeable` and its ERC-7201 namespace,
 including the configured executor, user consent and monthly claim records.
@@ -10,9 +8,9 @@ storage compatibility and behavior. Do not deploy an older V9.4 build that lacks
 these changes. The V9.4 compiler override uses optimizer runs=1 to stay within
 the contract-size limit; recheck size after every future modification.
 
-One-time upgrade that authorizes a new `Seed` contract to call
-`charityFundBootstrap` on the staking proxy — nothing else. This lets additional approved pools be seeded by community donations as the 300M OBN Nonprofit Seed Reserve allocation is exhausted. The allocation supports 300 seeds in total, not a specific pool-ID cutoff. After this upgrade executes once, no
-further Timelock or Safe action is needed for the community-funded seed deposit itself. Pool creation and recipient approval still require the multisig/Timelock.
+This upgrade authorizes `Seed` to call `charityFundBootstrap` on the staking proxy. It enables community-funded 1M OBN seeds alongside the existing Safe-funded path, allowing onboarding to continue beyond the 300M OBN Nonprofit Seed Reserve allocation.
+
+Once authorized, community seed deposits need no additional Safe or Timelock transaction. Pool creation and recipient approval still require the multisig/Timelock.
 
 This upgrade also adds a new rule to the core staking contract: `deposit()`/`depositFor()`/
 `depositWithPermit()` now require a pool to already be bootstrapped (have its nonprofit's own

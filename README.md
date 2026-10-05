@@ -64,9 +64,7 @@ Proof-of-Contribution makes OBN more than a yield protocol. It makes OBN a publi
 
 ## The Bootstrap Model
 
-The treasury and airdrop reserve consolidation is complete. The **Nonprofit Seed Reserve allocation is 300,000,000 OBN (300M)**, equivalent to 30% of the original 1 billion OBN supply. At consolidation, **11,000,000 OBN had already funded 11 nonprofit seeds**, leaving **289,000,000 OBN for up to 289 additional seeds** at 1,000,000 OBN per nonprofit. The 289M figure is the remaining reserve at consolidation, not an additional allocation or a live balance guarantee. A separate **50,000,000 OBN (50M) protocol reserve** remains available for protocol needs.
-
-Consolidating those reserves prioritizes nonprofit expansion and locked seed stakes over future discretionary treasury spending or airdrop distributions. Seed deployment increases staked principal (TVL). After the reserve-supported cohort, community-funded seeding supports continued onboarding; there is no hard 300-nonprofit or pool cap. Pool admission remains controlled by the multisig through the Timelock.
+The **300M OBN Nonprofit Seed Reserve** funds **1M OBN per nonprofit**, permanently staked in its pool. This supports 300 reserve-funded seeds. Community-funded seeding can support further onboarding; reserve capacity is not a cap on the number of nonprofits. Pool admission remains controlled by the multisig through the Timelock.
 
 This bootstrap provides each nonprofit:
 
@@ -131,9 +129,7 @@ Because rewards are split automatically, every emission phase supports three out
 
 ## Token Distribution and Current Reserves
 
-The treasury and airdrop reserve consolidation is complete. The **Nonprofit Seed Reserve allocation is 300,000,000 OBN (300M)**, equivalent to 30% of the original 1 billion OBN supply. At consolidation, **11,000,000 OBN had already funded 11 nonprofit seeds**, leaving **289,000,000 OBN for up to 289 additional seeds** at 1,000,000 OBN per nonprofit. The 289M figure is the remaining reserve at consolidation, not an additional allocation or a live balance guarantee. A separate **50,000,000 OBN (50M) protocol reserve** remains available for protocol needs.
-
-Consolidating those reserves prioritizes nonprofit expansion and locked seed stakes over future discretionary treasury spending or airdrop distributions. Seed deployment increases staked principal (TVL). After the reserve-supported cohort, community-funded seeding supports continued onboarding; there is no hard 300-nonprofit or pool cap. Pool admission remains controlled by the multisig through the Timelock.
+The Nonprofit Seed Reserve has a total allocation of **300M OBN**, with **50M OBN** held separately for protocol needs. Treasury and airdrop holdings were consolidated into the seed allocation. At that point, 11M OBN had already funded 11 nonprofit seeds, leaving 289M OBN for 289 additional seeds at 1M OBN each.
 
 The original initializer minted 40% for liquidity, 30% for airdrops, 10% for the charity allocation, 10% for treasury and 10% for team vesting. Those are historical genesis percentages, not today's unspent reserve allocations. The consolidation moved existing tokens; it did not mint new tokens or change the initializer.
 
@@ -203,4 +199,4 @@ npx hardhat test
 
 ### Pending governance upgrade
 
-AnnualGovernanceV2 retains the original OliveNFT collection through OliveAssembly registration, a 1 OBN minimum and square-root voting power. Each phase lasts 30 days. One Safe start freezes voter eligibility and cycle funds; permissionless batches prepare a growing nonprofit ballot during Phase 1. Phase 2 waits for preparation to finish and receives its full 30-day window. There is no 200-pool or 100-recipient cap. The completed 300M OBN seed allocation supports 300 seeds in total (11 funded and 289 additional at consolidation), without imposing a permanent membership ceiling. See [the current governance design](docs/THESIS.md#55-annualgovernancev2--pending-annual-governance-upgrade) for configuration timing, keeper behavior and trust assumptions. This upgrade has not been deployed.
+AnnualGovernanceV2 retains the original OliveNFT collection through OliveAssembly registration, a 1 OBN minimum and square-root voting power. Each phase lasts 30 days. One Safe start freezes voter eligibility and cycle funds; permissionless batches prepare a growing nonprofit ballot during Phase 1. Phase 2 waits for preparation to finish and receives its full 30-day window. There is no 200-pool or 100-recipient cap. See [the current governance design](docs/THESIS.md#55-annualgovernancev2--pending-annual-governance-upgrade) for configuration timing, keeper behavior and trust assumptions. This upgrade has not been deployed.

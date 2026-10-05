@@ -170,7 +170,7 @@ Chapter 4 describes such an instrument.
 
 This chapter formalizes the protocol's economic core: **participation locks supply.** Every claim is grounded in specific contract code described fully in Chapter 5; here we treat the system as a token-flow machine.
 
-### 4.1 Historical genesis allocations and the completed reserve consolidation
+### 4.1 Genesis allocations and current reserves
 
 The following table records the historical genesis mint, not current unspent reserves. `OBNToken.initialize` minted the entire initial supply exactly once, in fixed proportions (OBNToken.sol):
 
@@ -184,9 +184,7 @@ The following table records the historical genesis mint, not current unspent res
 
 No further minting is possible except by the single, set-once minter — the staking contract — so *all* post-genesis supply growth is staking emissions.
 
-The treasury and airdrop reserve consolidation is complete. The **Nonprofit Seed Reserve allocation is 300,000,000 OBN (300M)**, equivalent to 30% of the original 1 billion OBN supply. At consolidation, **11,000,000 OBN had already funded 11 nonprofit seeds**, leaving **289,000,000 OBN for up to 289 additional seeds** at 1,000,000 OBN per nonprofit. The 289M figure is the remaining reserve at consolidation, not an additional allocation or a live balance guarantee. A separate **50,000,000 OBN (50M) protocol reserve** remains available for protocol needs.
-
-Consolidating those reserves prioritizes nonprofit expansion and locked seed stakes over future discretionary treasury spending or airdrop distributions. Seed deployment increases staked principal (TVL). After the reserve-supported cohort, community-funded seeding supports continued onboarding; there is no hard 300-nonprofit or pool cap. Pool admission remains controlled by the multisig through the Timelock.
+The Nonprofit Seed Reserve has a total allocation of **300M OBN**, with **50M OBN** held separately for protocol needs. Treasury and airdrop holdings were consolidated into the seed allocation. At that point, 11M OBN had already funded 11 nonprofit seeds, leaving 289M OBN for 289 additional seeds at 1M OBN each.
 
 This is a reallocation of existing holdings, not a new mint or a change to the deployed initializer.
 
@@ -378,7 +376,7 @@ Admin: `setApprovedNonprofit(addr, bool)`, `setGovernance(addr)`, `emergencySwee
 
 This section describes the local, undeployed upgrade to the existing AnnualGovernance proxy. Historical audit reports describe earlier implementations and are not the current deployment specification.
 
-The Safe starts an annual cycle directly. Both voting phases last exactly 30 days. The owner remains the Timelock, and nonprofit onboarding and configuration remain controlled by the multisig through the Timelock. There is no hard numerical pool or nonprofit ballot cap. The completed 300M OBN Nonprofit Seed Reserve allocation supports 300 seeds in total: 11 already funded and 289 additional at consolidation. A separate 50M OBN reserve is retained for protocol needs. Onboarding beyond the reserve-supported cohort becomes economically harder and community-funded, not prohibited by governance.
+The Safe starts an annual cycle directly. Both voting phases last exactly 30 days. The owner remains the Timelock, and nonprofit onboarding and configuration remain controlled by the multisig through the Timelock. There is no hard numerical pool or nonprofit ballot cap. The seed reserve funds 1M OBN per nonprofit; community-funded seeding allows onboarding to continue beyond reserve capacity.
 
 **Snapshot and funds.** The start transaction fixes voter eligibility and aggregate stake at the previous block and captures both fund allocations. One OliveNFT must have been registered in OliveAssembly and aggregate stake must be at least 1 OBN. Power is square-root weighted. Both phases use the same snapshot; withdrawing afterward does not erase that cycle's entitlement. Later fund receipts belong to the next cycle, apart from this cycle's Offering GIVE allocation.
 

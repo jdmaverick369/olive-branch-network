@@ -98,7 +98,7 @@ This does not require users to sacrifice yield. The protocol is designed so earn
 
 - 40% Liquidity — for DEX pool bootstrapping
 - 30% Airdrop — early distribution to community
-- 10% original charity allocation (historical genesis mint; expanded by the completed reserve consolidation)
+- 10% original charity allocation
 - 10% Treasury — for protocol governance and operations
 - 10% Team — to the TeamVesting contract with cliff and vesting schedule
 
@@ -410,9 +410,7 @@ OBN is inflationary via staking, but voluntary burns (e.g., future app fees) can
 
 ### 5.2 Annual governance streams vs. Nonprofit Seed Reserve
 
-The treasury and airdrop reserve consolidation is complete. The **Nonprofit Seed Reserve allocation is 300,000,000 OBN (300M)**, equivalent to 30% of the original 1 billion OBN supply. At consolidation, **11,000,000 OBN had already funded 11 nonprofit seeds**, leaving **289,000,000 OBN for up to 289 additional seeds** at 1,000,000 OBN per nonprofit. The 289M figure is the remaining reserve at consolidation, not an additional allocation or a live balance guarantee. A separate **50,000,000 OBN (50M) protocol reserve** remains available for protocol needs.
-
-Consolidating those reserves prioritizes nonprofit expansion and locked seed stakes over future discretionary treasury spending or airdrop distributions. Seed deployment increases staked principal (TVL). After the reserve-supported cohort, community-funded seeding supports continued onboarding; there is no hard 300-nonprofit or pool cap. Pool admission remains controlled by the multisig through the Timelock.
+**Nonprofit Seed Reserve:** A 300M OBN allocation funds permanently staked nonprofit seeds at 1M OBN each. It is separate from ongoing staking emissions and annual governance allocations. See Section 11 for reserve accounting.
 
 **ExtendOliveBranch (1% of ongoing emissions):** Accumulates continuously. AnnualGovernance Phase 2 votes select which approved nonprofit receives the full cycle balance. The protocol's annual directed-contribution mechanism.
 
@@ -421,7 +419,7 @@ Consolidating those reserves prioritizes nonprofit expansion and locked seed sta
 This three-way distinction is important:
 
 - The **10% nonprofit reward share** is automatic, per-action, and pool-specific.
-- The **300M OBN Nonprofit Seed Reserve allocation** reflects the completed consolidation of existing tokens; it is separate from ongoing governance emissions.
+- The **Nonprofit Seed Reserve** funds bootstrap stakes from allocated holdings.
 - The **1% + 1% annual governance streams** are ongoing emissions resolved annually through community votes.
 
 ### 5.3 Permanent locks (bootstrap-only; increase-only)
@@ -457,7 +455,7 @@ Every charity page shows a clear "No Affiliation / Not Endorsed" banner by defau
 
 **Objective:** Ensure each newly onboarded charity earns from day one and that pools start with credible TVL.
 
-**Source of funds:** The completed 300M OBN Nonprofit Seed Reserve allocation supports 300 seeds at 1M OBN each. At consolidation, 11 seeds were funded and 289M OBN remained for 289 additional seeds. Community-funded seeding supports continued onboarding as reserves are exhausted; there is no hard pool cap. A separate 50M OBN reserve remains for protocol needs.
+**Source of funds:** The 300M OBN Nonprofit Seed Reserve funds 1M OBN bootstrap stakes per nonprofit. Community-funded seeding supports continued onboarding as reserves are exhausted; there is no hard pool cap.
 
 **Mechanism:**
 
@@ -631,7 +629,7 @@ These reports should help users understand not only what they earned, but what t
 
 OBN should publish periodic public reports covering:
 
-- Nonprofit Seed Reserve balances (300M allocation; 289M remaining at consolidation), seed deployments, and the separate 50M protocol reserve
+- Nonprofit Seed Reserve balances, seed deployments, and the separate protocol reserve
 - bootstraps executed
 - nonprofit pool status
 - pool additions, removals, or migrations
@@ -666,13 +664,11 @@ OBN is designed so users do not need to choose between earning and contributing.
 
 - 40% Liquidity
 - 30% Airdrop
-- 10% original charity allocation (historical genesis mint; expanded by the completed reserve consolidation)
+- 10% original charity allocation
 - 10% Treasury
 - 10% Team (to TeamVesting; ~4-month cliff, ~20-month linear vest)
 
-The treasury and airdrop reserve consolidation is complete. The **Nonprofit Seed Reserve allocation is 300,000,000 OBN (300M)**, equivalent to 30% of the original 1 billion OBN supply. At consolidation, **11,000,000 OBN had already funded 11 nonprofit seeds**, leaving **289,000,000 OBN for up to 289 additional seeds** at 1,000,000 OBN per nonprofit. The 289M figure is the remaining reserve at consolidation, not an additional allocation or a live balance guarantee. A separate **50,000,000 OBN (50M) protocol reserve** remains available for protocol needs.
-
-Consolidating those reserves prioritizes nonprofit expansion and locked seed stakes over future discretionary treasury spending or airdrop distributions. Seed deployment increases staked principal (TVL). After the reserve-supported cohort, community-funded seeding supports continued onboarding; there is no hard 300-nonprofit or pool cap. Pool admission remains controlled by the multisig through the Timelock.
+The Nonprofit Seed Reserve has a total allocation of **300M OBN**, with **50M OBN** held separately for protocol needs. Treasury and airdrop holdings were consolidated into the seed allocation. At that point, 11M OBN had already funded 11 nonprofit seeds, leaving 289M OBN for 289 additional seeds at 1M OBN each.
 
 **Ongoing issuance:** Only via staking emissions; the staking contract is the sole minter.
 

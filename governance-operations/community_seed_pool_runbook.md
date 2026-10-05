@@ -1,15 +1,8 @@
 # OBN — Onboard a Nonprofit Pool via Community Seeding
 
-Reserve update: consolidation is complete. The 300M OBN allocation includes 11M already seeded and 289M remaining at consolidation for 289 additional 1M seeds. A separate 50M OBN protocol reserve remains. This reserve capacity is not a pool cap and does not itself imply the v9.4/Seed contracts have been deployed.
+Use this flow when a nonprofit's 1M OBN seed will be funded by community contributions rather than the Nonprofit Seed Reserve. The reserve has a 300M OBN total allocation, enough for 300 seeds, but onboarding has no hard pool-count or pool-ID cutoff. Check the available reserve balance before choosing a funding path.
 
-For any pool whose 1,000,000 OBN genesis bootstrap can no longer be funded from the operator
-Safe's own OBN balance — in practice, once the Safe's consolidated 300,000,000 OBN reserve is
-drawn down (expected after 300 seeds in total, but that's a consequence of the reserve running
-out, not a rule the protocol enforces at any specific pool ID — a pool could in principle be
-Safe-funded past that point if the Safe is topped up, or need community funding earlier if the
-Safe's balance were spent down faster than expected). Requires the one-time v9.4 upgrade in
-`v94_upgrade_runbook.md` to already be live. Check the Safe's current OBN balance against
-`(pools remaining to bootstrap) × 1,000,000` before deciding which path a given pool needs.
+This flow requires the one-time v9.4 upgrade described in `v94_upgrade_runbook.md` to be live.
 
 Steps 1–3 are **identical** to the standard flow in `add_pool_runbook.md` — the pool itself is
 still added through the Timelock exactly as before, regardless of how it gets funded. Only the
