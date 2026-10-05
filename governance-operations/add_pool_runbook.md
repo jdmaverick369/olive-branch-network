@@ -136,7 +136,15 @@ YYYY-MM-DD-bootstrap-pidN.json
 
 ## Notes
 
-- A pool can only be added when `poolLength() < 99` (the 99-pool cap).
+- There is no on-chain pool cap — `addPool()` accepts any number of pools. Reserve
+  funding for genesis bootstraps must be tracked and topped up manually in OPERATOR_SAFE
+  as pools grow; nothing on-chain will stop you from adding a pool the Safe can't yet
+  afford to bootstrap.
+- The completed Nonprofit Seed Reserve allocation is 300M OBN: 11M already seeded and 289M remaining at consolidation for 289 additional 1M seeds. A separate 50M OBN protocol reserve remains. Reserve capacity is not a pool cap.
+  Once it's exhausted, use `community_seed_pool_runbook.md` instead of Step 4 below — it
+  covers the same `addPool`/`setApprovedNonprofit` steps but funds the genesis bootstrap
+  through community contributions via `Seed` rather than the Safe. Requires
+  the one-time v9.4 upgrade (`v94_upgrade_runbook.md`) to already be live.
 - `addPool` and `setApprovedNonprofit` are batched atomically — a pool is never added
   without ExtendOliveBranch approval, and vice versa.
 - The bootstrap is permanently locked: `charityFundBootstrap` calls `depositWithLock`

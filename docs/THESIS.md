@@ -170,9 +170,9 @@ Chapter 4 describes such an instrument.
 
 This chapter formalizes the protocol's economic core: **participation locks supply.** Every claim is grounded in specific contract code described fully in Chapter 5; here we treat the system as a token-flow machine.
 
-### 4.1 The five genesis allocations
+### 4.1 Historical genesis allocations and the completed reserve consolidation
 
-`OBNToken.initialize` mints the entire initial supply exactly once, in fixed proportions (OBNToken.sol):
+The following table records the historical genesis mint, not current unspent reserves. `OBNToken.initialize` minted the entire initial supply exactly once, in fixed proportions (OBNToken.sol):
 
 | Allocation | Share | Purpose |
 |---|---|---|
@@ -183,6 +183,12 @@ This chapter formalizes the protocol's economic core: **participation locks supp
 | Team vesting | 10% | Time-locked in `TeamVesting` (4-month cliff, 20-month linear) |
 
 No further minting is possible except by the single, set-once minter — the staking contract — so *all* post-genesis supply growth is staking emissions.
+
+The treasury and airdrop reserve consolidation is complete. The **Nonprofit Seed Reserve allocation is 300,000,000 OBN (300M)**, equivalent to 30% of the original 1 billion OBN supply. At consolidation, **11,000,000 OBN had already funded 11 nonprofit seeds**, leaving **289,000,000 OBN for up to 289 additional seeds** at 1,000,000 OBN per nonprofit. The 289M figure is the remaining reserve at consolidation, not an additional allocation or a live balance guarantee. A separate **50,000,000 OBN (50M) protocol reserve** remains available for protocol needs.
+
+Consolidating those reserves prioritizes nonprofit expansion and locked seed stakes over future discretionary treasury spending or airdrop distributions. Seed deployment increases staked principal (TVL). After the reserve-supported cohort, community-funded seeding supports continued onboarding; there is no hard 300-nonprofit or pool cap. Pool admission remains controlled by the multisig through the Timelock.
+
+This is a reallocation of existing holdings, not a new mint or a change to the deployed initializer.
 
 ### 4.2 The circulating-float identity
 
@@ -368,27 +374,23 @@ Two distribution paths, deliberately asymmetric:
 
 Admin: `setApprovedNonprofit(addr, bool)`, `setGovernance(addr)`, `emergencySweep(token, to)` — all timelock-only.
 
-### 5.5 `AnnualGovernance` — the two-phase annual cycle (AnnualGovernance.sol)
+### 5.5 AnnualGovernanceV2 ? pending annual governance upgrade
 
-UUPS-upgradeable, owned by the timelock. Implements Charter Article V: value claimed by no individual designation is governed collectively by the participants who generated it.
+This section describes the local, undeployed upgrade to the existing AnnualGovernance proxy. Historical audit reports describe earlier implementations and are not the current deployment specification.
 
-**The cycle state machine.** `CycleState ∈ {INACTIVE, PHASE1_OPEN, PHASE1_READY, PHASE2_OPEN, PHASE2_READY, COMPLETED, CANCELLED}`, derived (never stored) by `getCycleState` from timestamps and execution flags — eliminating state-desynchronization bugs.
+The Safe starts an annual cycle directly. Both voting phases last exactly 30 days. The owner remains the Timelock, and nonprofit onboarding and configuration remain controlled by the multisig through the Timelock. There is no hard numerical pool or nonprofit ballot cap. The completed 300M OBN Nonprofit Seed Reserve allocation supports 300 seeds in total: 11 already funded and 289 additional at consolidation. A separate 50M OBN reserve is retained for protocol needs. Onboarding beyond the reserve-supported cohort becomes economically harder and community-funded, not prohibited by governance.
 
-**Cycle storage.** `mapping(uint256 => Cycle) _cycles` where `Cycle` packs timing (`snapshotBlock` uint48, `phase1End`/`phase2Duration`/`phase2End` uint64), Phase 1 tallies (`burnVotes`, `giveVotes`, `phase1Outcome`), the Phase 2 ballot (`address[] ballot` + `onBallot` mapping for O(1) membership + `nonprofitVotes`), double-vote guards (`votedPhase1`, `votedPhase2`), and execution flags. The struct layout is documented as frozen — nested mappings' slot derivations are position-keyed, so reordering would silently corrupt live cycles. Linear storage slots 0–7 are explicitly commented (OZ v5's ERC-7201 namespaced storage keeps parent contracts out of linear slots), with a 50-slot gap.
+**Snapshot and funds.** The start transaction fixes voter eligibility and aggregate stake at the previous block and captures both fund allocations. One OliveNFT must have been registered in OliveAssembly and aggregate stake must be at least 1 OBN. Power is square-root weighted. Both phases use the same snapshot; withdrawing afterward does not erase that cycle's entitlement. Later fund receipts belong to the next cycle, apart from this cycle's Offering GIVE allocation.
 
-**Roles.** `owner` (timelock): cancel cycles, set `voteAdmin`, set `maxBallotSize`, authorize upgrades. `voteAdmin` (a Gnosis Safe): the single function `startAnnualCycle`. Vote casting and execution are **permissionless**.
+**Ballot preparation.** Start freezes the pool-history length, opens Phase 1 and processes the first 100 pool IDs. Permissionless keeper calls process additional batches of at most 100 IDs during Phase 1. This is a per-transaction work bound, not a limit on membership. Deduplication uses a mapping, retaining the first eligible PID's order. Active and shutdown pools remain eligible unless fully removed. No additional Safe or Timelock start interaction is needed.
 
-**`startAnnualCycle(phase1Duration, phase2Duration)`.** Requires both durations ≥ 1 day and the previous cycle COMPLETED/CANCELLED. Builds the ballot from every pool with `poolFullyRemoved == false` (active *and* shutdown pools — a nonprofit being closed to new deposits doesn't strip its constituency of a vote), deduplicates charity wallets (O(n²), bounded by the owner-configurable `maxBallotSize`, designed for ≤ 100), rejects empty ballots, and **requires every ballot address to be whitelisted in `ExtendOliveBranch`** — a cycle that could not be executed is never allowed to start. The snapshot is taken at `block.number − 1` so stake deposited in the same block as cycle start can never count — closing the flash-stake window completely when combined with checkpointed lookups.
+**Configuration timing.** Voter and fund snapshots are fixed at start, but the staking contract does not provide historical nonprofit configuration. Each pool's removal status and wallet, and a new recipient's approval, are read when that batch executes. Already-added recipients are immutable for the cycle; later-added pool IDs are excluded. Timelock changes during preparation can therefore affect unprocessed pools. An unapproved recipient makes the batch revert atomically; the Timelock must repair configuration or cancel the cycle. Approval revoked after admission does not remove that ballot member. Avoid nonprofit configuration changes while preparation is pending.
 
-**Voting.** `castOfferingVote(cycleId, burn)` during PHASE1_OPEN; `castNonprofitVote(cycleId, nonprofit)` during PHASE2_OPEN (must be on ballot). Both: one vote per address per phase; automatic lazy bootstrap of un-checkpointed stakers via `try stakingPools.bootstrapCheckpoint(msg.sender) {} catch {}` (idempotent, failure-safe); power = `getPastVotingPower(voter, snapshotBlock)`, required > 0. Both phases share the single cycle-start snapshot.
+**Execution.** Phase 1 votes may be cast while the nonprofit ballot is prepared. Phase 1 cannot execute until preparation is complete and its deadline has passed. The dispatcher advances pending batches before executing the phase. An empty final ballot cannot finalize preparation; the owner may cancel before Phase 1 execution. GIVE must strictly exceed BURN; ties and zero participation burn only the fixed Offering allocation. Phase 2 then opens for a full 30 days from actual execution. Each nonprofit vote updates the leader in constant work, with ties awarded to the earliest ballot position. Settlement pays only the fixed cycle allocation to that leader, or rolls it over when no votes were cast. Neither preparation nor settlement scans the entire ballot in one state-changing transaction.
 
-**Execution — permissionless, credibly neutral.**
+**Compatibility and reads.** Existing Cycle fields and top-level slots remain in place; new Cycle fields are appended. The old maxBallotSize value and setter remain for ABI/storage compatibility but do not constrain membership. The advisory pool index is not used to construct ballots. getCyclePreparation exposes progress; getBallotPage reads up to 100 members per call. For large cycles, the legacy CycleStarted event includes only the initial batch; indexers must use BallotBatchPrepared events or paginated reads for the complete ballot. The frontend waits for completion before presenting the Phase 2 ballot and reads pages at one block.
 
-- `executePhase1(cycleId)` after `phase1End`: outcome is **GIVE only if `giveVotes > burnVotes` strictly; ties and zero participation default to BURN** — the protocol's default posture is deflation, and moving the commons to a spendable state requires an affirmative majority. Calls `theOffering.burn(bal)` or `theOffering.sendToExtend(bal)` with the *full* balance. Sets `phase2End = now + phase2Duration` — Phase 2 always gets its full window no matter how late Phase 1 executes.
-- `executePhase2(cycleId)` after `phase2End`: linear scan of the ballot; **most votes wins; ties go to the lowest ballot index** (deterministic); **zero participation → rollover** (funds remain for next year — never distributed without a mandate). Winner receives the *entire* `ExtendOliveBranch` balance via `distributeFromGovernance`.
-- `executeCurrentCycle()` — keeper-friendly dispatcher that detects READY states on `currentCycleId`.
-
-**Safety rails.** `cancelCycle` is owner-only and available *only until Phase 1 executes* — once `TheOffering` has acted, the cycle must run to completion (no takebacks after irreversible effects). `_authorizeUpgrade` **reverts if a cycle is mid-flight** (must be COMPLETED/CANCELLED/INACTIVE), stacking an on-chain guard atop the timelock's 24-hour delay. Views (`getCycleSummary`, `getBallot`, `getNonprofitVotes`, `hasVotedPhase1/2`, `getVotingPowerForCycle`) expose the full cycle state for frontends and auditors.
+**Trust and practical limits.** No hard membership cap does not mean infinite throughput: preparation requires more keeper transactions as history grows. Legacy staking bootstrap and live stake fallbacks may still scan pool history. Timelock/dependency upgrade powers remain trusted. Cancellation is available only before Phase 1 executes; governance and Assembly upgrades remain blocked throughout active cycles, including preparation.
 
 ### 5.6 `OBNTimeLock` — the constitutional delay (OBNTimeLock.sol)
 

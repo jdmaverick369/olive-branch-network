@@ -94,11 +94,11 @@ This does not require users to sacrifice yield. The protocol is designed so earn
 - **UUPSUpgradeable:** Upgradeable with owner authorization
 - **OwnableUpgradeable:** Single owner with transfer capability
 
-**Genesis mint (one-time at initialize)** of the Initial Supply (currently planned: 1,000,000,000 OBN):
+**Historical genesis mint (one-time at initialize)** of the 1,000,000,000 OBN initial supply. These original mint destinations do not represent current unspent reserve allocations:
 
 - 40% Liquidity — for DEX pool bootstrapping
 - 30% Airdrop — early distribution to community
-- 10% Charity Genesis Reserve — dedicated for nonprofit programs, including pool bootstraps
+- 10% original charity allocation (historical genesis mint; expanded by the completed reserve consolidation)
 - 10% Treasury — for protocol governance and operations
 - 10% Team — to the TeamVesting contract with cliff and vesting schedule
 
@@ -292,7 +292,7 @@ At the end of each cycle, AnnualGovernance executes the community's Phase 1 vote
 
 ExtendOliveBranch is the protocol's annual nonprofit distribution vault. The staking contract routes the 1% charityFund emission slot to this address. OBN accumulates continuously and may also receive a donation from TheOffering when the community votes GIVE in Phase 1.
 
-At the end of each cycle, AnnualGovernance executes the community's Phase 2 vote: the winning nonprofit pool's charityWallet receives ExtendOliveBranch's full accumulated balance in a single transaction.
+At the end of each cycle, AnnualGovernance executes the community's Phase 2 vote: the winning nonprofit pool's charityWallet receives ExtendOliveBranch's fixed cycle allocation under the pending upgrade in a single transaction.
 
 **Approved nonprofit registry:** ExtendOliveBranch maintains a whitelist of approved recipient addresses. `setApprovedNonprofit(address, bool)` is callable by the Timelock. All pool charity wallets are kept on the whitelist; new pools are approved atomically alongside `addPool` via `schedule_addPool.js`.
 
@@ -300,7 +300,7 @@ At the end of each cycle, AnnualGovernance executes the community's Phase 2 vote
 
 **Non-upgradeable:** Same immutability guarantee as TheOffering. Constructor args (`obn`, `timelockOwner`) are immutable.
 
-### 3.6 AnnualGovernance (UUPS proxy)
+### 3.6 AnnualGovernance (existing UUPS proxy; pending AnnualGovernanceV2 upgrade)
 
 AnnualGovernance coordinates the annual decision cycles for both TheOffering and ExtendOliveBranch. It is a UUPS upgradeable proxy owned by the Timelock.
 
@@ -308,7 +308,7 @@ AnnualGovernance coordinates the annual decision cycles for both TheOffering and
 
 1. **Phase 1 — Burn or Give:** Stakers vote on TheOffering's accumulated balance. The winning outcome is executed atomically: BURN calls `TheOffering.burn()`; GIVE calls `TheOffering.sendToExtend()`.
 
-2. **Phase 2 — Nonprofit Selection:** Stakers vote to select which approved nonprofit receives ExtendOliveBranch's full accumulated balance. The ballot is curated by the `voteAdmin` to at most `maxBallotSize` nominees. The winning pool's charityWallet receives the distribution via `ExtendOliveBranch.distributeFromGovernance()`.
+2. **Phase 2 — Nonprofit Selection:** Stakers vote to select which approved nonprofit receives ExtendOliveBranch's full accumulated balance. In the pending AnnualGovernanceV2 upgrade, there is no hard ballot cap: permissionless batches process eligible pool IDs in deterministic order, with no discretionary ballot curation by voteAdmin. The winning pool's charityWallet receives the distribution via `ExtendOliveBranch.distributeFromGovernance()`.
 
 **Tie-breaking:**
 
@@ -318,13 +318,15 @@ AnnualGovernance coordinates the annual decision cycles for both TheOffering and
 **Vote integrity:**
 
 - Voting power uses checkpointed OBN balances at cycle start (`block.number - 1`) to prevent same-block stake-and-vote manipulation.
-- Phase transitions are controlled by the `voteAdmin` (OperatorSafe), making cycle timing deliberate.
+- Under the pending upgrade, the Safe starts the cycle once; permissionless keeper calls prepare the ballot and execute phase transitions. Phase 2 receives a full 30 days from actual Phase 1 settlement.
 
 **Execution:** AnnualGovernance calls TheOffering and ExtendOliveBranch directly. No additional multisig approval is required once a vote concludes — outcomes are enforced by contract.
 
 **Upgradability:** AnnualGovernance is a UUPS proxy. More sophisticated voting mechanics (delegation, quorum requirements, time-weighted voting) can be added through Timelock-governed upgrades as the DAO matures.
 
-**Parameters:** `owner` = Timelock; `voteAdmin` = OperatorSafe; `maxBallotSize` = 100; `currentCycleId` starts at 0.
+**Preparation timing in the pending upgrade:** Voter eligibility, stake and fund allocations freeze at Safe start. The pool-history length is fixed then, but each pool wallet/removal status and each new recipient approval are read when its batch executes. Later pool IDs are excluded and already-admitted recipients remain fixed. Avoid nonprofit configuration changes during preparation. The upgrade requires one registered OliveNFT and at least 1 OBN at the snapshot, with square-root voting power.
+
+**Pending upgrade parameters:** `owner` = Timelock; `voteAdmin` = OperatorSafe. Both phases last exactly 30 days. Legacy `maxBallotSize` storage is retained for compatibility but does not restrict membership. The upgrade is local and has not been deployed.
 
 ### 3.7 OBNStakingLens (UUPS proxy)
 
@@ -406,9 +408,11 @@ OBN is inflationary via staking, but voluntary burns (e.g., future app fees) can
 
 **Proof-of-Contribution:** Because charity distribution is tied to user actions and pool selection, the protocol can attribute contribution to specific users and nonprofit pools.
 
-### 5.2 Annual governance streams vs. Charity Genesis Reserve
+### 5.2 Annual governance streams vs. Nonprofit Seed Reserve
 
-**Charity Genesis Reserve (10% of initial supply):** One-time genesis allocation of 100,000,000 OBN held by governance, reserved for bootstrapping nonprofits. Primarily earmarked for 1,000,000 OBN bootstrap stakes per nonprofit pool — enough for 100 pools at this rate.
+The treasury and airdrop reserve consolidation is complete. The **Nonprofit Seed Reserve allocation is 300,000,000 OBN (300M)**, equivalent to 30% of the original 1 billion OBN supply. At consolidation, **11,000,000 OBN had already funded 11 nonprofit seeds**, leaving **289,000,000 OBN for up to 289 additional seeds** at 1,000,000 OBN per nonprofit. The 289M figure is the remaining reserve at consolidation, not an additional allocation or a live balance guarantee. A separate **50,000,000 OBN (50M) protocol reserve** remains available for protocol needs.
+
+Consolidating those reserves prioritizes nonprofit expansion and locked seed stakes over future discretionary treasury spending or airdrop distributions. Seed deployment increases staked principal (TVL). After the reserve-supported cohort, community-funded seeding supports continued onboarding; there is no hard 300-nonprofit or pool cap. Pool admission remains controlled by the multisig through the Timelock.
 
 **ExtendOliveBranch (1% of ongoing emissions):** Accumulates continuously. AnnualGovernance Phase 2 votes select which approved nonprofit receives the full cycle balance. The protocol's annual directed-contribution mechanism.
 
@@ -417,7 +421,7 @@ OBN is inflationary via staking, but voluntary burns (e.g., future app fees) can
 This three-way distinction is important:
 
 - The **10% nonprofit reward share** is automatic, per-action, and pool-specific.
-- The **10% Charity Genesis Reserve** is a one-time initial supply allocation for bootstrapping.
+- The **300M OBN Nonprofit Seed Reserve allocation** reflects the completed consolidation of existing tokens; it is separate from ongoing governance emissions.
 - The **1% + 1% annual governance streams** are ongoing emissions resolved annually through community votes.
 
 ### 5.3 Permanent locks (bootstrap-only; increase-only)
@@ -453,7 +457,7 @@ Every charity page shows a clear "No Affiliation / Not Endorsed" banner by defau
 
 **Objective:** Ensure each newly onboarded charity earns from day one and that pools start with credible TVL.
 
-**Source of funds:** The 10% Charity Genesis Reserve (100,000,000 OBN) was reserved for bootstrapping nonprofits. The intended bootstrap is 1,000,000 OBN per nonprofit — enough for 100 nonprofits — subject to governance and available reserves.
+**Source of funds:** The completed 300M OBN Nonprofit Seed Reserve allocation supports 300 seeds at 1M OBN each. At consolidation, 11 seeds were funded and 289M OBN remained for 289 additional seeds. Community-funded seeding supports continued onboarding as reserves are exhausted; there is no hard pool cap. A separate 50M OBN reserve remains for protocol needs.
 
 **Mechanism:**
 
@@ -503,8 +507,8 @@ Upgrades require `_authorizeUpgrade` (owner).
 **Governed (no upgrade needed unless a specific implementation requires it):**
 
 - Add pools (`addPool(charityWallet)`)
-- Execute bootstrap stakes from the Charity Genesis Reserve or authorized funding source
-- Manage AnnualGovernance cycle timing and ballot curation (voteAdmin role)
+- Execute bootstrap stakes from the Nonprofit Seed Reserve or an authorized community funding source
+- Start AnnualGovernance cycles through the voteAdmin Safe; the pending upgrade derives ballot membership through permissionless batches, not discretionary curation
 - Append future phases contiguously (`addPhase`)
 - Shutdown or remove pools
 - Spending and usage reporting for TheOffering and ExtendOliveBranch
@@ -533,8 +537,8 @@ Each cycle begins when the voteAdmin opens it. Phase 1 and Phase 2 run sequentia
 **Vote integrity:**
 
 - Voting power is derived from checkpointed OBN balances at cycle start, preventing same-block stake-then-vote manipulation.
-- The ballot is capped at `maxBallotSize = 100`.
-- Phase transitions are controlled by the voteAdmin so cycles are deliberate and not rushed.
+- The pending upgrade has no hard pool or ballot cap. Each preparation transaction processes at most 100 pool IDs; this work bound is not a membership limit. Phase 2 waits for preparation to complete.
+- Under the pending upgrade, the Safe starts the cycle once; permissionless keeper calls prepare the ballot and execute phase transitions. Phase 2 receives a full 30 days from actual Phase 1 settlement.
 
 **Execution:**
 
@@ -627,7 +631,7 @@ These reports should help users understand not only what they earned, but what t
 
 OBN should publish periodic public reports covering:
 
-- Charity Genesis Reserve balances
+- Nonprofit Seed Reserve balances (300M allocation; 289M remaining at consolidation), seed deployments, and the separate 50M protocol reserve
 - bootstraps executed
 - nonprofit pool status
 - pool additions, removals, or migrations
@@ -656,15 +660,19 @@ OBN is designed so users do not need to choose between earning and contributing.
 
 ## 11) Token Supply & Distribution
 
-**Initial Supply:** 1,000,000,000 OBN (current plan).
+**Initial Supply:** 1,000,000,000 OBN.
 
-**Genesis distribution (on initialize):**
+**Historical genesis distribution (on initialize; not current reserve balances):**
 
 - 40% Liquidity
 - 30% Airdrop
-- 10% Charity Genesis Reserve — 100,000,000 OBN reserved for bootstrapping nonprofits, used chiefly for 1,000,000 OBN bootstrap stakes per charity
+- 10% original charity allocation (historical genesis mint; expanded by the completed reserve consolidation)
 - 10% Treasury
 - 10% Team (to TeamVesting; ~4-month cliff, ~20-month linear vest)
+
+The treasury and airdrop reserve consolidation is complete. The **Nonprofit Seed Reserve allocation is 300,000,000 OBN (300M)**, equivalent to 30% of the original 1 billion OBN supply. At consolidation, **11,000,000 OBN had already funded 11 nonprofit seeds**, leaving **289,000,000 OBN for up to 289 additional seeds** at 1,000,000 OBN per nonprofit. The 289M figure is the remaining reserve at consolidation, not an additional allocation or a live balance guarantee. A separate **50,000,000 OBN (50M) protocol reserve** remains available for protocol needs.
+
+Consolidating those reserves prioritizes nonprofit expansion and locked seed stakes over future discretionary treasury spending or airdrop distributions. Seed deployment increases staked principal (TVL). After the reserve-supported cohort, community-funded seeding supports continued onboarding; there is no hard 300-nonprofit or pool cap. Pool admission remains controlled by the multisig through the Timelock.
 
 **Ongoing issuance:** Only via staking emissions; the staking contract is the sole minter.
 
