@@ -609,6 +609,11 @@ export default function AskPage() {
     }
   };
 
+  // After a failed or timed-out request: only say nothing changed when the guard has no unresolved request.
+  const notThrough = (nothingChanged = "That didn't go through. Nothing was changed.") =>
+    say("bot", actions.unresolved() ? "I couldn't confirm whether that went through, and it may still complete. Use Check status below before trying again." : nothingChanged);
+  const unresolvedNote = () => actions.unresolved() ? " The last one may still complete; use Check status below before trying again." : "";
+
   const run = async (action: Action) => {
     if (submitting.current || actions.busy) return;
     submitting.current = true;
@@ -618,41 +623,40 @@ export default function AskPage() {
       if (action.kind === "claimAll") {
         const pids = action.pids ?? [];
         const { done } = await actions.claimMany(pids);
-        if (done.length === 0) return say("bot", "That didn't go through. Nothing was changed.");
+        if (done.length === 0) return notThrough();
         await new Promise(r => setTimeout(r, 1_250));
         await reads.refetch();
-        return say("bot", done.length === pids.length
-          ? `Claimed your rewards from ${done.length} nonprofits.`
-          : `Claimed from ${done.map(poolName).join(", ")}. The rest didn't go through; say "claim all" to try them again.`);
+        // One claimMultiple transaction: every pool is claimed or none is.
+        return say("bot", `Claimed your rewards from ${pids.length} nonprofits.`);
       }
       if (action.kind === "stakeEach") {
         const items = action.items ?? [];
         const { done } = await actions.stakeMany(items);
-        if (done.length === 0) return say("bot", "That didn't go through. Nothing was changed.");
+        if (done.length === 0) return notThrough();
         await new Promise(r => setTimeout(r, 1_250));
         await Promise.all([reads.refetch(), poolInfo.refetch()]);
         const per = items[0]?.amount ?? 0n;
         return say("bot", displayText(done.length === items.length
           ? `Staked ${fmt(per)} OBN to each of ${done.length} nonprofits (${fmt(per * BigInt(done.length))} OBN in total).`
-          : `Staked ${fmt(per)} OBN to ${done.map(poolName).join(", ")}. The others didn't go through; ask me again to stake to the rest.`),
+          : `Staked ${fmt(per)} OBN to ${done.map(poolName).join(", ")}. The others didn't go through.${unresolvedNote() || " Ask me again to stake to the rest."}`),
           autoClaim.visible && autoClaim.known && !autoClaim.enabled ? ["turn on auto claim"] : undefined);
       }
       if (action.kind === "unstakeEach") {
         const items = action.items ?? [];
         const { done } = await actions.unstakeMany(items);
-        if (done.length === 0) return say("bot", "That didn't go through. Nothing was changed.");
+        if (done.length === 0) return notThrough();
         await new Promise(r => setTimeout(r, 1_250));
         await Promise.all([reads.refetch(), poolInfo.refetch()]);
         const total = items.filter(item => done.includes(item.pid)).reduce((sum, item) => sum + item.amount, 0n);
         const rest = items.filter(item => !done.includes(item.pid)).map(item => poolName(item.pid));
         return say("bot", displayText(rest.length === 0
           ? `Unstaked ${fmt(total)} OBN from ${done.length} nonprofits. It's back in your wallet.`
-          : `Unstaked ${fmt(total)} OBN from ${done.map(poolName).join(", ")}. These didn't go through: ${rest.join(", ")}.`));
+          : `Unstaked ${fmt(total)} OBN from ${done.map(poolName).join(", ")}. These didn't go through: ${rest.join(", ")}.${unresolvedNote()}`));
       }
       const ok = action.kind === "stake" ? await actions.stake(action.pid, action.amount)
         : action.kind === "unstake" ? await actions.unstake(action.pid, action.amount)
         : await actions.claim(action.pid);
-      if (!ok) return say("bot", action.step === 2 ? displayText("The stake didn't go through. The unstaked OBN is still in your wallet.") : "That didn't go through. Nothing was changed.");
+      if (!ok) return notThrough(action.step === 2 ? displayText("The stake didn't go through. The unstaked OBN is still in your wallet.") : undefined);
       lastPid.current = action.pid;
       await new Promise(r => setTimeout(r, 1_250));
       await Promise.all([reads.refetch(), poolInfo.refetch()]);
@@ -739,9 +743,6 @@ export default function AskPage() {
                     : confirm.items?.map(item => `${short(item.pid)}: ${fmt(item.amount)}`).join(" · ")}
                   {!actions.canBatch && (confirm.items?.length ?? 0) > 1 && <><br />Your wallet will ask you to confirm once per nonprofit ({confirm.items?.length} times).</>}
                 </p>
-              )}
-              {confirm.kind === "claimAll" && !actions.canBatch && (
-                <p className="mb-2 text-xs" style={{ color: "var(--card-subtext)" }}>Your wallet will ask you to confirm {confirm.pids?.length} times, once per nonprofit.</p>
               )}
               {confirm.share !== undefined && confirm.share >= 50 && (
                 <p className="mb-2 text-xs font-semibold" style={{ color: theme === "dark" ? "#fbbf24" : "#d97706" }}>

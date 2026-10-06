@@ -7,6 +7,7 @@ import { stakingAbi } from "@/lib/stakingAbi";
 import { DATA_SUFFIX } from "@/lib/builderCode";
 import { useWalletTransaction } from "@/hooks/useWalletTransaction";
 import { canQueryCapabilities } from "@/lib/walletCapabilities";
+import { readTransaction } from "@/lib/transactionGuard";
 
 const OBN_TOKEN_ADDRESS = process.env.NEXT_PUBLIC_OBN_TOKEN as `0x${string}`;
 const STAKING_CONTRACT = process.env.NEXT_PUBLIC_STAKING_CONTRACT as `0x${string}`;
@@ -115,22 +116,29 @@ export function useStakeActions(account: `0x${string}` | undefined) {
     await tx.writeContractAsync({ address: STAKING_CONTRACT, abi: stakingAbi, functionName: "claim", args: [BigInt(pid)], dataSuffix: DATA_SUFFIX });
   });
 
-  /** Claim several pools: one batched request on Base Account, otherwise one wallet prompt per pool. */
+  /**
+   * Claim several pools in one transaction: claimMultiple (v9.2+) covers every pool, so other wallets
+   * get one prompt instead of one per pool. Base Account batches it with its paymaster as usual.
+   */
   const claimMany = async (pids: number[]) => {
     const done: number[] = [];
     const ok = await guarded("Claim rewards", async () => {
+      const ids = pids.map(BigInt);
       if (canBatch) {
-        await batch(pids.map(pid => ({ to: STAKING_CONTRACT, data: encodeFunctionData({ abi: stakingAbi, functionName: "claim", args: [BigInt(pid)] }) })));
-        done.push(...pids);
-        return;
+        await batch([{ to: STAKING_CONTRACT, data: encodeFunctionData({ abi: stakingAbi, functionName: "claimMultiple", args: [ids] }) }]);
+      } else {
+        await tx.writeContractAsync({ address: STAKING_CONTRACT, abi: stakingAbi, functionName: "claimMultiple", args: [ids], dataSuffix: DATA_SUFFIX });
       }
-      for (const pid of pids) {
-        await tx.writeContractAsync({ address: STAKING_CONTRACT, abi: stakingAbi, functionName: "claim", args: [BigInt(pid)], dataSuffix: DATA_SUFFIX });
-        done.push(pid);
-      }
+      done.push(...pids);
     });
     return { ok, done };
   };
 
-  return { stake, stakeMany, unstake, unstakeMany, claim, claimMany, busy, canBatch, tx };
+  /**
+   * Whether the last request is still unresolved: sent (or possibly sent) but not confirmed, e.g. after a
+   * confirmation timeout. It may still complete, so it must not be reported as failed or retried.
+   */
+  const unresolved = () => !!account && !!readTransaction(account, CHAIN_ID);
+
+  return { stake, stakeMany, unstake, unstakeMany, claim, claimMany, busy, canBatch, tx, unresolved };
 }
