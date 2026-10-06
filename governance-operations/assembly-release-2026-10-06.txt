@@ -1,0 +1,62 @@
+OliveAssembly / AnnualGovernanceV2 release - October 6, 2026
+
+STATUS: Contracts deployed and verified on Base. Upgrade scheduled, not executed
+at the last on-chain check (Base block 52238701). The governance frontend has
+not been released. This source publication does not activate voting.
+
+Network: Base mainnet, chain ID 8453.
+Existing governance proxy (address preserved by the upgrade):
+0x1135d5fEA8098b09b4ED3AFbfFDc7B248359D270
+AnnualGovernanceV2 implementation:
+0x000a76f74b47498D6a9A593F9Cb7cfB71d975437
+OliveAssembly proxy (the registration contract):
+0xE1ba5a8bC457E60FC2377B1837a40FF85da1578c
+OliveAssembly implementation:
+0x754DbCc6Cea09a4C5C7De0622f52537D225a9445
+
+Verified sources and Assembly proxy implementation association:
+https://basescan.org/address/0x000a76f74b47498D6a9A593F9Cb7cfB71d975437#code
+https://basescan.org/address/0xE1ba5a8bC457E60FC2377B1837a40FF85da1578c#code
+https://basescan.org/address/0x754DbCc6Cea09a4C5C7De0622f52537D225a9445#code
+
+Confirmed creation transaction hashes, respectively Assembly implementation,
+governance implementation, and Assembly proxy:
+0xf128034c1dbb6e7639d2e95bcec7ad9d2e0d36f5331d3cbdcf88bebe6861cd07
+0xc51f4da1aefc8f08b66b3d3cebf0c34773164e98a56d2cd1b9a5837e8943ad81
+0xb98208ae04cebee9f0cf58145e00be04ce7713bb616b8ea80199b7fc6ad33d3d
+
+Scheduled Timelock operation:
+0x713c44b1ce424785831d08bcc50a5fe55e3e8888d75e181dcb30f1550c625c56
+Timelock: 0x86396526286769ace21982E798Df5eef2389f51c
+Safe: 0x066e2FABb036deab7DC58bAde428F819AC3542DD
+Ready timestamp: 1791353083 (October 7, 2026, 06:04:43 UTC).
+The scheduled batch upgrades the existing governance proxy and atomically
+initializes its NFT voting configuration, then binds Assembly to that proxy.
+It does not start an annual voting cycle. Execution requires a fresh readiness
+and dependency check; the recorded time alone is not evidence of execution.
+
+Design: the existing OliveNFT collection remains in place. OliveAssembly is a
+Timelock-owned UUPS proxy with one registered NFT per wallet and historical
+registration checkpoints. Registration persists across cycles; withdrawals
+remain available. Eligibility and stake-derived square-root voting power use
+the cycle snapshot, with a minimum aggregate stake of 1 OBN. Both voting phases
+last 30 days. There is no fixed nonprofit ballot cap; ballot preparation is
+batched. Multiple NFTs in one wallet do not multiply voting power.
+
+The two published Solidity files match the reviewed deployment source hashes:
+OliveAssembly.sol SHA-256:
+29669161b85e85df0cb7f9ca9db9c182f9988a2a9ed7e7f386612c0f4629c5db
+AnnualGovernanceV2.sol SHA-256:
+ba715508ed0bec787b22c5fbf24ac954ee7f9a22babb63f4c74dc5ae7111f856
+Implementation compiler: Solidity 0.8.28, optimizer 500 runs, viaIR enabled,
+Cancun EVM, IPFS metadata, OpenZeppelin contracts and upgradeable contracts 5.4.0.
+The deployed ERC1967Proxy uses OpenZeppelin's bundled artifact compiled with
+Solidity 0.8.29, optimizer 200 runs, Paris EVM. Exact compiler inputs are available
+with the verified BaseScan sources. The existing repository toolchain is not
+being replaced by this source publication.
+
+Frontend: the public mirror includes the production source-map-js 1.2.2 fix.
+Production security CI and deployment passed. The separate staged governance
+frontend was rebased on that release and passed 167 regression tests and its
+production build. Final production-configuration and physical-wallet checks
+remain before the governance frontend release.
