@@ -94,7 +94,7 @@ Both votes run through **AnnualGovernance**, an on-chain governance contract own
 - **Timing.** Each phase lasts 30 days. The nonprofit ballot has no fixed size cap and is prepared in permissionless batches during Phase 1. Phase 1 settles only after preparation finishes, and Phase 2 then receives its full 30 days.
 - **Execution.** Preparation and settlement go through the permissionless `executeCurrentCycle()`; anyone can call it, for example with [`execute_cycle.js`](obn-project/scripts/governance/execute_cycle.js).
 
-See [the governance design](docs/THESIS.md#55-annualgovernancev2--pending-annual-governance-upgrade) for configuration timing and trust assumptions.
+See [the governance design](docs/THESIS.md#55-annualgovernancev2--annual-governance-annualgovernancev2sol) for configuration timing and trust assumptions.
 
 Both voting phases and their allocations are recorded on-chain.
 

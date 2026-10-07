@@ -372,9 +372,9 @@ Two distribution paths, deliberately asymmetric:
 
 Admin: `setApprovedNonprofit(addr, bool)`, `setGovernance(addr)`, `emergencySweep(token, to)` — all timelock-only.
 
-### 5.5 AnnualGovernanceV2 ? pending annual governance upgrade
+### 5.5 `AnnualGovernanceV2` — annual governance (AnnualGovernanceV2.sol)
 
-This section describes the local, undeployed upgrade to the existing AnnualGovernance proxy. Historical audit reports describe earlier implementations and are not the current deployment specification.
+This section describes AnnualGovernanceV2, the live implementation behind the existing AnnualGovernance proxy since its upgrade on 7 October 2026 (Base block 52283807). Historical audit reports describe earlier implementations and are not the current deployment specification.
 
 The Safe starts an annual cycle directly. Both voting phases last exactly 30 days. The owner remains the Timelock, and nonprofit onboarding and configuration remain controlled by the multisig through the Timelock. There is no hard numerical pool or nonprofit ballot cap. The seed reserve funds 1M OBN per nonprofit; community-funded seeding allows onboarding to continue beyond reserve capacity.
 
