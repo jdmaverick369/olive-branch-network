@@ -30,7 +30,7 @@ When you stake OBN in a nonprofit pool, rewards accrue over time and are minted 
 |-----------|-------|---------|
 | You | 88% | Your yield for participating |
 | Nonprofit | 10% | Direct funding to the selected nonprofit wallet |
-| ExtendOliveBranch | 1% | Accumulates throughout the year; AnnualGovernance votes each cycle which approved nonprofit receives the full balance |
+| ExtendOliveBranch | 1% | Accumulates throughout the year; AnnualGovernance votes each cycle which approved nonprofit receives the cycle's fixed allocation |
 | TheOffering | 1% | Accumulates throughout the year; AnnualGovernance votes each cycle to burn the balance or donate it to ExtendOliveBranch |
 
 This is not a traditional donation flow. It is a programmable funding mechanism.
@@ -85,9 +85,16 @@ OBN's two 1% emission streams accumulate throughout each cycle and are resolved 
 - **Burn** — the accumulated OBN is permanently burned, reducing supply
 - **Give** — the accumulated OBN is transferred to ExtendOliveBranch for that cycle's nonprofit distribution
 
-**ExtendOliveBranch** receives 1% of all staking emissions, plus any donation from TheOffering when stakers vote Give. Under the pending upgrade, stakers choose which approved nonprofit receives the cycle's fixed allocation; receipts after the cycle starts remain for the next cycle.
+**ExtendOliveBranch** receives 1% of all staking emissions, plus any donation from TheOffering when stakers vote Give. Stakers choose which approved nonprofit receives the cycle's fixed allocation; receipts after the cycle starts remain for the next cycle.
 
-Both votes run through **AnnualGovernance** — an on-chain governance contract owned by the Timelock that manages each annual cycle. Voting power is based on checkpointed OBN balances to prevent last-minute manipulation.
+Both votes run through **AnnualGovernance**, an on-chain governance contract owned by the Timelock. Since 7 October 2026 it runs the AnnualGovernanceV2 implementation:
+
+- **Eligibility.** A wallet votes by registering one OliveNFT in **OliveAssembly** and having at least 1 OBN staked at the cycle's start snapshot. Registration persists across cycles, and extra NFTs in one wallet add no voting power.
+- **Voting power.** The square root of the wallet's staked OBN at the snapshot, so stake taken after a cycle starts cannot count.
+- **Timing.** Each phase lasts 30 days. The nonprofit ballot has no fixed size cap and is prepared in permissionless batches during Phase 1. Phase 1 settles only after preparation finishes, and Phase 2 then receives its full 30 days.
+- **Execution.** Preparation and settlement go through the permissionless `executeCurrentCycle()`; anyone can call it, for example with [`execute_cycle.js`](obn-project/scripts/governance/execute_cycle.js).
+
+See [the governance design](docs/THESIS.md#55-annualgovernancev2--pending-annual-governance-upgrade) for configuration timing and trust assumptions.
 
 Both voting phases and their allocations are recorded on-chain.
 
@@ -150,7 +157,8 @@ Always interact with the staking proxy; implementation addresses identify the de
 | **OBNStakingLens** | Analytics Read Layer (UUPS Proxy) | [0x2ae4df523040c0245a6F84342E4B06850c5bdb9b](https://basescan.org/address/0x2ae4df523040c0245a6F84342E4B06850c5bdb9b) | [Verified ✅](https://basescan.org/address/0x2ae4df523040c0245a6F84342E4B06850c5bdb9b) |
 | **OBNTimeLock** | Timelock (non-upgradeable) | [0x86396526286769ace21982E798Df5eef2389f51c](https://basescan.org/address/0x86396526286769ace21982E798Df5eef2389f51c) | [Verified ✅](https://basescan.org/address/0x86396526286769ace21982E798Df5eef2389f51c) |
 | **AnnualGovernance** | Governance (UUPS Proxy) | [0x1135d5fEA8098b09b4ED3AFbfFDc7B248359D270](https://basescan.org/address/0x1135d5fEA8098b09b4ED3AFbfFDc7B248359D270) | [Verified ✅](https://basescan.org/address/0x1135d5fEA8098b09b4ED3AFbfFDc7B248359D270) |
-| **AnnualGovernance implementation** | Fixed Phase 2 allocation; upgraded 23 September 2026. Use the proxy above for interactions. | [0xA6F3A7988ca98313e8aE5401b29CdEb830Fdd6B3](https://basescan.org/address/0xA6F3A7988ca98313e8aE5401b29CdEb830Fdd6B3) | [Verified ✅](https://basescan.org/address/0xA6F3A7988ca98313e8aE5401b29CdEb830Fdd6B3#code) |
+| **AnnualGovernanceV2 implementation** | NFT-registered, square-root voting with batched ballot preparation; upgraded 7 October 2026. Use the proxy above for interactions. | [0x000a76f74b47498D6a9A593F9Cb7cfB71d975437](https://basescan.org/address/0x000a76f74b47498D6a9A593F9Cb7cfB71d975437) | [Verified ✅](https://basescan.org/address/0x000a76f74b47498D6a9A593F9Cb7cfB71d975437#code) |
+| **OliveAssembly** | Voter registration (UUPS Proxy) | [0xE1ba5a8bC457E60FC2377B1837a40FF85da1578c](https://basescan.org/address/0xE1ba5a8bC457E60FC2377B1837a40FF85da1578c) | [Verified ✅](https://basescan.org/address/0xE1ba5a8bC457E60FC2377B1837a40FF85da1578c#code) |
 | **TheOffering** | Accumulator (non-upgradeable) | [0xc75B2a5C7B8F88327D44C223769cFa19cc93E341](https://basescan.org/address/0xc75B2a5C7B8F88327D44C223769cFa19cc93E341) | [Verified ✅](https://basescan.org/address/0xc75B2a5C7B8F88327D44C223769cFa19cc93E341) |
 | **ExtendOliveBranch** | Accumulator (non-upgradeable) | [0xE1BbfAf0552ACC183579a3D172e002adF0c66d8B](https://basescan.org/address/0xE1BbfAf0552ACC183579a3D172e002adF0c66d8B) | [Verified ✅](https://basescan.org/address/0xE1BbfAf0552ACC183579a3D172e002adF0c66d8B) |
 | **TeamVesting** | Vesting (non-upgradeable) | [0x9428Edd912224778d84D762ebCDA52e1c829aB8d](https://basescan.org/address/0x9428Edd912224778d84D762ebCDA52e1c829aB8d) | [Verified ✅](https://basescan.org/address/0x9428Edd912224778d84D762ebCDA52e1c829aB8d) |
@@ -207,7 +215,3 @@ npx hardhat test
 ---
 
 *Make contributing the path of least resistance.*
-
-### Pending governance upgrade
-
-AnnualGovernanceV2 retains the original OliveNFT collection through OliveAssembly registration, a 1 OBN minimum and square-root voting power. Each phase lasts 30 days. One Safe start freezes voter eligibility and cycle funds; permissionless batches prepare a growing nonprofit ballot during Phase 1. Phase 2 waits for preparation to finish and receives its full 30-day window. There is no 200-pool or 100-recipient cap. See [the current governance design](docs/THESIS.md#55-annualgovernancev2--pending-annual-governance-upgrade) for configuration timing, keeper behavior and trust assumptions. This upgrade has not been deployed.
