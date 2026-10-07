@@ -32,7 +32,7 @@ describe("V9.3.1 monthly autoclaim", function () {
   it("worker selection matches the real lens and rounded payout at one and two gross wei", async function () {
     const { staking, executor, user } = await loadFixture(fixture);
     const { network } = require("hardhat");
-    const { findEligiblePools } = await import("../../obn-frontend/scripts/autoclaim/core.mjs");
+    const { findEligiblePools } = await import("./helpers/autoClaimEligibility.mjs");
     const Lens = await ethers.getContractFactory("OBNStakingLens");
     const lens = await upgrades.deployProxy(Lens, [staking.target, executor.address], {kind:"uups"});
     await staking.connect(user).setAutoClaimEnabled(true);
