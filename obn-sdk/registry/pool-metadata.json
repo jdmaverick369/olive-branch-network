@@ -1,0 +1,13 @@
+[
+  { "pid": 0, "shortName": "GiveDirectly", "category": "humanitarian", "websiteUrl": "https://www.givedirectly.org/", "verifyUrl": "https://www.givedirectly.org/crypto#eth-wallet" },
+  { "pid": 1, "shortName": "Heifer", "category": "humanitarian", "websiteUrl": "https://www.heifer.org/", "verifyUrl": "https://www.heifer.org/give/other-ways-to-give/digital-currency" },
+  { "pid": 2, "shortName": "Last Door", "category": "humanitarian", "websiteUrl": "https://lastdoor.org/", "verifyUrl": "https://lastdoor.org/donate/ethereum-donations/" },
+  { "pid": 3, "shortName": "Freedom of the Press", "category": "humanitarian", "websiteUrl": "https://freedom.press/", "verifyUrl": "https://freedom.press/donate/cryptocurrency/" },
+  { "pid": 4, "shortName": "Khan Academy", "category": "humanitarian", "websiteUrl": "https://www.khanacademy.org/", "verifyUrl": "https://drive.google.com/file/d/1rux_kf-lqK2c7D5kAb8kzDGzNEHvK4ZO/view" },
+  { "pid": 5, "shortName": "Rainforest", "category": "environment", "websiteUrl": "https://rainforestfoundation.org/", "verifyUrl": "https://rainforestfoundation.org/give/cryptocurrency/" },
+  { "pid": 6, "shortName": "Tor", "category": "humanitarian", "websiteUrl": "https://www.torproject.org/", "verifyUrl": "https://donate.torproject.org/cryptocurrency/" },
+  { "pid": 7, "shortName": "St Jude", "category": "humanitarian", "websiteUrl": "https://www.stjude.org/", "verifyUrl": "https://www.stjude.org/donate/crypto.html#ae3ecd4c26dcd8922236410a4c276c00e507ac7d93efa5975098ea92907e3d9e=6" },
+  { "pid": 8, "shortName": "charity: water", "category": "humanitarian", "websiteUrl": "https://www.charitywater.org/", "verifyUrl": "https://www.charitywater.org/crypto#" },
+  { "pid": 9, "shortName": "Internet Archive", "category": "humanitarian", "websiteUrl": "https://archive.org/", "verifyUrl": "https://archive.org/donate/cryptocurrency/" },
+  { "pid": 10, "shortName": "K9 Rescue", "category": "animals", "websiteUrl": "https://k9-rescue.org" }
+]

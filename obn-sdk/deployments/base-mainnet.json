@@ -1,0 +1,77 @@
+{
+  "chainId": 8453,
+  "network": "base",
+  "block": 52286680,
+  "contracts": {
+    "OBNToken": {
+      "address": "0x07e5efCD1B5fAE3f461bf913BBEE03a10A20C685",
+      "proxy": "ERC1967 (UUPS)",
+      "implementation": "0x6a1C71F693a05bDa05582596c0F672B2103A8480",
+      "abi": "abis/OBNToken.json",
+      "source": "obn-project/contracts/OBNToken.sol:OBNToken",
+      "verifiedBy": "selectors"
+    },
+    "OBNStakingPools": {
+      "address": "0x2C4Bd5B2a48a76f288d7F2DB23aFD3a03b9E7cD2",
+      "proxy": "ERC1967 (UUPS)",
+      "implementation": "0x416dfFfDc4245a9f4C38f05d203AEcaC5E24908f",
+      "abi": "abis/OBNStakingPools.json",
+      "source": "obn-project/contracts/StakingPoolsV931.sol:OBNStakingPoolsV931",
+      "verifiedBy": "bytecode"
+    },
+    "OBNStakingLens": {
+      "address": "0x2ae4df523040c0245a6F84342E4B06850c5bdb9b",
+      "proxy": "ERC1967 (UUPS)",
+      "implementation": "0x361790d0Be4E3b961f02CF1873c36E927c5ebe5d",
+      "abi": "abis/OBNStakingLens.json",
+      "source": "obn-project/contracts/OBNStakingLens.sol (pre-v9.3.2; frozen copy: contracts/test/OBNStakingLensV1.sol)",
+      "verifiedBy": "bytecode"
+    },
+    "AnnualGovernance": {
+      "address": "0x1135d5fEA8098b09b4ED3AFbfFDc7B248359D270",
+      "proxy": "ERC1967 (UUPS)",
+      "implementation": "0x000a76f74b47498D6a9A593F9Cb7cfB71d975437",
+      "abi": "abis/AnnualGovernance.json",
+      "source": "obn-project/contracts/AnnualGovernanceV2.sol:AnnualGovernanceV2",
+      "verifiedBy": "bytecode"
+    },
+    "OliveAssembly": {
+      "address": "0xE1ba5a8bC457E60FC2377B1837a40FF85da1578c",
+      "proxy": "ERC1967 (UUPS)",
+      "implementation": "0x754DbCc6Cea09a4C5C7De0622f52537D225a9445",
+      "abi": "abis/OliveAssembly.json",
+      "source": "obn-project/contracts/OliveAssembly.sol:OliveAssembly",
+      "verifiedBy": "bytecode"
+    },
+    "TheOffering": {
+      "address": "0xc75B2a5C7B8F88327D44C223769cFa19cc93E341",
+      "abi": "abis/TheOffering.json",
+      "source": "obn-project/contracts/TheOffering.sol:TheOffering",
+      "verifiedBy": "bytecode"
+    },
+    "ExtendOliveBranch": {
+      "address": "0xE1BbfAf0552ACC183579a3D172e002adF0c66d8B",
+      "abi": "abis/ExtendOliveBranch.json",
+      "source": "obn-project/contracts/ExtendOliveBranch.sol:ExtendOliveBranch",
+      "verifiedBy": "bytecode"
+    },
+    "OBNTimeLock": {
+      "address": "0x86396526286769ace21982E798Df5eef2389f51c",
+      "abi": "abis/OBNTimeLock.json",
+      "source": "obn-project/contracts/OBNTimeLock.sol:OBNTimeLock",
+      "verifiedBy": "selectors"
+    },
+    "TeamVesting": {
+      "address": "0x9428Edd912224778d84D762ebCDA52e1c829aB8d",
+      "abi": "abis/TeamVesting.json",
+      "source": "obn-project/contracts/TeamVesting.sol:TeamVesting",
+      "verifiedBy": "selectors"
+    },
+    "OliveNFT": {
+      "address": "0xB66F67444b09f509D72d832567C2df84Edeb80F8",
+      "abi": "abis/OliveNFT.json",
+      "source": "obn-project/contracts/OliveNFT.sol:OliveNFT",
+      "verifiedBy": "bytecode"
+    }
+  }
+}

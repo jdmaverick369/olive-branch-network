@@ -1,0 +1,116 @@
+{
+  "chainId": 8453,
+  "staking": "0x2C4Bd5B2a48a76f288d7F2DB23aFD3a03b9E7cD2",
+  "block": 52286680,
+  "pools": [
+    {
+      "pid": 0,
+      "name": "Give Directly",
+      "shortName": "GiveDirectly",
+      "wallet": "0x750EF1D7a0b4Ab1c97B7A623D7917CcEb5ea779C",
+      "status": "active",
+      "category": "humanitarian",
+      "websiteUrl": "https://www.givedirectly.org/",
+      "verifyUrl": "https://www.givedirectly.org/crypto#eth-wallet"
+    },
+    {
+      "pid": 1,
+      "name": "Heifer International",
+      "shortName": "Heifer",
+      "wallet": "0xE04063602B8b6B5d3526e6af873d2A4777E12d92",
+      "status": "active",
+      "category": "humanitarian",
+      "websiteUrl": "https://www.heifer.org/",
+      "verifyUrl": "https://www.heifer.org/give/other-ways-to-give/digital-currency"
+    },
+    {
+      "pid": 2,
+      "name": "Last Door",
+      "shortName": "Last Door",
+      "wallet": "0xAB739D4F2B44F3f4ed8236070A8f97119eaEd4aB",
+      "status": "active",
+      "category": "humanitarian",
+      "websiteUrl": "https://lastdoor.org/",
+      "verifyUrl": "https://lastdoor.org/donate/ethereum-donations/"
+    },
+    {
+      "pid": 3,
+      "name": "Freedom of Press",
+      "shortName": "Freedom of the Press",
+      "wallet": "0x998F25Be40241CA5D8F5fCaF3591B5ED06EF3Be7",
+      "status": "active",
+      "category": "humanitarian",
+      "websiteUrl": "https://freedom.press/",
+      "verifyUrl": "https://freedom.press/donate/cryptocurrency/"
+    },
+    {
+      "pid": 4,
+      "name": "Khan Academy",
+      "shortName": "Khan Academy",
+      "wallet": "0x891432Ab6414EFff5d986E14848eCD1e6b2961ae",
+      "status": "active",
+      "category": "humanitarian",
+      "websiteUrl": "https://www.khanacademy.org/",
+      "verifyUrl": "https://drive.google.com/file/d/1rux_kf-lqK2c7D5kAb8kzDGzNEHvK4ZO/view"
+    },
+    {
+      "pid": 5,
+      "name": "Rainforest Foundation US",
+      "shortName": "Rainforest",
+      "wallet": "0x0A60e17d5c98D491809CD8A15370C53806EEc1ec",
+      "status": "active",
+      "category": "environment",
+      "websiteUrl": "https://rainforestfoundation.org/",
+      "verifyUrl": "https://rainforestfoundation.org/give/cryptocurrency/"
+    },
+    {
+      "pid": 6,
+      "name": "Tor Project",
+      "shortName": "Tor",
+      "wallet": "0x532Fb5D00f40ced99B16d1E295C77Cda2Eb1BB4F",
+      "status": "active",
+      "category": "humanitarian",
+      "websiteUrl": "https://www.torproject.org/",
+      "verifyUrl": "https://donate.torproject.org/cryptocurrency/"
+    },
+    {
+      "pid": 7,
+      "name": "St. Jude Children's Research Hospital",
+      "shortName": "St Jude",
+      "wallet": "0x92EE2370b56DC32794A6CD72585dC01d4288D314",
+      "status": "active",
+      "category": "humanitarian",
+      "websiteUrl": "https://www.stjude.org/",
+      "verifyUrl": "https://www.stjude.org/donate/crypto.html#ae3ecd4c26dcd8922236410a4c276c00e507ac7d93efa5975098ea92907e3d9e=6"
+    },
+    {
+      "pid": 8,
+      "name": "charity: water",
+      "shortName": "charity: water",
+      "wallet": "0x718A03C0b38889D57224B5A4eC853953f7B1Aa18",
+      "status": "active",
+      "category": "humanitarian",
+      "websiteUrl": "https://www.charitywater.org/",
+      "verifyUrl": "https://www.charitywater.org/crypto#"
+    },
+    {
+      "pid": 9,
+      "name": "Internet Archive",
+      "shortName": "Internet Archive",
+      "wallet": "0xa23fa5a73C6366f6a829aC1F452A24eFdc5EcFF7",
+      "status": "active",
+      "category": "humanitarian",
+      "websiteUrl": "https://archive.org/",
+      "verifyUrl": "https://archive.org/donate/cryptocurrency/"
+    },
+    {
+      "pid": 10,
+      "name": "K9 Rescue International",
+      "shortName": "K9 Rescue",
+      "wallet": "0x859D4d3096928048dE53cF256A640aBd428f9bC9",
+      "status": "active",
+      "category": "animals",
+      "websiteUrl": "https://k9-rescue.org"
+    }
+  ]
+}
