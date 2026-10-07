@@ -1,0 +1,8 @@
+# This repository holds the open protocol only. The OBN application, its
+# automation and the governance keeper live in a private repository and must
+# not be added here. .github/scripts/public-boundary.sh enforces this in CI.
+/obn-frontend/
+**/keeper/
+.env
+.env.*
+node_modules/

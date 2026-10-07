@@ -171,13 +171,24 @@ OBNToken and OBNStakingPools use the UUPS proxy pattern with governance-controll
 
 ## Repository Layout
 
-- [`obn-project/`](obn-project/) contains the protocol contracts, deployment records, tests, and supporting project tooling.
-- [`obn-frontend/`](obn-frontend/) contains a sanitized, open-source reference implementation of the Olive Branch Network interface.
-- [`governance-operations/`](governance-operations/) contains governance procedures and operational materials.
+- [`obn-project/`](obn-project/) contains the protocol contracts, deployment records, tests, and governance transaction tooling.
+- [`obn-sdk/`](obn-sdk/) contains integration data: contract addresses, ABIs built from the verified contract sources, and the nonprofit pool registry.
+- [`governance-operations/`](governance-operations/) contains governance procedures and transaction records.
 - [`liquidity-operations/`](liquidity-operations/) contains liquidity procedures and operational materials.
 - [`.archive/`](.archive/) contains superseded or historical project materials retained for reference.
 
-The production frontend is maintained separately in a private repository and deployed independently. Nothing in `obn-frontend/` is automatically connected to or deployed by the production Vercel project. The copy here exists for transparency, education, auditing, and community contribution.
+The Olive Branch Network application is maintained in a private repository. Earlier versions of its source were published here under `obn-frontend/`, last at commit [`d162194`](https://github.com/jdmaverick369/olive-branch-network/tree/d162194ca/obn-frontend); those versions remain available under the MIT License in this repository's history.
+
+---
+
+## Licensing
+
+Olive Branch Network follows an open-protocol, private-product model.
+
+- **Open protocol.** Everything in this repository, including the smart contracts, interfaces, integration data and governance records, is open source under the [MIT License](LICENSE) unless a file states otherwise. Anyone may inspect, audit, integrate with, and build on the protocol without permission.
+- **Private product.** The Olive Branch Network application, backend services, automation, analytics, AI features and operational tooling are proprietary and are not published here. Application code previously published in this repository remains available under the MIT License in the repository history.
+- **Third-party code.** Dependencies and third-party materials remain under their own licenses and notices.
+- **Brand.** Use of Olive Branch Network names, logos, and branding is not granted by any software license in this repository and does not imply endorsement. Nonprofit names and logos belong to their respective owners.
 
 ---
 
@@ -185,7 +196,7 @@ The production frontend is maintained separately in a private repository and dep
 
 ```bash
 git clone https://github.com/jdmaverick369/olive-branch-network.git
-cd olive-branch-network
+cd olive-branch-network/obn-project
 npm install
 npx hardhat compile
 npx hardhat test

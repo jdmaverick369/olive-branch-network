@@ -1,0 +1,20 @@
+name: Public boundary
+
+# Keeps private product code (application, keeper, environment files, internal
+# release scripts) out of this MIT protocol repository.
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+      - run: bash .github/scripts/public-boundary.sh
