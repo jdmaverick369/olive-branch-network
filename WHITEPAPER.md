@@ -33,7 +33,7 @@ This paper defines the protocol architecture, token economics, nonprofit pool mo
 - Timestamp-based emission phases with a 10-year declining schedule
 - Nonprofit self-stake protection, pool lifecycle management, atomic bootstrap migration, emergency force-exit controls
 
-**Governance & Upgradability:** UUPS proxies for the Token, Staking, AnnualGovernance, and Lens contracts; ownership is intended to migrate progressively toward DAO + timelock control.
+**Governance & Upgradability:** Timelock-owned UUPS proxies for Token, Staking, AnnualGovernance, Lens, and OliveAssembly. AnnualGovernanceV2 has been live since October 7, 2026: NFT registration and snapshot stake determine square-root voting power for annual allocations. Broader DAO control remains a future governance step.
 
 ---
 
@@ -281,8 +281,8 @@ TheOffering is the protocol's annual burn-or-give vault. The staking contract ro
 
 At the end of each cycle, AnnualGovernance executes the community's Phase 1 vote outcome:
 
-- **BURN:** The entire accumulated balance is permanently burned, reducing total OBN supply.
-- **GIVE:** The entire accumulated balance is transferred to ExtendOliveBranch, increasing that cycle's nonprofit distribution.
+- **BURN:** The allocation captured at cycle start is permanently burned, reducing total OBN supply.
+- **GIVE:** The allocation captured at cycle start is transferred to ExtendOliveBranch, increasing that cycle's nonprofit distribution.
 
 **Access control:** `timelockOwner` (Timelock) controls admin functions including `emergencySweep`. `governance` (AnnualGovernance) is the only address authorized to call `burn()` or `sendToExtend()`. The `governance` address is initialized to `address(0)` and wired to AnnualGovernance via `setGovernance()` through the Timelock.
 
@@ -292,23 +292,23 @@ At the end of each cycle, AnnualGovernance executes the community's Phase 1 vote
 
 ExtendOliveBranch is the protocol's annual nonprofit distribution vault. The staking contract routes the 1% charityFund emission slot to this address. OBN accumulates continuously and may also receive a donation from TheOffering when the community votes GIVE in Phase 1.
 
-At the end of each cycle, AnnualGovernance executes the community's Phase 2 vote: the winning nonprofit pool's charityWallet receives ExtendOliveBranch's fixed cycle allocation under the pending upgrade in a single transaction.
+At the end of each cycle, AnnualGovernance executes the community's Phase 2 vote: the winning nonprofit pool's charityWallet receives ExtendOliveBranch's fixed cycle allocation in a single transaction.
 
 **Approved nonprofit registry:** ExtendOliveBranch maintains a whitelist of approved recipient addresses. `setApprovedNonprofit(address, bool)` is callable by the Timelock. All pool charity wallets are kept on the whitelist; new pools are approved atomically alongside `addPool` via `schedule_addPool.js`.
 
-**Distribution:** `distributeFromGovernance(to, amount)` is callable only by the `governance` address. Any `to` address is valid when called through governance, because a community vote constitutes explicit selection.
+**Distribution:** `distributeFromGovernance(to, amount)` is callable only by the `governance` address. The vault does not repeat the whitelist check on this path: AnnualGovernanceV2 validates each recipient when its ballot batch is prepared and only pays the selected ballot member.
 
 **Non-upgradeable:** Same immutability guarantee as TheOffering. Constructor args (`obn`, `timelockOwner`) are immutable.
 
-### 3.6 AnnualGovernance (existing UUPS proxy; pending AnnualGovernanceV2 upgrade)
+### 3.6 AnnualGovernanceV2 (live implementation; existing UUPS proxy)
 
-AnnualGovernance coordinates the annual decision cycles for both TheOffering and ExtendOliveBranch. It is a UUPS upgradeable proxy owned by the Timelock.
+AnnualGovernance coordinates the annual decision cycles for both TheOffering and ExtendOliveBranch. Its existing Timelock-owned UUPS proxy was upgraded to AnnualGovernanceV2 on **October 7, 2026, at Base block 52283807**, as recorded in the [repository deployment documentation](README.md#annual-governance). OliveAssembly supplies checkpointed NFT registration for the new voting rules. Deployment does not itself start an annual cycle.
 
 **Cycle structure:** Each annual cycle runs two sequential phases:
 
-1. **Phase 1 — Burn or Give:** Stakers vote on TheOffering's accumulated balance. The winning outcome is executed atomically: BURN calls `TheOffering.burn()`; GIVE calls `TheOffering.sendToExtend()`.
+1. **Phase 1 — Burn or Give:** Eligible registered stakers vote on TheOffering's allocation captured when the cycle starts. The winning outcome is executed atomically: BURN calls `TheOffering.burn()`; GIVE calls `TheOffering.sendToExtend()`.
 
-2. **Phase 2 — Nonprofit Selection:** Stakers vote to select which approved nonprofit receives ExtendOliveBranch's full accumulated balance. In the pending AnnualGovernanceV2 upgrade, there is no hard ballot cap: permissionless batches process eligible pool IDs in deterministic order, with no discretionary ballot curation by voteAdmin. The winning pool's charityWallet receives the distribution via `ExtendOliveBranch.distributeFromGovernance()`.
+2. **Phase 2 — Nonprofit Selection:** Eligible registered stakers select which approved nonprofit receives ExtendOliveBranch's start-of-cycle allocation plus that cycle's GIVE transfer, if any. Later receipts remain for the next cycle. There is no hard ballot cap: permissionless batches process at most 100 pool IDs per call in ascending order, excluding fully removed pools and deduplicating charity wallets. Shutdown pools remain eligible until fully removed. The winning charityWallet receives the fixed allocation via `ExtendOliveBranch.distributeFromGovernance()`.
 
 **Tie-breaking:**
 
@@ -317,16 +317,19 @@ AnnualGovernance coordinates the annual decision cycles for both TheOffering and
 
 **Vote integrity:**
 
-- Voting power uses checkpointed OBN balances at cycle start (`block.number - 1`) to prevent same-block stake-and-vote manipulation.
-- Under the pending upgrade, the Safe starts the cycle once; permissionless keeper calls prepare the ballot and execute phase transitions. Phase 2 receives a full 30 days from actual Phase 1 settlement.
+- Eligibility requires one OliveNFT registered in OliveAssembly and at least 1 OBN in aggregate staked balance at `block.number - 1` before cycle start. Both phases share that snapshot; later registration or staking cannot add power to the cycle, and later withdrawals do not erase its entitlement.
+- Voting power is the square root of snapshot stake: 100 staked OBN gives 10 voting-power units. The contract computes `floor(sqrt(stakeInWei)) * 1e9`, expressed in 18-decimal units. Extra NFTs in a wallet add no power; historical pre-V2 cycles retain their original linear weighting.
+- The voteAdmin Safe starts Phase 1 directly, without a Timelock delay, and prepares the first ballot batch. Anyone can continue preparation and settle each phase. Phase 1 lasts exactly 30 days and cannot settle until ballot preparation is complete; Phase 2 receives a full 30 days from actual Phase 1 settlement.
 
 **Execution:** AnnualGovernance calls TheOffering and ExtendOliveBranch directly. No additional multisig approval is required once a vote concludes — outcomes are enforced by contract.
 
 **Upgradability:** AnnualGovernance is a UUPS proxy. More sophisticated voting mechanics (delegation, quorum requirements, time-weighted voting) can be added through Timelock-governed upgrades as the DAO matures.
 
-**Preparation timing in the pending upgrade:** Voter eligibility, stake and fund allocations freeze at Safe start. The pool-history length is fixed then, but each pool wallet/removal status and each new recipient approval are read when its batch executes. Later pool IDs are excluded and already-admitted recipients remain fixed. Avoid nonprofit configuration changes during preparation. The upgrade requires one registered OliveNFT and at least 1 OBN at the snapshot, with square-root voting power.
+**Preparation timing:** Voter eligibility and stake use the previous-block snapshot; fund balances and the pool-history length are captured in the Safe's start transaction. Each pool wallet/removal status and each new recipient approval are read when its batch executes. Later pool IDs are excluded and already-admitted recipients remain fixed, even if their approval is subsequently revoked. An unapproved recipient reverts that batch; the Timelock must repair configuration or cancel the cycle before Phase 1 settlement. Avoid nonprofit configuration changes during preparation.
 
-**Pending upgrade parameters:** `owner` = Timelock; `voteAdmin` = OperatorSafe. Both phases last exactly 30 days. Legacy `maxBallotSize` storage is retained for compatibility but does not restrict membership. The upgrade is local and has not been deployed.
+**Live parameters and safeguards:** `owner` = Timelock; `voteAdmin` = OperatorSafe. Legacy `maxBallotSize` storage is retained for compatibility but does not restrict membership. Governance and OliveAssembly upgrades are blocked throughout active cycles, including preparation. Cancellation is available only before Phase 1 executes. Allocations are accounting reservations in the existing vaults, not segregated custody; a shortfall must be replenished before settlement can succeed.
+
+**OliveAssembly registration:** Approve the Assembly proxy to transfer an OliveNFT, then call `deposit(tokenId)` to register it. Assembly holds one NFT per wallet; registration persists across cycles until withdrawal. The depositor may use `withdraw()`, `withdrawTo(recipient)`, or `withdrawExpected(tokenId, recipient)` without a lock period. Registered NFTs cannot be withdrawn by an administrator. NFT registration does not establish unique human identity.
 
 ### 3.7 OBNStakingLens (UUPS proxy)
 
@@ -378,11 +381,11 @@ Keeping the governance-accumulated streams at 1% each ensures the protocol remai
 
 ### 4.4 Annual governance streams (1% + 1%)
 
-Both 1% emission streams are governed by AnnualGovernance, each with a clearly defined purpose.
+Both 1% emission streams are governed by AnnualGovernance, each with a clearly defined purpose. V2 captures both balances at cycle start; Phase 2 adds only that cycle's GIVE transfer. Later receipts remain for the next cycle.
 
-**ExtendOliveBranch (1% of emissions):** Accumulates OBN continuously throughout each annual cycle. At the end of each cycle, stakers vote in Phase 2 of AnnualGovernance to select which approved nonprofit pool receives the full accumulated balance. This provides the community a transparent, recurring mechanism to direct protocol-level resources toward specific causes.
+**ExtendOliveBranch (1% of emissions):** Accumulates OBN continuously throughout each annual cycle. At the end of each cycle, stakers vote in Phase 2 of AnnualGovernance to select which approved nonprofit pool receives the fixed cycle allocation. This provides the community a transparent, recurring mechanism to direct protocol-level resources toward specific causes.
 
-**TheOffering (1% of emissions):** Accumulates OBN continuously. At the end of each cycle, stakers vote in Phase 1 of AnnualGovernance to choose between two outcomes: BURN the balance (permanently deflationary) or GIVE it to ExtendOliveBranch (additive to that cycle's nonprofit distribution). This vote grants the community ongoing control over supply policy — a decision that becomes more significant as protocol TVL and annual accumulation grow.
+**TheOffering (1% of emissions):** Accumulates OBN continuously. At the end of each cycle, stakers vote in Phase 1 of AnnualGovernance to choose between two outcomes: BURN the start-of-cycle allocation (permanently deflationary) or GIVE it to ExtendOliveBranch (additive to that cycle's nonprofit distribution). This vote grants the community ongoing control over supply policy — a decision that becomes more significant as protocol TVL and annual accumulation grow.
 
 The full reward structure:
 
@@ -412,9 +415,9 @@ OBN is inflationary via staking, but voluntary burns (e.g., future app fees) can
 
 **Nonprofit Seed Reserve:** A 300M OBN allocation funds permanently staked nonprofit seeds at 1M OBN each. It is separate from ongoing staking emissions and annual governance allocations. See Section 11 for reserve accounting.
 
-**ExtendOliveBranch (1% of ongoing emissions):** Accumulates continuously. AnnualGovernance Phase 2 votes select which approved nonprofit receives the full cycle balance. The protocol's annual directed-contribution mechanism.
+**ExtendOliveBranch (1% of ongoing emissions):** Accumulates continuously. AnnualGovernance Phase 2 votes select which approved nonprofit receives the fixed cycle allocation. The protocol's annual directed-contribution mechanism.
 
-**TheOffering (1% of ongoing emissions):** Accumulates continuously. AnnualGovernance Phase 1 votes choose between burning the balance or donating it to ExtendOliveBranch. The protocol's annual supply-policy mechanism.
+**TheOffering (1% of ongoing emissions):** Accumulates continuously. AnnualGovernance Phase 1 votes choose between burning the start-of-cycle allocation or donating it to ExtendOliveBranch. The protocol's annual supply-policy mechanism.
 
 This three-way distinction is important:
 
@@ -480,15 +483,11 @@ OBN is a routing & staking protocol, not a registered nonprofit or certifier. Us
 
 ## 7) Governance & Upgradability
 
-### 7.1 UUPS proxies (Token & Staking)
+### 7.1 UUPS proxies and authority
 
-Upgrades require `_authorizeUpgrade` (owner).
+Token, Staking, AnnualGovernance, Lens, and OliveAssembly upgrades require Timelock owner authorization. The OperatorSafe schedules administrative changes through the 24-hour Timelock. AnnualGovernance and OliveAssembly additionally reject upgrades during active cycles.
 
-**Progressive decentralization:**
-
-1. Multisig owner
-2. Timelock (with enforced delay)
-3. ERC20Votes-based DAO
+Annual allocation votes are live under the NFT-registered, square-root voting model. The voteAdmin Safe starts cycles; permissionless callers prepare ballots and execute outcomes. This does not transfer protocol upgrade authority to annual voters. Broader DAO control remains a future step.
 
 ### 7.2 Hard-coded vs Governed
 
@@ -506,7 +505,7 @@ Upgrades require `_authorizeUpgrade` (owner).
 
 - Add pools (`addPool(charityWallet)`)
 - Execute bootstrap stakes from the Nonprofit Seed Reserve or an authorized community funding source
-- Start AnnualGovernance cycles through the voteAdmin Safe; the pending upgrade derives ballot membership through permissionless batches, not discretionary curation
+- Start AnnualGovernance cycles through the voteAdmin Safe; AnnualGovernanceV2 derives ballot membership through permissionless batches, not discretionary curation
 - Append future phases contiguously (`addPhase`)
 - Shutdown or remove pools
 - Spending and usage reporting for TheOffering and ExtendOliveBranch
@@ -524,8 +523,8 @@ AnnualGovernance is the on-chain mechanism for OBN's recurring community decisio
 
 Each cycle begins when the voteAdmin opens it. Phase 1 and Phase 2 run sequentially.
 
-- **Phase 1 (Burn or Give):** Stakers vote on TheOffering's accumulated balance. BURN permanently reduces supply. GIVE transfers the balance to ExtendOliveBranch, increasing that cycle's nonprofit distribution.
-- **Phase 2 (Nonprofit selection):** Stakers vote to select which approved nonprofit pool receives ExtendOliveBranch's full accumulated balance. Nominees are drawn from the whitelist maintained in ExtendOliveBranch via `setApprovedNonprofit`.
+- **Phase 1 (Burn or Give):** Eligible registered stakers vote on TheOffering's start-of-cycle allocation. BURN permanently reduces supply. GIVE transfers that allocation to ExtendOliveBranch, increasing that cycle's nonprofit distribution.
+- **Phase 2 (Nonprofit selection):** Stakers vote to select which approved nonprofit pool receives ExtendOliveBranch's fixed cycle allocation. Ballot batches scan eligible pool IDs and validate their charity wallets against the whitelist maintained in ExtendOliveBranch via `setApprovedNonprofit`.
 
 **Tie-breaking:**
 
@@ -534,9 +533,9 @@ Each cycle begins when the voteAdmin opens it. Phase 1 and Phase 2 run sequentia
 
 **Vote integrity:**
 
-- Voting power is derived from checkpointed OBN balances at cycle start, preventing same-block stake-then-vote manipulation.
-- The pending upgrade has no hard pool or ballot cap. Each preparation transaction processes at most 100 pool IDs; this work bound is not a membership limit. Phase 2 waits for preparation to complete.
-- Under the pending upgrade, the Safe starts the cycle once; permissionless keeper calls prepare the ballot and execute phase transitions. Phase 2 receives a full 30 days from actual Phase 1 settlement.
+- One registered OliveNFT and at least 1 OBN of aggregate stake are required at the previous-block snapshot. Voting power is the square root of snapshot stake, and both phases use the same entitlement (Section 3.6).
+- AnnualGovernanceV2 has no hard pool or ballot cap. Each preparation transaction processes at most 100 pool IDs; this work bound is not a membership limit. Phase 2 waits for preparation to complete.
+- The Safe starts the cycle once; permissionless keeper calls prepare the ballot and execute phase transitions. Phase 2 receives a full 30 days from actual Phase 1 settlement.
 
 **Execution:**
 
@@ -649,8 +648,8 @@ OBN should publish periodic public reports covering:
 5. **Generate contribution** — The selected nonprofit receives its protocol-defined share when users interact with the pool.
 6. **Build Proof-of-Contribution** — User contribution can be tracked across pools and over time.
 7. **Withdraw unlocked principal anytime** — Bootstrap locks do not apply to ordinary user stakes.
-8. **Vote on TheOffering** — Once per year, stakers vote whether TheOffering's accumulated balance is burned or sent to ExtendOliveBranch.
-9. **Vote on ExtendOliveBranch** — Stakers then vote on which approved nonprofit receives ExtendOliveBranch's full accumulated balance.
+8. **Vote on TheOffering** — Before the cycle starts, register one OliveNFT in OliveAssembly and stake at least 1 OBN. Eligible wallets vote during Phase 1 on whether TheOffering's fixed allocation is burned or sent to ExtendOliveBranch.
+9. **Vote on ExtendOliveBranch** — The same eligible wallets then vote on which approved nonprofit receives ExtendOliveBranch's fixed cycle allocation.
 
 OBN is designed so users do not need to choose between earning and contributing. Both happen through the same protocol action.
 
@@ -702,7 +701,7 @@ The Nonprofit Seed Reserve has a total allocation of **300M OBN**, with **50M OB
 - Implement expanded contribution tracking in the frontend
 - Build Proof-of-Contribution dashboards
 - Improve nonprofit reporting pages
-- Launch AnnualGovernance first cycle once DAO voting is live
+- Operate annual cycles using deployed AnnualGovernanceV2 and OliveAssembly, with community registration, voting, and permissionless settlement
 - Produce educational media
 - Onboard additional nonprofits
 - Explore partnerships
@@ -812,8 +811,8 @@ Display and analytics views such as `getGlobalStats`, `getPoolStats`, `getUserPo
 
 **Governance mutations:**
 
-- `burn(amount)` (governance-only) — Burns the full balance after a BURN vote
-- `sendToExtend(amount)` (governance-only) — Sends the balance to ExtendOliveBranch after a GIVE vote
+- `burn(amount)` (governance-only) — Burns the fixed cycle allocation after a BURN vote
+- `sendToExtend(amount)` (governance-only) — Sends the fixed cycle allocation to ExtendOliveBranch after a GIVE vote
 
 **Admin mutations:**
 
@@ -825,7 +824,7 @@ Display and analytics views such as `getGlobalStats`, `getPoolStats`, `getUserPo
 **Distribution mutations:**
 
 - `distribute(nonprofit, amount)` (timelockOwner or governance) — Whitelist-enforced
-- `distributeFromGovernance(nonprofit, amount)` (governance-only) — Whitelist check intentionally omitted; the recipient was already validated and frozen in the ballot at `startAnnualCycle()`
+- `distributeFromGovernance(nonprofit, amount)` (governance-only) — Whitelist check intentionally omitted; the recipient was already validated and frozen when its ballot batch was prepared
 
 **Admin mutations:**
 
@@ -841,7 +840,7 @@ Display and analytics views such as `getGlobalStats`, `getPoolStats`, `getUserPo
 
 **Vote-admin mutations:**
 
-- `startAnnualCycle(phase1Duration, phase2Duration)` (voteAdmin-only) — Builds the ballot, validates the ExtendOliveBranch whitelist, and snapshots voting power
+- `startAnnualCycle(phase1Duration, phase2Duration)` (voteAdmin-only) — Requires both durations to equal 2,592,000 seconds (30 days); snapshots eligibility, stake and fund allocations, freezes the pool-count boundary, and prepares the first ballot batch
 
 **User mutations:**
 
@@ -850,21 +849,33 @@ Display and analytics views such as `getGlobalStats`, `getPoolStats`, `getUserPo
 
 **Permissionless execution:**
 
+- `prepareBallot(cycleId, maxPools)` processes 1 to 100 pool IDs per call during Phase 1
 - `executePhase1(cycleId)` / `executePhase2(cycleId)`
-- `executeCurrentCycle()` — Dispatches to whichever phase is ready; intended for keeper bots and community executors
+- `executeCurrentCycle()` — Advances incomplete ballot preparation or settles the ready phase; anyone may call it
 
 **Owner (Timelock) admin:**
 
 - `cancelCycle(cycleId)` — Only before Phase 1 has executed
 - `setVoteAdmin(newAdmin)`
-- `setMaxBallotSize(newMax)`
+- `setMaxBallotSize(newMax)` (legacy compatibility setting; does not cap V2 ballot membership)
 
 **Views:**
 
 - `currentCycleId()` / `getCycleState(cycleId)` / `getCycleSummary(cycleId)`
-- `getBallot(cycleId)` / `getNonprofitVotes(cycleId, nonprofit)`
+- `getBallot(cycleId)` / `getBallotPage(cycleId, offset, limit)` / `getNonprofitVotes(cycleId, nonprofit)`
+- `getCyclePreparation(cycleId)` reports preparation progress and completion
+- `getCycleFundSnapshot(cycleId)` / `getPhase2Allocation(cycleId)` report fixed monetary allocations
+- `getCurrentVoterInfo(user)` reports live eligibility, distinct from an existing cycle snapshot
+- `getCycleParticipation(cycleId)` / `getPhase2Result(cycleId)` report participation and confirmed settlement
 - `hasVotedPhase1(cycleId, voter)` / `hasVotedPhase2(cycleId, voter)`
-- `getVotingPowerForCycle(cycleId, user)` — Voting power at the cycle's snapshot block
+- `getVotingPowerForCycle(cycleId, user)` — Cycle-specific NFT eligibility and square-root power; returns power and checkpoint-bootstrap status
+
+### OliveAssembly
+
+- `deposit(tokenId)` registers one approved OliveNFT per wallet in Assembly custody
+- `withdraw()` / `withdrawTo(recipient)` / `withdrawExpected(tokenId, recipient)` allow depositor-controlled withdrawal, with no lock period
+- `registeredTokenId(user)` / `registeredCount()` report current registrations; the count does not imply staking eligibility
+- `getPastRegistration(user, blockNumber)` / `getPastRegisteredCount(blockNumber)` report historical registration snapshots
 
 ### OBNStakingLens
 
@@ -876,7 +887,7 @@ Read-only analytics layer; holds no funds. Recreates display/analytics views rem
 - `pendingRewards(pid, user)` / `pendingRewardsMultiple(pids[], user)`
 - `getPoolStats(pid)` / `pendingCharityFor(pid)` / `listPoolsBasic()`
 - `getPoolAPR(pid)` / `getGlobalStats()` / `currentRewardsPerSecond()`
-- `getVotingPower(user, snapshotBlock)` — Mirrors AnnualGovernance's voting-power view for frontend convenience
+- `getVotingPower(user, snapshotBlock)` — Raw checkpointed staking power, without NFT eligibility or square-root weighting; use AnnualGovernanceV2's `getVotingPowerForCycle` for annual voting
 
 **Admin:**
 
@@ -930,7 +941,7 @@ And every year, the community decides how far to extend the olive branch.
 
 ## Appendix B — Deployed Contracts (Base Mainnet)
 
-This reference describes V9.3.1 staking behavior. Deployment transactions, proxy activation, and service activation are tracked in the [operational release record](governance-operations/2026-09-24-staking-v931-autoclaim-record.json).
+This reference describes V9.3.1 staking behavior and the AnnualGovernanceV2 upgrade activated on October 7, 2026 (Base block 52283807). The governance revision does not change the staking version. Deployment transactions, proxy activation, and service activation are tracked in the [operational release record](governance-operations/2026-09-24-staking-v931-autoclaim-record.json).
 
 Use the staking proxy for deposits, claims, withdrawals, and consent changes. `MonthlyAutoClaimUpgradeable` is compiled into the V9.3.1 implementation and is not separately deployed.
 
@@ -943,7 +954,8 @@ Use the staking proxy for deposits, claims, withdrawals, and consent changes. `M
 | **OBNStakingLens** | Analytics Read Layer (UUPS Proxy) | [0x2ae4df523040c0245a6F84342E4B06850c5bdb9b](https://basescan.org/address/0x2ae4df523040c0245a6F84342E4B06850c5bdb9b) | [Verified ✅](https://basescan.org/address/0x2ae4df523040c0245a6F84342E4B06850c5bdb9b) |
 | **OBNTimeLock** | Timelock (non-upgradeable) | [0x86396526286769ace21982E798Df5eef2389f51c](https://basescan.org/address/0x86396526286769ace21982E798Df5eef2389f51c) | [Verified ✅](https://basescan.org/address/0x86396526286769ace21982E798Df5eef2389f51c) |
 | **AnnualGovernance** | Governance (UUPS Proxy) | [0x1135d5fEA8098b09b4ED3AFbfFDc7B248359D270](https://basescan.org/address/0x1135d5fEA8098b09b4ED3AFbfFDc7B248359D270) | [Verified ✅](https://basescan.org/address/0x1135d5fEA8098b09b4ED3AFbfFDc7B248359D270) |
-| **AnnualGovernance implementation** | Fixed Phase 2 allocation; upgraded 23 September 2026. Use the proxy above for interactions. | [0xA6F3A7988ca98313e8aE5401b29CdEb830Fdd6B3](https://basescan.org/address/0xA6F3A7988ca98313e8aE5401b29CdEb830Fdd6B3) | [Verified ✅](https://basescan.org/address/0xA6F3A7988ca98313e8aE5401b29CdEb830Fdd6B3#code) |
+| **AnnualGovernanceV2 implementation** | NFT-registered, square-root voting with batched ballot preparation; upgraded 7 October 2026. Use the proxy above for interactions. | [0x000a76f74b47498D6a9A593F9Cb7cfB71d975437](https://basescan.org/address/0x000a76f74b47498D6a9A593F9Cb7cfB71d975437) | [Verified ✅](https://basescan.org/address/0x000a76f74b47498D6a9A593F9Cb7cfB71d975437#code) |
+| **OliveAssembly** | Voter registration (UUPS Proxy) | [0xE1ba5a8bC457E60FC2377B1837a40FF85da1578c](https://basescan.org/address/0xE1ba5a8bC457E60FC2377B1837a40FF85da1578c) | [Verified ✅](https://basescan.org/address/0xE1ba5a8bC457E60FC2377B1837a40FF85da1578c#code) |
 | **TheOffering** | Accumulator (non-upgradeable) | [0xc75B2a5C7B8F88327D44C223769cFa19cc93E341](https://basescan.org/address/0xc75B2a5C7B8F88327D44C223769cFa19cc93E341) | [Verified ✅](https://basescan.org/address/0xc75B2a5C7B8F88327D44C223769cFa19cc93E341) |
 | **ExtendOliveBranch** | Accumulator (non-upgradeable) | [0xE1BbfAf0552ACC183579a3D172e002adF0c66d8B](https://basescan.org/address/0xE1BbfAf0552ACC183579a3D172e002adF0c66d8B) | [Verified ✅](https://basescan.org/address/0xE1BbfAf0552ACC183579a3D172e002adF0c66d8B) |
 | **TeamVesting** | Vesting (non-upgradeable) | [0x9428Edd912224778d84D762ebCDA52e1c829aB8d](https://basescan.org/address/0x9428Edd912224778d84D762ebCDA52e1c829aB8d) | [Verified ✅](https://basescan.org/address/0x9428Edd912224778d84D762ebCDA52e1c829aB8d) |
@@ -960,8 +972,8 @@ Use the staking proxy for deposits, claims, withdrawals, and consent changes. `M
 
 ---
 
-**Version:** 9.3.1 Proof-of-Contribution
+**Version:** 9.3.1 Proof-of-Contribution / AnnualGovernanceV2 governance revision
 
-**Date:** September 24, 2026
+**Date:** October 13, 2026
 
 **Canonical Repository:** [github.com/jdmaverick369/olive-branch-network](https://github.com/jdmaverick369/olive-branch-network)
