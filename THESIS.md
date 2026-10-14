@@ -4,7 +4,7 @@
 
 *Olive Branch Network — Base Mainnet*
 
-*July 2026*
+*July 2026 — governance revision October 14, 2026*
 
 ---
 
@@ -14,7 +14,7 @@ Charitable giving in the United States presents a paradox: total dollars donated
 
 This thesis argues that the root of the participation collapse is structural, not moral: under every historical form of money — commodity, fiat, and early digital — giving is *sacrificial*. A donation permanently transfers principal from donor to recipient, so the threshold for participation is disposable surplus — a bar that a growing share of households can no longer clear as real income gains concentrate at the top of the distribution. Programmable money removes this constraint for the first time in monetary history. Because a smart contract can separate *ownership of an asset* from *direction of the yield that asset generates*, it becomes possible to design **non-sacrificial giving**: a donor retains their principal permanently while continuously routing a protocol-enforced share of its productivity to independently verifiable public benefit.
 
-The Olive Branch Network (OBN) protocol is presented as a reference implementation of this design. The thesis (i) situates OBN within the long history of monetary technology; (ii) documents, with cited empirical data, the decline in charitable participation that motivates it; (iii) formalizes the protocol's participation–lock feedback loop, in which each additional participant transfers OBN tokens out of the circulating float and into non-custodial contract escrow, contracting effective supply as adoption grows; and (iv) provides a complete technical description of every core smart contract — `OBNToken`, `OBNStakingPools`, `TheOffering`, `ExtendOliveBranch`, `AnnualGovernance`, `OBNTimeLock`, `TeamVesting`, `OliveNFT`, and `OBNStakingLens` — including storage layouts, invariants, access-control structure, and upgrade-safety mechanics, as deployed on Base mainnet.
+The Olive Branch Network (OBN) protocol is presented as a reference implementation of this design. The thesis (i) situates OBN within the long history of monetary technology; (ii) documents, with cited empirical data, the decline in charitable participation that motivates it; (iii) formalizes the protocol's participation–lock feedback loop, in which each additional participant transfers OBN tokens out of the circulating float and into non-custodial contract escrow, contracting effective supply as adoption grows; and (iv) provides a complete technical description of every core smart contract — `OBNToken`, `OBNStakingPools`, `TheOffering`, `ExtendOliveBranch`, `AnnualGovernanceV2`, `OliveAssembly`, `OBNTimeLock`, `TeamVesting`, `OliveNFT`, and `OBNStakingLens` — including storage layouts, invariants, access-control structure, and upgrade-safety mechanics, as deployed on Base mainnet.
 
 ---
 
@@ -240,7 +240,7 @@ Assemble the pieces. Let *n* be the number of active participants and *k̄* the 
 2. **Yield rewards patience, and 88% of yield can compound.** Stakers who restake their 88% share move newly minted tokens straight back into K, further tightening F.
 3. **The gift stream funds real-world legitimacy.** The 10% nonprofit stream gives external institutions a durable reason to promote participation, which recruits more participants — the only marketing channel that is itself a charitable act.
 4. **Governance can convert the commons into pure deflation.** A BURN outcome in Phase 1 destroys the accumulated commons stream, reducing S outright. Note the default is deliberately deflationary: *zero participation → BURN* (GIVE must *strictly* exceed BURN).
-5. **Voting power requires staying staked.** Governance weight is a checkpointed snapshot of staked balance (`getPastVotingPower` over `Checkpoints.Trace208`), so influence over the annual burn/give and nonprofit selection accrues only to those whose tokens remain in K at the snapshot block. Governance participation is thus a *third* independent motive to keep tokens locked, alongside yield and giving.
+5. **Voting eligibility requires participation at the snapshot.** V2 combines registered NFT status with at least 1 OBN of checkpointed aggregate stake, then applies square-root weighting. Governance supplies a reason to be staked before each cycle starts; it does not require remaining staked afterward or establish a continuous lock through the vote (§5.5).
 
 The loop: **more participants → more tokens locked → smaller float and larger cumulative burn option → improved price support → higher yield value and higher gift value per token → stronger recruitment → more participants.**
 
@@ -350,7 +350,7 @@ Staked balances are *snapshot-queryable* so governance can weight votes at a fix
 - Every deposit, withdrawal, and bootstrap migration pushes `(block.number, totalStakedByUser)` into a per-user `Checkpoints.Trace208`.
 - **Genesis bootstrap:** stakers whose positions predate the checkpoint system have no history entries. Three complementary paths initialize them at `upgradeBlock`: `_initializeCheckpointIfNeeded` (automatic, on the user's next interaction, before any balance change); `bootstrapCheckpoint(user)` (permissionless — anyone can initialize anyone); and `batchBootstrap(users[])` (permissionless bulk ceremony). `AnnualGovernance` also lazily bootstraps voters on their first vote attempt (§5.5).
 - **`getPastVotingPower(user, blockNumber)`** — binary-search lookup (`upperLookup`) of the user's staked total at any past block; **`checkpointCount(user)`** exposes initialization status.
-- Voting power is thus **1 staked OBN = 1 vote, at the snapshot block** — unstaked tokens carry no governance weight, reinforcing the participation–lock loop (§4.5).
+- This interface returns **raw aggregate staked OBN at the snapshot**, not the final V2 vote weight. AnnualGovernanceV2 first checks historical OliveAssembly registration and the 1 OBN minimum, then applies square-root weighting (§5.5). Unstaked wallet balances and ERC20Votes delegation do not provide annual voting power. Historical cycles preceding NFT voting retain their original linear weighting.
 
 ### 5.3 `TheOffering` — the commons vault (TheOffering.sol)
 
@@ -368,7 +368,7 @@ The second non-upgradeable vault, receiving its own 1% share of all staking emis
 Two distribution paths, deliberately asymmetric:
 
 - **`distribute(nonprofit, amount)`** — timelockOwner or governance; *whitelist enforced*. Manual/pre-governance/emergency channel.
-- **`distributeFromGovernance(nonprofit, amount)`** — governance only; **whitelist intentionally omitted**, with the rationale documented in-contract: the recipient was validated against the whitelist when the ballot was frozen at `startAnnualCycle()`, and *a completed community vote must not be invalidatable by a post-hoc whitelist revocation* (vote finality over admin discretion). The timelock retains `emergencySweep` as the pre-distribution override if a recipient is compromised before execution.
+- **`distributeFromGovernance(nonprofit, amount)`** — governance only; **whitelist intentionally omitted** on this distribution path. V2 validates each recipient against the whitelist when its ballot batch is processed, then preserves that membership for the cycle. A later whitelist revocation cannot remove an admitted recipient or invalidate the selected recipient at payment. The Timelock retains `emergencySweep`; withdrawing reserved funds can prevent settlement until the shortfall is replenished.
 
 Admin: `setApprovedNonprofit(addr, bool)`, `setGovernance(addr)`, `emergencySweep(token, to)` — all timelock-only.
 
@@ -376,7 +376,44 @@ Admin: `setApprovedNonprofit(addr, bool)`, `setGovernance(addr)`, `emergencySwee
 
 This section describes AnnualGovernanceV2, the live implementation behind the existing AnnualGovernance proxy since its upgrade on 7 October 2026 (Base block 52283807). Historical audit reports describe earlier implementations and are not the current deployment specification.
 
-The Safe starts an annual cycle directly. Both voting phases last exactly 30 days. The owner remains the Timelock, and nonprofit onboarding and configuration remain controlled by the multisig through the Timelock. There is no hard numerical pool or nonprofit ballot cap. The seed reserve funds 1M OBN per nonprofit; community-funded seeding allows onboarding to continue beyond reserve capacity.
+#### 5.5.1 What the community decides
+
+Annual governance directs the two shared 1% emission streams. In Phase 1, participants choose whether to burn TheOffering's allocation or give it to ExtendOliveBranch. In Phase 2, they choose one eligible nonprofit to receive the cycle's ExtendOliveBranch allocation. Both phases run even when Phase 1 selects BURN. These votes do not change the 88% staker reward, redirect the 10% pool-specific nonprofit share, spend users' principal, or approve arbitrary protocol upgrades.
+
+The OperatorSafe, acting as `voteAdmin`, starts a cycle directly. The owner remains the Timelock, and nonprofit onboarding and configuration remain controlled through it. The term *annual* describes the intended operating cadence: the contract enforces two 30-day voting windows and prevents overlapping cycles, but does not schedule a cycle automatically or require a one-year interval between starts. Someone must submit each preparation and settlement transaction.
+
+#### 5.5.2 Registration and voting power
+
+A voter uses the same wallet to stake OBN and register one OliveNFT in OliveAssembly. After approving the Assembly proxy to transfer the NFT, the wallet calls `deposit(tokenId)`. Assembly holds the NFT and checkpoints the wallet's registration; holding an NFT outside Assembly is insufficient. Registration persists across cycles until withdrawal, and registering extra NFTs in the same wallet is not permitted. Staking and NFT registration are separate actions and neither substitutes for the other.
+
+For a cycle starting in block `B`, both phases use registration and aggregate staked balance at the end of block `B - 1`. A registered wallet with at least 1 OBN staked is eligible. Deposits or registration in block `B` or afterward do not increase that cycle's entitlement. Later stake or NFT withdrawals do not remove entitlement already captured by the snapshot. The mechanism therefore measures participation at a defined point, rather than imposing a 60-day stake or NFT lock.
+
+For eligible wallets, voting power in human-readable units is approximately the square root of staked OBN. For an 18-decimal stake amount `s`, the exact contract calculation is `floor(sqrt(s)) * 10^9`, returned in 18-decimal voting-power units. Power is zero below the minimum or without snapshot registration.
+
+| Aggregate stake at snapshot | Voting-power units, if registered |
+|---|---:|
+| Less than 1 OBN | 0 |
+| 1 OBN | 1 |
+| 100 OBN | 10 |
+| 10,000 OBN | 100 |
+
+This reduces the advantage of concentrated stake: increasing stake one hundredfold increases weight tenfold. It does not establish one-person-one-vote. A person can control multiple wallets and acquire multiple NFTs; splitting stake among eligible wallets can increase combined square-root weight. NFT registration is an eligibility gate, not proof of unique human identity.
+
+Each eligible wallet may submit one vote per phase using `castOfferingVote(cycleId, burn)` and `castNonprofitVote(cycleId, nonprofit)`. Votes cannot be revised through these endpoints. A Phase 2 voter need not have voted in Phase 1. Stake determines weight across all pools, so the voter may select any nonprofit on the ballot, not just a pool in which that wallet stakes. There is no turnout quorum or delegation mechanism in these annual voting endpoints.
+
+#### 5.5.3 Cycle lifecycle and ballot preparation
+
+| Step | Who acts | Contract behavior |
+|---|---|---|
+| Register and stake | Participant | Establishes NFT registration and stake before the snapshot |
+| Start Phase 1 | voteAdmin Safe | Calls `startAnnualCycle(2592000, 2592000)`; captures snapshots and opens a 30-day vote |
+| Prepare remaining ballot | Any caller | Calls `prepareBallot(cycleId, maxPools)` or `executeCurrentCycle()` in bounded batches |
+| Vote BURN or GIVE | Eligible wallets | Each submits one weighted Phase 1 vote |
+| Settle Phase 1 | Any caller | After the deadline and completed preparation, executes the outcome and opens Phase 2 |
+| Vote for a nonprofit | Eligible wallets | Each submits one weighted Phase 2 vote during its full 30-day window |
+| Settle Phase 2 | Any caller | Pays the winner's fixed allocation or records rollover if there were no votes |
+
+Starting requires Assembly to be bound to governance, at least one registration at the snapshot, nonempty pool history, and any prior cycle to be completed or cancelled. A registered wallet count does not guarantee any wallet meets the staking threshold. Both duration arguments must be exactly 2,592,000 seconds. The Safe's start action does not require a new Timelock operation or a second Safe action to open Phase 2.
 
 **Snapshot and funds.** The start transaction fixes voter eligibility and aggregate stake at the previous block and captures both fund allocations. One OliveNFT must have been registered in OliveAssembly and aggregate stake must be at least 1 OBN. Power is square-root weighted. Both phases use the same snapshot; withdrawing afterward does not erase that cycle's entitlement. Later fund receipts belong to the next cycle, apart from this cycle's Offering GIVE allocation.
 
@@ -386,13 +423,44 @@ The Safe starts an annual cycle directly. Both voting phases last exactly 30 day
 
 **Execution.** Phase 1 votes may be cast while the nonprofit ballot is prepared. Phase 1 cannot execute until preparation is complete and its deadline has passed. The dispatcher advances pending batches before executing the phase. An empty final ballot cannot finalize preparation; the owner may cancel before Phase 1 execution. GIVE must strictly exceed BURN; ties and zero participation burn only the fixed Offering allocation. Phase 2 then opens for a full 30 days from actual execution. Each nonprofit vote updates the leader in constant work, with ties awarded to the earliest ballot position. Settlement pays only the fixed cycle allocation to that leader, or rolls it over when no votes were cast. Neither preparation nor settlement scans the entire ballot in one state-changing transaction.
 
+For example, if Phase 1's deadline passes on day 30 but it settles on day 34, Phase 2 closes on day 64. Phase 1 votes stop at the original deadline; delayed execution does not extend that vote. `executeCurrentCycle()` advances one batch or one settlement per call, so completing the last preparation batch may require a subsequent call to settle Phase 1. The permissionless execution model allows any willing caller to perform this work; it does not guarantee that a keeper service is running.
+
+#### 5.5.4 Fixed allocations and outcome rules
+
+Let `O` be TheOffering's OBN balance and `E` be ExtendOliveBranch's balance in the start transaction. Phase 1 burns `O` unless GIVE's weighted tally strictly exceeds BURN's. A tie or no Phase 1 votes therefore resolves to BURN. If GIVE wins, `O` moves to ExtendOliveBranch. Phase 2's allocation is `E` for BURN or `E + O` for GIVE. Subsequent receipts are excluded and stay available for a future cycle.
+
+For example, with 1,000 OBN in TheOffering and 2,000 OBN in ExtendOliveBranch at start, GIVE makes 3,000 OBN available for Phase 2. If ExtendOliveBranch later receives another 200 OBN, that 200 is not added to the current payout. With BURN, 1,000 OBN is destroyed and Phase 2 allocates 2,000 OBN. With no Phase 2 votes, its allocation stays in the vault for a future cycle; BURN already executed in Phase 1 is not reversed.
+
+Phase 2 selects the highest weighted tally, with ties resolved by the earliest ballot position, determined by ascending pool-ID processing and recipient deduplication. It is a single-recipient allocation, not a proportional distribution among all nominees. Funds remain in the existing vaults: the snapshot is an accounting reservation, not separate escrow. Administrative withdrawals can create a shortfall; settlement reverts rather than paying a reduced allocation and can be retried after replenishment.
+
+#### 5.5.5 Authority, compatibility, and verification
+
+| Actor | Authority in the current design |
+|---|---|
+| Registered eligible voters | Decide the two annual allocation outcomes using snapshot weight |
+| voteAdmin Safe | Starts cycles; cannot replace ballots with a hand-picked list or override tallies through the start function |
+| Any caller | Prepares deterministic ballot batches and executes outcomes once their conditions are met |
+| Timelock owner | Changes voteAdmin, manages nonprofit configuration and vault administration, cancels before Phase 1 settlement, and authorizes permitted upgrades |
+
+Annual voters do not acquire the Timelock's administrative powers. Governance and Assembly block their own upgrades during active cycles, but staking, token, and vault dependencies retain their administrative trust assumptions. The cycle cannot be cancelled through `cancelCycle` after Phase 1 executes; this restriction does not remove vault emergency powers or guarantee uninterrupted settlement.
+
 **Compatibility and reads.** Existing Cycle fields and top-level slots remain in place; new Cycle fields are appended. The old maxBallotSize value and setter remain for ABI/storage compatibility but do not constrain membership. The advisory pool index is not used to construct ballots. getCyclePreparation exposes progress; getBallotPage reads up to 100 members per call. For large cycles, the legacy CycleStarted event includes only the initial batch; indexers must use BallotBatchPrepared events or paginated reads for the complete ballot. The frontend waits for completion before presenting the Phase 2 ballot and reads pages at one block.
 
 **Trust and practical limits.** No hard membership cap does not mean infinite throughput: preparation requires more keeper transactions as history grows. Legacy staking bootstrap and live stake fallbacks may still scan pool history. Timelock/dependency upgrade powers remain trusted. Cancellation is available only before Phase 1 executes; governance and Assembly upgrades remain blocked throughout active cycles, including preparation.
 
+Readers can verify the lifecycle through `getCycleSummary`, `getCyclePreparation`, `getCycleFundSnapshot`, `getPhase2Allocation`, `getCycleParticipation`, and `getPhase2Result`. Use `getVotingPowerForCycle` for a wallet's cycle-specific entitlement; `getCurrentVoterInfo` describes current registration and stake and can differ from a cycle snapshot. Legacy stakers may need checkpoint bootstrapping, which the vote endpoints attempt automatically. The staking and Lens power views expose raw stake and must not be displayed as final V2 vote weight. Historical cycles are not retroactively reweighted, and legacy analytics flags distinguish unavailable historical records from genuine zero results.
+
+#### 5.5.6 OliveAssembly custody and withdrawal
+
+OliveAssembly is a separate Timelock-owned UUPS proxy for the existing OliveNFT collection. It records one deposited NFT per wallet, its depositor, historical registration checkpoints, and historical registered-wallet counts. It binds once to the governance proxy and requires compatible ownership and reciprocal configuration. Its upgrade authorization checks that governance is idle.
+
+Depositors may call `withdraw()` to receive their NFT or `withdrawTo(recipient)` to choose a receiver. `withdrawExpected(tokenId, recipient)` additionally verifies the registered token is the one the depositor intended to withdraw. There is no lock period and no administrative withdrawal path for registered NFTs. Withdrawal changes future registration snapshots without rewriting past ones. Unsolicited safe transfers revert; plain ERC-721 transfers do not register a voter and may require Timelock recovery with a transfer-history reference. Registration should therefore use `deposit`, not a direct NFT transfer.
+
+The deployment references are the AnnualGovernance proxy `0x1135d5fEA8098b09b4ED3AFbfFDc7B248359D270`, its V2 implementation `0x000a76f74b47498D6a9A593F9Cb7cfB71d975437`, and the OliveAssembly proxy `0xE1ba5a8bC457E60FC2377B1837a40FF85da1578c`. Users interact with the proxies. Deploying or upgrading these contracts does not itself start a voting cycle.
+
 ### 5.6 `OBNTimeLock` — the constitutional delay (OBNTimeLock.sol)
 
-A bare subclass of OpenZeppelin's `TimelockController(minDelay, proposers, executors, admin)`, deployed with a 24-hour minimum delay. It owns every upgradeable contract (token, staking, governance, lens) and holds the `timelockOwner` role in both vaults. Its brevity is the point: all complexity lives in the battle-tested OZ implementation, and every privileged action in the system — upgrades, pool administration, whitelist changes, governance wiring, emergency sweeps — must be publicly scheduled and survive a full day of scrutiny before execution. The timelock converts "admin keys" into "advance public notice."
+A bare subclass of OpenZeppelin's `TimelockController(minDelay, proposers, executors, admin)`, deployed with a 24-hour minimum delay. It owns every upgradeable contract (token, staking, governance, lens, and Assembly) and holds the `timelockOwner` role in both vaults. Its brevity is the point: all complexity lives in the battle-tested OZ implementation, and the owner-controlled actions listed here — upgrades, pool administration, whitelist changes, governance wiring, emergency sweeps — must be publicly scheduled and survive a full day of scrutiny before execution. Cycle starts are a separate voteAdmin permission; preparation and settlement are permissionless. Those actions do not require a new 24-hour Timelock operation.
 
 ### 5.7 `TeamVesting` — aligned insiders (TeamVesting.sol)
 
@@ -400,7 +468,7 @@ Non-upgradeable `Ownable` vault for the 10% team allocation. Immutables: `token`
 
 ### 5.8 `OliveNFT` — the cultural artifact (OliveNFT.sol)
 
-An ERC-721Enumerable collection, economically firewalled from the protocol (holds no OBN, grants no yield or votes). `MAX_SUPPLY = 20,000` and `MINT_PRICE = 0.005 ether` are constants. Mechanics of note:
+An ERC-721Enumerable collection that holds no OBN and grants no staking yield. Since AnnualGovernanceV2, depositing one OliveNFT in OliveAssembly supplies the registration requirement for annual voting; voting weight still comes from snapshot stake, not NFT quantity (§5.5). Merely holding the NFT does not confer annual voting eligibility. `MAX_SUPPLY = 20,000` and `MINT_PRICE = 0.005 ether` are constants. Mechanics of note:
 
 - **One-at-a-time per wallet** (`enforceOnePerAddress`, toggleable): `mint()` mints exactly one token, reverting with `AlreadyHolding()` if the wallet already holds one — an anti-whale, breadth-first distribution posture that mirrors the protocol's participation ethic.
 - **Commit–reveal fairness:** the owner commits `keccak256(seed)` before sale (`commitMetadataSeed`), and can reveal only the exact preimage (`revealMetadata`), making trait assignment provably pre-committed without on-chain randomness or manipulable block variables.
@@ -409,21 +477,38 @@ An ERC-721Enumerable collection, economically firewalled from the protocol (hold
 
 ### 5.9 `OBNStakingLens` — the read-only analytics plane (OBNStakingLens.sol)
 
-A UUPS-upgradeable, timelock-owned **pure view** contract holding no funds and possessing no privileges: its single storage slot points at the staking *proxy* (address stable across upgrades). It provides the full analytics suite for frontends — `getUserStats`, `getUserPoolView`, `getPoolStats`, `listPoolsBasic`, `pendingRewards[Multiple]`, `getPoolAPR`, `getGlobalStats`, `currentRewardsPerSecond`, `pendingCharityFor` — by recomputing live accumulator projections through the staking contract's public `sumRewardAcrossPhases` wrapper, and adds `getVotingPower(user, snapshotBlock)` for governance frontends. The architectural principle is separation of planes: *write paths and custody stay minimal and slow-changing in the engine; read/UX iteration happens in a contract that can be upgraded freely because it can steal nothing.*
+A UUPS-upgradeable, timelock-owned **pure view** contract holding no funds and possessing no privileges: its single storage slot points at the staking *proxy* (address stable across upgrades). It provides the full analytics suite for frontends — `getUserStats`, `getUserPoolView`, `getPoolStats`, `listPoolsBasic`, `pendingRewards[Multiple]`, `getPoolAPR`, `getGlobalStats`, `currentRewardsPerSecond`, `pendingCharityFor` — by recomputing live accumulator projections through the staking contract's public `sumRewardAcrossPhases` wrapper, and adds `getVotingPower(user, snapshotBlock)` for raw historical stake. Annual governance interfaces must use V2's `getVotingPowerForCycle` for NFT-gated, square-root vote weight. The architectural principle is separation of planes: *write paths and custody stay minimal and slow-changing in the engine; read/UX iteration happens in a contract that can be upgraded freely because it can steal nothing.*
 
 ### 5.10 Interaction topology
 
-```
-                    ┌────────────── OBNTimeLock (24h) ── owns/admins ──┐
-                    │                    │                             │
-                    ▼                    ▼                             ▼
-   OBNToken ◄─mint()─ OBNStakingPools ◄─reads─ OBNStakingLens      AnnualGovernance
-      │                  │ 88%→staker                                   │
-      │ burn()           │ 10%→pool nonprofit         votes weighted by │ getPastVotingPower
-      │                  │  1%→TheOffering ─────► burn OR sendToExtend ◄┘ (Phase 1)
-      ▼                  │  1%→ExtendOliveBranch           │
-   (supply −)            └─ principal escrow (K)           ▼
-                                              ExtendOliveBranch ─distributeFromGovernance→ winning nonprofit (Phase 2)
+```mermaid
+flowchart TD
+    Safe[OperatorSafe] -->|scheduled administration| TL[OBNTimeLock: 24-hour delay]
+    Safe -->|start cycle as voteAdmin| Gov[AnnualGovernanceV2]
+    TL -->|owns| Gov
+    TL -->|owns| Assembly[OliveAssembly]
+    TL -->|owns| Staking[OBNStakingPools]
+    TL -->|owns| Token[OBNToken]
+    TL -->|owns| Lens[OBNStakingLens]
+    TL -->|administers| Offering[TheOffering]
+    TL -->|administers| Extend[ExtendOliveBranch]
+    User[Participant wallet] -->|register OliveNFT| Assembly
+    User -->|stake OBN| Staking
+    Assembly -->|historical registration| Gov
+    Staking -->|historical aggregate stake| Gov
+    User -->|one weighted vote per phase| Gov
+    Caller[Any caller] -->|prepare ballot and settle| Gov
+    Staking -->|mint rewards through sole-minter role| Token
+    Token -->|88 percent| Rewards[Staker rewards]
+    Token -->|10 percent| Pool[Pool nonprofit]
+    Token -->|1 percent| Offering
+    Token -->|1 percent| Extend
+    Gov -->|Phase 1: fixed allocation| Offering
+    Offering -->|BURN| Burn[Supply reduction]
+    Offering -->|GIVE| Extend
+    Gov -->|Phase 2: fixed allocation| Extend
+    Extend -->|winner payout or no-vote rollover| Result[Selected nonprofit or retained funds]
+    Lens -->|analytics reads| Staking
 ```
 
 ---
@@ -437,12 +522,12 @@ A UUPS-upgradeable, timelock-owned **pure view** contract holding no funds and p
 - **SafeERC20** for all token movement; `Math.mulDiv` for all proportional arithmetic (full-width intermediate products, no overflow/precision cliffs).
 - **Custody minimization:** rewards are minted directly to final recipients; the staking contract holds only principal, and the admin `sweep` explicitly cannot touch the staking token.
 - **One-way ratchets:** the token minter is set-once; locks only increase; `migrateV93` self-disables; type counts freeze; commit–reveal is single-shot.
-- **Snapshot-before-start voting** (block − 1) plus checkpointed balances eliminate flash-stake governance attacks; one-address-one-vote-per-phase with recorded events.
-- **Upgrade discipline:** UUPS with `_disableInitializers()` in every constructor; documented storage maps and gap accounting; an on-chain prohibition on upgrading governance mid-cycle.
+- **Snapshot-before-start voting** (block − 1) plus checkpointed stake and NFT registration prevent same-block eligibility changes from counting; each wallet casts at most one weighted vote per phase, with recorded events. This does not establish unique-person identity or prevent all borrowing across the snapshot.
+- **Upgrade discipline:** UUPS with `_disableInitializers()` in every constructor; documented storage maps and gap accounting; an on-chain prohibition on upgrading governance or OliveAssembly mid-cycle.
 
 ### 6.2 Institutional defenses
 
-The Charter functions as the system's constitution, and the contracts implement its articles almost clause-by-clause: consent and revocability (no-penalty `withdraw`), separability of ownership and yield-direction (staking itself), recipient accountability (the whitelist and ballot validation), commons governance (the two-phase cycle with deflationary defaults), and verifiability (the event and statistics surface, including per-user lifetime contribution tracking). Authority is deliberately fragmented: the timelock can administer but not confiscate (`forceExitUserToSelf` pays the *user*); the vote admin can start cycles but not decide them; governance can move the commons but only along two pre-authorized paths; and once Phase 1 executes, no one — not even the timelock — can cancel the people's vote.
+The Charter functions as the system's constitution, and the contracts implement its articles almost clause-by-clause: consent and revocability (no-penalty `withdraw`), separability of ownership and yield-direction (staking itself), recipient accountability (the whitelist and ballot validation), commons governance (the two-phase cycle with deflationary defaults), and verifiability (the event and statistics surface, including per-user lifetime contribution tracking). Authority is deliberately fragmented: the timelock can administer but not confiscate (`forceExitUserToSelf` pays the *user*); the vote admin can start cycles but not decide them; governance can move the commons but only along two pre-authorized paths; and once Phase 1 executes, no one — not even the timelock — can cancel the cycle through `cancelCycle`. Vault emergency powers and dependency upgrades remain separate trust assumptions, as detailed in §5.5.5.
 
 ---
 
@@ -450,7 +535,7 @@ The Charter functions as the system's constitution, and the contracts implement 
 
 1. **The price-support claim is conditional.** As derived in §4.6, float contraction requires net staking inflow to outpace un-restaked emissions. Exogenous demand shocks, liquidity-pool depth, and nonprofit sell-pressure on the 10% stream all lie outside protocol control. This thesis claims a *mechanism*, not a return.
 2. **Emission-funded giving inherits token-price risk.** The nonprofit stream's real value depends on the OBN market. A prolonged price decline shrinks the gift stream even as nominal emissions continue. Diversification of nonprofit treasuries is an off-chain necessity the protocol cannot enforce.
-3. **Plutocratic weighting.** 1-token-1-vote governance weights the wealthy, mitigated but not eliminated by the participation requirement and per-address vote recording. Quadratic or tenure-weighted voting (the `cumulativeStakeSeconds` primitive already exists on-chain) is natural future work.
+3. **Stake concentration and multiple-wallet participation.** V2's square-root weighting reduces the influence of concentrated stake compared with linear weighting, but does not eliminate wealth advantages. Splitting stake among multiple wallets, each with a registered NFT, can increase combined weight. Registration is not unique-person verification; checkpointing prevents same-block stake manipulation but not every form of borrowed stake or coordinated participation. Identity, delegation, quorum, and tenure-based designs remain possible future work rather than deployed guarantees.
 4. **Whitelist centralization.** Nonprofit verification currently flows through the timelock owner. The Charter's Article IV demands *independent* verifiability; a decentralized attestation registry (cf. the project's canonical public-benefit registry CDRs) is the intended successor.
 5. **Empirical generalization.** The participation data are U.S.-centric; the sacrifice-threshold theory should be tested against giving-participation panels in other economies, and ultimately against OBN's own on-chain cohort data — the protocol is, among other things, a natural experiment in whether removing principal-loss raises participation.
 6. **Regulatory posture.** The analysis in Chapter 4 is economic, not a securities-law opinion; token distribution and marketing must be evaluated under applicable law independently of this thesis.
@@ -519,9 +604,9 @@ The deepest claim of this thesis is the simplest: generosity should not require 
 ### Protocol sources
 
 - OBN Whitepaper — [WHITEPAPER.md](WHITEPAPER.md)
-- Core contracts — [`obn-project/contracts/`](obn-project/contracts/): `OBNToken.sol`, `StakingPoolsV93.sol`, `TheOffering.sol`, `ExtendOliveBranch.sol`, `AnnualGovernance.sol`, `OBNTimeLock.sol`, `TeamVesting.sol`, `OliveNFT.sol`, `OBNStakingLens.sol`
+- Core contracts — [`obn-project/contracts/`](obn-project/contracts/): `OBNToken.sol`, `StakingPoolsV93.sol`, `TheOffering.sol`, `ExtendOliveBranch.sol`, `AnnualGovernanceV2.sol`, `OliveAssembly.sol`, `OBNTimeLock.sol`, `TeamVesting.sol`, `OliveNFT.sol`, `OBNStakingLens.sol`
 - OBN Charter v0.1 and *The Philosophy of Olive Branch Network* — protocol governance documents
 
 ---
 
-*Prepared from the OBN protocol codebase and its Base mainnet deployment records, July 2026. Contract behavior verified against the deployed configuration (staking proxy 0x2C4B…7cD2, chain ID 8453).*
+*Originally prepared July 2026. Governance sections revised October 14, 2026 against AnnualGovernanceV2 and OliveAssembly source code and repository records of the October 7 activation (Base block 52283807, chain ID 8453). This revision documents contract behavior, not the current status of an individual voting cycle.*
