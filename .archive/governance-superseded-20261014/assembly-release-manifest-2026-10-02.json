@@ -1,0 +1,169 @@
+{
+  "version": 1,
+  "pins": {
+    "chainId": 8453,
+    "governance": "0x1135d5fEA8098b09b4ED3AFbfFDc7B248359D270",
+    "implementation": "0xA6F3A7988ca98313e8aE5401b29CdEb830Fdd6B3",
+    "implementationHash": "0xf386a46ad43dd21f0ce677cc88341731638844ea02e3d11db230b6672626e9b1",
+    "baselineExecutableHash": "0xc988c6a6bf6edc5b733d200c2a51c365c9dfa8b363ace9f26cfd7feb4de1e294",
+    "owner": "0x86396526286769ace21982E798Df5eef2389f51c",
+    "voteAdmin": "0x066e2FABb036deab7DC58bAde428F819AC3542DD",
+    "obn": "0x07e5efCD1B5fAE3f461bf913BBEE03a10A20C685",
+    "stakingPools": "0x2C4Bd5B2a48a76f288d7F2DB23aFD3a03b9E7cD2",
+    "theOffering": "0xc75B2a5C7B8F88327D44C223769cFa19cc93E341",
+    "extendOliveBranch": "0xE1BbfAf0552ACC183579a3D172e002adF0c66d8B",
+    "nft": "0xB66F67444b09f509D72d832567C2df84Edeb80F8",
+    "nftHash": "0xcabdc9aa078301feb3a3e471c4856e2162dc0c7ad176f119db189ca9319cb3a4"
+  },
+  "files": {
+    "contracts/AnnualGovernance.sol": "34dd1a678e4337be74a5bb18941bf84d56fc5d6db83bcec6f858509fdfb1e3e5",
+    "node_modules/@openzeppelin/contracts/token/ERC20/IERC20.sol": "01b6f5c4fa45fd38822b286ecef6daf983d27306dd6362496fa71b3e4600b72c",
+    "node_modules/@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol": "f527a063813c2bf60c153fb08e38539578935402894fcc36fac42324ca325d3b",
+    "node_modules/@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol": "9247b9ad7939d23990dbdc9274917c3762ffb37e5137ef7bbfcc2e2fba1b8dd2",
+    "node_modules/@openzeppelin/contracts-upgradeable/utils/ContextUpgradeable.sol": "a08e16324da33a9d666dc07a22ae58031c242a3869f6808e55b4b82fc70cb209",
+    "node_modules/@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol": "2d07bcf9728190a5c807cf68defc3f3c52aa098d04770d44af37f30abade38d5",
+    "node_modules/@openzeppelin/contracts/interfaces/draft-IERC1822.sol": "73653312bc2eda0ec231553a5295242eaef2d4f46a023532d45fe76cbd0f565f",
+    "node_modules/@openzeppelin/contracts/proxy/ERC1967/ERC1967Utils.sol": "58c5b19893bf3d7f9e1aa0edc5b908b915eb7af4381800deb425a6e5331f4432",
+    "node_modules/@openzeppelin/contracts/proxy/beacon/IBeacon.sol": "c1c9726bbb0ec4c540c7c98059dcded69a8586b46c168036672381033ee76239",
+    "node_modules/@openzeppelin/contracts/interfaces/IERC1967.sol": "c4e901318ab6d4963582c62c62ce988a34c68dbae71846b67decacde79e9a317",
+    "node_modules/@openzeppelin/contracts/utils/Address.sol": "f1a9255dbc40cf9ae7c786abed3b022691a9d24bca0c7f05dc60e63421d405ab",
+    "node_modules/@openzeppelin/contracts/utils/Errors.sol": "0704b9d6c032cca8512a3bc3f30f49f86f1f03102d2896a3d23e794b82efea66",
+    "node_modules/@openzeppelin/contracts/utils/StorageSlot.sol": "75704538dcb223239280c6726d9a31cf769a7816718517c997fc7d63bdb70778",
+    "contracts/AnnualGovernanceV2.sol": "b6ccc54e26757bbb7c02da3664b219f8dfc64343d732d8fae2c8629b98df04bd",
+    "node_modules/@openzeppelin/contracts/utils/math/Math.sol": "92fee281fd46a1b058b190cf21d6b1a528f0433a907850ae1c9bcf36c5c0cd98",
+    "node_modules/@openzeppelin/contracts/utils/Panic.sol": "270fc8401c1a13fae6a7a4a2dd6e381b95d658896701e51f0d3e2688acab3dec",
+    "node_modules/@openzeppelin/contracts/utils/math/SafeCast.sol": "9769274bf53f26a7c7896c526ea1980dc9bea5bf5c2a5fd04870008c4afc1de9",
+    "contracts/OliveAssembly.sol": "29669161b85e85df0cb7f9ca9db9c182f9988a2a9ed7e7f386612c0f4629c5db",
+    "node_modules/@openzeppelin/contracts/token/ERC721/IERC721.sol": "ff0eb9902bf0ac099205615fac90eacf34fae637571b05aab3ea35dea53d5f17",
+    "node_modules/@openzeppelin/contracts/utils/introspection/IERC165.sol": "9055c2994b37dea1a41b7b7926dcb510f05dbe2540b0aafc5fbee9558fffd0ca",
+    "node_modules/@openzeppelin/contracts/token/ERC721/IERC721Receiver.sol": "eafee3ffdc7cb2fba4bf6bd16fb28f8e5b4679742e81c2ad42a1b1df5c179feb",
+    "node_modules/@openzeppelin/contracts/utils/structs/Checkpoints.sol": "d908ee19a12ef183693ba9635c4bd5ec902614c493fb7967898de286218e42f7",
+    "node_modules/@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol": "11b45418823fd6e961d8db5cf5c2795b08f51f88a66f8e37a38fcd052ee711a4",
+    "package.json": "68b8772d709bba73adbbf1aa1fee1e15d19fcc5c17e9dc0a38821d3cf1703ed5",
+    "package-lock.json": "2a26a8b764fb6225638f2c80b104a91842f554c7a88a663784f7e8ecd62cd0f0",
+    "hardhat.config.js": "99de1c93ea0185b10f0e1cb9138a06ceecb6d7ed6b7a547b2e2155b7ba3fe5c3",
+    "hardhat.nft-voting.config.cjs": "6acdb3343d823f8f9941f6966a67fe87308b9f936fb9026c5e6540c956ca6c7d",
+    "scripts/governance/addresses.js": "7e15090ed594d5e19c2311f9d2e1f31043cf897a7d5daa72b25ecc0ade082230",
+    "scripts/governance/timelock_safe_helper.js": "8fce8c82ecc7eb133d639e55096eab01ca236df51345539268ece9b1343b836e",
+    "scripts/governance/check_assembly_readiness.cjs": "6b34cc281e2c7d409f4f9d0dbb58cf39e81ab57fbc8e9694cb18b4b5e1413d3a",
+    "../.github/workflows/execute_cycle.yml": "6ea84f235eb300c5996ddb3cc1de4b94ac218038a631c0454261ed067b095706",
+    "../.github/workflows/governance-upgrade.yml": "781c9d70f6a602998cbabf000e2e31cf5c19d4f413339d6d732d1467cfdf2d50",
+    "keeper/execute.test.cjs": "2e669b8168450ece1780b1aba5a9d70b95e410f62eedcc1ffcfcf532e24a4cde",
+    "scripts/governance/assembly_release.cjs": "a4d74aa7eb64b369882b36079689e6eb67ecad8cabc090308e7656dc77201b1d",
+    "scripts/governance/prepare_assembly_upgrade.cjs": "4e53c2a610d91eefbff5fad31424d671b18aa9b7f68e5eb8029b6672ab116a3f",
+    "scripts/governance/gen_safe_startAnnualCycle.js": "81f3a09e3ed93cafb8fd6f89a958e314652bbab0ff15a9bd67f629e97d28ed40",
+    "scripts/governance/prepare_annual_allocation_upgrade.js": "e4725998b01b7fb7ec8e556b16f2d97849f2e9a7bac89af6ce5d66e690255597",
+    "keeper/package.json": "feeea981228bdb3094f59d4ff5f9b1a5d5ef0b824e4ad2bb160e6891b8496e1e",
+    "keeper/package-lock.json": "84b3ae501ec0b0aef74e0d3511db3adb7bf05fdbf94f1651114341b87d3c081c",
+    "keeper/execute.cjs": "19fb7017197067f7c69f113783e30ab0a3aec306e527cb3c0345adc1f0e9b764"
+  },
+  "artifacts": {
+    "AnnualGovernance": {
+      "creationHash": "0xc0900a9a3b4c79612c69aa3ada5312b59974ad554a8a5ac52fcd7d04d6204b1e",
+      "runtimeHash": "0x5e176f1dbeb9d961ef88239295bfb2b768da6974627085a32b54a8e28a90d698",
+      "compiler": "0.8.28+commit.7893614a",
+      "settings": {
+        "optimizer": {
+          "enabled": true,
+          "runs": 500
+        },
+        "viaIR": true,
+        "metadata": {
+          "bytecodeHash": "ipfs"
+        },
+        "evmVersion": "cancun",
+        "outputSelection": {
+          "*": {
+            "*": [
+              "abi",
+              "evm.bytecode",
+              "evm.deployedBytecode",
+              "evm.methodIdentifiers",
+              "metadata",
+              "storageLayout"
+            ],
+            "": [
+              "ast"
+            ]
+          }
+        }
+      }
+    },
+    "AnnualGovernanceV2": {
+      "creationHash": "0xf0f4aeb4a58715082421aa945b90aa6445a04b6f88f99b07478ef2bb1bc11f98",
+      "runtimeHash": "0xcdb239509c8f3533a714530c763cd6f37c1caa5e5438b3c1a5112df3a33cc6ce",
+      "compiler": "0.8.28+commit.7893614a",
+      "settings": {
+        "optimizer": {
+          "enabled": true,
+          "runs": 500
+        },
+        "viaIR": true,
+        "metadata": {
+          "bytecodeHash": "ipfs"
+        },
+        "evmVersion": "cancun",
+        "outputSelection": {
+          "*": {
+            "*": [
+              "abi",
+              "evm.bytecode",
+              "evm.deployedBytecode",
+              "evm.methodIdentifiers",
+              "metadata",
+              "storageLayout"
+            ],
+            "": [
+              "ast"
+            ]
+          }
+        }
+      }
+    },
+    "OliveAssembly": {
+      "creationHash": "0x75bcf47b5acd1e7dc6a8afbf19df88389ecf172acc8ef19a5c726ec8c7622f2f",
+      "runtimeHash": "0xa91d2aaa55af85fc5ac410b0b94bd7801a7af4cefa5c6aa4522555566aacf13b",
+      "compiler": "0.8.28+commit.7893614a",
+      "settings": {
+        "optimizer": {
+          "enabled": true,
+          "runs": 500
+        },
+        "viaIR": true,
+        "metadata": {
+          "bytecodeHash": "ipfs"
+        },
+        "evmVersion": "cancun",
+        "outputSelection": {
+          "*": {
+            "*": [
+              "abi",
+              "evm.bytecode",
+              "evm.deployedBytecode",
+              "evm.methodIdentifiers",
+              "metadata",
+              "storageLayout"
+            ],
+            "": [
+              "ast"
+            ]
+          }
+        }
+      }
+    },
+    "ERC1967Proxy": [
+      {
+        "creationHash": "0xc349e53d943899690a1154040dacbd9fedbc102de7dbec2d1e2b87b0f97e31a6",
+        "runtimeHash": "0x5e4dcb0bb1910f6429e5fe91678990088a51c6d1cfe1b31d05fb9d948cc7867c"
+      },
+      {
+        "creationHash": "0x29cb1942c57c3b080832b476f4c6d0326af8f48fe5bfdf0345ca5f813984d955",
+        "runtimeHash": "0x864cc9ad53b338b82da1f7cab85ab0b3d5c8861acb422b6fec63cf36234f36a6"
+      },
+      {
+        "creationHash": "0xf6e55a94fc9157e1dc73e5ca59b4a59d446b0d2f999b82720377fb1fe4087a34",
+        "runtimeHash": "0xa0749d6f0ac31264459cf30ac4b08abbf1acc7ec9769db6841756f0599550937"
+      }
+    ]
+  }
+}

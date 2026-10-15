@@ -1,0 +1,316 @@
+{
+  "live": {
+    "checkedAt": "2026-09-29T00:27:46.315Z",
+    "chainId": 8453,
+    "address": "0xB66F67444b09f509D72d832567C2df84Edeb80F8",
+    "block": 51926159,
+    "blockHash": "0xcdbd04858a9e1fd9d0eeecbd7d54bdb8a9c65a1c6fba17699910f642babc87ee",
+    "blockTimestamp": 1790641665,
+    "blockGasLimit": "400000000",
+    "supply": 13,
+    "uniqueHolders": 13,
+    "maxSupply": "20000",
+    "codeHash": "0xcabdc9aa078301feb3a3e471c4856e2162dc0c7ad176f119db189ca9319cb3a4",
+    "owners": [
+      {
+        "tokenId": "1",
+        "owner": "0xc285b80fB746Dd30cf26c72Ecb94E6Fd8aaA2b82"
+      },
+      {
+        "tokenId": "2",
+        "owner": "0xd93A7C5d9aB42d3372332Ed99e4C254EF43A5afc"
+      },
+      {
+        "tokenId": "3",
+        "owner": "0x4F9f7a145bE8b5E5464a52d92F42b68eC8C5cA61"
+      },
+      {
+        "tokenId": "4",
+        "owner": "0x07199f6C6bEF828F9464286A4A7a19d251f509c6"
+      },
+      {
+        "tokenId": "5",
+        "owner": "0x94323806D813B6665e0E0Fd4C7759fadC983Cc51"
+      },
+      {
+        "tokenId": "6",
+        "owner": "0xd7cCc5828a93a5AF3fA685bC4a382FAbCc40dCB8"
+      },
+      {
+        "tokenId": "7",
+        "owner": "0xa88aA4F531529d953881cD8Fd39f8d51bAbb851c"
+      },
+      {
+        "tokenId": "8",
+        "owner": "0x65e3419E633833Df1D602e7905Cb9C7e541f0849"
+      },
+      {
+        "tokenId": "9",
+        "owner": "0xF71Fa5918db043048b25CCaF1603fDdA7c84080b"
+      },
+      {
+        "tokenId": "10",
+        "owner": "0xF6a85781b8eFc98de5F35Cca9478CDc77921A414"
+      },
+      {
+        "tokenId": "11",
+        "owner": "0x3E191CbeEf5d62d1f4765dd24365cB86e4d09EA7"
+      },
+      {
+        "tokenId": "12",
+        "owner": "0xF0807dA85b2af462eDd8a1855F4D301fBa1f74ae"
+      },
+      {
+        "tokenId": "13",
+        "owner": "0x2f21f94e1e57543f4663B722b6B1Bed97C576Bd4"
+      }
+    ]
+  },
+  "assumptions": {
+    "localHardfork": "cancun",
+    "localBlockGasLimit": 1000000000,
+    "scope": "Snapshot transaction only; excludes AnnualGovernance start, proxy and Safe overhead, L1 fees and chain-specific gas changes.",
+    "productionSourceUnchanged": true,
+    "nftRuntimeMatchesLive": true,
+    "baseTransactionGasCap": 16777216,
+    "baseGasCapSource": "https://docs.base.org/upgrades/azul/exec-engine",
+    "harnessCompiler": "0.8.26+commit.8a97fa7a.Emscripten.clang"
+  },
+  "measurements": [
+    {
+      "scenario": "current ownership reproduced locally",
+      "supply": 13,
+      "holders": 13,
+      "traversal": "tokenByIndex+ownerOf",
+      "gasUsed": 431548
+    },
+    {
+      "scenario": "current ownership reproduced locally",
+      "supply": 13,
+      "holders": 13,
+      "traversal": "sequential ownerOf",
+      "gasUsed": 388738
+    },
+    {
+      "scenario": "one NFT per holder",
+      "supply": 100,
+      "holders": 100,
+      "traversal": "tokenByIndex+ownerOf",
+      "gasUsed": 2961628
+    },
+    {
+      "scenario": "one NFT per holder",
+      "supply": 100,
+      "holders": 100,
+      "traversal": "sequential ownerOf",
+      "gasUsed": 2632355
+    },
+    {
+      "scenario": "one NFT per holder",
+      "supply": 500,
+      "holders": 500,
+      "traversal": "tokenByIndex+ownerOf",
+      "gasUsed": 14674325
+    },
+    {
+      "scenario": "one NFT per holder",
+      "supply": 500,
+      "holders": 500,
+      "traversal": "sequential ownerOf",
+      "gasUsed": 13026835
+    },
+    {
+      "scenario": "one NFT per holder",
+      "supply": 1000,
+      "holders": 1000,
+      "traversal": "tokenByIndex+ownerOf",
+      "gasUsed": 29318712
+    },
+    {
+      "scenario": "one NFT per holder",
+      "supply": 1000,
+      "holders": 1000,
+      "traversal": "sequential ownerOf",
+      "gasUsed": 26020813
+    },
+    {
+      "scenario": "one NFT per holder",
+      "supply": 5000,
+      "holders": 5000,
+      "traversal": "tokenByIndex+ownerOf",
+      "gasUsed": 146614431
+    },
+    {
+      "scenario": "one NFT per holder",
+      "supply": 5000,
+      "holders": 5000,
+      "traversal": "sequential ownerOf",
+      "gasUsed": 130007797
+    },
+    {
+      "scenario": "one NFT per holder",
+      "supply": 10000,
+      "holders": 10000,
+      "traversal": "tokenByIndex+ownerOf",
+      "gasUsed": 293585641
+    },
+    {
+      "scenario": "one NFT per holder",
+      "supply": 10000,
+      "holders": 10000,
+      "traversal": "sequential ownerOf",
+      "gasUsed": 260079419
+    },
+    {
+      "scenario": "one NFT per holder",
+      "supply": 20000,
+      "holders": 20000,
+      "traversal": "tokenByIndex+ownerOf",
+      "gasUsed": 588699938
+    },
+    {
+      "scenario": "one NFT per holder",
+      "supply": 20000,
+      "holders": 20000,
+      "traversal": "sequential ownerOf",
+      "gasUsed": 520515629
+    },
+    {
+      "scenario": "all NFTs held by one address",
+      "supply": 100,
+      "holders": 1,
+      "traversal": "tokenByIndex+ownerOf",
+      "gasUsed": 748978
+    },
+    {
+      "scenario": "all NFTs held by one address",
+      "supply": 100,
+      "holders": 1,
+      "traversal": "sequential ownerOf",
+      "gasUsed": 419705
+    },
+    {
+      "scenario": "all NFTs held by one address",
+      "supply": 500,
+      "holders": 1,
+      "traversal": "tokenByIndex+ownerOf",
+      "gasUsed": 3521675
+    },
+    {
+      "scenario": "all NFTs held by one address",
+      "supply": 500,
+      "holders": 1,
+      "traversal": "sequential ownerOf",
+      "gasUsed": 1874185
+    },
+    {
+      "scenario": "all NFTs held by one address",
+      "supply": 1000,
+      "holders": 1,
+      "traversal": "tokenByIndex+ownerOf",
+      "gasUsed": 6991062
+    },
+    {
+      "scenario": "all NFTs held by one address",
+      "supply": 1000,
+      "holders": 1,
+      "traversal": "sequential ownerOf",
+      "gasUsed": 3693163
+    },
+    {
+      "scenario": "all NFTs held by one address",
+      "supply": 5000,
+      "holders": 1,
+      "traversal": "tokenByIndex+ownerOf",
+      "gasUsed": 34886781
+    },
+    {
+      "scenario": "all NFTs held by one address",
+      "supply": 5000,
+      "holders": 1,
+      "traversal": "sequential ownerOf",
+      "gasUsed": 18280147
+    },
+    {
+      "scenario": "all NFTs held by one address",
+      "supply": 10000,
+      "holders": 1,
+      "traversal": "tokenByIndex+ownerOf",
+      "gasUsed": 70107991
+    },
+    {
+      "scenario": "all NFTs held by one address",
+      "supply": 10000,
+      "holders": 1,
+      "traversal": "sequential ownerOf",
+      "gasUsed": 36601769
+    },
+    {
+      "scenario": "all NFTs held by one address",
+      "supply": 20000,
+      "holders": 1,
+      "traversal": "tokenByIndex+ownerOf",
+      "gasUsed": 141722288
+    },
+    {
+      "scenario": "all NFTs held by one address",
+      "supply": 20000,
+      "holders": 1,
+      "traversal": "sequential ownerOf",
+      "gasUsed": 73537979
+    }
+  ],
+  "capChecks": [
+    {
+      "supply": 13,
+      "enumerable": true,
+      "gasCap": 16777216,
+      "succeeded": true,
+      "reason": ""
+    },
+    {
+      "supply": 13,
+      "enumerable": false,
+      "gasCap": 16777216,
+      "succeeded": true,
+      "reason": ""
+    },
+    {
+      "supply": 500,
+      "enumerable": true,
+      "gasCap": 16777216,
+      "succeeded": true,
+      "reason": ""
+    },
+    {
+      "supply": 500,
+      "enumerable": false,
+      "gasCap": 16777216,
+      "succeeded": true,
+      "reason": ""
+    },
+    {
+      "supply": 1000,
+      "enumerable": true,
+      "gasCap": 16777216,
+      "succeeded": false,
+      "reason": "Transaction ran out of gas"
+    },
+    {
+      "supply": 1000,
+      "enumerable": false,
+      "gasCap": 16777216,
+      "succeeded": false,
+      "reason": "Transaction ran out of gas"
+    }
+  ],
+  "checks": [
+    "Snapshot event counts match fixtures",
+    "Every current holder included",
+    "Nonholder excluded",
+    "Post-snapshot mint does not change eligibility",
+    "Post-snapshot transfer preserves old holder eligibility and excludes recipient",
+    "Next snapshot includes transfer recipient",
+    "500 distinct holders execute under Base gas cap; 1000 do not (both implementations)"
+  ]
+}

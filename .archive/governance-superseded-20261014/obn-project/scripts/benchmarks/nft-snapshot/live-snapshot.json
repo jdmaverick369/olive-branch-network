@@ -1,0 +1,67 @@
+{
+  "checkedAt": "2026-09-29T00:27:46.315Z",
+  "chainId": 8453,
+  "address": "0xB66F67444b09f509D72d832567C2df84Edeb80F8",
+  "block": 51926159,
+  "blockHash": "0xcdbd04858a9e1fd9d0eeecbd7d54bdb8a9c65a1c6fba17699910f642babc87ee",
+  "blockTimestamp": 1790641665,
+  "blockGasLimit": "400000000",
+  "supply": 13,
+  "uniqueHolders": 13,
+  "maxSupply": "20000",
+  "codeHash": "0xcabdc9aa078301feb3a3e471c4856e2162dc0c7ad176f119db189ca9319cb3a4",
+  "owners": [
+    {
+      "tokenId": "1",
+      "owner": "0xc285b80fB746Dd30cf26c72Ecb94E6Fd8aaA2b82"
+    },
+    {
+      "tokenId": "2",
+      "owner": "0xd93A7C5d9aB42d3372332Ed99e4C254EF43A5afc"
+    },
+    {
+      "tokenId": "3",
+      "owner": "0x4F9f7a145bE8b5E5464a52d92F42b68eC8C5cA61"
+    },
+    {
+      "tokenId": "4",
+      "owner": "0x07199f6C6bEF828F9464286A4A7a19d251f509c6"
+    },
+    {
+      "tokenId": "5",
+      "owner": "0x94323806D813B6665e0E0Fd4C7759fadC983Cc51"
+    },
+    {
+      "tokenId": "6",
+      "owner": "0xd7cCc5828a93a5AF3fA685bC4a382FAbCc40dCB8"
+    },
+    {
+      "tokenId": "7",
+      "owner": "0xa88aA4F531529d953881cD8Fd39f8d51bAbb851c"
+    },
+    {
+      "tokenId": "8",
+      "owner": "0x65e3419E633833Df1D602e7905Cb9C7e541f0849"
+    },
+    {
+      "tokenId": "9",
+      "owner": "0xF71Fa5918db043048b25CCaF1603fDdA7c84080b"
+    },
+    {
+      "tokenId": "10",
+      "owner": "0xF6a85781b8eFc98de5F35Cca9478CDc77921A414"
+    },
+    {
+      "tokenId": "11",
+      "owner": "0x3E191CbeEf5d62d1f4765dd24365cB86e4d09EA7"
+    },
+    {
+      "tokenId": "12",
+      "owner": "0xF0807dA85b2af462eDd8a1855F4D301fBa1f74ae"
+    },
+    {
+      "tokenId": "13",
+      "owner": "0x2f21f94e1e57543f4663B722b6B1Bed97C576Bd4"
+    }
+  ]
+}
