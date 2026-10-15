@@ -15,11 +15,16 @@ async function buildFixture(governanceName = "AnnualGovernance", stakingName = "
   ], { kind: "uups" });
   const extend = await (await ethers.getContractFactory("ExtendOliveBranch")).deploy(token.target, owner.address);
   const offering = await (await ethers.getContractFactory("TheOffering")).deploy(token.target, extend.target, owner.address);
-  const pools = await upgrades.deployProxy(await ethers.getContractFactory(stakingName), [
+  const V93 = "contracts/StakingPoolsV93.sol:OBNStakingPools";
+  // Later implementations omit the v9.2 initializer: deploy V9.3 and upgrade, as on mainnet.
+  let pools = await upgrades.deployProxy(await ethers.getContractFactory(V93), [
     token.target, offering.target, extend.target,
   ], { kind: "uups" });
   await token.setMinterOnce(pools.target);
   await pools.migrateV93(offering.target, extend.target, owner.address);
+  if (stakingName !== V93) {
+    pools = await upgrades.upgradeProxy(pools.target, await ethers.getContractFactory(stakingName));
+  }
   await pools.addPool(nonprofit.address);
   await token.approve(pools.target, ethers.MaxUint256);
   await pools.charityFundBootstrap(0, amount("1000000"), nonprofit.address);

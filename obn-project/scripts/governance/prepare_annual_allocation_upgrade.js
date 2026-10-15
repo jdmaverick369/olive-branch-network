@@ -9,6 +9,7 @@ const { checkUpgrade } = require("./annual_allocation_upgrade_checks");
 const { scheduleOne, executeOne } = require("./timelock_safe_helper");
 
 async function main() {
+  throw new Error('The allocation-only release is retired. Use scripts/governance/prepare_assembly_upgrade.cjs for AnnualGovernanceV2 and atomic NFT initialization.');
   const action = process.env.ACTION || "check";
   if (!["check", "deploy", "schedule", "execute"].includes(action)) throw new Error("Invalid ACTION");
   const proxy = process.env.ANNUAL_GOV_PROXY;

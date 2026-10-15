@@ -3,18 +3,10 @@
 // This is a DIRECT Safe call — startAnnualCycle is restricted to voteAdmin (OPERATOR_SAFE),
 // not the Timelock. No 24h delay required.
 //
-// Usage:
-//   node scripts/governance/gen_safe_startAnnualCycle.js \
-//     --phase1 <seconds> --phase2 <seconds>
-//
-//   # Example: 14-day Phase 1, 14-day Phase 2
-//   node scripts/governance/gen_safe_startAnnualCycle.js --phase1 1209600 --phase2 1209600
-//
-// Phase durations:
-//   7 days  = 604800
-//   14 days = 1209600
-//   30 days = 2592000
-//   Minimum = 86400 (1 day)
+// Usage (both phases default to exactly 30 days):
+//   node scripts/governance/gen_safe_startAnnualCycle.js
+//   node scripts/governance/gen_safe_startAnnualCycle.js --phase1 2592000 --phase2 2592000
+// Other durations are rejected by both this generator and AnnualGovernanceV2.
 //
 // Output:
 //   governance-operations/YYYY-MM-DD-startAnnualCycle.json
@@ -25,8 +17,15 @@ const addrs       = require("./addresses");
 const { buildSafeJson, writeJson, outDir } = require("./timelock_safe_helper");
 const path = require("path");
 
-const ANNUAL_GOV  = process.env.ANNUAL_GOV_PROXY || "0x1135d5fEA8098b09b4ED3AFbfFDc7B248359D270";
-const MIN_DURATION = 86400n; // 1 day
+const { PIN } = require('./assembly_release.cjs');
+const ANNUAL_GOV = PIN.governance;
+function validateTarget() {
+  if (process.env.ANNUAL_GOV_PROXY && process.env.ANNUAL_GOV_PROXY.toLowerCase() !== PIN.governance.toLowerCase())
+    throw new Error('ANNUAL_GOV_PROXY differs from the pinned governance proxy.');
+  if (addrs.OPERATOR_SAFE.toLowerCase() !== PIN.voteAdmin.toLowerCase() || String(addrs.CHAIN_ID) !== String(PIN.chainId))
+    throw new Error('Safe or chain differs from the reviewed release.');
+}
+const PHASE_DURATION = 2592000n; // exactly 30 days
 
 const ABI = [
   "function startAnnualCycle(uint64 phase1Duration, uint64 phase2Duration) external",
@@ -38,16 +37,20 @@ function fmtDuration(secs) {
   return d > 0 ? `${d}d ${h}h` : `${h}h`;
 }
 
+function parseDurations(args) {
+  const argv = minimist(args, { string: ["phase1", "phase2"] });
+  const values = ["phase1", "phase2"].map(key => {
+    const value = argv[key] ?? PHASE_DURATION.toString();
+    if (typeof value !== "string" || !/^[0-9]+$/.test(value) || BigInt(value) !== PHASE_DURATION)
+      throw new Error(key + " must be exactly 30 days (2592000 seconds).");
+    return BigInt(value);
+  });
+  return values;
+}
+
 function main() {
-  const argv = minimist(process.argv.slice(2));
-
-  const phase1 = BigInt(argv.phase1 ?? 0);
-  const phase2 = BigInt(argv.phase2 ?? 0);
-
-  if (phase1 < MIN_DURATION)
-    throw new Error(`❌ --phase1 must be ≥ 86400 seconds (1 day). Got: ${phase1}`);
-  if (phase2 < MIN_DURATION)
-    throw new Error(`❌ --phase2 must be ≥ 86400 seconds (1 day). Got: ${phase2}`);
+  validateTarget();
+  const [phase1, phase2] = parseDurations(process.argv.slice(2));
 
   const iface    = new ethers.Interface(ABI);
   const calldata = iface.encodeFunctionData("startAnnualCycle", [phase1, phase2]);
@@ -73,4 +76,7 @@ function main() {
   console.log(`         Execute this tx in the same block window as intended cycle start.`);
 }
 
-try { main(); } catch (e) { console.error(e.message); process.exitCode = 1; }
+module.exports = { parseDurations, validateTarget };
+if (require.main === module) {
+  try { main(); } catch (e) { console.error(e.message); process.exitCode = 1; }
+}

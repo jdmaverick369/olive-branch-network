@@ -1,0 +1,40 @@
+name: Governance upgrade checks
+on:
+  pull_request:
+    paths: ['obn-project/**', '.github/workflows/governance-upgrade.yml']
+  workflow_dispatch:
+    inputs:
+      full_collection_scale:
+        description: Run 20,000 real voter registrations and both voting phases locally
+        type: boolean
+        default: false
+permissions:
+  contents: read
+jobs:
+  scale:
+    if: github.event_name == 'workflow_dispatch' && inputs.full_collection_scale
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: '22'
+      - run: npm ci --ignore-scripts
+        working-directory: obn-project
+      - run: node node_modules/hardhat/internal/cli/cli.js test --network hardhat --config hardhat.nft-voting.config.cjs test/AssemblyScale.test.cjs --grep 'Assembly full collection scale'
+        working-directory: obn-project
+        env:
+          RUN_ASSEMBLY_SCALE: 'true'
+  contracts:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: '22'
+      - run: npm ci --ignore-scripts
+        working-directory: obn-project
+      - run: node node_modules/hardhat/internal/cli/cli.js test --network hardhat --config hardhat.nft-voting.config.cjs test/AnnualGovernanceStartSnapshot.test.js test/OliveGovernanceReview.test.js test/OliveGovernanceUpgrade.test.js test/AnnualGovernance.test.js test/AnnualGovernanceAllocation.test.js test/AssemblyModelAudit.test.js test/AssemblyAdversarialAudit.test.js test/AssemblyReleaseTooling.test.cjs test/AssemblyUnbounded.test.cjs
+        working-directory: obn-project

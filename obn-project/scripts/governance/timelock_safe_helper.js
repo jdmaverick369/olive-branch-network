@@ -46,7 +46,7 @@ function buildSafeJson(name, description, to, data) {
 function writeJson(filePath, json) {
   const dir = path.dirname(filePath);
   if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
-  fs.writeFileSync(filePath, JSON.stringify(json, null, 2));
+  fs.writeFileSync(filePath, JSON.stringify(json, null, 2), { flag: 'wx' });
 }
 
 function outDir() {
