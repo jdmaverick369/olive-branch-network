@@ -1,0 +1,53 @@
+TAP version 13
+# Subtest: Safe export preserves exact scheduled operation and direct execution calldata
+not ok 1 - Safe export preserves exact scheduled operation and direct execution calldata
+  ---
+  duration_ms: 91.337
+  type: 'test'
+  location: 'C:\\obn\\obn-project\\test\\AssemblySafeExportAudit.test.cjs:18:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    The input did not match the regular expression /EEXIST/. Input:
+    
+    "SyntaxError: Identifier 'fs' has already been declared"
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected:
+  actual:
+  error: "Identifier 'fs' has already been declared"
+  name: 'SyntaxError'
+  stack: |-
+    Script.runInContext (node:vm:149:12)
+    Script.runInNewContext (node:vm:154:17)
+    Object.runInNewContext (node:vm:310:38)
+    run (C:\obn\obn-project\test\AssemblySafeExportAudit.test.cjs:16:36)
+    getActual (node:assert:530:5)
+    Function.throws (node:assert:676:24)
+    TestContext.<anonymous> (C:\obn\obn-project\test\AssemblySafeExportAudit.test.cjs:29:9)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.start (node:internal/test_runner/test:944:17)
+  operator: 'throws'
+  stack: |-
+    TestContext.<anonymous> (C:\obn\obn-project\test\AssemblySafeExportAudit.test.cjs:29:9)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.start (node:internal/test_runner/test:944:17)
+    startSubtestAfterBootstrap (node:internal/test_runner/harness:296:17)
+  ...
+# Subtest: failed live preparation emits no uploadable schedule or execution file
+ok 2 - failed live preparation emits no uploadable schedule or execution file
+  ---
+  duration_ms: 70.5679
+  type: 'test'
+  ...
+1..2
+# tests 2
+# suites 0
+# pass 1
+# fail 1
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 320.2133

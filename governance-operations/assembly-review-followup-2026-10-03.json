@@ -1,0 +1,77 @@
+{
+  "date": "2026-10-03",
+  "scope": "Local follow-up to independent Claude review. No production checkout changes, push, deployment or live transactions.",
+  "fixes": {
+    "keeper": "Null, undefined and empty revert data are accepted only for CALL_EXCEPTION and only after the current ERC1967 implementation address AND full bytecode hash match the pinned predecessor at one block. Unknown implementations, contract errors, transport failures and failed verification remain errors. Logs expose only allowlisted error categories, never arbitrary RPC payloads.",
+    "rpc": "Read-only contract queries retry transient SERVER_ERROR, rate limits, network errors and timeouts at most five times with bounded backoff. Reverts and decoding errors fail. A dedicated BASE_RPC_URL is still recommended for release operations.",
+    "manifest": "Added local Hardhat config, address helper, Safe JSON helper, readiness script, both governance workflows and keeper tests to exact hash coverage.",
+    "generator": "minimist 1.2.8 is now a direct locked development dependency. Unexpected ANNUAL_GOV_PROXY or Safe/chain settings fail before writing. Both phases remain exactly 30 days.",
+    "label": "Registered OliveNFTs replaces Total registered voters. Stake qualification remains separate.",
+    "gas": "Added persistent 200-pool/100-charity regression cases, including 100 IDs indexed within start and compaction followed by 100 new IDs. Ballot contents and retained pool counts are asserted."
+  },
+  "measuredGas": {
+    "hundredCharities": 9379450,
+    "twoHundredPoolsWithHundredNewIds": 11581718,
+    "compactionWithHundredNewIds": 10490235,
+    "settlement": 604554,
+    "qualification": "Measured scenarios, not a proven worst-case bound. Tests use a local 16,000,000 gas budget; no claim that this verifies current Base network limits."
+  },
+  "validation": {
+    "livePreflight": "Passed through publicnode at Base block 52107805. The default public RPC attempt was interrupted after prolonged latency; retries do not eliminate public endpoint throttling. Use a dedicated release RPC.",
+    "contractAndToolingTests": 148,
+    "keeperTests": 12,
+    "frontendGovernanceTests": 37,
+    "forkTests": 1,
+    "liveKeeper": "Execution explicitly disabled; returned cycle 0, nothing-ready, poolIndex null, exit 0.",
+    "fork": "Pinned legacy full runtime detection succeeds before upgrade and is false afterward. Atomic Timelock upgrade/bind and two-phase settlement still pass.",
+    "checks": {
+      "contracts-final": {
+        "label": "contracts-final",
+        "exitCode": 0,
+        "signal": null
+      },
+      "release-tools": {
+        "label": "release-tools",
+        "exitCode": 0,
+        "signal": null
+      },
+      "keeper": {
+        "label": "keeper",
+        "exitCode": 0,
+        "signal": null
+      },
+      "keeper-live-dryrun": {
+        "label": "keeper-live-dryrun",
+        "exitCode": 0,
+        "signal": null
+      },
+      "fork-final": {
+        "label": "fork-final",
+        "exitCode": 0,
+        "signal": null
+      },
+      "frontend-governance": {
+        "label": "frontend-governance",
+        "exitCode": 0,
+        "signal": null
+      },
+      "followup-live-preflight": {
+        "label": "followup-live-preflight",
+        "exitCode": 0,
+        "signal": null
+      }
+    }
+  },
+  "unchanged": [
+    "Contract bytecode and storage were not modified in this follow-up.",
+    "Timelock/dependency trust, ballot approval at cycle start, pool/ballot caps and pseudonymous economics remain accepted design constraints.",
+    "Keeper builder attribution remains absent; this is not a security defect or settlement prerequisite."
+  ],
+  "remainingReleaseWork": [
+    "Commit the complete reviewed release together, including all newly introduced files, before publishing the workflow.",
+    "Integrate governance into the live checkout only as part of the authorized production release and run its build.",
+    "Complete actual iOS/Android browser, Farcaster and Coinbase wallet tests, including sponsorship fallback, replacement and recovery.",
+    "Re-run preflight before signing and after the Timelock delay; verify real Safe signatures and operation IDs."
+  ],
+  "manifestSha256": "0278978f64ed12a5cd41078011119d1388ce26a88850dab64dbb6addf5ff5eb8"
+}

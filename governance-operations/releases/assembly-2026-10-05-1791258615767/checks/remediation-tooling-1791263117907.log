@@ -1,0 +1,24 @@
+[dotenv@17.2.1] injecting env (29) from .env -- tip: 📡 observe env with Radar: https://dotenvx.com/radar
+
+
+  Assembly unsigned release preparation
+    √ rejects an unexpected Safe before writing output (204ms)
+[dotenv@17.2.1] injecting env (0) from .env -- tip: 🛠️  run anywhere with `dotenvx run -- yourcommand`
+    √ never overwrites an existing Safe JSON
+    √ retries metadata and storage reads before enforcing pinned state (4049ms)
+    √ retries transient RPC failures with bounded backoff but never suppresses a revert
+    √ pins release configuration, helpers, workflows and keeper tests (175ms)
+    √ rejects an unexpected Safe generator target without emitting a file (151ms)
+    √ defaults to two 30-day phases and rejects other durations for either phase
+    √ pins reviewed inputs and rejects modified manifest evidence (464ms)
+    √ encodes the atomic initialize-and-bind batch and identical operation IDs for both Safe calls (130ms)
+    √ rejects the wrong network before querying deployment state
+    √ rejects unsafe phase seconds 2592000000 before emitting a Safe file (147ms)
+    √ rejects unsafe phase seconds 1.5 before emitting a Safe file (150ms)
+    √ rejects unsafe phase seconds 1e6 before emitting a Safe file (141ms)
+    √ rejects unsafe phase seconds -86400 before emitting a Safe file (142ms)
+    √ rejects unsafe phase seconds true before emitting a Safe file (146ms)
+
+
+  15 passing (6s)
+

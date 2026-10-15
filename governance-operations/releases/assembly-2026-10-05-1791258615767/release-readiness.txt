@@ -1,0 +1,149 @@
+OLIVEASSEMBLY / ANNUALGOVERNANCEV2 — RELEASE PREPARATION
+Prepared October 5, 2026 (America/Chicago)
+
+Subsequent end-to-end audit: see end-to-end-audit.txt. One medium dependency-check
+gap and two low frontend issues remain; the earlier passing rehearsal is not an
+unconditional deployment sign-off. Resolve those findings before release.
+
+Scope
+Governance-only release against the currently live staking 9.3.1. No mainnet
+transactions, deployment, GitHub push, or production frontend changes were made.
+Deferred staking 9.3.2, its auto-claim worker changes, and Seed changes are excluded.
+This package is for review; it does not authorize execution.
+
+Contract evidence
+Read-only Base preflight: block 52,234,632, hash
+0xe99e588f07b132dc1fb29d8592a2597433e88d01a9d75badcee26ea2afe5cf10.
+The live deployment has 11 active pools and governance cycle index 0. This does
+not authorize opening voting early: the current annual accumulation period remains.
+All 40 reviewed source/tooling files and the generated manifest match the pin.
+Manifest SHA-256:
+f8a765ea8e63bf799e941447890ce0073f200ce1c634058e315a3a9dfc556693.
+
+The fresh local fork deployed the exact pinned implementation bytecode, atomically
+initialized the Assembly proxy, and exercised the release generator's Safe calldata
+through the existing Timelock. Early execution failed; execution after the 24-hour
+delay succeeded. AnnualGovernanceV2 upgrades the existing governance proxy.
+OliveAssembly is a new upgradeable proxy; the existing NFT collection is preserved.
+
+The rehearsal covered public NFT minting, approval/registration, 1-OBN minimum,
+1- and 4-OBN voting power, alternate-recipient NFT withdrawal, withdrawal of NFT
+and stake after the snapshot, active-cycle upgrade guards, both keeper-driven
+phase settlements, exactly 30 days per phase, retention of later fund receipts,
+and continued registration with changed stake/power in the next cycle.
+See rehearsal-only.json. Its addresses and calldata are SIMULATION ONLY.
+NEVER IMPORT rehearsal-only.json INTO SAFE.
+
+154 contract/tooling tests and 14 keeper tests passed. This includes bounded ballot
+preparation beyond 300 pools. This fresh fork used the actual 11-pool deployment;
+it is not a fresh full 20,000-voter mainnet-fork load simulation.
+Fresh receipt gas: Assembly implementation 1,816,956; governance implementation
+4,303,142; initialized proxy 229,703; upgrade/bind 193,819; registration 238,173
+and 226,323; start with the current 11-recipient ballot 1,253,064.
+These are local EVM gas measurements, not mainnet fee quotations or upper bounds.
+
+Frontend candidate
+frontend-overlay/ contains only proposed governance integration files; its manifest
+records the expected original and replacement hashes. Apply only if the live files
+still match those original hashes; otherwise re-merge and re-test.
+The integration preserves the newer live Oliver work at private HEAD
+1bef456f1b6df8dea53c9735da4d279109e46085 and its existing working changes.
+Dependencies and the lockfile are unchanged. No real environment files were copied.
+The live C:\obn-frontend checkout was not modified.
+Oliver's governance explanation now describes Assembly registration and snapshots.
+
+38 governance frontend tests, 36 Oliver command tests, and 88 frontend security
+tests passed. Scoped governance lint passed without warnings. See checks/ for exact
+commands, results and log hashes, including earlier unsuccessful staging attempts.
+The local build uses public test configuration, governance disabled, no Assembly
+address, and a dummy WalletConnect project ID. It is not a deployable production
+configuration. Browser smoke refuses all signing/sending requests; no real wallet
+transaction is represented by that test. Final build/browser status is recorded
+separately in validation-summary.json.
+Existing dependency build warnings concern the optional MetaMask React Native
+storage module and an ox/tempo dynamic import. No dependency upgrade is included.
+
+Deployment sequence — ONLY after separate deployment authorization
+1. Re-run the pinned manifest, storage-layout, and live dependency/preflight checks.
+   Stop if code, ownership, staking version, active-cycle state or inputs differ.
+2. Deploy the reviewed OliveAssembly and AnnualGovernanceV2 implementations.
+   implementation-creations.json contains unsigned creation bytes, not broadcasts.
+   REQUIRED: publish and verify BOTH implementation contracts on BaseScan using
+   the exact reviewed compiler input/settings and deployed constructor arguments.
+   Confirm successful source verification on each address's BaseScan contract page;
+   a submitted verification request alone does not satisfy this release gate.
+3. Generate deployment-plan with the ACTUAL Assembly implementation address.
+   Deploy its ERC1967 proxy with initialization in the constructor; never deploy an
+   uninitialized proxy. Verify collection, Timelock owner, runtime and proxy slots.
+   REQUIRED: verify the new OliveAssembly ERC1967 proxy source on BaseScan with
+   its actual implementation address and initialization bytes as constructor
+   arguments. Confirm BaseScan recognizes it as a proxy linked to the verified
+   OliveAssembly implementation. Complete steps 2-3 verification before scheduling
+   the upgrade; resolve verification failures without changing the reviewed build.
+4. Run prepare with the actual Assembly proxy, actual V2 implementation, reviewed
+   manifest and a unique 32-byte salt. Review generated targets/data/operation ID.
+   Schedule the upgrade-and-bind batch through the Safe/Timelock. Wait 24 hours,
+   re-run preflight, then execute the reviewed batch. Verify the new implementation,
+   governance/Assembly binding and unchanged dependencies before enabling the UI.
+   REQUIRED: confirm BaseScan's existing governance proxy page recognizes the new
+   verified AnnualGovernanceV2 implementation and exposes its Read/Write as Proxy
+   interface. Confirm the Assembly proxy interface and implementation link too.
+   Record both implementation addresses, both proxy addresses, BaseScan links,
+   verification results, and deployment/upgrade transaction hashes in the final
+   release record. Do not mark deployment complete or enable the public governance
+   UI while source verification or either proxy relationship remains unresolved.
+   This delay applies to the upgrade, not the Safe's annual start-cycle call.
+   Safe import files: use scripts/governance/prepare_assembly_safe_files.cjs with
+   the reviewed manifest, ACTUAL Assembly proxy, ACTUAL V2 implementation, unique
+   32-byte salt, and a NEW output directory. This read-only wrapper runs the pinned
+   prepare generator, including live preflight, then exports 01-schedule.safe.json
+   for Safe Transaction Builder and 02-execute-direct.json containing the exact
+   Timelock execution transaction (NOT a Safe import file). At Base block 52,236,450,
+   EXECUTOR_ROLE was confirmed open, the Safe retained PROPOSER_ROLE, and the delay
+   was 86,400 seconds. This matches verify_contracts.js constructor arguments.
+   Anyone may execute the exact approved operation when ready; no second Safe
+   approval is required. optional-execute-via-safe.json is merely an alternative.
+   Reconfirm open execution before using a direct wallet transaction. The 24-hour
+   clock starts when scheduling EXECUTES on-chain, not when Safe signatures begin.
+   Before execution, recheck live preflight and the exact Timelock operation's
+   readiness/cancellation status. The review-bundle.json is not an import file.
+   No production Safe import files exist yet: actual candidate addresses are still
+   unavailable. The wrapper is additive tooling; pinned contract/generator files
+   remain unchanged. Its live generation must be validated after deployment.
+5. Integrate the reviewed frontend overlay into the current release checkout. Set
+   the real Assembly proxy environment address and verify existing addresses.
+   Build with actual production configuration. Check browser, Farcaster and
+   Coinbase Wallet registration/withdrawal/transaction prompts on physical devices
+   before making the registration and voting release switch public. Withdrawal
+   must remain accessible once configured even if the release switch is disabled.
+6. Verify the keeper uses the reviewed bounded preparation/settlement logic and
+   its production signer/RPC configuration. Phase transitions require transactions;
+   elapsed time alone cannot cause an on-chain action. Monitor keeper failures.
+7. DO NOT startAnnualCycle as part of the upgrade. At the intended annual voting
+   opening, the Safe starts the cycle directly. For a larger ballot, finish bounded
+   preparation batches before voting. Each phase then lasts 30 days; subsequent
+   fund receipts accumulate for the next cycle under the existing allocation model.
+
+Operational behavior that remains intentional
+Registration persists while the NFT is deposited; stake/power is re-snapshotted
+for every cycle. One deposited NFT per wallet; multiple wallet NFTs add no votes.
+Withdrawals after a snapshot do not revoke that snapshot's eligibility. This is
+pseudonymous economic resistance, not proof of one-human-one-vote.
+Nonprofit onboarding remains controlled by the existing multisig/Timelock; there
+is no arbitrary ballot cap. During batched preparation, processed recipients are
+frozen while later recipients use the configuration when their batch is processed.
+Avoid changing nonprofit configuration during preparation unless intended.
+Nonzero registered NFT supply is not a participation quorum: zero turnout still
+follows the existing Offering burn rule. Accidentally transferred NFTs are handled
+through administrator-assisted recovery, not a public app recovery action.
+
+Remaining release gates
+Actual deployed candidate addresses and runtime checks; final Safe review; final
+production configuration; physical wallet checks; production keeper verification.
+BaseScan source verification of AnnualGovernanceV2, OliveAssembly implementation
+and the new Assembly proxy, plus confirmed explorer links for both proxies, is a
+required deployment gate. Verification is pending until actual deployment; local
+fork addresses must never be used for production explorer verification.
+These cannot be represented as completed by a local rehearsal. Passing tests does
+not establish that no vulnerability exists. No new contract-source changes were
+made to the pinned implementation during this preparation.

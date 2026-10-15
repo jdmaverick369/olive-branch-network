@@ -1,6 +1,6 @@
 # V9.3.1 final review and upgrade checklist
 
-Reviewed and implementation deployed 2026-09-24. The proxy upgrade has NOT been executed.
+Reviewed and implementation deployed 2026-09-24. **Status (2026-10-14): executed — the staking proxy reports `version() == "9.3.1"` on mainnet.** Everything below is a historical record; `prepare_v931_upgrade.js` has been moved to `.archive/governance-superseded-20261014/obn-project/scripts/governance/`.
 Release source commit: `047b40d6598563e9203b7b5abfe01f0771010f70`.
 Verified implementation: `0x416dfFfDc4245a9f4C38f05d203AEcaC5E24908f`.
 [BaseScan verified source](https://basescan.org/address/0x416dfFfDc4245a9f4C38f05d203AEcaC5E24908f#code).

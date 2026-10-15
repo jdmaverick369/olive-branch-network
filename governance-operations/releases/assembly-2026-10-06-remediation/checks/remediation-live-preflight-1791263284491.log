@@ -1,0 +1,9 @@
+[dotenv@17.2.1] injecting env (0) from .env -- tip: 🔐 prevent committing .env to code: https://dotenvx.com/precommit
+{
+  "block": 52236969,
+  "cycle": "0",
+  "historicalPools": "11",
+  "activePools": 11,
+  "ballotSize": 11,
+  "ballotPreparationBatches": "1"
+}

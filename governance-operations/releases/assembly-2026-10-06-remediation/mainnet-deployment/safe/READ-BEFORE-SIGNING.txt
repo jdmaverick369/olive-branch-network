@@ -1,0 +1,10 @@
+Operation ID: 0x713c44b1ce424785831d08bcc50a5fe55e3e8888d75e181dcb30f1550c625c56
+Preflight Base block: 52238408
+Import 01-schedule.safe.json into the reviewed Base Safe Transaction Builder first.
+After that transaction executes, wait for this Timelock operation to become ready (24-hour minimum).
+Re-run live preflight; confirm the operation is pending/ready and not cancelled or executed.
+Confirm EXECUTOR_ROLE is still open, then any wallet may submit the direct Timelock transaction in 02-execute-direct.json.
+No second Safe approval is required with open execution. optional-execute-via-safe.json is only an alternative.
+Review BaseScan verification and the pinned addresses/calldata before signing.
+review-bundle.json is review evidence, NOT a Safe import file.
+These files do not start the annual voting cycle or authorize deployment.

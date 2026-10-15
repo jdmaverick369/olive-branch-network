@@ -1,0 +1,23 @@
+{
+  "label": "contracts",
+  "cwd": "C:/obn/obn-project",
+  "args": [
+    "node_modules/hardhat/internal/cli/cli.js",
+    "test",
+    "--config",
+    "hardhat.nft-voting.config.cjs",
+    "test/AnnualGovernanceStartSnapshot.test.js",
+    "test/OliveGovernanceReview.test.js",
+    "test/OliveGovernanceUpgrade.test.js",
+    "test/AnnualGovernance.test.js",
+    "test/AnnualGovernanceAllocation.test.js",
+    "test/AssemblyModelAudit.test.js",
+    "test/AssemblyAdversarialAudit.test.js",
+    "test/AssemblyReleaseTooling.test.cjs",
+    "test/AssemblyUnbounded.test.cjs"
+  ],
+  "exitCode": 0,
+  "signal": null,
+  "log": "C:\\obn\\governance-operations\\releases\\assembly-2026-10-05-1791258615767\\checks\\contracts-1791258834119.log",
+  "sha256": "d3c7e29d1142b7cd45d85786a7a91a42fad6c8e216b780ef251dc53182a4b06e"
+}

@@ -104,6 +104,8 @@ $env:ACTION = 'execute'
 npx.cmd hardhat run scripts/governance/prepare_v931_upgrade.js --network base
 ```
 
+> Note (2026-10-14): the V9.3.1 upgrade has executed (`version() == "9.3.1"`). `prepare_v931_upgrade.js` was moved to `.archive/governance-superseded-20261014/obn-project/scripts/governance/`; run it from there only to reproduce this record.
+
 The generator checks the existing implementation, owner, candidate bytecode,
 storage compatibility, readiness, and operation ID. It writes unsigned Safe JSON;
 it does not broadcast the upgrade. A completed operation must not be replayed.

@@ -1,0 +1,10 @@
+[dotenv@17.2.1] injecting env (29) from .env -- tip: ⚙️  enable debug logging with { debug: true }
+
+
+  Governance release dependency guard audit
+CONFIRMED GAP: existing preflight accepted the V932 implementation with unchanged migration marker; no reinitializer was called.
+    √ demonstrates that a changed staking implementation is not rejected by the current preflight (1108ms)
+
+
+  1 passing (1s)
+

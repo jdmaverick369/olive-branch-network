@@ -1,0 +1,18 @@
+{
+  "label": "final-audit-dependency-guard",
+  "cwd": "C:/obn/obn-project",
+  "args": [
+    "node_modules/hardhat/internal/cli/cli.js",
+    "test",
+    "--no-compile",
+    "--network",
+    "hardhat",
+    "--config",
+    "hardhat.assembly-release-20261005.config.cjs",
+    "test/AssemblyDependencyGuardAudit.test.cjs"
+  ],
+  "exitCode": 1,
+  "signal": null,
+  "log": "C:\\obn\\governance-operations\\releases\\assembly-2026-10-05-1791258615767\\checks\\final-audit-dependency-guard-1791262634066.log",
+  "sha256": "04698bd01f22161552b9ab4470206695fc4804dbe361ccf9027aef23bf438187"
+}

@@ -1,0 +1,309 @@
+{
+  "date": "2026-10-04",
+  "timezone": "America/Chicago",
+  "status": "Implemented and locally validated; not deployed or pushed.",
+  "supersedes": "Earlier capped-design release manifests and reports remain immutable historical evidence. They do not describe this candidate. Use the uncapped manifest linked here.",
+  "policy": {
+    "membership": "No numerical cap on pools or nonprofit ballot members. Onboarding and nonprofit configuration remain multisig/Timelock controlled.",
+    "seed": "User-confirmed planning capacity is 300 seed-supported nonprofits; later onboarding is economically harder, not prohibited. No Seed, staking or reserve allocation contract was changed, and reserve economics were not independently re-audited in this task."
+  },
+  "implementation": {
+    "preparation": "Safe start snapshots previous-block voters/stake and current fund allocations, fixes the pool-history boundary, opens the full 30-day Phase 1, and processes up to 100 IDs. Permissionless prepareBallot or executeCurrentCycle processes subsequent batches. Mapping-based deduplication preserves earliest admitted PID order. Phase 1 settlement requires preparation complete; the keeper advances it during Phase 1 and in the READY state. No extra Safe call is required.",
+    "configurationTiming": "Pool IDs added after start are excluded. Removal status and charity wallet are read at processing time; approval is required when a recipient is first admitted. Already-admitted recipients cannot be rewritten or removed by later configuration changes. Staking has no historical nonprofit-configuration getter. An invalid batch reverts atomically; Timelock repair or pre-settlement cancellation is needed. This is distinct from the immutable voter/fund snapshot at Safe start.",
+    "settlement": "Each nonprofit vote updates a constant-work running leader. Equal tallies favor the earlier ballot position even if votes arrive in reverse order. Settlement does not scan the ballot. Zero-vote rollover and Offering tie/zero-vote burn remain unchanged. Phase 2 starts with a full 30 days after actual Phase 1 settlement.",
+    "compatibility": "Original storage slots and existing Cycle members remain in place; preparation fields, leader and position mapping are appended. Legacy maxBallotSize and its setter are retained for compatibility but ignored for membership. The advisory historical index is bounded per call and no longer used by cycle preparation. Active-cycle upgrade guards remain intact.",
+    "events": "CycleStarted contains the initial batch for large cycles, not the complete ballot. Consumers must use BallotBatchPrepared/BallotPreparationCompleted or paginated getters. Each emitted batch is bounded.",
+    "frontend": "Phase 2 ballot pages contain at most 100 entries each and are read at a single pinned block only after preparation is complete. Failed/incomplete reads fail rather than fabricate a ballot. Protocol Funds analytics display preparation progress. Existing selected-wallet signing protections are preserved.",
+    "documents": [
+      "README.md",
+      "docs/THESIS.md section 5.5"
+    ],
+    "release": "Preflight no longer enforces the old numerical limits and reports preparation batch count. Keeper progresses Phase 1 batches automatically. New manifest created exclusively; old evidence was not rewritten."
+  },
+  "validation": {
+    "fullContractToolingSuite": 153,
+    "additionalFocusedPreparationTests": 3,
+    "uniqueContractToolingTestsAcrossRuns": 154,
+    "keeperTests": 14,
+    "frontendGovernanceTests": 38,
+    "fullScaleTests": 1,
+    "forkTests": 1,
+    "typecheck": "passed",
+    "lint": "passed",
+    "localProductionBuild": "passed with public test configuration; not a real wallet/device test",
+    "liveReadOnlyPreflightBlock": 52185871,
+    "scale": "300 simultaneously active pools with 300 distinct nonprofit recipients and 20,000 real registered/staked wallets complete both voting phases. 19,998 actor wallets stake 1 OBN each plus two existing wallets stake 100 OBN each. NFT reserve mints, normal staking calls, approvals and deposits are real; setup and votes are batched by a local-only smart-wallet harness. No storage injection or fabricated checkpoint counts. A post-snapshot withdrawal preserves voting entitlement.",
+    "beyond300": "A separate 350-distinct-recipient test uses legacy maxBallotSize=1, prepares all recipients, excludes later pool IDs, rejects unapproved batches without advancing, blocks premature settlement, paginates and preserves reverse-arrival tie ordering. Additional tests cover wallet changes before/after processing, removal, cancellation and custody/upgrade guards.",
+    "gas": {
+      "start300Recipients20000VotersEstimate": 8801789,
+      "start300Recipients20000VotersReceipt": 8634874,
+      "subsequentPreparation": "Each batch estimate asserted below a local 16M budget.",
+      "settlement350": "Estimate asserted below 1M gas.",
+      "qualification": "Measured local scenarios; no promise of infinite throughput or current network gas limits."
+    },
+    "runtimeBytes": {
+      "AnnualGovernanceV2": 19558,
+      "OliveAssembly": 8040
+    },
+    "checks": {
+      "uncapped-final-contracts": {
+        "file": "C:\\obn\\.archive\\governance-validation-2026-10-04\\uncapped-final-contracts-1791160909424-bc566c3e-17bd-432e-b31f-a36e09e1dfea.json",
+        "label": "uncapped-final-contracts",
+        "cwd": "C:/obn/obn-project",
+        "args": [
+          "node_modules/hardhat/internal/cli/cli.js",
+          "test",
+          "--no-compile",
+          "--network",
+          "hardhat",
+          "--config",
+          "hardhat.nft-voting.config.cjs",
+          "test/AnnualGovernanceStartSnapshot.test.js",
+          "test/OliveGovernanceReview.test.js",
+          "test/OliveGovernanceUpgrade.test.js",
+          "test/AnnualGovernance.test.js",
+          "test/AnnualGovernanceAllocation.test.js",
+          "test/AssemblyModelAudit.test.js",
+          "test/AssemblyAdversarialAudit.test.js",
+          "test/AssemblyReleaseTooling.test.cjs",
+          "test/AssemblyUnbounded.test.cjs"
+        ],
+        "exitCode": 0,
+        "signal": null,
+        "log": "C:\\obn\\.archive\\governance-validation-2026-10-04\\uncapped-final-contracts-1791160909424-bc566c3e-17bd-432e-b31f-a36e09e1dfea.log",
+        "logSha256": "3194296c4f012c0c24b0096fc9b8faface58a2b178735898d046a0e98decc1cd"
+      },
+      "uncapped-behavior": {
+        "file": "C:\\obn\\.archive\\governance-validation-2026-10-04\\uncapped-behavior-1791161004474-2bfca4ec-cdbb-4563-8d08-df6b80f18d56.json",
+        "label": "uncapped-behavior",
+        "cwd": "C:/obn/obn-project",
+        "args": [
+          "node_modules/hardhat/internal/cli/cli.js",
+          "test",
+          "--no-compile",
+          "--network",
+          "hardhat",
+          "--config",
+          "hardhat.nft-voting.config.cjs",
+          "test/AssemblyUnbounded.test.cjs",
+          "--grep",
+          "Uncapped governance preparation"
+        ],
+        "exitCode": 0,
+        "signal": null,
+        "log": "C:\\obn\\.archive\\governance-validation-2026-10-04\\uncapped-behavior-1791161004474-2bfca4ec-cdbb-4563-8d08-df6b80f18d56.log",
+        "logSha256": "e54bea21f911710b0596727ad40ef1f3e7c07151556aacc97cb952267c83c402"
+      },
+      "uncapped-keeper": {
+        "file": "C:\\obn\\.archive\\governance-validation-2026-10-04\\uncapped-keeper-1791160963827-2f21bec6-a37a-43a7-84c6-f35b2f4e69ea.json",
+        "label": "uncapped-keeper",
+        "cwd": "C:/obn/obn-project/keeper",
+        "args": [
+          "--test",
+          "execute.test.cjs"
+        ],
+        "exitCode": 0,
+        "signal": null,
+        "log": "C:\\obn\\.archive\\governance-validation-2026-10-04\\uncapped-keeper-1791160963827-2f21bec6-a37a-43a7-84c6-f35b2f4e69ea.log",
+        "logSha256": "02fdbe211925182b30d7a9f1b957d377a7a37533c9695daaeba5927f2778e35c"
+      },
+      "uncapped-scale": {
+        "file": "C:\\obn\\.archive\\governance-validation-2026-10-04\\uncapped-scale-1791160845737-3f7f5c7f-d008-45b9-a9f6-c41026d4cfe5.json",
+        "label": "uncapped-scale",
+        "cwd": "C:/obn/obn-project",
+        "args": [
+          "node_modules/hardhat/internal/cli/cli.js",
+          "test",
+          "--network",
+          "hardhat",
+          "--config",
+          "hardhat.nft-voting.config.cjs",
+          "test/AssemblyScale.test.cjs",
+          "--grep",
+          "Assembly full collection scale"
+        ],
+        "exitCode": 0,
+        "signal": null,
+        "log": "C:\\obn\\.archive\\governance-validation-2026-10-04\\uncapped-scale-1791160845737-3f7f5c7f-d008-45b9-a9f6-c41026d4cfe5.log",
+        "logSha256": "ea01b417f0bd1cf5f0458207d5997b26e50b53a4d949a09e50a63e8375b067fc"
+      },
+      "uncapped-frontend-final": {
+        "file": "C:\\obn\\.archive\\governance-validation-2026-10-04\\uncapped-frontend-final-1791160953877-b34aa14b-f980-45e6-8604-28bb63dc53f8.json",
+        "label": "uncapped-frontend-final",
+        "cwd": "C:/obn/obn-frontend",
+        "args": [
+          "--test",
+          "scripts/governance-nft.test.cjs",
+          "scripts/governance-withdrawal.test.cjs",
+          "scripts/governance-voting.test.cjs",
+          "scripts/governance-audit-20260930.test.cjs",
+          "scripts/governance-analytics.test.cjs"
+        ],
+        "exitCode": 0,
+        "signal": null,
+        "log": "C:\\obn\\.archive\\governance-validation-2026-10-04\\uncapped-frontend-final-1791160953877-b34aa14b-f980-45e6-8604-28bb63dc53f8.log",
+        "logSha256": "72f877a41b0a6c08d110b9e2ce3d954f25390757c20a68bbf48ca6af1739b9cd"
+      },
+      "uncapped-typecheck": {
+        "file": "C:\\obn\\.archive\\governance-validation-2026-10-04\\uncapped-typecheck-1791160893687-5a80722e-c63a-4884-bbfb-bbf6da08af90.json",
+        "label": "uncapped-typecheck",
+        "cwd": "C:/obn/obn-frontend",
+        "args": [
+          "node_modules/typescript/bin/tsc",
+          "--noEmit"
+        ],
+        "exitCode": 0,
+        "signal": null,
+        "log": "C:\\obn\\.archive\\governance-validation-2026-10-04\\uncapped-typecheck-1791160893687-5a80722e-c63a-4884-bbfb-bbf6da08af90.log",
+        "logSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "uncapped-lint": {
+        "file": "C:\\obn\\.archive\\governance-validation-2026-10-04\\uncapped-lint-1791160954994-c2476ad2-ef6a-4b20-8937-2a00feaaf98f.json",
+        "label": "uncapped-lint",
+        "cwd": "C:/obn/obn-frontend",
+        "args": [
+          "node_modules/eslint/bin/eslint.js",
+          "src/app/governance/extend/page.tsx",
+          "src/components/GovernanceStats.tsx",
+          "src/lib/governanceAnalyticsAbi.ts"
+        ],
+        "exitCode": 0,
+        "signal": null,
+        "log": "C:\\obn\\.archive\\governance-validation-2026-10-04\\uncapped-lint-1791160954994-c2476ad2-ef6a-4b20-8937-2a00feaaf98f.log",
+        "logSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "uncapped-build": {
+        "file": "C:\\obn\\.archive\\governance-validation-2026-10-04\\uncapped-build-1791161011527-432d31d2-e7c0-41c8-8421-eb961f4449b8.json",
+        "label": "uncapped-build",
+        "cwd": "C:/obn/obn-frontend",
+        "args": [
+          "node_modules/next/dist/bin/next",
+          "build"
+        ],
+        "exitCode": 0,
+        "signal": null,
+        "log": "C:\\obn\\.archive\\governance-validation-2026-10-04\\uncapped-build-1791161011527-432d31d2-e7c0-41c8-8421-eb961f4449b8.log",
+        "logSha256": "c40fa9901fcf80935cb4ecb6d4703509d0d4a9b740c6f197030bb8c5eafc4e41"
+      },
+      "uncapped-fork": {
+        "file": "C:\\obn\\.archive\\governance-validation-2026-10-04\\uncapped-fork-1791161041948-932ac2bf-f418-41b9-8382-70f2f2058efe.json",
+        "label": "uncapped-fork",
+        "cwd": "C:/obn/obn-project",
+        "args": [
+          "node_modules/hardhat/internal/cli/cli.js",
+          "test",
+          "--no-compile",
+          "--network",
+          "hardhat",
+          "--config",
+          "../.archive/governance-remediation-2026-10-02/hardhat.fork.config.cjs",
+          "../.archive/governance-remediation-2026-10-02/AssemblyRemediationFork.test.cjs"
+        ],
+        "exitCode": 0,
+        "signal": null,
+        "log": "C:\\obn\\.archive\\governance-validation-2026-10-04\\uncapped-fork-1791161041948-932ac2bf-f418-41b9-8382-70f2f2058efe.log",
+        "logSha256": "54c151a37296ae18efc4f934d41cd33efdf58fede3cead74af5fd58c2291786a"
+      },
+      "uncapped-preflight": {
+        "file": "C:\\obn\\.archive\\governance-validation-2026-10-04\\uncapped-preflight-1791161089453-0ebc0f79-255a-4b61-aefa-1d84e7f96c4d.json",
+        "label": "uncapped-preflight",
+        "cwd": "C:/obn/obn-project",
+        "args": [
+          "scripts/governance/prepare_assembly_upgrade.cjs",
+          "check",
+          "../governance-operations/assembly-release-manifest-uncapped-2026-10-04-1791161078289.json"
+        ],
+        "exitCode": 0,
+        "signal": null,
+        "log": "C:\\obn\\.archive\\governance-validation-2026-10-04\\uncapped-preflight-1791161089453-0ebc0f79-255a-4b61-aefa-1d84e7f96c4d.log",
+        "logSha256": "ed25d9dc6b5bbe5cf17c925c9c350a2f03cc45efb6df67c08544c7d11045e01d"
+      },
+      "uncapped-keeper-live": {
+        "file": "C:\\obn\\.archive\\governance-validation-2026-10-04\\uncapped-keeper-live-1791161094327-3294a76f-4836-4ed6-a499-106bdb02acd3.json",
+        "label": "uncapped-keeper-live",
+        "cwd": "C:/obn/obn-project/keeper",
+        "args": [
+          "execute.cjs"
+        ],
+        "exitCode": 0,
+        "signal": null,
+        "log": "C:\\obn\\.archive\\governance-validation-2026-10-04\\uncapped-keeper-live-1791161094327-3294a76f-4836-4ed6-a499-106bdb02acd3.log",
+        "logSha256": "76590139f759213165b52cb75f333a5ddad6ed3143721ad9fc0137a55ab25174"
+      }
+    }
+  },
+  "limits": [
+    "Nonprofit configuration is frozen per processed batch, not historically at the start block. Avoid Timelock configuration changes while preparation is pending.",
+    "More pool history requires more keeper transactions and can delay Phase 2; no total-membership cap is imposed.",
+    "Legacy staking bootstrap and live stake fallback can still scan staking history; those dependencies were not redesigned.",
+    "Production frontend integration must preserve current independent Oliver work. No live checkout was modified by this task.",
+    "Real device/signing/paymaster tests, actual Safe signatures, deployment and external security re-review remain outstanding.",
+    "Any scripts using old manifests must switch to the new uncapped manifest and repeat preflight before signing."
+  ],
+  "manifest": {
+    "file": "governance-operations/assembly-release-manifest-uncapped-2026-10-04-1791161078289.json",
+    "sha256": "f8a765ea8e63bf799e941447890ce0073f200ce1c634058e315a3a9dfc556693"
+  },
+  "fileHashes": [
+    {
+      "file": "obn-project/contracts/AnnualGovernanceV2.sol",
+      "sha256": "ba715508ed0bec787b22c5fbf24ac954ee7f9a22babb63f4c74dc5ae7111f856"
+    },
+    {
+      "file": "obn-project/keeper/execute.cjs",
+      "sha256": "883be6ae1af10e9ea1634e73df82462eb820bd4309c1b8331125725d0900be9e"
+    },
+    {
+      "file": "obn-project/keeper/execute.test.cjs",
+      "sha256": "79d4e505ef88e0099c30a4358256b5259bffaa0b20ce5492b214ba50e26e2d19"
+    },
+    {
+      "file": "obn-project/scripts/governance/assembly_release.cjs",
+      "sha256": "28089f4ae7d37342469bc0ea82d4fea2ebe52fdd9e12765fb8daf4bd34a121d0"
+    },
+    {
+      "file": "obn-project/test/AssemblyAdversarialAudit.test.js",
+      "sha256": "251de551e062137a3448fae8560b78bc37d71b27f25863065e2f9f6a69786f83"
+    },
+    {
+      "file": "obn-project/test/AssemblyUnbounded.test.cjs",
+      "sha256": "81f6889ca2bfbbd7c901a0a1ef89eb5c783dbb1b176ce6b1dfc4f12bd40f4015"
+    },
+    {
+      "file": "obn-project/test/AssemblyScale.test.cjs",
+      "sha256": "cb9be2bbe9f40bb3bafe1936d564f10e61785f0c628cbf5bc8f33e3b3ce6cfc3"
+    },
+    {
+      "file": "obn-project/contracts/test/AssemblyScaleActors.sol",
+      "sha256": "480108e63e6a5b33e6f64b6c2be15d277b8a0aa58aa2b09b930ad3a96e8b6b52"
+    },
+    {
+      "file": "obn-frontend/src/app/governance/extend/page.tsx",
+      "sha256": "845951d4491ff4f8e663a1a30ad5768280807979eb3397eb1aff430ee8e34be5"
+    },
+    {
+      "file": "obn-frontend/src/components/GovernanceStats.tsx",
+      "sha256": "fecba477fb8b20a59482bf8cadb26275914d5424c980ec4f51be8680da94ddee"
+    },
+    {
+      "file": "obn-frontend/src/lib/governanceAnalyticsAbi.ts",
+      "sha256": "b4a9eba7565c76af394449de29460719d1fc2bdb93352dd428ba1f77594f1f69"
+    },
+    {
+      "file": "obn-frontend/scripts/governance-voting.test.cjs",
+      "sha256": "9dc61d973d635450dc15731ec91b5b5cb37df637f2eebc93a41ca8e227b708b7"
+    },
+    {
+      "file": ".github/workflows/governance-upgrade.yml",
+      "sha256": "4187e34eb31b5eeb665768f2de4eb4ff9c08c73fcf602f91c38ecf293b2e67d3"
+    },
+    {
+      "file": "README.md",
+      "sha256": "adb8bf49fd37926ada3c50ea96194070bddea5ce691a8f7f0e3177e5dee3f665"
+    },
+    {
+      "file": "docs/THESIS.md",
+      "sha256": "116eb83f91b8dd5ed73ac189287aa11c1693b9042cafce7ec67f24a83cbc999a"
+    }
+  ]
+}

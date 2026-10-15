@@ -1,0 +1,26 @@
+{
+  "chainId": 8453,
+  "checkedAt": "2026-10-06T05:55:24.541Z",
+  "contracts": [
+    {
+      "name": "OliveAssembly",
+      "address": "0x754DbCc6Cea09a4C5C7De0622f52537D225a9445",
+      "verified": true,
+      "compiler": "v0.8.28+commit.7893614a"
+    },
+    {
+      "name": "AnnualGovernanceV2",
+      "address": "0x000a76f74b47498D6a9A593F9Cb7cfB71d975437",
+      "verified": true,
+      "compiler": "v0.8.28+commit.7893614a"
+    },
+    {
+      "name": "ERC1967Proxy",
+      "address": "0xE1ba5a8bC457E60FC2377B1837a40FF85da1578c",
+      "verified": true,
+      "compiler": "v0.8.29+commit.ab55807c"
+    }
+  ],
+  "assemblyProxyImplementationLinked": true,
+  "existingGovernanceProxyUpgradePending": true
+}

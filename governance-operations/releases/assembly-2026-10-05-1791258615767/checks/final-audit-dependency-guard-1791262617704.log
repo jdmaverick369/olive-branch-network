@@ -1,0 +1,22 @@
+[dotenv@17.2.1] injecting env (29) from .env -- tip: 🛠️  run anywhere with `dotenvx run -- yourcommand`
+
+
+  Governance release dependency guard audit
+    1) demonstrates that a changed staking implementation is not rejected by the current preflight
+
+
+  0 passing (982ms)
+  1 failing
+
+  1) Governance release dependency guard audit
+       demonstrates that a changed staking implementation is not rejected by the current preflight:
+     HardhatError: HH700: Artifact for contract "StakingPoolsV932" not found. Did you mean "IStakingPoolsV93"?
+      at Artifacts._handleWrongArtifactForContractName (C:\obn\obn-project\node_modules\hardhat\src\internal\artifacts.ts:721:11)
+      at Artifacts._getArtifactPathFromFiles (C:\obn\obn-project\node_modules\hardhat\src\internal\artifacts.ts:855:19)
+      at Artifacts._getArtifactPath (C:\obn\obn-project\node_modules\hardhat\src\internal\artifacts.ts:516:21)
+      at Artifacts.readArtifact (C:\obn\obn-project\node_modules\hardhat\src\internal\artifacts.ts:71:26)
+      at getContractFactory (C:\obn\obn-project\node_modules\@nomicfoundation\hardhat-ethers\src\internal\helpers.ts:120:22)
+      at Context.<anonymous> (C:\obn\obn-project\test\AssemblyDependencyGuardAudit.test.cjs:10:25)
+
+
+

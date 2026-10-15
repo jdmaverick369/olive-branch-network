@@ -1,0 +1,9 @@
+[dotenv@17.2.1] injecting env (29) from .env -- tip: 🛠️  run anywhere with `dotenvx run -- yourcommand`
+{
+  "block": 52236916,
+  "cycle": "0",
+  "historicalPools": "11",
+  "activePools": 11,
+  "ballotSize": 11,
+  "ballotPreparationBatches": "1"
+}

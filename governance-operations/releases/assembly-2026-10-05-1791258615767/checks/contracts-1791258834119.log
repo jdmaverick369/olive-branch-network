@@ -1,0 +1,204 @@
+[dotenv@17.2.1] injecting env (29) from .env -- tip: 🛠️  run anywhere with `dotenvx run -- yourcommand`
+
+
+  Phase 1 start is the monetary cutoff for both funds
+    √ BURN excludes receipts during both phases and delayed execution; next cycle captures leftovers (1343ms)
+    √ BURN preserves a zero start allocation despite later receipts
+    √ GIVE excludes receipts during both phases and delayed execution; next cycle captures leftovers
+    √ GIVE preserves a zero start allocation despite later receipts
+    √ rolls back shortfalls in both phases and retries the original allocations after replenishment
+    √ cancellation moves no funds and a replacement cycle snapshots all available balances
+    √ zero participation burns only the original Offering amount and rolls over all Extend funds
+    √ uses transaction ordering at Phase 1 start for funds, not the previous-block voter snapshot
+
+  NFT governance security review reproductions
+    √ one controller can double weight by splitting 400 OBN across four registered wallets (289ms)
+    √ blocks both vault and governance upgrades during an active cycle (100ms)
+    √ recovers an unsafe transfer through owner review without creating voting rights
+    √ rejects zero-registration cycles and preserves the zero-participation burn policy (83ms)
+    √ permits direct mint while registered but still returns the deposited NFT safely
+
+  NFT governance recovery and rollout hardening
+    √ owner rotates the direct-start voteAdmin without giving that role upgrade or owner privileges (88ms)
+    √ one direct voteAdmin start permits keeper execution of both phases, fixed allocation, and persistent registration next year (98ms)
+    √ restricts recovery to owner and excludes registered OliveNFTs even with a claimed evidence hash
+    √ validates recovery custody, recipient and evidence; rejected receipts do not lose custody
+    √ recovers a foreign collection with the same token ID without touching a registered OliveNFT
+    √ requires only one-time vault binding, with no separate activation or waiting period (58ms)
+    √ blocks vault upgrades in all four active states and permits them after completion/cancellation (105ms)
+    √ fails closed on unavailable governance for upgrades while allowing depositor withdrawal (81ms)
+    √ counts end-of-block registrations and never lets an empty same-block registration start a cycle (89ms)
+
+  Minimum aggregate snapshot stake of 1 OBN
+    √ rejects one wei below the minimum in both phases; a later top-up qualifies only next cycle without re-registration (100ms)
+    √ qualifies exactly 1 OBN summed across pools and preserves power after post-snapshot withdrawals (109ms)
+    √ does not reinterpret fractional stake or recorded votes in historical linear cycles (82ms)
+
+  Olive governance vault and NFT upgrade
+    √ makes the vault owner-upgradeable, locks implementations, and preserves custody/history across upgrade (224ms)
+    √ prevents withdrawal reentry and rolls back rejected transfers; depositor can choose a receiver
+    Full-supply gas: register=238333, start=368435, vote=143711
+    √ keeps cycle start, registration and voting bounded at the full 20,000 NFT supply (2609ms)
+    √ permits one registration, owner-only withdrawal, and return to a wallet holding other NFTs
+    √ rejects unsolicited safe transfers, other collections, and approved operators claiming ownership (43ms)
+    √ rolls back custody and checkpoints if NFT approval is missing
+    √ validates storage layout and retains proxy/configuration; initialization is owner-only and one-time (100ms)
+    √ requires registered NFT AND stake and uses the same sqrt weight after NFT/stake withdrawals in both phases (119ms)
+    √ rejects a registered wallet with no stake and a holder withdrawn before the snapshot (81ms)
+    √ excludes deposits in the cycle-start block and collapses same-block checkpoint changes (85ms)
+    √ preserves historical linear power and allocation state, and blocks mid-cycle upgrades (180ms)
+    √ computes fractional and extreme stake without overflow, with square root applied to aggregate stake (94ms)
+
+  AnnualGovernance
+    1. Phase 1 — Burn outcome
+      √ calls theOffering.burn() when burnVotes > giveVotes
+      √ burn wins on a tie (giveVotes == burnVotes)
+      √ burn wins with zero participation
+      √ skips the TheOffering call entirely when its balance is zero
+      √ emits Phase1Executed with BURN outcome and correct amount
+    2. Phase 1 — Give outcome
+      √ calls theOffering.sendToExtend() when giveVotes strictly exceed burnVotes
+      √ emits Phase1Executed with GIVE outcome
+    3. Phase 2 activation
+      √ phase2End is 0 before executePhase1 is called
+      √ state never reaches PHASE2_OPEN or PHASE2_READY before executePhase1
+      √ state transitions to PHASE2_OPEN immediately after executePhase1
+      √ phase2End is set in the executePhase1 block, not the cycle start block
+    4. TheOffering revert safety
+      √ executePhase1 reverts and phase1Executed stays false when burn() reverts
+      √ executePhase1 reverts and phase1Executed stays false when sendToExtend() reverts
+      √ phase2End remains 0 and PHASE2_OPEN state is unreachable after a failed executePhase1
+    5. Phase2Started event
+      √ emits Phase2Started with correct phase2End on successful executePhase1
+      √ Phase2Started and Phase1Executed both fire in the same transaction
+      √ no Phase2Started event emitted when executePhase1 reverts
+    6. Phase 2 duration integrity
+      √ phase2End = executePhase1 timestamp + phase2Duration even when Phase 1 executes late
+      √ Phase 2 voting window is fully open (PHASE2_OPEN) immediately after late Phase 1 execution
+      √ phase2Duration passed to startAnnualCycle is preserved in the cycle
+    7. Phase 2 — rollover on zero participation
+      √ emits Phase2RolledOver and does not call distribute when no votes cast
+      √ state transitions to COMPLETED even on rollover
+      √ next cycle can start after a rolled-over cycle
+    8. Phase 2 — winner distribution
+      √ distributes the fixed ExtendOliveBranch allocation to the nonprofit with the most votes
+      √ skips the distribute call when ExtendOliveBranch balance is zero
+      √ phase2 votes from stakers who also voted phase1 are counted correctly
+    9. Phase 2 — tie-breaking
+      √ first ballot entry (lowest pool index) wins when two nonprofits tie
+      √ a nonprofit at a higher ballot index wins if it has strictly more votes
+      √ three-way split: nonprofit with most votes wins; no tie-break needed
+    10. cancelCycle
+      √ reverts when timelockOwner tries to cancel after executePhase1
+      √ succeeds during PHASE1_OPEN (before phase1End)
+      √ succeeds during PHASE1_READY (after phase1End, before executePhase1)
+      √ reverts if called twice on the same cycle
+      √ reverts if called by anyone other than timelockOwner
+      √ next cycle can start after a cancelled cycle
+    governance sovereignty — distributeFromGovernance
+      √ startAnnualCycle reverts if any ballot address is not approved in ExtendOliveBranch
+      √ executePhase2 succeeds even if the winner's approval is revoked after cycle start
+      √ distributeFromGovernance does not check approvedNonprofit — ballot validation at startAnnualCycle is the only gate
+      √ distribute() called by timelockOwner reverts if address is not approved
+      √ distribute() called by timelockOwner succeeds for an approved address
+      √ distributeFromGovernance reverts when called by any address other than governance
+      √ distributeFromGovernance reverts when called by timelockOwner (not governance)
+      √ votes for non-ballot address revert — ballot freezing is the distribution gate
+    ballot deduplication
+      √ two pools sharing a charity wallet appear only once on the ballot
+      √ reverts startAnnualCycle if a ballot address is not approved in ExtendOliveBranch
+    UUPS initializer safety
+      √ T1: bare implementation cannot be initialized
+      √ T3: proxy initialize() cannot be replayed
+      √ _authorizeUpgrade reverts mid-cycle
+      √ _authorizeUpgrade succeeds after cycle completes
+    13. getVotingPowerForCycle
+      √ returns (0, false) for cycleId 0
+      √ returns (0, false) for a cycleId that has not been started
+      √ returns correct power for a bootstrapped staker during an active cycle
+      √ returns bootstrapped=false for an unbootstrapped staker
+      √ returns correct power for a completed cycle (historical lookup)
+    14. snapshot block = block.number - 1
+      √ snapshotBlock is one less than the block containing startAnnualCycle
+      √ snapshotBlock emitted in CycleStarted equals block.number - 1
+      √ snapshotBlock is strictly less than the cycle-start block
+
+  AnnualGovernance fixed Phase 2 allocation
+    √ BURN: fixes both funds at Phase 1 execution and carries later receipts into the next cycle (160ms)
+    √ GIVE: fixes both funds at Phase 1 execution and carries later receipts into the next cycle
+    √ v9.3: real claims keep minting both 1% shares, but Phase 2 pays only the fixed allocation
+    √ includes receipts after Phase 1 voting closes but excludes receipts even after Phase 2 voting closes
+    √ treats zero as a fixed allocation and leaves all later receipts untouched
+    √ rolls the fixed allocation and later receipts into the next cycle with no Phase 2 votes
+    √ keeps cancelled-cycle funds available and does not create a snapshot on cancellation
+    √ reverts atomically after an admin distribute causes a shortfall, and succeeds after replenishment
+    √ reverts atomically after an admin emergencySweep causes a shortfall, and succeeds after replenishment
+    √ rolls back Phase 1 on a failed GIVE and snapshots only the successful retry
+    √ rolls back Phase 2 on a vault failure without changing the allocation
+    √ retains ballot authority when the winner's approval is revoked after the snapshot
+
+  AnnualGovernance allocation upgrade compatibility
+    √ preflights and executes the exact upgradeToAndCall payload through the real Timelock (379ms)
+    √ passes OpenZeppelin storage and implementation validation against the frozen V1 (44ms)
+    √ upgrades V1 in INACTIVE, preserves stored history, and fixes allocations in the next cycle (71ms)
+    √ upgrades V1 in COMPLETED, preserves stored history, and fixes allocations in the next cycle (77ms)
+    √ upgrades V1 in CANCELLED, preserves stored history, and fixes allocations in the next cycle (76ms)
+    √ legacyFixture: blocks upgrades in PHASE1_OPEN
+    √ legacyFixture: blocks upgrades in PHASE1_READY
+    √ legacyFixture: blocks upgrades in PHASE2_OPEN
+    √ legacyFixture: blocks upgrades in PHASE2_READY
+    √ fixture: blocks upgrades in PHASE1_OPEN
+    √ fixture: blocks upgrades in PHASE1_READY
+    √ fixture: blocks upgrades in PHASE2_OPEN
+    √ fixture: blocks upgrades in PHASE2_READY
+    √ rejects unauthorized upgrades and keeps the implementation initializer locked
+
+  OliveAssembly custody and checkpoint model audit
+    √ preserves custody, unique registration and historical counts through 160 mixed operations (seed 305419896) (14375ms)
+    √ preserves custody, unique registration and historical counts through 160 mixed operations (seed 3735928559) (15632ms)
+    √ preserves custody, unique registration and historical counts through 160 mixed operations (seed 270544960) (16839ms)
+
+  Assembly adversarial integration audit
+    expanded gas: compaction=false, start=8599496, estimatedRequired=8766687
+    √ prepares bounded ballot batches across removed history (removed=false) (726ms)
+    expanded gas: compaction=true, start=906054, estimatedRequired=920211
+    √ prepares bounded ballot batches across removed history (removed=true) (626ms)
+    √ reports live registration and power independently from snapshot participation
+    √ rejects a stale token-specific withdrawal after an authorized registration changes
+    √ indexes historical pools in bounded batches without changing ballot order (231ms)
+    √ permits more than 200 active pools without any ballot cap setting (335ms)
+    √ preserves genuine pre-migration stake for lazy voting and a first post-snapshot balance change
+    √ cannot recycle snapshot stake between registered wallets or use post-snapshot deposits as historical power
+    √ freezes a single recipient when one NFT changes registrants several times in the snapshot block
+    √ enforces exact phase deadlines and rolls back vote flags on late or premature votes
+    √ documents that dependency upgrades remain an owner trust boundary during active voting (45ms)
+    100-ballot gas: start=8621323, settle=148045
+    √ starts and settles a 100-nonprofit ballot within the local block budget and uses the first tied recipient (270ms)
+    √ rejects millisecond durations while preserving withdrawals
+
+  Assembly unsigned release preparation
+    √ rejects an unexpected Safe before writing output (209ms)
+[dotenv@17.2.1] injecting env (0) from .env -- tip: ⚙️  override existing env vars with { override: true }
+    √ never overwrites an existing Safe JSON
+    √ retries metadata and storage reads before enforcing pinned state (4020ms)
+    √ retries transient RPC failures with bounded backoff but never suppresses a revert
+    √ pins release configuration, helpers, workflows and keeper tests (182ms)
+    √ rejects an unexpected Safe generator target without emitting a file (161ms)
+    √ defaults to two 30-day phases and rejects other durations for either phase
+    √ pins reviewed inputs and rejects modified manifest evidence (479ms)
+    √ encodes the atomic initialize-and-bind batch and identical operation IDs for both Safe calls (121ms)
+    √ rejects the wrong network before querying deployment state
+    √ rejects unsafe phase seconds 2592000000 before emitting a Safe file (149ms)
+    √ rejects unsafe phase seconds 1.5 before emitting a Safe file (148ms)
+    √ rejects unsafe phase seconds 1e6 before emitting a Safe file (168ms)
+    √ rejects unsafe phase seconds -86400 before emitting a Safe file (153ms)
+    √ rejects unsafe phase seconds true before emitting a Safe file (150ms)
+
+  Uncapped governance preparation
+    √ freezes processed recipients while reading unprocessed wallets and removals at their batch (402ms)
+    √ prepares 350 distinct recipients with bounded calls, excludes new pool IDs and blocks premature settlement (1095ms)
+    √ permits cancellation and custody withdrawal during preparation, but forbids upgrades and later preparation (677ms)
+
+
+  154 passing (1m)
+

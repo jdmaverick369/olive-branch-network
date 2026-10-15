@@ -1,0 +1,42 @@
+{
+  "checks": {
+    "block": 52236582,
+    "cycle": "0",
+    "historicalPools": "11",
+    "activePools": 11,
+    "ballotSize": 11,
+    "ballotPreparationBatches": "1"
+  },
+  "blockHash": "0x7b1d722cfcf72aacf2b6e5e4dd2975dc8218ebbdb8072e9268720a76cab856d8",
+  "dependencies": {
+    "staking": {
+      "address": "0x2C4Bd5B2a48a76f288d7F2DB23aFD3a03b9E7cD2",
+      "proxyOrContractCodeHash": "0x864cc9ad53b338b82da1f7cab85ab0b3d5c8861acb422b6fec63cf36234f36a6",
+      "implementation": "0x416dfFfDc4245a9f4C38f05d203AEcaC5E24908f",
+      "implementationCodeHash": "0x5c626fa674f0c1c3a1e2f08f2a282c03ce70e9ed9a0d1ad2cd4cb3b241f0e596",
+      "version": "9.3.1"
+    },
+    "offering": {
+      "address": "0xc75B2a5C7B8F88327D44C223769cFa19cc93E341",
+      "proxyOrContractCodeHash": "0x32ecd29f181e5fa6888d7f39f4681d538197cbf8a82db83f1269d2a43935d5b4",
+      "implementation": "0x0000000000000000000000000000000000000000"
+    },
+    "extend": {
+      "address": "0xE1BbfAf0552ACC183579a3D172e002adF0c66d8B",
+      "proxyOrContractCodeHash": "0xddd733b38a713c997f37f2d37441385ae177444723e86a4d1f8c3b31831a0e26",
+      "implementation": "0x0000000000000000000000000000000000000000"
+    }
+  },
+  "timelock": {
+    "openExecutor": true,
+    "safeProposer": true,
+    "delay": "86400"
+  },
+  "verificationTransport": {
+    "packageVersion": "2.1.3",
+    "effectiveApiUrl": "https://api.etherscan.io/v2/api",
+    "chainId": 8453,
+    "credentialValidityTested": false
+  },
+  "matchesRehearsedStaking": true
+}

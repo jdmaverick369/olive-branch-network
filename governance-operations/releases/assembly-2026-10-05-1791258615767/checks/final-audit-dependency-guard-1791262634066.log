@@ -1,0 +1,23 @@
+[dotenv@17.2.1] injecting env (29) from .env -- tip: 🔐 prevent committing .env to code: https://dotenvx.com/precommit
+
+
+  Governance release dependency guard audit
+    1) demonstrates that a changed staking implementation is not rejected by the current preflight
+
+
+  0 passing (991ms)
+  1 failing
+
+  1) Governance release dependency guard audit
+       demonstrates that a changed staking implementation is not rejected by the current preflight:
+
+      AssertionError: expected '9.3.1' to equal '9.3.2'
+      + expected - actual
+
+      -9.3.1
+      +9.3.2
+      
+      at Context.<anonymous> (test\AssemblyDependencyGuardAudit.test.cjs:16:39)
+
+
+

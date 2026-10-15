@@ -1,0 +1,14 @@
+{
+  "status": "ALL THREE DEPLOYED; EXISTING GOVERNANCE NOT UPGRADED",
+  "block": 52238353,
+  "cycle": "0",
+  "historicalPools": "11",
+  "activePools": 11,
+  "ballotSize": 11,
+  "ballotPreparationBatches": "1",
+  "addresses": {
+    "assemblyImplementation": "0x754DbCc6Cea09a4C5C7De0622f52537D225a9445",
+    "governanceImplementation": "0x000a76f74b47498D6a9A593F9Cb7cfB71d975437",
+    "assemblyProxy": "0xE1ba5a8bC457E60FC2377B1837a40FF85da1578c"
+  }
+}

@@ -1,0 +1,18 @@
+{
+  "checkedAt": "2026-09-24T15:50:17.922Z",
+  "forkBlock": 51737615,
+  "implementation": "0x416dfFfDc4245a9f4C38f05d203AEcaC5E24908f",
+  "scheduleOperationId": "0xef6f6aa72fa93747a7bda001c37a7649c94edf8e040af552ce294e0150352e58",
+  "poolsCompared": 11,
+  "walletsCompared": 16,
+  "legacyAbiPreserved": true,
+  "exactSafeUpgradePassed": true,
+  "differentialStateAndEventsEqual": true,
+  "lockedWithdrawalRejected": true,
+  "manualClaimDepositWithdrawPassed": true,
+  "autoClaimMultiPoolPassed": true,
+  "optOutEnforced": true,
+  "fullExitAfterAutoClaimPassed": true,
+  "autoClaimGas": "336926",
+  "transactionsSentToMainnet": 0
+}

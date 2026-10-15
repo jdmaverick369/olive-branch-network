@@ -1,0 +1,18 @@
+{
+  "label": "final-audit-permissionless-fork",
+  "cwd": "C:/obn/obn-project",
+  "args": [
+    "node_modules/hardhat/internal/cli/cli.js",
+    "test",
+    "--no-compile",
+    "--network",
+    "hardhat",
+    "--config",
+    "hardhat.assembly-release-20261005.config.cjs",
+    "test/AssemblyPermissionlessReleaseAudit.test.cjs"
+  ],
+  "exitCode": 0,
+  "signal": null,
+  "log": "C:\\obn\\governance-operations\\releases\\assembly-2026-10-05-1791258615767\\checks\\final-audit-permissionless-fork-1791262477550.log",
+  "sha256": "8c2cb166ba79d474d5956a10d851a2936fd1b972991aeb41338c22f28e75f664"
+}

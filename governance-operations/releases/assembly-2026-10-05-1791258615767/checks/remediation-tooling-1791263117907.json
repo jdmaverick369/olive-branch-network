@@ -1,0 +1,18 @@
+{
+  "label": "remediation-tooling",
+  "cwd": "C:/obn/obn-project",
+  "args": [
+    "node_modules/hardhat/internal/cli/cli.js",
+    "test",
+    "--no-compile",
+    "--network",
+    "hardhat",
+    "--config",
+    "hardhat.nft-voting.config.cjs",
+    "test/AssemblyReleaseTooling.test.cjs"
+  ],
+  "exitCode": 0,
+  "signal": null,
+  "log": "C:\\obn\\governance-operations\\releases\\assembly-2026-10-05-1791258615767\\checks\\remediation-tooling-1791263117907.log",
+  "sha256": "6cdd4e65f40a22f16a3bb2afbea808c52e40aa830b33bc6c5cf4a2f9f6188e1c"
+}

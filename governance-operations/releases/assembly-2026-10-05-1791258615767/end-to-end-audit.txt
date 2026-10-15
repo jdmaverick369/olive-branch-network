@@ -1,0 +1,137 @@
+GOVERNANCE END-TO-END RELEASE AUDIT
+October 5, 2026 (America/Chicago)
+
+Verdict
+No new critical/high-severity contract defect was identified in this review.
+Do not treat the complete release as unconditionally ready: one medium release
+guard gap and two low frontend issues remain. No deployment, transaction broadcast,
+production frontend modification or push occurred. The findings below are not fixed
+by this audit. Pinned contract and generator sources were preserved.
+
+1. MEDIUM — Safe generation does not enforce the rehearsed staking implementation.
+   scripts/governance/assembly_release.cjs:91-133 checks the staking address and
+   upgradeBlock marker but never its ERC1967 implementation slot/runtime hash.
+   prepare_assembly_safe_files.cjs delegates to this same preflight. The separate
+   preparation report records staking version/address, but the signing-file
+   generation path does not require them to match that report.
+
+   Reproduced locally: deployed the existing V932 candidate, changed ONLY the local
+   fork's staking implementation slot to it, and called preflight. It succeeded.
+   No reinitializer was called; even the stored version label stayed 9.3.1. This
+   demonstrates why a version string or unchanged migration marker is insufficient.
+   It does not demonstrate an unauthorized mainnet upgrade or a V932 exploit.
+
+   Impact: an independently scheduled staking upgrade can invalidate the reviewed
+   dependency baseline while governance signing files still pass automated checks.
+   The Safe/Timelock remains the administrative trust boundary; this is deployment
+   assurance, not an unprivileged ownership bypass.
+   Required remedy: pin the reviewed staking implementation address AND runtime
+   code hash in the generation and pre-execution checks, reject drift, and require
+   an explicit new review/rehearsal for any dependency change. Version is additional
+   information only. Update the reviewed tooling manifest if pinned tooling changes.
+   Until fixed, manually compare against the captured implementation/runtime before
+   scheduling and executing; do not combine this release with a staking upgrade.
+   Evidence: test/AssemblyDependencyGuardAudit.test.cjs and its final passing log.
+
+2. LOW — Failed ballot/cycle reads do not have complete error recovery in the UI.
+   frontend-candidate/src/app/governance/extend/page.tsx:197 ignores the paginated
+   ballot query's isError/refetch. On initial RPC failure, chainBallot falls back to
+   [], and showBallot at line 402 hides the ballot. Retry tallies at line 408 only
+   retries vote totals, not the failed ballot query. Automatic retries/focus refresh
+   may recover, but the visible recovery control does not repair this failure.
+   src/hooks/useGovernanceCycle.ts:26 likewise discards query errors, so unavailable
+   cycle data can appear to consumers as no cycle rather than an RPC failure.
+   Remedy: explicit cycle/ballot unavailable states with retry controls for those
+   queries, keeping actual zero/no-cycle data distinct from errors. Test transport
+   failures and subsequent successful retry. Transactions remain contract-guarded.
+
+3. LOW — The main FAQ still describes the old voting model.
+   frontend-candidate/src/app/faq/page.tsx:318 says to hold the NFT in the voting
+   wallet and says power is proportional to stake. Line 294 promises the full
+   balance rather than the fixed cycle allocation. Additional NFT descriptions
+   still say holding alone is the voting requirement. Oliver's short answer was
+   updated earlier, but this separate FAQ page was not part of that overlay.
+   Remedy: explain Assembly registration before the snapshot, at least 1 OBN at
+   that snapshot, square-root weighting, persistent registration/withdrawal rules,
+   two 30-day phases and the allocation cutoff. Preserve the newer live page's
+   unrelated wallet/trade behavior when integrating the copy changes.
+
+Contract review coverage
+- Existing governance proxy upgraded through its Timelock owner; no replacement
+  governance address. New Assembly proxy initializes collection and owner atomically.
+- Implementation initializers disabled; UUPS authorization and storage layout checks.
+- One registered NFT per account; regular transferFrom deposits gain no registration;
+  unsolicited safe transfers revert; recovery cannot seize registered tokens.
+- Withdrawals remain available during voting, including alternate recipients and
+  expected-token protection. Ownership changes cannot rewrite historical eligibility.
+- End-of-previous-block registration/stake snapshot, 1 OBN aggregate minimum,
+  square-root power and one vote per phase. Persistent registration reuses the NFT
+  while stake/power is independently snapshotted for each cycle.
+- Fixed fund allocations retain subsequent receipts for the next cycle. Burn/Give
+  and zero-vote/tie rules remain unchanged. Phase 2 gets a full 30 days when opened.
+- Bounded uncapped ballot preparation, deduplication, historical-pool boundary,
+  deterministic tie order and constant-work leader settlement; upgrade guards apply
+  while a cycle/preparation is active. Registered counts mean NFTs, not qualified
+  stakers or unique human beings.
+- Permissionless keeper advances preparation and phase settlement. It does NOT
+  execute the administrative Timelock upgrade; that direct transaction is separate.
+
+Safe/Timelock rehearsal and export review
+A fresh fork run at Base block 52,234,632 deployed exact pinned implementation bytes
+and the initialized proxy. The Safe scheduled the exact generated batch. An ordinary
+unprivileged keeper wallet could not schedule it, could not execute early, and could
+not execute changed/unapproved operation data. It could execute after the delay;
+duplicate execution reverted. Atomic governance upgrade/initialization and Assembly
+binding succeeded, followed by registration, withdrawal and both voting phases.
+
+The additive Safe exporter was tested offline with the generator's exact bundle:
+schedule and optional Safe objects are preserved; direct to/value/data matches the
+execute transaction; decoded operation ID matches; existing directories are not
+overwritten; failed preparation emits no signing files. This is not a real Safe UI
+import test or production-address preflight. No production candidate addresses exist.
+
+Latest live read-only check
+Base block 52,236,582: staking implementation still matches the rehearsed address
+0x416dfFfDc4245a9f4C38f05d203AEcaC5E24908f, version 9.3.1; Safe proposer role present;
+open executor role present; delay 86,400 seconds. Runtime hashes and block hash are
+in final-audit-live-1791262514938.json. All 40 manifest files still match.
+One Safe schedule approval is required. The 24-hour clock starts when scheduling
+executes on-chain. Anyone may then send the exact Timelock execution transaction
+while open execution remains enabled; no second Safe approval is needed.
+
+BaseScan verification review
+Verification is a required manual release gate, not yet a completed API submission.
+The installed hardhat-verify 2.1.3 uses https://api.etherscan.io/v2/api with chainid
+8453 when configured with a single string API key. Its implementation overrides the
+older-looking custom API URL in hardhat.config.js, so that URL is NOT a demonstrated
+verification blocker. The variable is named BASESCAN_API_KEY; its value must be an
+Etherscan V2-compatible key. No credential value was read into this report, printed,
+or tested against the explorer. No verification request was submitted.
+Reference: https://docs.etherscan.io/contract-verification/verify-with-hardhat
+and the installed plugin's internal/etherscan.js:30-61 (version-specific behavior).
+Before scheduling, verify both new implementations and Assembly's proxy source,
+using exact compiled settings/constructor data. After upgrade, confirm both proxy
+relationships and correct Read/Write as Proxy interfaces. Retain explorer evidence.
+
+Validation evidence
+Fresh checks: 154 contract/tooling tests; 14 keeper tests; 38 governance frontend
+tests; 2 Safe-export tests; 1 permissionless fork rehearsal; 1 dependency-gap
+reproduction. All final runs passed; the gap reproduction passes by demonstrating
+the missing rejection, not by fixing it. Intermediate audit-harness failures remain
+in the logs and were corrected (VM reuse and candidate artifact/version assumptions).
+Earlier production-style build, mobile Oliver smoke, 36 command tests and 88 security
+tests were reviewed as prior evidence; not rerun because production code was unchanged.
+The prior full 300-pool/20,000-voter scale test remains applicable to the unchanged
+pin. This pass reran the bounded >300-pool tests but did not repeat all 40,000 votes.
+
+Limits and final release conditions
+No guarantee of absence of vulnerabilities. Mainnet deployment, real-address Safe
+imports, explorer verification, governance-enabled real-device registration/voting
+and production keeper operation have not occurred. The prior browser smoke used
+mock wallets with signing refused and governance disabled, not live governance UX.
+Resolve findings 1-3; preserve source pins or explicitly re-pin/review after changes;
+refresh live checks before each administrative transaction; separately validate
+production wallet flows and keeper configuration; do not start annual voting as
+part of deployment. Avoid nonprofit configuration changes during ballot preparation.
+Pseudonymous voting is not one-human-one-vote; withdrawals after snapshots and the
+existing zero-turnout Offering burn are intentional and remain documented.

@@ -1,0 +1,240 @@
+{
+  "date": "2026-10-04",
+  "timezone": "America/Chicago",
+  "scope": "Local testing and operational improvements only. No push, production frontend edits, deployment or live transaction. Existing production governance and custody artifacts remain unchanged.",
+  "verdict": "20,000 eligible registered wallets complete both phases. 300 historical pool IDs work with 200 retained pools. 300 active pools are NOT supported: the existing 200-pool cap correctly rejects indexing and cycle start. No capacity limit was silently raised.",
+  "fixes": {
+    "gas": "Front compaction now removes IDs 1 through 100, forcing retained IDs to move while preserving the staked pool 0. Both cases assert estimateGas below a local 16M budget and execute with that budget; receipt gas is recorded separately from the estimate.",
+    "diagnostics": "Keeper-owned failures use fixed safe codes for wrong chain, unknown state, missing signer/private key and unconfirmed settlement/index writes. Common nonce, replacement and invalid-argument categories are allowlisted; arbitrary messages remain hidden. Signer creation is inside provider cleanup protection.",
+    "retries": "All preflight getNetwork/getBlockNumber/getStorage/getCode operations now use bounded retryRead, including candidate proxy/runtime/initializer checks. Contract calls retain existing bounded retries. Tests inject transient network, block, storage and code-read failures.",
+    "safeFiles": "Safe JSON writes use exclusive wx creation. Added unexpected Safe-address rejection and overwrite-preservation regressions.",
+    "evidence": "New uniquely named evidence logs/status files, report and manifest use exclusive creation. The old validation runner delegates to the append-only runner. Old report generators now refuse to overwrite existing files. Existing historical records were left as found in this follow-up; earlier overwritten versions have not been recovered or fabricated.",
+    "repeatability": "Added opt-in workflow_dispatch full_collection_scale job using a local Hardhat network only. The test harness is never a production deployment candidate."
+  },
+  "scale": {
+    "historicalPoolIds": 300,
+    "initialActivePoolRejection": 300,
+    "retainedPoolsForSuccessfulCycle": 200,
+    "distinctCharities": 100,
+    "registeredEligibleWallets": 20000,
+    "phase1Voters": 20000,
+    "phase2Voters": 20000,
+    "phase2VotingPower": "20018 VP",
+    "registrationAfterSampleWithdrawal": 19999,
+    "methodology": "Real original OliveNFT, OliveAssembly proxy, migrated staking and AnnualGovernanceV2 proxy. Two initial wallets hold 100 OBN each. 19,998 additional clone wallet actors each receive one reserve-minted NFT and stake 1 OBN through normal contract calls, then deposit their NFT. No storage injection or fabricated checkpoints. Actor setup is batched 10 per transaction and voting 100 per transaction. This exercises smart-contract wallet participation and global counts, not 20,000 browser sessions or 20,000 separate registration blocks. It does not benchmark public mint economics or real wallet providers.",
+    "snapshot": "A registered actor withdraws after cycle start; live registration falls to 19,999, snapshot remains 20,000, and the actor successfully votes with frozen 1 VP in both phases.",
+    "gas": {
+      "cycleStartEstimate": 9747167,
+      "cycleStartReceipt": 9587696,
+      "noCompaction200PoolsEstimate": 11797557,
+      "noCompaction200PoolsReceipt": 11581718,
+      "frontCompactionEstimate": 11004074,
+      "frontCompactionReceipt": 10816737,
+      "qualification": "Estimates and receipts from measured local scenarios, not a formal upper bound or confirmation of current Base gas limits. The 20k run starts with its pool index already prepared."
+    }
+  },
+  "validation": {
+    "contractAndToolingTests": 151,
+    "releaseToolingSubsetTests": 15,
+    "keeperTests": 13,
+    "fullScaleTests": 1,
+    "localForkTests": 1,
+    "checks": {
+      "contracts": {
+        "file": "C:\\obn\\.archive\\governance-validation-2026-10-04\\contracts-1791159010773-b89a7c5c-5160-4390-8e9e-9c6f17d90f01.json",
+        "label": "contracts",
+        "cwd": "C:/obn/obn-project",
+        "args": [
+          "node_modules/hardhat/internal/cli/cli.js",
+          "test",
+          "--no-compile",
+          "--network",
+          "hardhat",
+          "--config",
+          "hardhat.nft-voting.config.cjs",
+          "test/AnnualGovernanceStartSnapshot.test.js",
+          "test/OliveGovernanceReview.test.js",
+          "test/OliveGovernanceUpgrade.test.js",
+          "test/AnnualGovernance.test.js",
+          "test/AnnualGovernanceAllocation.test.js",
+          "test/AssemblyModelAudit.test.js",
+          "test/AssemblyAdversarialAudit.test.js",
+          "test/AssemblyReleaseTooling.test.cjs"
+        ],
+        "exitCode": 0,
+        "signal": null,
+        "log": "C:\\obn\\.archive\\governance-validation-2026-10-04\\contracts-1791159010773-b89a7c5c-5160-4390-8e9e-9c6f17d90f01.log",
+        "logSha256": "0a854f5db723b2c65c09ef590ca5615bb70e3307780e357688a3cce14258cab6"
+      },
+      "release-tools": {
+        "file": "C:\\obn\\.archive\\governance-validation-2026-10-04\\release-tools-1791159073797-aa42b0c1-4626-4e0c-9876-6a707bf38055.json",
+        "label": "release-tools",
+        "cwd": "C:/obn/obn-project",
+        "args": [
+          "node_modules/hardhat/internal/cli/cli.js",
+          "test",
+          "--no-compile",
+          "--network",
+          "hardhat",
+          "--config",
+          "hardhat.nft-voting.config.cjs",
+          "test/AssemblyReleaseTooling.test.cjs"
+        ],
+        "exitCode": 0,
+        "signal": null,
+        "log": "C:\\obn\\.archive\\governance-validation-2026-10-04\\release-tools-1791159073797-aa42b0c1-4626-4e0c-9876-6a707bf38055.log",
+        "logSha256": "3cdf9470def8e8aa8f28527e91741bd5989d8feda12fc8037fb0e8237e3f36d2"
+      },
+      "keeper": {
+        "file": "C:\\obn\\.archive\\governance-validation-2026-10-04\\keeper-1791159009652-326fb546-050e-421e-abc2-58d95dff5808.json",
+        "label": "keeper",
+        "cwd": "C:/obn/obn-project/keeper",
+        "args": [
+          "--test",
+          "execute.test.cjs"
+        ],
+        "exitCode": 0,
+        "signal": null,
+        "log": "C:\\obn\\.archive\\governance-validation-2026-10-04\\keeper-1791159009652-326fb546-050e-421e-abc2-58d95dff5808.log",
+        "logSha256": "c61f1336332fb4a15ec76b044c5bf3a790d2f7d1f02d3c4f36540ef0a744258d"
+      },
+      "scale": {
+        "file": "C:\\obn\\.archive\\governance-validation-2026-10-04\\scale-1791158985913-c7856581-b389-48f0-be58-0c5867d531a3.json",
+        "label": "scale",
+        "cwd": "C:/obn/obn-project",
+        "args": [
+          "node_modules/hardhat/internal/cli/cli.js",
+          "test",
+          "--network",
+          "hardhat",
+          "--config",
+          "hardhat.nft-voting.config.cjs",
+          "test/AssemblyScale.test.cjs",
+          "--grep",
+          "Assembly full collection scale"
+        ],
+        "exitCode": 0,
+        "signal": null,
+        "log": "C:\\obn\\.archive\\governance-validation-2026-10-04\\scale-1791158985913-c7856581-b389-48f0-be58-0c5867d531a3.log",
+        "logSha256": "4933e722cbb1964d07feb8709b7b7aa3c99c408d4ce1ff91dc90c971897f622a"
+      },
+      "fork": {
+        "file": "C:\\obn\\.archive\\governance-validation-2026-10-04\\fork-1791159110927-088136c5-a27f-4a62-b28e-e6b2958141a0.json",
+        "label": "fork",
+        "cwd": "C:/obn/obn-project",
+        "args": [
+          "node_modules/hardhat/internal/cli/cli.js",
+          "test",
+          "--no-compile",
+          "--network",
+          "hardhat",
+          "--config",
+          "../.archive/governance-remediation-2026-10-02/hardhat.fork.config.cjs",
+          "../.archive/governance-remediation-2026-10-02/AssemblyRemediationFork.test.cjs"
+        ],
+        "exitCode": 0,
+        "signal": null,
+        "log": "C:\\obn\\.archive\\governance-validation-2026-10-04\\fork-1791159110927-088136c5-a27f-4a62-b28e-e6b2958141a0.log",
+        "logSha256": "f9beae44aa3265639f6fba9af74a2cfb08faa17c8dcb3aace6d770b448e501bd"
+      },
+      "preflight": {
+        "file": "C:\\obn\\.archive\\governance-validation-2026-10-04\\preflight-1791159125225-b17e2ca4-a7bc-4120-b720-719c495485df.json",
+        "label": "preflight",
+        "cwd": "C:/obn/obn-project",
+        "args": [
+          "scripts/governance/prepare_assembly_upgrade.cjs",
+          "check",
+          "../governance-operations/assembly-release-manifest-2026-10-04-1791159102930.json"
+        ],
+        "exitCode": 0,
+        "signal": null,
+        "log": "C:\\obn\\.archive\\governance-validation-2026-10-04\\preflight-1791159125225-b17e2ca4-a7bc-4120-b720-719c495485df.log",
+        "logSha256": "22dbb3fcec6588f1887baf70ba23811eece054cc3afb43858859fdf3e5ac6830"
+      },
+      "keeper-live": {
+        "file": "C:\\obn\\.archive\\governance-validation-2026-10-04\\keeper-live-1791159130093-6bfca7e6-6339-4b80-8e16-6ee80e9fcdb6.json",
+        "label": "keeper-live",
+        "cwd": "C:/obn/obn-project/keeper",
+        "args": [
+          "execute.cjs"
+        ],
+        "exitCode": 0,
+        "signal": null,
+        "log": "C:\\obn\\.archive\\governance-validation-2026-10-04\\keeper-live-1791159130093-6bfca7e6-6339-4b80-8e16-6ee80e9fcdb6.log",
+        "logSha256": "17e6646dffc660087cc9b236c4917697cb23245d77574cd38ee16cc39db6bf9d"
+      }
+    },
+    "frontend": "Not changed or revalidated in this follow-up.",
+    "failedDevelopmentRuns": [
+      {
+        "file": "C:\\obn\\.archive\\governance-validation-2026-10-04\\scale-1791158960690-7608ef98-f9b5-445b-97c6-cb922de5ca49.json",
+        "reason": "Initial test harness failed compilation because a parameter used reserved Solidity keyword assembly. Renamed to vault and reran successfully; failed log retained."
+      }
+    ]
+  },
+  "releaseManifest": {
+    "file": "governance-operations/assembly-release-manifest-2026-10-04-1791159102930.json",
+    "sha256": "31b761ff24669eee4f11ff4d672b880ceaa5d63bc2d29acb6d4eacb8f049b264"
+  },
+  "fileHashes": [
+    {
+      "file": "obn-project/keeper/execute.cjs",
+      "sha256": "3fa63c1329cdd7dd5ad2624a0aefda0ad2063ea8e3936ff796d5852b5e1d1e21"
+    },
+    {
+      "file": "obn-project/keeper/execute.test.cjs",
+      "sha256": "b216df4571f723cf6138bb30c32703ebe69fb646518fbbfb17284631d850866e"
+    },
+    {
+      "file": "obn-project/scripts/governance/assembly_release.cjs",
+      "sha256": "b69153b1884e2ff8d6a2ba43130bfeedb74b9cab9f49902dc597c98421afd21c"
+    },
+    {
+      "file": "obn-project/scripts/governance/timelock_safe_helper.js",
+      "sha256": "83fe6fea82eb6762270e06ae5d54082dbecfccd63fdb29dc64942be2b564027d"
+    },
+    {
+      "file": "obn-project/test/AssemblyReleaseTooling.test.cjs",
+      "sha256": "2a3380a8ef274b2ca1993cf40c3926bfcfe4a7f9785feff7ab54350634fa647d"
+    },
+    {
+      "file": "obn-project/test/AssemblyAdversarialAudit.test.js",
+      "sha256": "22653087cf5e0a5a2086b68718b550cb79299cc9ab971580d0f8ad7be2973ba7"
+    },
+    {
+      "file": "obn-project/test/AssemblyScale.test.cjs",
+      "sha256": "4f36fbff5cde2200962e96d61f66693aaff88cf23c22b9cb18e827f98541cb0d"
+    },
+    {
+      "file": "obn-project/contracts/test/AssemblyScaleActors.sol",
+      "sha256": "fd71db28771eb18bd9cbbb398e590b75c1c4ac5955ce2e5c63b85add2cf3a8d1"
+    },
+    {
+      "file": ".github/workflows/governance-upgrade.yml",
+      "sha256": "6bf7d5d3b6b11f0f4564bd7d6d2ad64bb6de92517b8ef0b9f5ca31516eada14a"
+    },
+    {
+      "file": ".archive/run-governance-validation-append-only.cjs",
+      "sha256": "401e5a0cddb06d8a881a2fdfbf74517bf7cf167598c5a4dc06107e55f2aaa581"
+    },
+    {
+      "file": ".archive/run-governance-validation.cjs",
+      "sha256": "366911f11e07c46a496fd34ad5fcc89c3f00bdac4223751713aa022028b26a35"
+    },
+    {
+      "file": ".archive/write-governance-remediation.cjs",
+      "sha256": "c17a8b582b1c8cb714d5b8bf581b9d119a2fc56e7b3974d9f7f2b9ccc2e5bf32"
+    },
+    {
+      "file": ".archive/write-review-followup.cjs",
+      "sha256": "42e6a4105d0499f38b27cf5b341594259cfe4658573c59f7cf5be6e596a0adcb"
+    }
+  ],
+  "remaining": [
+    "If 300 simultaneously active pools are required, a separate capacity/gas design change is necessary; current release supports at most 200 retained pools and 100 nonprofits.",
+    "Commit the complete reviewed release before publishing its workflow.",
+    "Integrate with the current live frontend and preserve independent Oliver changes, then perform production build and actual wallet/device tests.",
+    "Use a reliable dedicated release RPC and re-run preflight before signing and after the Timelock delay.",
+    "Safe signing, deployment, production configuration, builder attribution and independent formal verification were not performed."
+  ]
+}

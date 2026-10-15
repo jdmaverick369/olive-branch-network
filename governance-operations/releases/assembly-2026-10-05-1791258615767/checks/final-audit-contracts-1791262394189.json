@@ -1,0 +1,25 @@
+{
+  "label": "final-audit-contracts",
+  "cwd": "C:/obn/obn-project",
+  "args": [
+    "node_modules/hardhat/internal/cli/cli.js",
+    "test",
+    "--network",
+    "hardhat",
+    "--config",
+    "hardhat.nft-voting.config.cjs",
+    "test/AnnualGovernanceStartSnapshot.test.js",
+    "test/OliveGovernanceReview.test.js",
+    "test/OliveGovernanceUpgrade.test.js",
+    "test/AnnualGovernance.test.js",
+    "test/AnnualGovernanceAllocation.test.js",
+    "test/AssemblyModelAudit.test.js",
+    "test/AssemblyAdversarialAudit.test.js",
+    "test/AssemblyReleaseTooling.test.cjs",
+    "test/AssemblyUnbounded.test.cjs"
+  ],
+  "exitCode": 0,
+  "signal": null,
+  "log": "C:\\obn\\governance-operations\\releases\\assembly-2026-10-05-1791258615767\\checks\\final-audit-contracts-1791262394189.log",
+  "sha256": "0f786120e577193bfc36af4beb2d68871731c5ebf7d6b30365892c9a0f75b80f"
+}

@@ -1,0 +1,141 @@
+// hardhat.config.js
+require("@nomicfoundation/hardhat-ethers");
+require("@nomicfoundation/hardhat-chai-matchers");
+require("@nomicfoundation/hardhat-verify");
+require("@openzeppelin/hardhat-upgrades");
+require("dotenv").config();
+
+const {
+  BASE_SEPOLIA_URL,
+  BASE_MAINNET_URL,
+  PRIVATE_KEY = "",
+  BASESCAN_API_KEY = "",
+  FORK_MAINNET = "",
+  FORK_BLOCK_NUMBER = "",
+} = process.env;
+
+const accounts = PRIVATE_KEY
+  ? [PRIVATE_KEY.startsWith("0x") ? PRIVATE_KEY : `0x${PRIVATE_KEY}`]
+  : [];
+
+module.exports = {
+  solidity: {
+    // Multiple compilers allowed; the first that satisfies a file's pragma is used.
+    compilers: [
+      {
+        version: "0.8.28",
+        settings: {
+          optimizer: { enabled: true, runs: 500 },
+          viaIR: true,
+          metadata: { bytecodeHash: "ipfs" },
+          evmVersion: "cancun",
+        },
+      },
+      {
+        version: "0.8.22",
+        settings: { optimizer: { enabled: true, runs: 200 } },
+      },
+      {
+        version: "0.8.21",
+        settings: { optimizer: { enabled: true, runs: 200 } },
+      },
+      {
+        version: "0.8.20",
+        settings: { optimizer: { enabled: true, runs: 200 } },
+      },
+    ],
+    // Force IR pipeline on the heaviest files even if another compiler version is picked
+    overrides: {
+      "contracts/StakingPoolsV931.sol": {
+        version: "0.8.28",
+        settings: { optimizer: { enabled: true, runs: 1 }, viaIR: true, evmVersion: "cancun" },
+      },
+      "contracts/StakingPoolsV94.sol": {
+        version: "0.8.28",
+        settings: { optimizer: { enabled: true, runs: 1 }, viaIR: true, evmVersion: "cancun" },
+      },
+      "contracts/StakingPools.sol": {
+        version: "0.8.28",
+        settings: { optimizer: { enabled: true, runs: 500 }, viaIR: true },
+      },
+      "contracts/StakingPoolsV93.sol": {
+        version: "0.8.28",
+        settings: { optimizer: { enabled: true, runs: 500 }, viaIR: true },
+      },
+      "contracts/OliveNFT.sol": {
+        version: "0.8.28",
+        settings: { optimizer: { enabled: true, runs: 500 }, viaIR: true },
+      },
+    },
+  },
+
+  networks: {
+    base_sepolia: {
+      url: BASE_SEPOLIA_URL,
+      chainId: 84532,
+      accounts,
+    },
+    base: {
+      url: BASE_MAINNET_URL,
+      chainId: 8453,
+      accounts,
+    },
+    // Conditional Base mainnet fork — enabled when FORK_MAINNET=true in .env or shell.
+    // Usage: FORK_MAINNET=true npx hardhat test test/V93ForkMigration.test.js
+    // Optional: FORK_BLOCK_NUMBER=<block> for a reproducible fork point.
+    ...(FORK_MAINNET === "true" && BASE_MAINNET_URL
+      ? {
+          hardhat: {
+            forking: {
+              url: BASE_MAINNET_URL,
+              ...(FORK_BLOCK_NUMBER ? { blockNumber: Number(FORK_BLOCK_NUMBER) } : {}),
+            },
+            // Base mainnet (8453) hardfork history is not built into Hardhat.
+            // Declaring Cancun from block 0 lets the EDR provider resolve EVM rules
+            // for any historical block on this chain without throwing "No known hardfork".
+            chains: {
+              8453: {
+                hardforkHistory: {
+                  cancun: 0,
+                },
+              },
+            },
+          },
+        }
+      : {}),
+  },
+
+  etherscan: {
+    // Basescan verification using Etherscan V2 API
+    apiKey: BASESCAN_API_KEY,
+    customChains: [
+      {
+        network: "base",
+        chainId: 8453,
+        urls: {
+          apiURL: "https://api.basescan.org/v2/api",
+          browserURL: "https://basescan.org",
+        },
+      },
+      {
+        network: "base-sepolia",
+        chainId: 84532,
+        urls: {
+          apiURL: "https://api-sepolia.basescan.org/v2/api",
+          browserURL: "https://sepolia.basescan.org",
+        },
+      },
+    ],
+  },
+
+  sourcify: {
+    enabled: true
+  },
+
+  paths: {
+    sources: "contracts",
+    tests: "test",
+    cache: "cache",
+    artifacts: "artifacts",
+  },
+};

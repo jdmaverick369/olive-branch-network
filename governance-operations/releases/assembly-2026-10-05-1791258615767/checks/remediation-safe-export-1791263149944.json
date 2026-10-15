@@ -1,0 +1,12 @@
+{
+  "label": "remediation-safe-export",
+  "cwd": "C:/obn/obn-project",
+  "args": [
+    "--test",
+    "test/AssemblySafeExportAudit.test.cjs"
+  ],
+  "exitCode": 0,
+  "signal": null,
+  "log": "C:\\obn\\governance-operations\\releases\\assembly-2026-10-05-1791258615767\\checks\\remediation-safe-export-1791263149944.log",
+  "sha256": "facfd765488ce17760d133788199dc7db5b12cf1bb595441e4aa9f8bb5a183de"
+}

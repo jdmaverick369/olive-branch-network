@@ -1,0 +1,84 @@
+{
+  "recordedAt": "2026-10-01T02:40:43.400Z",
+  "scope": "Read-only source audit with isolated test additions; no production-source or live-checkout modifications",
+  "liveReadBlock": 52016497,
+  "priorForkRehearsalBlock": 52015686,
+  "files": [
+    {
+      "file": "obn-project/contracts/AnnualGovernanceV2.sol",
+      "sha256": "da82a7c22f630106ad16f742199fcb023348a3840640962c6ea6c8716cc1426f"
+    },
+    {
+      "file": "obn-project/contracts/OliveAssembly.sol",
+      "sha256": "5b977ce097e6be383f6ea7aa1135c2c925b687ef147a88ab1e1f628768d5c767"
+    },
+    {
+      "file": "obn-project/contracts/AnnualGovernance.sol",
+      "sha256": "34dd1a678e4337be74a5bb18941bf84d56fc5d6db83bcec6f858509fdfb1e3e5"
+    },
+    {
+      "file": "obn-project/contracts/OliveNFT.sol",
+      "sha256": "0f262130322e91cd6de01106b983de1fe5ae78e2e339257e7421413726ea21c1"
+    },
+    {
+      "file": "obn-project/contracts/StakingPoolsV931.sol",
+      "sha256": "4212ec6bcc584604e4586f98e2770e04ebb620377c0cf45699cc523dbe960378"
+    },
+    {
+      "file": "obn-project/contracts/OBNToken.sol",
+      "sha256": "670c318ecb917fc98500612006561fa6cd71510c3e903f81ea9e973777b8b3e2"
+    },
+    {
+      "file": "obn-project/contracts/TheOffering.sol",
+      "sha256": "b92b99eecbf947ddb460f40a5cdb926d19899e4f9cabdae0938d036f94c29834"
+    },
+    {
+      "file": "obn-project/contracts/ExtendOliveBranch.sol",
+      "sha256": "690253992be0db35dbf5cf04aecb4570d14165cd0c01a8e7d60cd220aabc1432"
+    },
+    {
+      "file": "obn-project/test/AssemblyModelAudit.test.js",
+      "sha256": "bb25a95a967fa477a08f4c42eeaa71a53219f1fbf78d3365af9b8bc7cf2bf611"
+    },
+    {
+      "file": "obn-project/test/AssemblyAdversarialAudit.test.js",
+      "sha256": "84889bdd0afcec6c7cedd3ae66f38a8a6e1b05d1b251e560936658dfed0a637a"
+    },
+    {
+      "file": "obn-project/test/AssemblyDeploymentRehearsal.test.js",
+      "sha256": "6dafbd7a5aa90382e6444710733dab8c1151f15e76303489855bdcd1e3467a42"
+    },
+    {
+      "file": "obn-frontend/src/app/governance/offering/page.tsx",
+      "sha256": "eeeb10336e6c6ede3550faf88c67573b879d0aaca2438477005e041a4b05b017"
+    },
+    {
+      "file": "obn-frontend/src/app/governance/extend/page.tsx",
+      "sha256": "ee8d7dcd4637cb4f6d8ca9eac7cda355e9c436a1db3da084d319131965dcedf2"
+    },
+    {
+      "file": "obn-frontend/src/components/OliveGovernanceRegistration.tsx",
+      "sha256": "b9864f1ce48b9ff27e3e732c7c6d6505f8b9ab3a96f8f78303e3ddcdd0cb7b20"
+    },
+    {
+      "file": "obn-frontend/src/lib/confirmedGovernanceVote.ts",
+      "sha256": "77657ffd203eca778c457998a93c02a42ffcb2ab3faa4534c02a8aada9cbe1da"
+    },
+    {
+      "file": "obn-frontend/src/lib/getDisplayedVotingPower.ts",
+      "sha256": "57d3504e433d450aeea8a472669f458735ceb6cb887fe463c7171b2e6a497df9"
+    },
+    {
+      "file": "obn-frontend/scripts/governance-audit-20260930.test.cjs",
+      "sha256": "ba07a3e540397b3d311a126a3d465ce840baa1aa963510f1349a63883a05cfb8"
+    },
+    {
+      "file": "obn-frontend/package-lock.json",
+      "sha256": "fe8a92f0142e9fa26bce664676aa931047bbc91808efe067265dd816bbf39a99"
+    },
+    {
+      "file": "obn-frontend/next.config.ts",
+      "sha256": "0dc5d7f9bf67e030f33e7f44ef537ba04cde2c52b84c58a77ebb6fd414c03ffb"
+    }
+  ]
+}

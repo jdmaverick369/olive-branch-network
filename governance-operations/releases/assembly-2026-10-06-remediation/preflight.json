@@ -1,0 +1,36 @@
+{
+  "status": "HISTORICAL BASELINE FOR LOCAL OCTOBER 6 REHEARSAL; SEE remediation-live-preflight LOG FOR FRESH CHAIN CHECK",
+  "chainId": 8453,
+  "preflight": {
+    "block": 52234632,
+    "cycle": "0",
+    "historicalPools": "11",
+    "activePools": 11,
+    "ballotSize": 11,
+    "ballotPreparationBatches": "1"
+  },
+  "blockHash": "0xe99e588f07b132dc1fb29d8592a2597433e88d01a9d75badcee26ea2afe5cf10",
+  "dependencies": {
+    "staking": {
+      "address": "0x2C4Bd5B2a48a76f288d7F2DB23aFD3a03b9E7cD2",
+      "owner": "0x86396526286769ace21982E798Df5eef2389f51c",
+      "implementation": "0x416dfFfDc4245a9f4C38f05d203AEcaC5E24908f",
+      "version": "9.3.1"
+    },
+    "nft": {
+      "address": "0xB66F67444b09f509D72d832567C2df84Edeb80F8",
+      "owner": "0x86396526286769ace21982E798Df5eef2389f51c"
+    },
+    "offering": {
+      "address": "0xc75B2a5C7B8F88327D44C223769cFa19cc93E341",
+      "owner": "0x86396526286769ace21982E798Df5eef2389f51c"
+    },
+    "extend": {
+      "address": "0xE1BbfAf0552ACC183579a3D172e002adF0c66d8B",
+      "owner": "0x86396526286769ace21982E798Df5eef2389f51c"
+    }
+  },
+  "manifestSha256": "3581583191b5651774ed1b527ec61fe26307ea677a666bb73a88a15f4e77f712",
+  "realCandidateAddresses": null,
+  "sourceManifestSha256": "f8a765ea8e63bf799e941447890ce0073f200ce1c634058e315a3a9dfc556693"
+}

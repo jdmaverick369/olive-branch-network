@@ -1,0 +1,16 @@
+{
+  "status": "FUNDING CHECK PASSED",
+  "chainId": 8453,
+  "wallet": "0x64C9c9cEDc94e58EA9C98f92DAF65F19383C5118",
+  "balanceETH": "0.002989721595629194",
+  "implementationGasEstimates": [
+    "1832544",
+    "4338461"
+  ],
+  "proxyGasAllowance": "500000",
+  "maxFeePerGasGwei": "0.011",
+  "executionFeeCapETH": "0.000086957255",
+  "extraFeeReserveETH": "0.0001",
+  "totalBudgetETH": "0.000186957255",
+  "additionalETH": "0.0"
+}

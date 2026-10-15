@@ -1,0 +1,46 @@
+{
+  "status": "PASSED - LOCAL FORK ONLY",
+  "forkBlock": 52234632,
+  "chainId": 31337,
+  "mainnetTransactions": 0,
+  "localAddresses": {
+    "vaultImpl": "0x6cEE3AC97C67E0B39238fb564faf10218C59a6e9",
+    "govImpl": "0x48D705f1d64E7Ffe3EFcE15D8d8061b20aB4C929",
+    "vaultAddress": "0xce3774eE9D08a2532B7Ff4b1B2aa0529a66f3B07"
+  },
+  "generatedOperationId": "0x275b2b923ec00f692d06914cca44d49cdbe84d44a49a6ff97de76b31cac6fe2b",
+  "localPayloads": {
+    "targets": [
+      "0x1135d5fEA8098b09b4ED3AFbfFDc7B248359D270",
+      "0xce3774eE9D08a2532B7Ff4b1B2aa0529a66f3B07"
+    ],
+    "datas": [
+      "0x4f1ef28600000000000000000000000048d705f1d64e7ffe3efce15d8d8061b20ab4c9290000000000000000000000000000000000000000000000000000000000000040000000000000000000000000000000000000000000000000000000000000002429b47efd000000000000000000000000ce3774ee9d08a2532b7ff4b1b2aa0529a66f3b0700000000000000000000000000000000000000000000000000000000",
+      "0xcabb269d0000000000000000000000001135d5fea8098b09b4ed3afbffdc7b248359d270"
+    ]
+  },
+  "gas": {
+    "deployAssemblyImplementation": "1816956",
+    "deployGovernanceImplementation": "4303142",
+    "deployInitializedAssemblyProxy": "229703",
+    "upgradeAndBind": "193819",
+    "register0": "238173",
+    "register1": "226323",
+    "start": "1253064"
+  },
+  "checks": [
+    "exact creation bytes and atomic proxy initialization",
+    "reviewed live V931 dependency retained",
+    "generated Timelock schedule/execute with delay",
+    "public NFT mint and registration",
+    "one- and four-OBN qualification",
+    "active-cycle upgrade guards",
+    "alternate-recipient withdrawal",
+    "post-snapshot stake/NFT withdrawals preserve this vote",
+    "permissionless keeper both phases",
+    "both phases exactly 30 days",
+    "later fund receipts retained",
+    "persistent registration with changed next-cycle power"
+  ],
+  "warning": "Simulation addresses and payloads are NOT production deployment addresses. Do not import into Safe."
+}

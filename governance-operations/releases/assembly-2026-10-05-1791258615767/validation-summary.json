@@ -1,0 +1,59 @@
+{
+  "status": "LOCAL PREPARATION AND REHEARSAL PASSED; PRODUCTION GATES REMAIN",
+  "checks": [
+    {
+      "label": "contracts",
+      "record": "checks/contracts-1791258834119.json",
+      "exitCode": 0,
+      "logSha256": "d3c7e29d1142b7cd45d85786a7a91a42fad6c8e216b780ef251dc53182a4b06e"
+    },
+    {
+      "label": "keeper",
+      "record": "checks/keeper-1791258834418.json",
+      "exitCode": 0,
+      "logSha256": "b0d2a65f0ec6110a159439d9db69956ea0883478a2fd4bda0c9b9fb5c086889e"
+    },
+    {
+      "label": "frontend-governance",
+      "record": "checks/frontend-governance-1791258834270.json",
+      "exitCode": 0,
+      "logSha256": "2d6eac5bebc44853bccc75fc9d6090e306a43ff129aa488a26d44488b2f3ba5d"
+    },
+    {
+      "label": "frontend-security",
+      "record": "checks/frontend-security-1791258851666.json",
+      "exitCode": 0,
+      "logSha256": "56accfef0bf6cdb1647c20c21734ac4380286c928a8a623bafb1a52984174e12"
+    },
+    {
+      "label": "frontend-release-commands",
+      "record": "checks/frontend-release-commands-1791259463873.json",
+      "exitCode": 0,
+      "logSha256": "5f5ab92ac322612bbad51103fae22281322f5d29de403dda1cc882b213962785"
+    },
+    {
+      "label": "frontend-final-lint",
+      "record": "checks/frontend-final-lint-1791259120913.json",
+      "exitCode": 0,
+      "logSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "label": "frontend-verified-build",
+      "record": "checks/frontend-verified-build-1791259446128.json",
+      "exitCode": 0,
+      "logSha256": "a81f92d9f73399d57f094acd28b67d6c3844e87b8698947f6f4d041965923338"
+    },
+    {
+      "label": "frontend-verified-browser",
+      "record": "checks/frontend-verified-browser-1791259512537.json",
+      "exitCode": 0,
+      "logSha256": "a367442589adf383a1346cb7e52b756d23ce3b1c9734096853162379d56ca451"
+    }
+  ],
+  "contractFork": "rehearsal-only.json",
+  "browserCoverage": "Synthetic-wallet Oliver regression, including mobile layout and governance explanation; signing/sending refused. Governance UI disabled for production-style preactivation build.",
+  "stagingFailures": "Earlier CSS/browser failures came from missing staging PostCSS configuration and stale build cache; corrected complete configuration and clean build passed. Earlier public-font download failure required network permission. An intermediate clean build was stopped; its partial log is retained.",
+  "mainnetTransactions": 0,
+  "productionFrontendModified": false,
+  "pushed": false
+}

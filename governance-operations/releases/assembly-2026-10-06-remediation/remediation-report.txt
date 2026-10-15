@@ -1,0 +1,105 @@
+GOVERNANCE RELEASE — OCTOBER 6, 2026 REMEDIATION
+
+All three findings in the October 5 end-to-end audit are addressed locally.
+No contracts were deployed, no transactions broadcast, and no changes pushed.
+The production C:\obn-frontend checkout remains untouched.
+
+FRONTEND BASELINE GATE (October 6 follow-up)
+Update: step 1 is now complete in live-frontend-integration/. Use its candidate,
+integration-notes.txt and check-frontend-baseline.cjs for the next validation step.
+The baseline drift described below was resolved by a fresh source integration;
+Automated regression/build and synthetic-wallet browser validation of that candidate
+have now passed; see live-frontend-integration/validation-report.txt. Physical-wallet
+and final production configuration checks remain pending.
+
+The live release checkout has advanced to 6dcd7cf56c7d983bb3eb58759b12f10fddb0c430
+since this candidate's 1bef456f baseline. Newer claim handling and analytics must
+be preserved. All 33 overlay target preimages still match, but this does NOT make
+the old full staged frontend current. Do not deploy that staged folder as-is.
+Before integration run:
+node governance-operations/releases/assembly-2026-10-06-remediation/check-frontend-baseline.cjs
+The gate currently exits nonzero intentionally because the live HEAD changed.
+Start an isolated integration checkout from the latest live release revision,
+preserve/reconcile its working changes explicitly, and apply only the reviewed
+governance overlay. Do not overwrite unrelated files, dependency locks, secrets,
+environment configuration, or production-only assets from the old staging copy.
+Keep deferred auto-claim worker changes separate from the governance release.
+Confirm the actual production deployment revision at release time; local HEAD
+alone does not prove which revision Vercel currently serves. Review the resulting
+diff against that live baseline, run governance and existing wallet/claim regression
+tests plus the production build and device checks, then record new baseline hashes.
+Re-run the gate immediately before any separately authorized deployment. A changed
+baseline requires another comparison/test; do not merely edit hashes to clear it.
+
+1. Dependency guard
+The common release preflight now requires the reviewed staking implementation
+0x416dfFfDc4245a9f4C38f05d203AEcaC5E24908f AND its runtime hash
+0x5c626fa674f0c1c3a1e2f08f2a282c03ce70e9ed9a0d1ad2cd4cb3b241f0e596.
+The same preflight protects Safe file generation and the check command used before
+Timelock execution. A version string is not used as a substitute for code identity.
+Fork tests reject both a changed implementation slot and altered runtime at the
+reviewed address. Restoring the reviewed dependency passes, as does the complete
+permissionless execution/registration/voting rehearsal.
+
+2. Frontend error recovery
+The cycle hook exposes RPC errors, including partial multicall failures, and a
+retry that refreshes the cycle ID and the applicable summary. Its reads explicitly
+target the governance chain. Both voting pages show an unavailable/retry state
+instead of interpreting failure as no cycle. Phase 2 has a separate Retry ballot
+control that retries paginated membership, not merely vote totals; voting is
+disabled when that ballot query errors. Protocol Funds and registration also show
+cycle errors; withdrawal remains available. Tests cover ballot retry, cycle retry,
+failed cycle-ID reads, summary transport failures and partial summary failures.
+
+3. FAQ
+The main FAQ now explains Assembly registration before the snapshot, the 1 OBN
+minimum, square-root power, persistent registration, withdrawal after snapshots,
+both 30-day phases and fixed cycle allocations. The existing live wallet/trade
+behavior was preserved in the isolated integration candidate.
+
+Validation
+- 43 governance frontend tests passed.
+- 15 release-tooling tests and 2 Safe-export tests passed.
+- 2 fork tests passed: dependency rejection/restoration and full permissionless
+  Timelock upgrade/voting rehearsal. Local fork baseline: Base block 52,234,632.
+- Fresh read-only Base preflight and UUPS storage validation passed; see checks/.
+- Production-style frontend build/typecheck passed.
+- Changed governance runtime files pass lint. The FAQ has 16 pre-existing
+  react-hooks/static-components diagnostics because FAQItem is declared inside
+  its page component. These were not introduced or suppressed in source. FAQ copy
+  passes the other lint rules with that one rule excluded for the copy-only check.
+- No contract bytecode or compiler settings changed. The earlier full contract,
+  keeper and scale results remain historical evidence for those identical artifacts.
+
+Release evidence and instructions
+This directory's reviewed-manifest.json supersedes the October 4 manifest for the
+updated tooling. Comparing manifests shows only assembly_release.cjs changed among
+the 40 pinned files; two staking dependency pins were added. All implementation
+and proxy artifact hashes are identical. Earlier reports/manifests remain history.
+Use frontend-overlay/ and frontend-overlay-manifest.json for the current integration;
+require original file hashes to match before applying. Do not copy the full staged
+frontend over production. Source candidate remains in the October 5 release folder.
+
+Use the existing prepare_assembly_safe_files.cjs wrapper with THIS manifest and
+the actual deployed and verified Assembly proxy/V2 implementation addresses.
+It produces 01-schedule.safe.json, 02-execute-direct.json (not a Safe import), and
+an optional Safe execution alternative. No production candidate addresses exist yet.
+
+Before scheduling AND again before execution, from C:\obn\obn-project run:
+node scripts/governance/prepare_assembly_upgrade.cjs check ../governance-operations/releases/assembly-2026-10-06-remediation/reviewed-manifest.json
+For actual candidate checks, rerun prepare with the real addresses and the same
+reviewed operation salt into a new review output; compare the operation ID/calldata.
+Stop on dependency drift. Do not regenerate pins to bypass a failed check.
+
+The Safe schedules; the 24-hour delay starts when scheduling executes on-chain.
+Confirm the exact operation is ready/not cancelled/not executed and execution is
+still open. Any wallet may then submit its exact Timelock execution transaction.
+This is separate from the annual-cycle keeper; it requires no second Safe approval.
+
+BaseScan verification remains mandatory for AnnualGovernanceV2, the OliveAssembly
+implementation and its initialized proxy, followed by recognition of both proxy
+implementation links. Verify exact runtime, ownership, NFT collection and binding.
+Do not enable the public governance UI before those checks, real configuration and
+physical-wallet checks. Keep keeper production configuration/monitoring in place.
+Do not startAnnualCycle as part of deployment. The Safe opens voting at the intended
+annual date; both phases remain 30 days. Nothing in these fixes changes that policy.

@@ -1,0 +1,13 @@
+{
+  "label": "remediation-live-preflight",
+  "cwd": "C:/obn/obn-project",
+  "args": [
+    "scripts/governance/prepare_assembly_upgrade.cjs",
+    "check",
+    "../governance-operations/releases/assembly-2026-10-06-remediation/reviewed-manifest.json"
+  ],
+  "exitCode": 0,
+  "signal": null,
+  "log": "C:\\obn\\governance-operations\\releases\\assembly-2026-10-05-1791258615767\\checks\\remediation-live-preflight-1791263179124.log",
+  "sha256": "84f6378fe5066dd7684dfaf864c4b3663ec22b42637bb70440ea8782f1364c2d"
+}

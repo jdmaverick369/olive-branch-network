@@ -1,0 +1,12 @@
+{
+  "label": "final-audit-safe-export",
+  "cwd": "C:/obn/obn-project",
+  "args": [
+    "--test",
+    "test/AssemblySafeExportAudit.test.cjs"
+  ],
+  "exitCode": 1,
+  "signal": null,
+  "log": "C:\\obn\\governance-operations\\releases\\assembly-2026-10-05-1791258615767\\checks\\final-audit-safe-export-1791262531501.log",
+  "sha256": "88adc8a2ab242721033078744eaf3dbff5ee045bc016eb4555d7a335a7a9802f"
+}

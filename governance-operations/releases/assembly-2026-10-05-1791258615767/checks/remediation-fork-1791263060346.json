@@ -1,0 +1,19 @@
+{
+  "label": "remediation-fork",
+  "cwd": "C:/obn/obn-project",
+  "args": [
+    "node_modules/hardhat/internal/cli/cli.js",
+    "test",
+    "--no-compile",
+    "--network",
+    "hardhat",
+    "--config",
+    "hardhat.assembly-release-20261005.config.cjs",
+    "test/AssemblyDependencyGuardAudit.test.cjs",
+    "test/AssemblyPermissionlessReleaseAudit.test.cjs"
+  ],
+  "exitCode": 0,
+  "signal": null,
+  "log": "C:\\obn\\governance-operations\\releases\\assembly-2026-10-05-1791258615767\\checks\\remediation-fork-1791263060346.log",
+  "sha256": "90bedc3e9c2e1850745dd256a1f762089fffad7ba8da63bb8cadaa9770294c1e"
+}

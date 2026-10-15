@@ -1,0 +1,14 @@
+{
+  "status": "SAFE CALLDATA CHECKED; NOT SCHEDULED",
+  "operationId": "0x713c44b1ce424785831d08bcc50a5fe55e3e8888d75e181dcb30f1550c625c56",
+  "delaySeconds": 86400,
+  "openExecution": true,
+  "block": 52238447,
+  "cycle": "0",
+  "historicalPools": "11",
+  "activePools": 11,
+  "ballotSize": 11,
+  "ballotPreparationBatches": "1",
+  "assembly": "0xE1ba5a8bC457E60FC2377B1837a40FF85da1578c",
+  "governanceImplementation": "0x000a76f74b47498D6a9A593F9Cb7cfB71d975437"
+}

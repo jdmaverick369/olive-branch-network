@@ -1,0 +1,44 @@
+﻿October 6, 2026 - deployed, BaseScan verified and scheduled; awaiting Timelock delay.
+
+Base chain ID: 8453.
+OliveAssembly proxy: 0xE1ba5a8bC457E60FC2377B1837a40FF85da1578c
+OliveAssembly implementation: 0x754DbCc6Cea09a4C5C7De0622f52537D225a9445
+AnnualGovernanceV2 implementation: 0x000a76f74b47498D6a9A593F9Cb7cfB71d975437
+Existing governance proxy: 0x1135d5fEA8098b09b4ED3AFbfFDc7B248359D270
+
+All three creation transactions confirmed; see receipts.json.
+All three sources verified; Assembly proxy implementation linked on BaseScan.
+See verification.json and post-deployment-check.json.
+The unsent nonce-428 plan is superseded and retained only as historical evidence.
+Use plan.json and receipts.json for actual deployed addresses.
+
+COMPLETED USER ACTION (scheduling confirmed on-chain):
+Open the Base Safe 0x066e2FABb036deab7DC58bAde428F819AC3542DD.
+Import safe/01-schedule.safe.json in Transaction Builder and review/sign/execute.
+This schedules a Timelock batch containing ONLY:
+1. Upgrade existing governance proxy to AnnualGovernanceV2 and atomically
+   initialize NFT voting with the deployed Assembly proxy.
+2. Bind OliveAssembly to the existing governance proxy.
+
+Operation ID:
+0x713c44b1ce424785831d08bcc50a5fe55e3e8888d75e181dcb30f1550c625c56
+Minimum delay: 86400 seconds AFTER scheduling transaction executes on-chain.
+Safe calldata independently decoded and checked against live Timelock hash,
+roles, delay and deployed candidates at block 52238447.
+User scheduling confirmed at read block 52238701. Operation pending, not ready or done. Ready October 7, 2026 06:04:43 UTC / 1:04:43 AM CDT. See schedule-confirmation.json.
+
+After the delay, recheck readiness, permissions and pinned dependencies before
+submitting safe/02-execute-direct.json as a normal Timelock transaction.
+It is NOT a Safe import. Open EXECUTOR_ROLE allows any wallet to execute; no
+second Safe approval is required. The optional Safe execute file is an alternative.
+After execution, verify governance proxy implementation association on BaseScan
+and post-upgrade state before enabling the governance frontend.
+Do not start an annual voting cycle as part of this deployment.
+
+Existing governance proxy is still on the old implementation. No annual cycle,
+staking upgrade or governance frontend deployment was performed. The user executed the Safe scheduling transaction.
+Staged frontend now uses live baseline ddc000b (source-map-js security patch):
+../live-frontend-integration-security/
+167 tests and production webpack/TypeScript build passed on that candidate.
+Final production-configuration and physical-wallet checks remain.
+

@@ -1,0 +1,11 @@
+{
+  "operationId": "0x713c44b1ce424785831d08bcc50a5fe55e3e8888d75e181dcb30f1550c625c56",
+  "checkedBlock": 52238701,
+  "calldataMatches": true,
+  "timestamp": "1791353083",
+  "readyUTC": "2026-10-07T06:04:43.000Z",
+  "readyChicago": "Wednesday, October 7, 2026 at 1:04:43 AM CDT",
+  "pending": true,
+  "ready": false,
+  "done": false
+}

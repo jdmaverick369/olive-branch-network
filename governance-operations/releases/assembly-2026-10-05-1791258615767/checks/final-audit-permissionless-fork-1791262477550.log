@@ -1,0 +1,10 @@
+[dotenv@17.2.1] injecting env (29) from .env -- tip: 🛠️  run anywhere with `dotenvx run -- yourcommand`
+
+
+  Pinned governance release rehearsal 2026-10-05
+{"status":"PASSED - LOCAL FORK ONLY","forkBlock":52234632,"gas":{"deployAssemblyImplementation":"1816956","deployGovernanceImplementation":"4303142","deployInitializedAssemblyProxy":"229703","upgradeAndBind":"193819","register0":"238173","register1":"226323","start":"1253064"}}
+    √ deploys exact creation bytes locally, executes generated Timelock batch, and settles an NFT vote (13162ms)
+
+
+  1 passing (13s)
+

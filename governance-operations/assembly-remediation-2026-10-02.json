@@ -1,0 +1,367 @@
+{
+  "date": "2026-10-02",
+  "lastReviewed": "2026-10-03",
+  "followup": "assembly-review-followup-2026-10-03.json",
+  "timezone": "America/Chicago",
+  "decision": "Report fixes implemented and locally validated; no deployment authorized or performed.",
+  "supersedes": "assembly-security-review-2026-10-01.json",
+  "scope": "C:/obn test/integration source only; C:/obn-frontend remains unchanged. No git push, deployment, live transaction, Timelock scheduling or production configuration changes.",
+  "baseline": {
+    "productionCommit": "fbb16aea0bf7ce30ede39604a0aec1ec6129612d",
+    "identical": 177,
+    "different": [
+      ".env.example",
+      "package.json",
+      "src/app/governance/extend/page.tsx",
+      "src/app/governance/offering/page.tsx",
+      "src/app/profile/page.tsx",
+      "src/app/protocol-funds/page.tsx",
+      "src/components/NFTPrefetch.tsx",
+      "src/hooks/useDisplayedVotingPower.ts",
+      "src/hooks/useWalletTransaction.tsx",
+      "src/lib/contracts.ts",
+      "src/lib/getDisplayedVotingPower.ts",
+      "src/lib/governanceAbi.ts",
+      "src/lib/oliveAbi.ts",
+      "src/lib/ownedNfts.ts"
+    ],
+    "missing": []
+  },
+  "findings": {
+    "REL-01": {
+      "status": "fixed",
+      "details": "Merged latest production fbb16aea0bf7ce30ede39604a0aec1ec6129612d into the local test tree using three-way merges; preserved Oliver, current staking/card deposit flows, secured API code and Wagmi 2. No live checkout changes.",
+      "evidence": "frontend-baseline.json"
+    },
+    "REL-02": {
+      "status": "fixed",
+      "details": "New read-only V2 release tool validates layout, pinned source/artifacts, actual implementation full runtime, executable baseline, chain, Safe/Timelock roles, first-cycle state, collection, fund wiring, ballot approvals, candidate UUPS code/initializer locks and initialized proxy. Produces unsigned creation plans and matching Timelock schedule/execute payloads for upgradeToAndCall(initializeNFTVoting)+bindGovernance. Old allocation-only script fails with retirement notice. No live deployment, scheduling, upgrade or signing performed.",
+      "manifest": "assembly-release-manifest-2026-10-02.json",
+      "evidence": [
+        "live-preflight.log",
+        "fork-final.log",
+        "release-tools.log"
+      ]
+    },
+    "GOV-01": {
+      "status": "fixed",
+      "details": "Each voting phase is exactly 30 days (2592000 seconds), enforced on-chain. The Safe generator defaults to these durations and rejects alternatives. Phase 2 receives its full 30 days from actual Phase 1 execution, including delayed keeper execution."
+    },
+    "UI-01": {
+      "status": "fixed",
+      "details": "Vote reads and writes follow the selected MiniApp wallet. Writes require the selected signer and pass through the production transaction guard. Viewed-wallet changes invalidate pending operations."
+    },
+    "UI-02": {
+      "status": "fixed",
+      "details": "Registration/withdrawal use the shared transaction journal/guard and exact Registered/Withdrawn event matching for contract, depositor, token and recipient. Cancelled/replaced receipts cannot report custody success. All loading controls reset after outer failures."
+    },
+    "UI-03": {
+      "status": "fixed",
+      "details": "Failed or partial tallies are unavailable, not zero. Partial reads do not rank recipients. Final outcome comes from confirmed contract settlement state; legacy/unavailable data displays retry rather than inventing an outcome."
+    },
+    "UI-04": {
+      "status": "fixed",
+      "details": "Voting-power errors display Unavailable and retry independently of cycle state. Hook results are scoped to wallet/cycle and dependencies pass targeted lint."
+    },
+    "UI-05": {
+      "status": "fixed",
+      "details": "Protocol Funds explains fixed current allocations versus subsequent receipts and shows separate Offering/Extend allocation panels."
+    },
+    "UI-06": {
+      "status": "fixed",
+      "details": "withdrawExpected(expectedTokenId,recipient) rejects a stale intent atomically. The app always uses it; legacy withdrawal entry points remain ABI-compatible. Alternate recipient confirmation resets on wallet changes."
+    },
+    "SCALE-01": {
+      "status": "fixed with explicit capacity bounds",
+      "details": "Permissionless incremental pool indexing scans at most 100 historical IDs per call and retains at most 200 not-fully-removed pools. Starts auto-index up to 100 new IDs, validate every cached pool/charity live, and cap the ballot at 100 recipients. Stable compaction preserves the tie rule. Keeper can prepare the index while idle; no additional Safe/Timelock interaction is required. No NFT/registrant enumeration is used."
+    },
+    "DEP-01": {
+      "status": "remediated and isolated; low development-tool warnings remain",
+      "details": "Removed unused frames.js/Next/CSS tooling and the unused toolbox bundle. Kept Solidity 0.8.28 and OpenZeppelin contract sources 5.4.0; updated within Hardhat 2 and applied validated utility patches. Keeper has its own minimal pinned package and lockfile, read-only default, explicit execution flag, chain check and pinned CI actions.",
+      "keeperAudit": {
+        "info": 0,
+        "low": 0,
+        "moderate": 0,
+        "high": 0,
+        "critical": 0,
+        "total": 0
+      },
+      "toolingAudit": {
+        "info": 0,
+        "low": 17,
+        "moderate": 0,
+        "high": 0,
+        "critical": 0,
+        "total": 17
+      },
+      "residual": "17 low entries propagate from elliptic through the Hardhat 2 development stack. No fixed compatible elliptic version is available in that graph; not present in the isolated keeper or frontend. Do not describe the tooling as vulnerability-free."
+    }
+  },
+  "onchainData": {
+    "registeredCount": "OliveAssembly.registeredCount(): current deposited NFT/wallet count, O(1), distinct from stake-qualified voters. getPastRegisteredCount(block) remains available.",
+    "currentVoter": "AnnualGovernanceV2.getCurrentVoterInfo(address): registered token ID, aggregate current stake, current square-root VP and current eligibility. No snapshot/lock is implied; legacy wallets without checkpoints use a read-only stake summation.",
+    "cycleParticipation": "getCycleParticipation(cycle): registered-at-snapshot count, Phase 1 voter count, Phase 2 voter count, Phase 2 VP cast, recorded flag.",
+    "result": "getPhase2Result(cycle): settled winner, amount distributed, rollover, finalized and recorded flags. Legacy outcomes are explicitly marked unrecorded.",
+    "existing": "Snapshot block, deadlines/state, burn/give tallies, per-charity tallies, fixed allocations, per-wallet historical power/eligibility/voted flags, registration/withdrawal/vote/settlement events remain available.",
+    "UI": "Protocol Funds shows total registrations, selected wallet live stake/VP/eligibility, snapshot registration count and participation. Voting pages continue to show frozen snapshot power. Refreshes every 10 seconds for live stats; failed reads remain unavailable.",
+    "deliberatelyNotClaimed": "No aggregate current voting-power denominator or percentage of all eligible registrants is fabricated: deriving that exactly would require stake-update integration or an indexer. Participation counts are wallets, not unique humans."
+  },
+  "validation": {
+    "contractAndToolingTests": 148,
+    "keeperTests": 12,
+    "frontendSecurityTests": 88,
+    "frontendCommandTests": 28,
+    "frontendGovernanceTests": 37,
+    "localForkTests": 1,
+    "build": "passed with public Base addresses/RPC and a nonfunctional WalletConnect test ID; compilation is not a real-device wallet test",
+    "typeScript": "passed",
+    "targetedLint": "0 errors, 0 warnings",
+    "livePreflightBlock": 52103689,
+    "localForkBlock": 52103689,
+    "statuses": {
+      "contracts-final": {
+        "label": "contracts-final",
+        "exitCode": 0,
+        "signal": null
+      },
+      "release-tools": {
+        "label": "release-tools",
+        "exitCode": 0,
+        "signal": null
+      },
+      "frontend-governance": {
+        "label": "frontend-governance",
+        "exitCode": 0,
+        "signal": null
+      },
+      "frontend-security": {
+        "label": "frontend-security",
+        "exitCode": 0,
+        "signal": null
+      },
+      "frontend-commands": {
+        "label": "frontend-commands",
+        "exitCode": 0,
+        "signal": null
+      },
+      "frontend-typecheck": {
+        "label": "frontend-typecheck",
+        "exitCode": 0,
+        "signal": null
+      },
+      "frontend-lint": {
+        "label": "frontend-lint",
+        "exitCode": 0,
+        "signal": null
+      },
+      "frontend-build": {
+        "label": "frontend-build",
+        "exitCode": 0,
+        "signal": null
+      },
+      "keeper": {
+        "label": "keeper",
+        "exitCode": 0,
+        "signal": null
+      },
+      "fork-final": {
+        "label": "fork-final",
+        "exitCode": 0,
+        "signal": null
+      },
+      "keeper-live-dryrun": {
+        "label": "keeper-live-dryrun",
+        "exitCode": 0,
+        "signal": null
+      }
+    },
+    "contractSizeBytes": {
+      "AnnualGovernanceV2": 16923,
+      "OliveAssembly": 8040
+    },
+    "gas": {
+      "hundredNonprofitStart": 9379450,
+      "hundredNonprofitSettlement": 604554,
+      "twoHundredPoolsWithHundredNewIds": 11581718,
+      "compactionAndHundredNewIds": 10490235
+    },
+    "fork": "Actual Base state on local chain 31337: pinned live baseline, rejecting preflight for bad owner/bytecode, exact generated atomic Timelock payload, real delay, owner/binding, Safe start, 1 OBN, post-snapshot withdrawal, unchanged frozen voting power, GIVE and exact payout, new analytics. All impersonation and transactions local."
+  },
+  "releaseSteps": [
+    "Review and preserve assembly-release-manifest-2026-10-02.json with the exact source and lockfiles. Candidate changes remain local and uncommitted; no repository history or production checkout was changed.",
+    "From obn-project: node scripts/governance/prepare_assembly_upgrade.cjs check ../governance-operations/assembly-release-manifest-2026-10-02.json (read-only).",
+    "When deployment is separately authorized, deploy reviewed implementation bytecode and a fresh ERC1967 OliveAssembly proxy with collection and Timelock owner initialized atomically. deployment-plan emits unsigned creation bytes only.",
+    "After candidate addresses exist, use prepare with reviewed manifest, Assembly proxy, governance implementation, random 32-byte salt and output path. It rejects mismatches and emits both schedule and execute Safe JSON objects; no transaction is sent.",
+    "Re-run preflight immediately before signing and again after the Timelock delay. Verify upgrade/binding and new reads before enabling NEXT_PUBLIC_GOVERNANCE_ENABLED and configuring the Assembly proxy in the frontend.",
+    "Run real iOS/Android browser, Farcaster and Coinbase wallet signing/recovery checks, including alternate-recipient withdrawal. New governance contract paymaster coverage is not assumed."
+  ],
+  "limits": [
+    "148 tests and a fork rehearsal are not formal verification or a guarantee of no vulnerabilities.",
+    "Voting phases are exactly 30 days each. Annual accumulation/cadence, zero-vote burn/rollover and first-ballot tie rules remain unchanged.",
+    "Gas figures are measured scenarios, not a formal worst-case bound or a verification of current Base transaction gas limits.",
+    "200 active/non-fully-removed pools and 100 distinct nonprofits are explicit capacity limits. Expand only with a separately reviewed gas/design change.",
+    "Pool indexing relies on StakingPoolsV931 fully removed IDs never being restored; a future staking upgrade must preserve that invariant or migrate the index.",
+    "Historical unbootstrapped wallet stake reads still scan pool history; existing permissionless bootstrapCheckpoint can materialize their aggregate before history becomes very large.",
+    "Safe/Timelock/dependency upgrade trust, public pseudonymous addresses, NFT owner minting and multiple-wallet/Sybil economics remain as recorded in the original report.",
+    "Human device tests, actual Safe signatures, production deployment/configuration and independent external audit were not performed."
+  ],
+  "manifestSha256": "0278978f64ed12a5cd41078011119d1388ce26a88850dab64dbb6addf5ff5eb8",
+  "fileHashes": [
+    {
+      "file": "obn-project/contracts/AnnualGovernanceV2.sol",
+      "sha256": "b6ccc54e26757bbb7c02da3664b219f8dfc64343d732d8fae2c8629b98df04bd"
+    },
+    {
+      "file": "obn-project/contracts/OliveAssembly.sol",
+      "sha256": "29669161b85e85df0cb7f9ca9db9c182f9988a2a9ed7e7f386612c0f4629c5db"
+    },
+    {
+      "file": "obn-project/hardhat.config.js",
+      "sha256": "99de1c93ea0185b10f0e1cb9138a06ceecb6d7ed6b7a547b2e2155b7ba3fe5c3"
+    },
+    {
+      "file": "obn-project/package.json",
+      "sha256": "68b8772d709bba73adbbf1aa1fee1e15d19fcc5c17e9dc0a38821d3cf1703ed5"
+    },
+    {
+      "file": "obn-project/package-lock.json",
+      "sha256": "2a26a8b764fb6225638f2c80b104a91842f554c7a88a663784f7e8ecd62cd0f0"
+    },
+    {
+      "file": "obn-project/scripts/governance/assembly_release.cjs",
+      "sha256": "a4d74aa7eb64b369882b36079689e6eb67ecad8cabc090308e7656dc77201b1d"
+    },
+    {
+      "file": "obn-project/scripts/governance/prepare_assembly_upgrade.cjs",
+      "sha256": "4e53c2a610d91eefbff5fad31424d671b18aa9b7f68e5eb8029b6672ab116a3f"
+    },
+    {
+      "file": "obn-project/scripts/governance/check_assembly_readiness.cjs",
+      "sha256": "6b34cc281e2c7d409f4f9d0dbb58cf39e81ab57fbc8e9694cb18b4b5e1413d3a"
+    },
+    {
+      "file": "obn-project/scripts/governance/gen_safe_startAnnualCycle.js",
+      "sha256": "81f3a09e3ed93cafb8fd6f89a958e314652bbab0ff15a9bd67f629e97d28ed40"
+    },
+    {
+      "file": "obn-project/scripts/governance/prepare_annual_allocation_upgrade.js",
+      "sha256": "e4725998b01b7fb7ec8e556b16f2d97849f2e9a7bac89af6ce5d66e690255597"
+    },
+    {
+      "file": "obn-project/hardhat.nft-voting.config.cjs",
+      "sha256": "6acdb3343d823f8f9941f6966a67fe87308b9f936fb9026c5e6540c956ca6c7d"
+    },
+    {
+      "file": "obn-project/scripts/governance/addresses.js",
+      "sha256": "7e15090ed594d5e19c2311f9d2e1f31043cf897a7d5daa72b25ecc0ade082230"
+    },
+    {
+      "file": "obn-project/scripts/governance/timelock_safe_helper.js",
+      "sha256": "8fce8c82ecc7eb133d639e55096eab01ca236df51345539268ece9b1343b836e"
+    },
+    {
+      "file": "obn-project/keeper/execute.cjs",
+      "sha256": "19fb7017197067f7c69f113783e30ab0a3aec306e527cb3c0345adc1f0e9b764"
+    },
+    {
+      "file": "obn-project/keeper/package.json",
+      "sha256": "feeea981228bdb3094f59d4ff5f9b1a5d5ef0b824e4ad2bb160e6891b8496e1e"
+    },
+    {
+      "file": "obn-project/keeper/package-lock.json",
+      "sha256": "84b3ae501ec0b0aef74e0d3511db3adb7bf05fdbf94f1651114341b87d3c081c"
+    },
+    {
+      "file": "obn-project/keeper/execute.test.cjs",
+      "sha256": "2e669b8168450ece1780b1aba5a9d70b95e410f62eedcc1ffcfcf532e24a4cde"
+    },
+    {
+      "file": "obn-project/test/AssemblyAdversarialAudit.test.js",
+      "sha256": "03eadc2fe6e88b7170faa64c3a76d37820151e09ff6bfa5dfb601753a327ea8e"
+    },
+    {
+      "file": "obn-project/test/AssemblyReleaseTooling.test.cjs",
+      "sha256": "bad2082d1f6a0d7014756e88213680424149eccbd91aee717e44f888bedede95"
+    },
+    {
+      "file": ".github/workflows/execute_cycle.yml",
+      "sha256": "6ea84f235eb300c5996ddb3cc1de4b94ac218038a631c0454261ed067b095706"
+    },
+    {
+      "file": ".github/workflows/governance-upgrade.yml",
+      "sha256": "781c9d70f6a602998cbabf000e2e31cf5c19d4f413339d6d732d1467cfdf2d50"
+    },
+    {
+      "file": "obn-frontend/package.json",
+      "sha256": "6493ee6cfb4c8b14a4a346d9bbab4fb3b1eba27160d3f7ad29adab5b7f55688c"
+    },
+    {
+      "file": "obn-frontend/package-lock.json",
+      "sha256": "6c157ec5081c375bfaecf9526cc3bc97df00c6655654b5aed0803e1341b53ceb"
+    },
+    {
+      "file": "obn-frontend/src/components/GovernanceStats.tsx",
+      "sha256": "cb4588868149bf17fcabed7f577e294f102dac356f65d6afb8a7fb82fd5bb3a6"
+    },
+    {
+      "file": "obn-frontend/src/components/OliveGovernanceRegistration.tsx",
+      "sha256": "0ee5b30e81fd3d1320005fb6f09d779f963f29e40d41a8614c476efe49076219"
+    },
+    {
+      "file": "obn-frontend/src/components/CycleFundAllocation.tsx",
+      "sha256": "c04bc06426fae1265bbdf930b4e64a16592ab88db2f5b40f74d32d9d31cb4fa8"
+    },
+    {
+      "file": "obn-frontend/src/hooks/useDisplayedVotingPower.ts",
+      "sha256": "71f82c3083f62aef5fcf70d808e0c005cabf286cdeba2762079c6f6efd40ae98"
+    },
+    {
+      "file": "obn-frontend/src/hooks/useWalletTransaction.tsx",
+      "sha256": "94e2e538a0d50bc4cf1183304bc23068023dd9e62347051284878aa27a76a97f"
+    },
+    {
+      "file": "obn-frontend/src/lib/governanceAnalyticsAbi.ts",
+      "sha256": "c96a8d041128787036a9c01bfc06f17250398abafb033450fc3a1903b4880dbd"
+    },
+    {
+      "file": "obn-frontend/src/lib/confirmedAssemblyAction.ts",
+      "sha256": "20c89e9c98169d3054cb5dea0d9a5ff9f41bc630e2ea6a193dceb5a7368d1d3b"
+    },
+    {
+      "file": "obn-frontend/src/lib/oliveAssembly.ts",
+      "sha256": "bbb39cfc084bab3666b7acebe606d772428cd7ca7b95a53dae69b9ff23a0fb0a"
+    },
+    {
+      "file": "obn-frontend/src/app/governance/extend/page.tsx",
+      "sha256": "6b1e4224bae17ad56cc8d34409ac7d72a30daefd7397d31d1e9885b762b7c723"
+    },
+    {
+      "file": "obn-frontend/src/app/governance/offering/page.tsx",
+      "sha256": "45b380a16cdfbb151d209213156327f13a5a8296c0144a09940d2a1c4ee64863"
+    },
+    {
+      "file": "obn-frontend/src/app/protocol-funds/page.tsx",
+      "sha256": "80341ba5e845ecfe9b604325ff9e3c7eb2bf983d5c490079e34daeef97f665ad"
+    },
+    {
+      "file": "obn-frontend/src/app/profile/page.tsx",
+      "sha256": "4d1c6aa7398b513221e2a6c67a1f665985308fc0a963bad4a3bbb0fdb065a056"
+    },
+    {
+      "file": "obn-frontend/scripts/governance-analytics.test.cjs",
+      "sha256": "d33fc03b46ee2fbe2d51fa42b6834ef2ee85e403a9d7bd4c1f70e06fff30546c"
+    },
+    {
+      "file": "obn-frontend/scripts/governance-audit-20260930.test.cjs",
+      "sha256": "3a6d6c3b5de50e182d6af4fad6878e1bffe1ca75b7e51bbef7ae516dea6d0fb4"
+    },
+    {
+      "file": "obn-frontend/scripts/governance-withdrawal.test.cjs",
+      "sha256": "6b379eafcaa0dcca15caae8b735bc632650dfe242bd428f59efec59694aa222d"
+    },
+    {
+      "file": "obn-frontend/scripts/governance-voting.test.cjs",
+      "sha256": "2a09926b631a7fa84eee4c27c2a5351d595105ac73beb252dd4f6839e749e265"
+    }
+  ]
+}
