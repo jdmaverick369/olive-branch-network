@@ -59,7 +59,7 @@ This thesis defends three claims:
 
 ### 1.4 The protocol in one paragraph
 
-Olive Branch Network is an ERC-20 token (`OBN`) on Base with a staking system of per-nonprofit pools. A participant deposits OBN into the pool of a nonprofit they wish to support. The deposit is never spent, transferred to the nonprofit, or put at risk of loss to the protocol; it can be withdrawn at any time (except for explicitly locked bootstrap positions). While staked, the protocol mints time-based emissions against the stake and splits every realized reward four ways at claim time: **88% to the staker, 10% to the pool's nonprofit, 1% to the commons vault (`TheOffering`), and 1% to the distribution vault (`ExtendOliveBranch`).** The commons vault's fate — burn or give — is decided annually by a two-phase, stake-weighted vote (`AnnualGovernance`), whose second phase directs the distribution vault's accumulated balance to a community-chosen nonprofit. The design realizes the Charter's Article I: *"to make it possible for a person to preserve ownership of their assets while continuously directing a portion of the value those assets generate toward independently accountable public benefit"* (OBN Charter, Art. I).
+Olive Branch Network is an ERC-20 token (`OBN`) on Base with a staking system of per-nonprofit pools. A participant deposits OBN into the pool of a nonprofit they wish to support. The deposit is never spent, transferred to the nonprofit, or put at risk of loss to the protocol; it can be withdrawn at any time (except for explicitly locked bootstrap positions). While staked, the protocol mints time-based emissions against the stake and splits every realized reward four ways at claim time: **88% to the staker, 10% to the pool's nonprofit, 1% to the commons vault (`TheOffering`), and 1% to the distribution vault (`ExtendOliveBranch`).** The fate of the commons vault's allocation captured at cycle start — burn or give — is decided annually by a two-phase vote of wallets with a registered OliveNFT, weighted by the square root of snapshot stake (`AnnualGovernance`), whose second phase directs the distribution vault's fixed cycle allocation to a community-chosen nonprofit. The design realizes the Charter's Article I: *"to make it possible for a person to preserve ownership of their assets while continuously directing a portion of the value those assets generate toward independently accountable public benefit"* (OBN Charter, Art. I).
 
 ---
 
@@ -225,8 +225,8 @@ At every realization, `_mintSlices` divides the gross pending reward:
 
 - **88% → the staker.** The participant's yield. Newly minted, enters F (or is restaked).
 - **10% → the pool's nonprofit wallet.** The gift. Continuous, protocol-enforced, proportional to the participant's stake and time. This is the *Contribution* of Charter Article VII, and it costs the staker no principal — only a share of yield that would not exist without the protocol.
-- **1% → `TheOffering`** (the commons vault). Accumulates all year; each annual governance cycle votes to **burn** it (deflationary sink, reduces S) or **give** it (transfers to `ExtendOliveBranch`).
-- **1% → `ExtendOliveBranch`** (the distribution vault). Accumulates all year; each annual governance cycle's Phase 2 vote directs the entire balance to one community-chosen, whitelisted nonprofit (or rolls it over if no one votes).
+- **1% → `TheOffering`** (the commons vault). Accumulates all year; each annual governance cycle votes to **burn** the allocation captured at cycle start (deflationary sink, reduces S) or **give** it (transfers to `ExtendOliveBranch`).
+- **1% → `ExtendOliveBranch`** (the distribution vault). Accumulates all year; each annual governance cycle's Phase 2 vote directs that cycle's fixed allocation to one community-chosen, whitelisted nonprofit (or rolls it over if no one votes).
 
 Note that **no emission stream flows to a treasury**: the two residual slices both feed governance-controlled vaults. Until their annual disposition, both streams sit in vault escrow (G in §4.2) — outside the tradeable float.
 
@@ -239,7 +239,7 @@ Assemble the pieces. Let *n* be the number of active participants and *k̄* the 
 1. **Adoption tightens float.** Each new participant converts float tokens into escrowed principal: ΔF = −Δstake. With demand held constant, a shrinking tradeable float raises the market-clearing price — the standard supply–demand result, and the on-chain analogue of the "float shrink" long observed in proof-of-stake economies where high staking ratios reduce liquid supply.
 2. **Yield rewards patience, and 88% of yield can compound.** Stakers who restake their 88% share move newly minted tokens straight back into K, further tightening F.
 3. **The gift stream funds real-world legitimacy.** The 10% nonprofit stream gives external institutions a durable reason to promote participation, which recruits more participants — the only marketing channel that is itself a charitable act.
-4. **Governance can convert the commons into pure deflation.** A BURN outcome in Phase 1 destroys the accumulated commons stream, reducing S outright. Note the default is deliberately deflationary: *zero participation → BURN* (GIVE must *strictly* exceed BURN).
+4. **Governance can convert the commons into pure deflation.** A BURN outcome in Phase 1 destroys the commons allocation captured at cycle start, reducing S outright. Note the default is deliberately deflationary: *zero participation → BURN* (GIVE must *strictly* exceed BURN).
 5. **Voting eligibility requires participation at the snapshot.** V2 combines registered NFT status with at least 1 OBN of checkpointed aggregate stake, then applies square-root weighting. Governance supplies a reason to be staked before each cycle starts; it does not require remaining staked afterward or establish a continuous lock through the vote (§5.5).
 
 The loop: **more participants → more tokens locked → smaller float and larger cumulative burn option → improved price support → higher yield value and higher gift value per token → stronger recruitment → more participants.**
@@ -278,7 +278,7 @@ All contracts target Solidity ^0.8.28, build on OpenZeppelin v5, and are deploye
 
 **Security properties.** No pausability, no blacklist, no transfer tax: the token is maximally neutral. Burning is available to any holder via `ERC20Burnable` — the hook `TheOffering` uses to destroy the commons.
 
-### 5.2 `OBNStakingPools` — the engine (StakingPoolsV93.sol; version string "9.3")
+### 5.2 `OBNStakingPools` — the engine (StakingPoolsV931.sol; version string "9.3.1")
 
 The staking contract is the largest and most consequential contract in the system: it is the sole OBN minter, the custodian of all staked principal (K in §4.2), and the voting-power oracle for governance. It runs behind a UUPS proxy at a stable address.
 
@@ -293,9 +293,9 @@ The 88/10/1/1 split is `constant` — compiled into the bytecode, unchangeable w
 
 #### 5.2.2 Storage layout
 
-Slot-ordered and upgrade-critical (the contract documents its slot map; the trailing gap is `uint256[93]`):
+Slot-ordered and upgrade-critical (the contract documents its slot map; the trailing gap is `uint256[93]`; monthly auto-claim state sits outside this map in ERC-7201 namespaced storage at `obn.storage.MonthlyAutoClaim`):
 
-- **Config:** `stakingToken` (the OBN token as `IOBNMintable`), `treasury` (→ TheOffering), `charityFund` (→ ExtendOliveBranch), `version` (string, "9.3").
+- **Config:** `stakingToken` (the OBN token as `IOBNMintable`), `treasury` (→ TheOffering), `charityFund` (→ ExtendOliveBranch), `version` (string, "9.3.1").
 - **Emission schedule:** `Phase[] phases`, each `{start, end, bps}` in timestamps.
 - **Pools:** `PoolInfo[] poolInfo`, each `{charityWallet, totalStaked}` — one pool per nonprofit.
 - **User accounting:** `userAmount[pid][user]`, `userRewardDebt[pid][user]` — the accumulator/reward-debt pattern (§5.2.3).
@@ -321,7 +321,7 @@ The split into 88/10/1/1 happens only at realization inside `_mintSlices`, which
 - **`depositFor(pid, amount, beneficiary)`** — third-party funding of another address's stake (payroll-style giving, gifts of participation).
 - **`depositWithPermit(...)`** — single-transaction approve+stake via EIP-2612.
 - **`withdraw(pid, amount)`** — exit. Enforces `amount ≤ userAmount − lockedAmount` (the *unlocked* balance); updates all balances, checkpoints, and hooks (`_afterWithdrawBalanceHooks` clamps locks to the new balance, clears active-staker flags at zero, and on the last pool exit banks the session into `cumulativeStakeSeconds` and decrements `uniqueStakersGlobal`); transfers principal back; realizes pending rewards through the same 88/10/1/1 split. **No cooldown, no penalty, no fee** — Article III separability demands frictionless exit.
-- **`claim(pid)` / `claimFor(pid, user)` / `claimMultiple(pids)`** — realize rewards without touching principal. `claimFor` is permissionless but can only send rewards to their rightful owner (it mints *to `user`*, not to the caller); this enables keeper-automated compounding for nonprofits.
+- **`claim(pid)` / `claimFor(pid, user)` / `claimMultiple(pids)`** — realize rewards without touching principal. `claimFor` is owner-only (behind the timelock) and can only send rewards to their rightful owner (it mints *to `user`*, not to the caller). Scheduled claims use the separate, consent-based `autoClaimFor` path added in V9.3.1 (Whitepaper §3.2.1); that path does not compound rewards.
 - **View suite:** `pendingRewards`, `getPoolInfo`, `getUserStakeValue`, `unlockedBalance`, `poolLength`, `isGloballyStaked`, `stakeElapsed`, `currentRewardsPerSecond` (heavier analytics live in the Lens — §5.9).
 
 #### 5.2.5 Charity-fund bootstrap and the self-stake freeze
@@ -340,7 +340,7 @@ The split into 88/10/1/1 happens only at realization inside `_mintSlices`, which
 - **`addPhase(start, end, bps)`** — append emission phases; must be contiguous with the last. This is also governance's lever over the 3% fallback rate.
 - **`forceExitUserToSelf(pid, user, claimRewards)`** — emergency: return a user's entire principal *to the user themselves* (never to the admin), optionally realizing rewards, ignoring locks. The admin cannot confiscate; it can only force-return.
 - **`sweep(token, amount)`** — recover stray ERC-20s to the `treasury` address, **explicitly excluding the staking token** ("Cannot sweep staking token") so admin can never touch K.
-- **`migrateV93(newTreasury, newCharityFund, newOperator)`** — the one-time wiring function, executed atomically with the implementation deployment via `upgradeToAndCall` through the timelock. It set `treasury` → TheOffering, `charityFund` → ExtendOliveBranch, and `charityFundOperator` → the operations Safe; recorded `upgradeBlock` as the genesis anchor for voting-power checkpoints; and permanently disabled itself (`_migrationExecuted`).
+- **`migrateV93(newTreasury, newCharityFund, newOperator)`** — the one-time wiring function, executed atomically with the implementation deployment via `upgradeToAndCall` through the timelock. It set `treasury` → TheOffering, `charityFund` → ExtendOliveBranch, and `charityFundOperator` → the operations Safe; recorded `upgradeBlock` as the genesis anchor for voting-power checkpoints; and permanently disabled itself (`_migrationExecuted`). The V9.3.1 upgrade added `initializeV931(executor)`, a separate one-time reinitializer that set `version` to "9.3.1" and the auto-claim executor; `setAutoClaimExecutor(executor)` can later change that executor, and the zero address pauses automation.
 - **`upgradeTo(newImpl, data)` / `setVersion`** — UUPS upgrade path compatible with timelock scheduling.
 
 #### 5.2.7 Checkpointed voting power
@@ -604,7 +604,7 @@ The deepest claim of this thesis is the simplest: generosity should not require 
 ### Protocol sources
 
 - OBN Whitepaper — [WHITEPAPER.md](../WHITEPAPER.md)
-- Core contracts — [`obn-project/contracts/`](../obn-project/contracts/): `OBNToken.sol`, `StakingPoolsV93.sol`, `TheOffering.sol`, `ExtendOliveBranch.sol`, `AnnualGovernanceV2.sol`, `OliveAssembly.sol`, `OBNTimeLock.sol`, `TeamVesting.sol`, `OliveNFT.sol`, `OBNStakingLens.sol`
+- Core contracts — [`obn-project/contracts/`](../obn-project/contracts/): `OBNToken.sol`, `StakingPoolsV931.sol`, `MonthlyAutoClaimUpgradeable.sol`, `TheOffering.sol`, `ExtendOliveBranch.sol`, `AnnualGovernanceV2.sol`, `OliveAssembly.sol`, `OBNTimeLock.sol`, `TeamVesting.sol`, `OliveNFT.sol`, `OBNStakingLens.sol`
 - OBN Charter v0.1 and *The Philosophy of Olive Branch Network* — protocol governance documents
 
 ---

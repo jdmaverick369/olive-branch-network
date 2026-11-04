@@ -168,8 +168,8 @@ Autoclaim preferences are attached to staking addresses and kept separate from a
 **Charity mechanics:**
 
 - 10% of rewards is minted per user action (claim, deposit, withdraw) directly to that pool's charityWallet
-- 1% accrues continuously to ExtendOliveBranch; community votes each cycle which approved nonprofit receives the accumulated balance
-- 1% accrues continuously to TheOffering; community votes each cycle to burn the balance or donate it to ExtendOliveBranch
+- 1% accrues continuously to ExtendOliveBranch; community votes each cycle which approved nonprofit receives that cycle's fixed allocation
+- 1% accrues continuously to TheOffering; community votes each cycle to burn the allocation fixed at cycle start or donate it to ExtendOliveBranch
 - No global TVL buffer; splits happen per-action for atomic execution
 
 #### 3.2.2 Pool Lifecycle Management
@@ -634,7 +634,6 @@ OBN should publish periodic public reports covering:
 - pool additions, removals, or migrations
 - direct charity distributions
 - TheOffering and ExtendOliveBranch balances, accumulation, and usage by cycle
-- TheOffering and ExtendOliveBranch balances and usage
 - Proof-of-Contribution metrics
 
 ---
