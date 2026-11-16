@@ -378,7 +378,7 @@ OBN 使用累积器/奖励债务方案,并有一个决定性的变化:**累积�
 
 ### 5.5 `AnnualGovernanceV2` — 年度治理 (AnnualGovernanceV2.sol)
 
-本节描述 AnnualGovernanceV2,这是自 2026 年 10 月 7 日(Base 区块 52283807)升级以来位于现有 AnnualGovernance 代理之后的上线实现。历史审计报告描述的是早期实现,并非当前的部署规范。
+本节描述 AnnualGovernanceV2,这是自 2026 年 10 月 7 日(Base 区块 52283807)升级以来位于现有 AnnualGovernance 代理之后的上线实现。上线合约尚未经过第三方安全审计;团队此前在 `governance-operations` 中自行开展的审查针对的是早期版本,而非当前上线的部署。
 
 #### 5.5.1 社区决定什么
 

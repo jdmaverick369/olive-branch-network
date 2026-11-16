@@ -378,7 +378,7 @@ Quản trị: `setApprovedNonprofit(addr, bool)`, `setGovernance(addr)`, `emerge
 
 ### 5.5 `AnnualGovernanceV2` — quản trị hằng năm (AnnualGovernanceV2.sol)
 
-Mục này mô tả AnnualGovernanceV2, bản triển khai đang hoạt động phía sau proxy AnnualGovernance hiện có kể từ đợt nâng cấp ngày 7 tháng 10 năm 2026 (khối Base 52283807). Các báo cáo kiểm toán lịch sử mô tả những bản triển khai trước đó và không phải là đặc tả triển khai hiện tại.
+Mục này mô tả AnnualGovernanceV2, bản triển khai đang hoạt động phía sau proxy AnnualGovernance hiện có kể từ đợt nâng cấp ngày 7 tháng 10 năm 2026 (khối Base 52283807). Các hợp đồng đang hoạt động chưa được bên thứ ba kiểm toán bảo mật; các đợt rà soát trước đây của chính nhóm trong `governance-operations` mô tả các phiên bản trước, không phải bản triển khai đang hoạt động.
 
 #### 5.5.1 Cộng đồng quyết định điều gì
 

@@ -378,7 +378,7 @@ Admin: `setApprovedNonprofit(addr, bool)`, `setGovernance(addr)`, `emergencySwee
 
 ### 5.5 `AnnualGovernanceV2` — tata kelola tahunan (AnnualGovernanceV2.sol)
 
-Bagian ini menjelaskan AnnualGovernanceV2, implementasi aktif di balik proxy AnnualGovernance yang ada sejak peningkatannya pada 7 Oktober 2026 (blok Base 52283807). Laporan audit historis menjelaskan implementasi sebelumnya dan bukan spesifikasi deployment saat ini.
+Bagian ini menjelaskan AnnualGovernanceV2, implementasi aktif di balik proxy AnnualGovernance yang ada sejak peningkatannya pada 7 Oktober 2026 (blok Base 52283807). Kontrak yang aktif belum menjalani audit keamanan oleh pihak ketiga; tinjauan tim sendiri sebelumnya di `governance-operations` menjelaskan versi sebelumnya, bukan deployment yang aktif.
 
 #### 5.5.1 Apa yang diputuskan komunitas
 

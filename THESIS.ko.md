@@ -378,7 +378,7 @@ OBN은 결정적 변형이 있는 누산기/보상 부채 방식을 사용합니
 
 ### 5.5 `AnnualGovernanceV2` — 연간 거버넌스 (AnnualGovernanceV2.sol)
 
-이 절은 2026년 10월 7일(Base 블록 52283807) 업그레이드 이후 기존 AnnualGovernance 프록시 뒤에서 운영 중인 구현인 AnnualGovernanceV2를 설명합니다. 과거 감사 보고서는 이전 구현을 설명하며 현재 배포 사양이 아닙니다.
+이 절은 2026년 10월 7일(Base 블록 52283807) 업그레이드 이후 기존 AnnualGovernance 프록시 뒤에서 운영 중인 구현인 AnnualGovernanceV2를 설명합니다. 운영 중인 컨트랙트는 제3자 보안 감사를 받지 않았습니다. `governance-operations`에 있는 팀 자체의 이전 검토는 이전 버전을 다루며 운영 중인 배포를 설명하지 않습니다.
 
 #### 5.5.1 커뮤니티가 결정하는 것
 

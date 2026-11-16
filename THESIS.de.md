@@ -378,7 +378,7 @@ Admin: `setApprovedNonprofit(addr, bool)`, `setGovernance(addr)`, `emergencySwee
 
 ### 5.5 `AnnualGovernanceV2` — jährliche Governance (AnnualGovernanceV2.sol)
 
-Dieser Abschnitt beschreibt AnnualGovernanceV2, die Live-Implementierung hinter dem bestehenden AnnualGovernance-Proxy seit dem Upgrade am 7. Oktober 2026 (Base-Block 52283807). Historische Auditberichte beschreiben frühere Implementierungen und sind nicht die aktuelle Bereitstellungsspezifikation.
+Dieser Abschnitt beschreibt AnnualGovernanceV2, die Live-Implementierung hinter dem bestehenden AnnualGovernance-Proxy seit dem Upgrade am 7. Oktober 2026 (Base-Block 52283807). Die Live-Verträge wurden keinem Sicherheitsaudit durch Dritte unterzogen; die früheren eigenen Prüfungen des Teams in `governance-operations` beschreiben frühere Versionen, nicht die Live-Bereitstellung.
 
 #### 5.5.1 Was die Community entscheidet
 

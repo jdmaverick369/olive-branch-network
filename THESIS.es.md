@@ -378,7 +378,7 @@ Administración: `setApprovedNonprofit(addr, bool)`, `setGovernance(addr)`, `eme
 
 ### 5.5 `AnnualGovernanceV2` — gobernanza anual (AnnualGovernanceV2.sol)
 
-Esta sección describe AnnualGovernanceV2, la implementación activa detrás del proxy AnnualGovernance existente desde su actualización del 7 de octubre de 2026 (bloque 52283807 de Base). Los informes históricos de auditoría describen implementaciones anteriores y no son la especificación de despliegue actual.
+Esta sección describe AnnualGovernanceV2, la implementación activa detrás del proxy AnnualGovernance existente desde su actualización del 7 de octubre de 2026 (bloque 52283807 de Base). Los contratos activos no han tenido una auditoría de seguridad de terceros; las revisiones anteriores del propio equipo en `governance-operations` describen versiones anteriores, no el despliegue activo.
 
 #### 5.5.1 Qué decide la comunidad
 
