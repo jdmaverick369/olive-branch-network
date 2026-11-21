@@ -1,0 +1,12 @@
+{
+  "timestamp": "2026-11-21T04:06:57.309Z",
+  "network": "base",
+  "token": "0x07e5efCD1B5fAE3f461bf913BBEE03a10A20C685",
+  "burner": "0x64C9c9cEDc94e58EA9C98f92DAF65F19383C5118",
+  "amount": "3253496",
+  "amountWei": "3253496000000000000000000",
+  "txHash": "0x926cecb323a94e6186c6dd3b903017602e47dacc8f7b826db3ffebd730d8da23",
+  "blockNumber": 60218204,
+  "balanceAfter": "461.06308547784",
+  "totalSupplyAfter": "1000000000.676797860665234964"
+}
