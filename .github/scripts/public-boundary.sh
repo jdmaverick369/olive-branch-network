@@ -12,7 +12,7 @@ fi
 forbidden='^obn-frontend/'                                    # private application
 forbidden+='|(^|/)keeper/'                                     # keeper implementation
 forbidden+='|(^|/)\.env($|\.)'                                 # environment files, including examples
-forbidden+='|^\.archive/[^/]+\.(cjs|mjs)$'                     # internal release scripts
+forbidden+='|^\.archive/(frontend|governance/assembly-release-tooling)/'  # private frontend evidence and internal release scripts
 forbidden+='|(^|/)(frontend-candidate|frontend-overlay|live-frontend-integration[^/]*|private-local-integration-[^/]*)/'  # frontend copies in release evidence
 
 violations=$(printf '%s\n' "$files" | grep -E "$forbidden" || true)
