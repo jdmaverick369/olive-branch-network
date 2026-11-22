@@ -10,7 +10,7 @@ The live Timelock had open execution enabled, allowing the configured deployment
 wallet to execute the exact previously scheduled operation without another Safe
 signature round. The preflight, candidate bytecode/storage checks, operation-ID
 comparison, and read-only execution simulation passed before submission.
-See [execution record](../../governance-operations/2026-09-23-annual-fixed-allocation-execution-record.json).
+See [execution record](../../2026-09-23-annual-fixed-allocation-execution-record.json).
 The scheduling instructions below are retained as historical documentation.
 
 ## Verified deployment

@@ -4,7 +4,7 @@ Full lifecycle for an annual governance cycle: from starting the cycle through b
 phases of voting to final execution. The first cycle is planned for **9 September 2027**.
 
 The fixed-allocation behavior below is live following the
-[Phase 2 allocation upgrade](annual_allocation_upgrade_runbook.md), executed on
+[Phase 2 allocation upgrade](../releases/2026-09-23-annual-allocation/2026-09-23-annual_allocation_upgrade_runbook.md), executed on
 23 September 2026. The proxy address is unchanged; use it for all governance calls.
 
 ---

@@ -14,7 +14,7 @@ not the current proxy status.
 
 Current references:
 
-- [Confirmed execution record](../../governance-operations/2026-09-23-annual-fixed-allocation-execution-record.json)
-- [Allocation behavior and upgrade reference](../../governance-operations/annual_allocation_upgrade_runbook.md)
-- [Security review](../../governance-operations/annual_allocation_security_review.md)
-- [Ongoing annual governance runbook](../../governance-operations/annual_governance_runbook.md)
+- [Confirmed execution record](../../2026-09-23-annual-fixed-allocation-execution-record.json)
+- [Allocation behavior and upgrade reference](2026-09-23-annual_allocation_upgrade_runbook.md)
+- [Security review](2026-09-21-annual_allocation_security_review.md)
+- [Ongoing annual governance runbook](../../runbooks/annual_governance_runbook.md)

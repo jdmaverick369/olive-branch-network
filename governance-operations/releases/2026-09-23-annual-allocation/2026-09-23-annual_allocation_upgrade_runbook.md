@@ -3,8 +3,8 @@
 Status (23 September 2026): upgrade executed and verified on Base at block 51703926.
 The proxy now uses implementation `0xA6F3A7988ca98313e8aE5401b29CdEb830Fdd6B3`.
 The Timelock operation is complete; owner, voteAdmin, and cycle ID were preserved.
-See [execution record](2026-09-23-annual-fixed-allocation-execution-record.json).
-See [archived deployment and scheduling instructions](../.archive/annual-governance-2026-09/2026-09-21-annual-fixed-allocation.md).
+See [execution record](../../2026-09-23-annual-fixed-allocation-execution-record.json).
+See [archived deployment and scheduling instructions](2026-09-21-annual-fixed-allocation.md).
 
 ## Resulting behavior
 
@@ -94,9 +94,9 @@ to reduce wealth-based influence are deferred to a separate governance design.
 Commit only these files for the annual-governance release:
 
 ```text
-governance-operations/annual_governance_runbook.md
-governance-operations/annual_allocation_upgrade_runbook.md
-governance-operations/annual_allocation_security_review.md
+governance-operations/runbooks/annual_governance_runbook.md
+governance-operations/releases/2026-09-23-annual-allocation/2026-09-23-annual_allocation_upgrade_runbook.md
+governance-operations/releases/2026-09-23-annual-allocation/2026-09-21-annual_allocation_security_review.md
 obn-frontend/src/app/governance/extend/page.tsx
 obn-frontend/src/hooks/useGovernanceCycle.ts
 obn-frontend/src/lib/governanceAbi.ts

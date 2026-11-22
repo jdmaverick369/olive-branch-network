@@ -7,7 +7,7 @@
 // stake, use gen_safe_migrateBootstrap.js instead, which moves the stake, lock,
 // and reward debt to the new wallet AND updates the charity wallet, atomically.
 // This script checks userAmount(pid, currentWallet) on-chain and refuses to run
-// if the pool is already bootstrapped — see charity_wallet_runbook.md.
+// if the pool is already bootstrapped — see governance-operations/runbooks/charity_wallet_runbook.md.
 //
 // When to use which:
 //   updateCharityWallet  — pool not yet bootstrapped; nothing to migrate

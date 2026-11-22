@@ -4,7 +4,7 @@ This review covers the current governance upgrade, its NFT custody contract, sup
 
 The production frontend remains `C:\obn-frontend`, at local commit `12eaa21`. The integration copy is `C:\obn\obn-frontend`; the latest tracked source updates are synchronized there with the pending governance work preserved. Both copies have identical package locks. This review did not change production contracts or application source, install or upgrade dependencies, update the release checkout, deploy, schedule, push, or submit a transaction on a live network. Added files are audit reports, evidence and isolated tests.
 
-This report supersedes the open-findings status in `assembly_deployment_readiness_2026-09-30.md`. The earlier wrong cached nonprofit choice, VP/USD total and voting-page lint findings were fixed before this review and their regression tests pass. The findings below are distinct.
+This report supersedes the open-findings status in `2026-09-30-assembly_deployment_readiness.md`. The earlier wrong cached nonprofit choice, VP/USD total and voting-page lint findings were fixed before this review and their regression tests pass. The findings below are distinct.
 
 ## Critical dependency advisories require remediation
 
@@ -12,7 +12,7 @@ This report supersedes the open-findings status in `assembly_deployment_readines
 
 The application uses Next Image optimization, permits IPFS image gateways, and configures AVIF in `next.config.ts:64`. The image advisory is therefore relevant to this application's configuration. Windows-specific applicability depends on where the server actually runs; a Windows development checkout does not prove production is Windows-hosted. Managed hosting may use a separately maintained optimizer. **No exploit was attempted against the application, and the deployed hosting runtime or provider mitigations were not verified.** The finding is a confirmed vulnerable dependency range and release blocker, not a demonstrated compromise of the live site.
 
-The production-dependency audit (`npm audit --omit=dev --json`) reported **44 vulnerable dependency entries: 1 critical, 9 high, 34 moderate**. These include transitive dependencies and propagated severity; they are not 44 distinct proven application exploits. The complete machine-readable result is `assembly_dependency_audit_2026-09-30.json`. Other flagged paths include axios, sharp, ws and wallet SDK dependencies. Their reachability needs triage; blindly accepting major-version replacements or suggested downgrades is inappropriate.
+The production-dependency audit (`npm audit --omit=dev --json`) reported **44 vulnerable dependency entries: 1 critical, 9 high, 34 moderate**. These include transitive dependencies and propagated severity; they are not 44 distinct proven application exploits. The complete machine-readable result is `2026-09-30-assembly_dependency_audit.json`. Other flagged paths include axios, sharp, ws and wallet SDK dependencies. Their reachability needs triage; blindly accepting major-version replacements or suggested downgrades is inappropriate.
 
 Priority: update Next.js and the relevant image-processing dependency to supported patched versions, assess the other advisories against the actual runtime, and repeat package, application and wallet regression checks. Testing the existing version successfully does not resolve a published vulnerability. Coordinate remediation in the authoritative live checkout through the normal release process; this review has not changed it.
 
@@ -113,7 +113,7 @@ The existing local tests and fork rehearsal support the contract design, but the
 - `obn-project/test/AssemblyModelAudit.test.js`
 - `obn-project/test/AssemblyAdversarialAudit.test.js`
 - `obn-frontend/scripts/governance-audit-20260930.test.cjs`
-- `governance-operations/assembly_dependency_audit_2026-09-30.json`
-- `governance-operations/assembly_audit_manifest_2026-09-30.json`
+- `governance-operations/releases/2026-09-29-assembly-reviews/2026-09-30-assembly_dependency_audit.json`
+- `governance-operations/releases/2026-09-29-assembly-reviews/2026-09-30-assembly_audit_manifest.json`
 
 Run contract audit files with `hardhat.nft-voting.config.cjs` only. Run the frontend reproduction file with `node --test`; it asserts the current faulty behavior and should not be confused with a release acceptance suite.

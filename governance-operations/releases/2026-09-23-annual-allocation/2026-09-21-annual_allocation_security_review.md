@@ -50,7 +50,7 @@ balance and requires replenishment. Tests cover partial and total depletion,
 atomic failure, replenishment, and retry. A Phase 2 shortfall also delays completion
 and therefore further upgrades/cycles. There is deliberately no allocation-editing
 or cancellation bypass after Phase 1. See the
-[upgrade runbook](annual_allocation_upgrade_runbook.md) for recovery details.
+[upgrade runbook](2026-09-23-annual_allocation_upgrade_runbook.md) for recovery details.
 
 ## Validation results
 

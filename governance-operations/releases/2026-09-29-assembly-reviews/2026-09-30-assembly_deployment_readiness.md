@@ -91,7 +91,7 @@ node node_modules/hardhat/internal/cli/cli.js test --config hardhat.nft-voting.c
 node node_modules/hardhat/internal/cli/cli.js test --config hardhat.assembly-fork.config.cjs test/AssemblyDeploymentRehearsal.test.js
 ```
 
-> Note (2026-10-14): `hardhat.assembly-fork.config.cjs` was superseded by `hardhat.assembly-release-20261005.config.cjs` and moved to `.archive/governance-superseded-20261014/obn-project/`.
+> Note (2026-10-14): `hardhat.assembly-fork.config.cjs` was superseded by `hardhat.assembly-release-20261005.config.cjs` and moved to `governance-operations/releases/2026-10-14-superseded-release-tooling/obn-project/`.
 
 The first command permits only read RPC methods and uses no wallet/secret configuration. The last command is an in-process fork at block 52,015,686, with no live network definitions. The fork test is skipped under the ordinary non-fork config.
 

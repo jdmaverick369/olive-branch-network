@@ -1,6 +1,6 @@
 # NFT registration and square-root annual governance
 
-Current release addendum (2026-10-06): use [the remediation release](releases/assembly-2026-10-06-remediation/remediation-report.txt) and its `reviewed-manifest.json` for preparation and pre-execution checks. It pins the staking implementation address and runtime hash, adds frontend RPC recovery, and corrects the FAQ. Earlier manifests are historical and must not be used with the updated tooling. The Safe schedules the upgrade; open Timelock execution permits anyone to execute the exact operation after 24 hours. BaseScan verification remains required.
+Current release addendum (2026-10-06): use [the remediation release](../../governance-operations/releases/2026-10-06-assembly-remediation/remediation-report.txt) and its `reviewed-manifest.json` for preparation and pre-execution checks. It pins the staking implementation address and runtime hash, adds frontend RPC recovery, and corrects the FAQ. Earlier manifests are historical and must not be used with the updated tooling. The Safe schedules the upgrade; open Timelock execution permits anyone to execute the exact operation after 24 hours. BaseScan verification remains required.
 
 Status: local implementation and validation only, hardened 2026-09-30. No mainnet or testnet contracts have been deployed, no Timelock operation has been scheduled, and no production frontend configuration has been enabled by this work. This is a revision of the undeployed draft, not a migration path for an older deployed vault with existing deposits.
 
@@ -74,7 +74,7 @@ Registration is absent unless `NEXT_PUBLIC_OLIVE_GOVERNANCE_VAULT` contains a va
 
 ## Local validation
 
-The [2026-09-30 deployment readiness review](assembly_deployment_readiness_2026-09-30.md) adds a successful pinned Base fork rehearsal and production test build, and records outstanding frontend defects, expanded lint failures and release preparation. The release checkout is `C:\obn-frontend`; it remains unchanged and still needs the reviewed integration before release. Do not deploy or publish the reference/test frontend from this repository.
+The [2026-09-30 deployment readiness review](../../governance-operations/releases/2026-09-29-assembly-reviews/2026-09-30-assembly_deployment_readiness.md) adds a successful pinned Base fork rehearsal and production test build, and records outstanding frontend defects, expanded lint failures and release preparation. The release checkout is `C:\obn-frontend`; it remains unchanged and still needs the reviewed integration before release. Do not deploy or publish the reference/test frontend from this repository.
 
 The isolated config below removes live networks and fork settings. Tests deploy only to Hardhat's in-process local chain.
 

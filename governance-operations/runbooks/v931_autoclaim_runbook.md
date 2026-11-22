@@ -1,6 +1,6 @@
 # Sponsored monthly autoclaim — V9.3.1
 
-This runbook defines wallet consent, claim execution, sponsorship, and operator recovery. Transaction history and activation status are maintained in the [release record](2026-09-24-staking-v931-autoclaim-record.json).
+This runbook defines wallet consent, claim execution, sponsorship, and operator recovery. Transaction history and activation status are maintained in the [release record](../2026-09-24-staking-v931-autoclaim-record.json).
 
 - Staking proxy: `0x2C4Bd5B2a48a76f288d7F2DB23aFD3a03b9E7cD2`.
 - Implementation: [`0x416dfFfDc4245a9f4C38f05d203AEcaC5E24908f`](https://basescan.org/address/0x416dfFfDc4245a9f4C38f05d203AEcaC5E24908f#code).
@@ -104,7 +104,7 @@ $env:ACTION = 'execute'
 npx.cmd hardhat run scripts/governance/prepare_v931_upgrade.js --network base
 ```
 
-> Note (2026-10-14): the V9.3.1 upgrade has executed (`version() == "9.3.1"`). `prepare_v931_upgrade.js` was moved to `.archive/governance-superseded-20261014/obn-project/scripts/governance/`; run it from there only to reproduce this record.
+> Note (2026-10-14): the V9.3.1 upgrade has executed (`version() == "9.3.1"`). `prepare_v931_upgrade.js` was moved to `governance-operations/releases/2026-10-14-superseded-release-tooling/obn-project/scripts/governance/`; run it from there only to reproduce this record.
 
 The generator checks the existing implementation, owner, candidate bytecode,
 storage compatibility, readiness, and operation ID. It writes unsigned Safe JSON;
@@ -227,7 +227,7 @@ The same Base Sepolia pilot proxy processed all pools 0 through 31 for a new
 test staker in one successful CDP UserOperation. The EntryPoint event confirmed
 paymaster 0x709A4bae3DB73a8E717AEfca13E88512f738b27f and 5,557,453 actual gas used.
 Transaction: https://sepolia.basescan.org/tx/0x5d734dac4b305b484e0ed4145ddb204f083d408a95636bb62a18a1b003db7d28
-Receipt evidence: governance-operations/autoclaim-sepolia-max-results.json in the
+Receipt evidence: governance-operations/releases/2026-09-25-v931-autoclaim/2026-09-24-autoclaim-sepolia-max-results.json in the
 contracts repository. Duplicate and post-opt-out eth_call checks also passed.
 This proves sponsorship for the tested state, not a worst-case gas guarantee.
 

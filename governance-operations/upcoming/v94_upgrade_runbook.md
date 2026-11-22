@@ -1,6 +1,6 @@
 # OBN — v9.4 Upgrade: Community-Funded Pool Seeding (Seed contract)
 
-Release order: deploy [V9.3.1 monthly autoclaim](v931_autoclaim_runbook.md) first.
+Release order: deploy [V9.3.1 monthly autoclaim](../runbooks/v931_autoclaim_runbook.md) first.
 V9.4 must preserve `MonthlyAutoClaimUpgradeable` and its ERC-7201 namespace,
 including the configured executor, user consent and monthly claim records.
 Run `MonthlyAutoClaim.test.js` before V9.4 release to validate V9.3.1-to-V9.4

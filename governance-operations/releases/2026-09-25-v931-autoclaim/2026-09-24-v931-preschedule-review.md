@@ -58,6 +58,6 @@ The existing scheduling file is ready to schedule based on this evidence. Before
 execution, recheck the operation and live baseline. Keep automation disabled until
 the upgrade is confirmed and the controlled mainnet sponsored pilot passes.
 
-Evidence: `v931-preschedule-fork-review.json`.
+Evidence: `2026-09-24-v931-preschedule-fork-review.json`.
 Reproducible test: `../obn-project/test/V931ReleaseSafeFork.test.js` with
 `FORK_MAINNET=true` and `FORK_BLOCK_NUMBER=51737615` on network `hardhat`.
