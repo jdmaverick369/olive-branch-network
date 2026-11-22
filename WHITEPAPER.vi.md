@@ -481,6 +481,8 @@ Nếu các tiêu chuẩn không được đáp ứng, chúng tôi sẽ gỡ tổ
 
 Các khoản stake và phần thưởng đang chờ của người dùng nên được trả lại cho họ trước khi pool bị đóng và xóa khỏi giao thức.
 
+**Đóng một pool.** Khi một tổ chức phi lợi nhuận rời đi, pool của tổ chức đó bị đóng: các khoản stake mới bị chặn, trong khi những người đang stake vẫn có thể rút stake và nhận thưởng, và các khoản stake còn lại tiếp tục sinh thưởng theo tỷ lệ chia thông thường 88/10/1/1. Trước khi pool bị xóa, mọi người stake còn lại đều được cưỡng chế thoát: `forceExitUserToSelf` trả từng khoản stake, cùng phần thưởng đang chờ, về ví của chính người stake đó và không thể gửi đi nơi nào khác. Khoản stake hạt giống bị khóa của tổ chức được trả về Quỹ dự trữ hạt giống phi lợi nhuận. Chỉ khi đó, khi không còn gì được stake, pool mới bị xóa.
+
 OBN là một giao thức định tuyến và staking, không phải là một tổ chức phi lợi nhuận đã đăng ký hay một bên chứng nhận. Người dùng nên tự xác minh các tổ chức và tham khảo ý kiến chuyên gia thuế.
 
 ---

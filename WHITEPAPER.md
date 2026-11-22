@@ -477,6 +477,8 @@ If standards aren't met, we remove the nonprofit from our frontend and stop prom
 
 User stakes and pending rewards should be returned to users before the pool is shutdown and removed from the protocol.
 
+**Closing a pool.** When a nonprofit leaves, its pool is shut down: new stakes are blocked, while existing stakers can still unstake and claim, and stakes that remain keep earning under the usual 88/10/1/1 split. Before the pool is removed, every remaining staker is force-exited: `forceExitUserToSelf` returns each stake, with pending rewards, to that staker's own wallet and can send it nowhere else. The nonprofit's locked seed stake is returned to the Nonprofit Seed Reserve. Only then, with nothing left staked, is the pool removed.
+
 OBN is a routing & staking protocol, not a registered nonprofit or certifier. Users should independently verify organizations and consult tax professionals.
 
 ---

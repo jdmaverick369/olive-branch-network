@@ -339,6 +339,7 @@ OBN 使用累积器/奖励债务方案,并有一个决定性的变化:**累积�
 - **`addPool(charityWallet)`** — 为公益组织创建资金池;初始化其累计时钟。
 - **`shutdownPool(pid)`** — 阻止*新的*存入;领取和提取继续进行,因此用户始终可以退出。已关闭的资金池仍有资格进入治理选票。
 - **`removePool(pid)`** — 仅当 `totalStaked == 0` 时;转出遗留 charity 累积,设置 `poolFullyRemoved`(将公益组织从未来选票中除名),并将资金池的慈善钱包重新指向 `treasury` 地址(TheOffering),使任何残余铸造都不会滞留在 address(0)。
+- **关闭资金池** — 当某个公益组织退出时,其资金池将被关闭:新的质押被阻止,现有质押者仍可解除质押并领取奖励,留在池中的质押继续按通常的 88/10/1/1 比例获得奖励。在移除资金池之前,会对每一位剩余的质押者执行强制退出:`forceExitUserToSelf` 将每笔质押连同待领奖励退还到该质押者自己的钱包,且不能发送到任何其他地址。该公益组织被锁定的种子质押将退回公益种子储备。只有在池中不再有任何质押之后,资金池才会被移除。
 - **`updateCharityWallet(pid, newWallet)`** — 轮换遭泄露或已迁移的公益钱包。
 - **`migrateBootstrap(pid, old, new)`** — 在公益地址之间原子移动整个引导头寸(余额、奖励债务、锁定),贯通双方的投票权检查点,并在链上证明待领奖励保留在 1 wei 以内(`pendingAfter ≥ pendingBefore && pendingAfter ≤ pendingBefore + 1`)。
 - **`addPhase(start, end, bps)`** — 追加释放阶段;必须与最后阶段连续。这也是治理影响 3% 兜底比率的杠杆。

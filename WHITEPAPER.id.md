@@ -481,6 +481,8 @@ Jika standar tidak terpenuhi, kami menghapus organisasi nirlaba dari frontend ka
 
 Stake dan imbalan tertunda pengguna harus dikembalikan kepada pengguna sebelum pool ditutup dan dihapus dari protokol.
 
+**Penutupan pool.** Ketika sebuah organisasi nirlaba keluar, pool-nya ditutup: stake baru diblokir, sementara staker yang ada tetap dapat menarik stake dan mengklaim, dan stake yang tersisa terus menghasilkan imbalan dengan pembagian 88/10/1/1 seperti biasa. Sebelum pool dihapus, setiap staker yang tersisa dikeluarkan secara paksa: `forceExitUserToSelf` mengembalikan setiap stake, beserta imbalan tertunda, ke dompet staker itu sendiri dan tidak dapat mengirimkannya ke tempat lain. Stake benih terkunci milik organisasi nirlaba dikembalikan ke Cadangan Benih Nirlaba. Baru setelah itu, ketika tidak ada lagi yang di-stake, pool dihapus.
+
 OBN adalah protokol perutean dan staking, bukan organisasi nirlaba terdaftar atau lembaga sertifikasi. Pengguna harus memverifikasi organisasi secara independen dan berkonsultasi dengan profesional pajak.
 
 ---

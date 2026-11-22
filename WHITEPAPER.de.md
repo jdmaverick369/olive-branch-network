@@ -481,6 +481,8 @@ Werden Standards nicht erfüllt, entfernen wir die gemeinnützige Organisation a
 
 Nutzer-Stakes und ausstehende Belohnungen sollten an die Nutzer zurückgegeben werden, bevor der Pool stillgelegt und aus dem Protokoll entfernt wird.
 
+**Schließung eines Pools.** Verlässt eine gemeinnützige Organisation das Protokoll, wird ihr Pool stillgelegt: Neue Stakes sind gesperrt, bestehende Staker können weiterhin unstaken und beanspruchen, und verbleibende Stakes verdienen weiter nach der üblichen Aufteilung 88/10/1/1. Bevor der Pool entfernt wird, wird für jeden verbliebenen Staker ein Force-Exit ausgeführt: `forceExitUserToSelf` gibt jeden Stake samt ausstehender Belohnungen an die eigene Wallet des jeweiligen Stakers zurück und kann ihn nirgendwohin sonst senden. Der gesperrte Seed-Stake der gemeinnützigen Organisation geht an die Gemeinnützige Seed-Reserve zurück. Erst dann, wenn nichts mehr gestakt ist, wird der Pool entfernt.
+
 OBN ist ein Routing- und Staking-Protokoll, keine eingetragene gemeinnützige Organisation oder Zertifizierungsstelle. Nutzer sollten Organisationen unabhängig prüfen und Steuerfachleute konsultieren.
 
 ---

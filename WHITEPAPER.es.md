@@ -481,6 +481,8 @@ Si no se cumplen los estándares, retiramos a la organización de nuestro fronte
 
 Los stakes y las recompensas pendientes de los usuarios deben devolverse a ellos antes de que el pool se cierre y se elimine del protocolo.
 
+**Cierre de un pool.** Cuando una organización sin fines de lucro se retira, su pool se cierra: se bloquean los nuevos stakes, mientras que los stakers existentes pueden seguir retirando su stake y reclamando, y los stakes que permanecen siguen ganando con el reparto habitual 88/10/1/1. Antes de eliminar el pool, se ejecuta la salida forzosa de cada staker restante: `forceExitUserToSelf` devuelve cada stake, con las recompensas pendientes, a la billetera del propio staker y no puede enviarlo a ningún otro lugar. El stake semilla bloqueado de la organización se devuelve a la Reserva de Semillas para Organizaciones. Solo entonces, cuando ya no queda nada en stake, se elimina el pool.
+
 OBN es un protocolo de enrutamiento y staking, no una organización sin fines de lucro registrada ni un certificador. Los usuarios deben verificar las organizaciones de forma independiente y consultar a profesionales fiscales.
 
 ---
