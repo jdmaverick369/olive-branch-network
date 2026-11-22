@@ -1,8 +1,8 @@
 # Olive Branch Network ホワイトペーパー — Proof-of-Contribution
 
-[English](WHITEPAPER.md) · [Tiếng Việt](WHITEPAPER.vi.md) · [한국어](WHITEPAPER.ko.md) · **日本語** · [简体中文](WHITEPAPER.zh-CN.md) · [हिन्दी](WHITEPAPER.hi.md) · [العربية](WHITEPAPER.ar.md) · [Русский](WHITEPAPER.ru.md) · [Deutsch](WHITEPAPER.de.md) · [Português](WHITEPAPER.pt.md) · [Español](WHITEPAPER.es.md) · [Bahasa Indonesia](WHITEPAPER.id.md)
+[English](../WHITEPAPER.md) · [Tiếng Việt](WHITEPAPER.vi.md) · [한국어](WHITEPAPER.ko.md) · **日本語** · [简体中文](WHITEPAPER.zh-CN.md) · [हिन्दी](WHITEPAPER.hi.md) · [العربية](WHITEPAPER.ar.md) · [Русский](WHITEPAPER.ru.md) · [Deutsch](WHITEPAPER.de.md) · [Português](WHITEPAPER.pt.md) · [Español](WHITEPAPER.es.md) · [Bahasa Indonesia](WHITEPAPER.id.md)
 
-> この翻訳は便宜上提供するものです。英語版([WHITEPAPER.md](WHITEPAPER.md))が正本であり、両者に相違がある場合は英語版が優先します。この翻訳はリビジョン `3c740d855` をもとに AI の支援を受けて作成したもので、専門の翻訳者によるレビューはまだ受けていません。コントラクト名、関数名、アドレスは英語のまま記載しています。
+> この翻訳は便宜上提供するものです。英語版([WHITEPAPER.md](../WHITEPAPER.md))が正本であり、両者に相違がある場合は英語版が優先します。この翻訳はリビジョン `3c740d855` をもとに AI の支援を受けて作成したもので、専門の翻訳者によるレビューはまだ受けていません。コントラクト名、関数名、アドレスは英語のまま記載しています。
 
 ## 目的
 
@@ -306,7 +306,7 @@ ExtendOliveBranch はプロトコルの年次非営利分配の保管庫です�
 
 ### 3.6 AnnualGovernanceV2(稼働中の実装、既存の UUPS プロキシ)
 
-AnnualGovernance は TheOffering と ExtendOliveBranch の両方の年次意思決定サイクルを調整します。Timelock が所有する既存の UUPS プロキシは、[リポジトリのデプロイ文書](README.md#annual-governance)に記録されているとおり、**2026年10月7日、Base ブロック 52283807** で AnnualGovernanceV2 にアップグレードされました。OliveAssembly は新しい投票ルールのためのチェックポイント付き NFT 登録を提供します。デプロイ自体が年次サイクルを開始するわけではありません。
+AnnualGovernance は TheOffering と ExtendOliveBranch の両方の年次意思決定サイクルを調整します。Timelock が所有する既存の UUPS プロキシは、[リポジトリのデプロイ文書](../README.md#annual-governance)に記録されているとおり、**2026年10月7日、Base ブロック 52283807** で AnnualGovernanceV2 にアップグレードされました。OliveAssembly は新しい投票ルールのためのチェックポイント付き NFT 登録を提供します。デプロイ自体が年次サイクルを開始するわけではありません。
 
 **サイクル構造:** 各年次サイクルは順に進む 2 つのフェーズで構成されます。
 
@@ -946,7 +946,7 @@ OBN は搾取を中心に作られていません。整合を中心に作られ�
 
 ## 付録 B — デプロイ済みコントラクト(Base Mainnet)
 
-この参考資料は、V9.3.1 のステーキングの動作と、2026年10月7日(Base ブロック 52283807)に有効化された AnnualGovernanceV2 のアップグレードについて説明します。ガバナンスの改訂はステーキングのバージョンを変更しません。デプロイトランザクション、プロキシの有効化、サービスの有効化は[運用リリース記録](governance-operations/2026-09-24-staking-v931-autoclaim-record.json)で追跡されています。
+この参考資料は、V9.3.1 のステーキングの動作と、2026年10月7日(Base ブロック 52283807)に有効化された AnnualGovernanceV2 のアップグレードについて説明します。ガバナンスの改訂はステーキングのバージョンを変更しません。デプロイトランザクション、プロキシの有効化、サービスの有効化は[運用リリース記録](../governance-operations/2026-09-24-staking-v931-autoclaim-record.json)で追跡されています。
 
 入金、受け取り、出金、同意の変更にはステーキングプロキシを使用してください。`MonthlyAutoClaimUpgradeable` は V9.3.1 実装にコンパイルされており、別途デプロイされていません。
 

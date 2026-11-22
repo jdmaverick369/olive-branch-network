@@ -1,8 +1,8 @@
 # Cho đi không hy sinh: Lời giải ở cấp giao thức cho sự suy giảm của việc tham gia từ thiện đại chúng
 
-[English](THESIS.md) · **Tiếng Việt** · [한국어](THESIS.ko.md) · [日本語](THESIS.ja.md) · [简体中文](THESIS.zh-CN.md) · [हिन्दी](THESIS.hi.md) · [العربية](THESIS.ar.md) · [Русский](THESIS.ru.md) · [Deutsch](THESIS.de.md) · [Português](THESIS.pt.md) · [Español](THESIS.es.md) · [Bahasa Indonesia](THESIS.id.md)
+[English](../THESIS.md) · **Tiếng Việt** · [한국어](THESIS.ko.md) · [日本語](THESIS.ja.md) · [简体中文](THESIS.zh-CN.md) · [हिन्दी](THESIS.hi.md) · [العربية](THESIS.ar.md) · [Русский](THESIS.ru.md) · [Deutsch](THESIS.de.md) · [Português](THESIS.pt.md) · [Español](THESIS.es.md) · [Bahasa Indonesia](THESIS.id.md)
 
-> Bản dịch này chỉ nhằm mục đích tiện tham khảo. Bản tiếng Anh ([THESIS.md](THESIS.md)) là bản có giá trị chính thức; nếu có khác biệt, bản tiếng Anh được ưu tiên áp dụng. Bản dịch được thực hiện với sự hỗ trợ của AI từ phiên bản `3c740d855` và chưa được dịch giả chuyên nghiệp rà soát. Tên hợp đồng, tên hàm và địa chỉ được giữ nguyên bằng tiếng Anh.
+> Bản dịch này chỉ nhằm mục đích tiện tham khảo. Bản tiếng Anh ([THESIS.md](../THESIS.md)) là bản có giá trị chính thức; nếu có khác biệt, bản tiếng Anh được ưu tiên áp dụng. Bản dịch được thực hiện với sự hỗ trợ của AI từ phiên bản `3c740d855` và chưa được dịch giả chuyên nghiệp rà soát. Tên hợp đồng, tên hàm và địa chỉ được giữ nguyên bằng tiếng Anh.
 
 **Luận văn của Olive Branch Network**
 
@@ -609,7 +609,7 @@ Tuyên bố sâu sắc nhất của luận văn này cũng là tuyên bố đơn
 ### Nguồn của giao thức
 
 - Sách trắng OBN — [WHITEPAPER.md](WHITEPAPER.vi.md)
-- Các hợp đồng cốt lõi — [`obn-project/contracts/`](obn-project/contracts/): `OBNToken.sol`, `StakingPoolsV931.sol`, `MonthlyAutoClaimUpgradeable.sol`, `TheOffering.sol`, `ExtendOliveBranch.sol`, `AnnualGovernanceV2.sol`, `OliveAssembly.sol`, `OBNTimeLock.sol`, `TeamVesting.sol`, `OliveNFT.sol`, `OBNStakingLens.sol`
+- Các hợp đồng cốt lõi — [`obn-project/contracts/`](../obn-project/contracts/): `OBNToken.sol`, `StakingPoolsV931.sol`, `MonthlyAutoClaimUpgradeable.sol`, `TheOffering.sol`, `ExtendOliveBranch.sol`, `AnnualGovernanceV2.sol`, `OliveAssembly.sol`, `OBNTimeLock.sol`, `TeamVesting.sol`, `OliveNFT.sol`, `OBNStakingLens.sol`
 - Hiến chương OBN v0.1 và *The Philosophy of Olive Branch Network* — các tài liệu quản trị của giao thức
 
 ---

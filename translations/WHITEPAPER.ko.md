@@ -1,8 +1,8 @@
 # Olive Branch Network 백서 — Proof-of-Contribution
 
-[English](WHITEPAPER.md) · [Tiếng Việt](WHITEPAPER.vi.md) · **한국어** · [日本語](WHITEPAPER.ja.md) · [简体中文](WHITEPAPER.zh-CN.md) · [हिन्दी](WHITEPAPER.hi.md) · [العربية](WHITEPAPER.ar.md) · [Русский](WHITEPAPER.ru.md) · [Deutsch](WHITEPAPER.de.md) · [Português](WHITEPAPER.pt.md) · [Español](WHITEPAPER.es.md) · [Bahasa Indonesia](WHITEPAPER.id.md)
+[English](../WHITEPAPER.md) · [Tiếng Việt](WHITEPAPER.vi.md) · **한국어** · [日本語](WHITEPAPER.ja.md) · [简体中文](WHITEPAPER.zh-CN.md) · [हिन्दी](WHITEPAPER.hi.md) · [العربية](WHITEPAPER.ar.md) · [Русский](WHITEPAPER.ru.md) · [Deutsch](WHITEPAPER.de.md) · [Português](WHITEPAPER.pt.md) · [Español](WHITEPAPER.es.md) · [Bahasa Indonesia](WHITEPAPER.id.md)
 
-> 이 번역본은 편의를 위해 제공됩니다. 영어 원본([WHITEPAPER.md](WHITEPAPER.md))이 공식 문서이며, 내용이 다를 경우 영어 원본이 우선합니다. 이 번역본은 리비전 `3c740d855`을 바탕으로 AI의 도움을 받아 작성되었으며 아직 전문 번역가의 검토를 거치지 않았습니다. 컨트랙트 이름, 함수 이름, 주소는 영어 그대로 표기합니다.
+> 이 번역본은 편의를 위해 제공됩니다. 영어 원본([WHITEPAPER.md](../WHITEPAPER.md))이 공식 문서이며, 내용이 다를 경우 영어 원본이 우선합니다. 이 번역본은 리비전 `3c740d855`을 바탕으로 AI의 도움을 받아 작성되었으며 아직 전문 번역가의 검토를 거치지 않았습니다. 컨트랙트 이름, 함수 이름, 주소는 영어 그대로 표기합니다.
 
 ## 목적
 
@@ -306,7 +306,7 @@ ExtendOliveBranch는 프로토콜의 연간 비영리 분배 금고입니다. �
 
 ### 3.6 AnnualGovernanceV2 (운영 중인 구현; 기존 UUPS 프록시)
 
-AnnualGovernance는 TheOffering과 ExtendOliveBranch 모두에 대한 연간 의사결정 주기를 조정합니다. Timelock이 소유한 기존 UUPS 프록시는 [리포지토리 배포 문서](README.md#annual-governance)에 기록된 대로 **2026년 10월 7일, Base 블록 52283807**에서 AnnualGovernanceV2로 업그레이드되었습니다. OliveAssembly는 새로운 투표 규칙을 위한 체크포인트 NFT 등록을 제공합니다. 배포 자체는 연간 주기를 시작하지 않습니다.
+AnnualGovernance는 TheOffering과 ExtendOliveBranch 모두에 대한 연간 의사결정 주기를 조정합니다. Timelock이 소유한 기존 UUPS 프록시는 [리포지토리 배포 문서](../README.md#annual-governance)에 기록된 대로 **2026년 10월 7일, Base 블록 52283807**에서 AnnualGovernanceV2로 업그레이드되었습니다. OliveAssembly는 새로운 투표 규칙을 위한 체크포인트 NFT 등록을 제공합니다. 배포 자체는 연간 주기를 시작하지 않습니다.
 
 **주기 구조:** 각 연간 주기는 두 개의 순차적인 단계로 진행됩니다.
 
@@ -946,7 +946,7 @@ OBN은 추출을 중심으로 만들어지지 않았습니다. 일치를 중심�
 
 ## 부록 B — 배포된 컨트랙트(Base Mainnet)
 
-이 참고 자료는 V9.3.1 스테이킹 동작과 2026년 10월 7일(Base 블록 52283807)에 활성화된 AnnualGovernanceV2 업그레이드를 설명합니다. 거버넌스 개정은 스테이킹 버전을 변경하지 않습니다. 배포 트랜잭션, 프록시 활성화, 서비스 활성화는 [운영 릴리스 기록](governance-operations/2026-09-24-staking-v931-autoclaim-record.json)에서 추적됩니다.
+이 참고 자료는 V9.3.1 스테이킹 동작과 2026년 10월 7일(Base 블록 52283807)에 활성화된 AnnualGovernanceV2 업그레이드를 설명합니다. 거버넌스 개정은 스테이킹 버전을 변경하지 않습니다. 배포 트랜잭션, 프록시 활성화, 서비스 활성화는 [운영 릴리스 기록](../governance-operations/2026-09-24-staking-v931-autoclaim-record.json)에서 추적됩니다.
 
 예치, 수령, 출금, 동의 변경에는 스테이킹 프록시를 사용하십시오. `MonthlyAutoClaimUpgradeable`은 V9.3.1 구현에 컴파일되어 있으며 별도로 배포되지 않습니다.
 

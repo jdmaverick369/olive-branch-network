@@ -1,8 +1,8 @@
 # Whitepaper Olive Branch Network — Proof-of-Contribution
 
-[English](WHITEPAPER.md) · [Tiếng Việt](WHITEPAPER.vi.md) · [한국어](WHITEPAPER.ko.md) · [日本語](WHITEPAPER.ja.md) · [简体中文](WHITEPAPER.zh-CN.md) · [हिन्दी](WHITEPAPER.hi.md) · [العربية](WHITEPAPER.ar.md) · [Русский](WHITEPAPER.ru.md) · [Deutsch](WHITEPAPER.de.md) · [Português](WHITEPAPER.pt.md) · [Español](WHITEPAPER.es.md) · **Bahasa Indonesia**
+[English](../WHITEPAPER.md) · [Tiếng Việt](WHITEPAPER.vi.md) · [한국어](WHITEPAPER.ko.md) · [日本語](WHITEPAPER.ja.md) · [简体中文](WHITEPAPER.zh-CN.md) · [हिन्दी](WHITEPAPER.hi.md) · [العربية](WHITEPAPER.ar.md) · [Русский](WHITEPAPER.ru.md) · [Deutsch](WHITEPAPER.de.md) · [Português](WHITEPAPER.pt.md) · [Español](WHITEPAPER.es.md) · **Bahasa Indonesia**
 
-> Terjemahan ini disediakan semata-mata untuk kemudahan. Versi bahasa Inggris ([WHITEPAPER.md](WHITEPAPER.md)) adalah versi resmi; jika terdapat perbedaan, versi bahasa Inggris yang berlaku. Terjemahan ini dibuat dengan bantuan AI dari revisi `3c740d855` dan belum ditinjau oleh penerjemah profesional. Nama kontrak, nama fungsi, dan alamat tetap dalam bahasa Inggris.
+> Terjemahan ini disediakan semata-mata untuk kemudahan. Versi bahasa Inggris ([WHITEPAPER.md](../WHITEPAPER.md)) adalah versi resmi; jika terdapat perbedaan, versi bahasa Inggris yang berlaku. Terjemahan ini dibuat dengan bantuan AI dari revisi `3c740d855` dan belum ditinjau oleh penerjemah profesional. Nama kontrak, nama fungsi, dan alamat tetap dalam bahasa Inggris.
 
 ## Tujuan
 
@@ -306,7 +306,7 @@ Pada akhir setiap siklus, AnnualGovernance mengeksekusi pemungutan suara Fase 2 
 
 ### 3.6 AnnualGovernanceV2 (implementasi aktif; proxy UUPS yang ada)
 
-AnnualGovernance mengoordinasikan siklus keputusan tahunan untuk TheOffering dan ExtendOliveBranch. Proxy UUPS miliknya yang ada dan dimiliki Timelock ditingkatkan ke AnnualGovernanceV2 pada **7 Oktober 2026, pada blok Base 52283807**, sebagaimana dicatat dalam [dokumentasi deployment repositori](README.md#annual-governance). OliveAssembly menyediakan pendaftaran NFT dengan checkpoint untuk aturan pemungutan suara baru. Deployment itu sendiri tidak memulai siklus tahunan.
+AnnualGovernance mengoordinasikan siklus keputusan tahunan untuk TheOffering dan ExtendOliveBranch. Proxy UUPS miliknya yang ada dan dimiliki Timelock ditingkatkan ke AnnualGovernanceV2 pada **7 Oktober 2026, pada blok Base 52283807**, sebagaimana dicatat dalam [dokumentasi deployment repositori](../README.md#annual-governance). OliveAssembly menyediakan pendaftaran NFT dengan checkpoint untuk aturan pemungutan suara baru. Deployment itu sendiri tidak memulai siklus tahunan.
 
 **Struktur siklus:** Setiap siklus tahunan menjalankan dua fase berurutan:
 
@@ -946,7 +946,7 @@ Dan setiap tahun, komunitas memutuskan sejauh mana mengulurkan ranting zaitun.
 
 ## Lampiran B — Kontrak yang Di-deploy (Base Mainnet)
 
-Referensi ini menjelaskan perilaku staking V9.3.1 dan peningkatan AnnualGovernanceV2 yang diaktifkan pada 7 Oktober 2026 (blok Base 52283807). Revisi tata kelola tidak mengubah versi staking. Transaksi deployment, aktivasi proxy, dan aktivasi layanan dilacak dalam [catatan rilis operasional](governance-operations/2026-09-24-staking-v931-autoclaim-record.json).
+Referensi ini menjelaskan perilaku staking V9.3.1 dan peningkatan AnnualGovernanceV2 yang diaktifkan pada 7 Oktober 2026 (blok Base 52283807). Revisi tata kelola tidak mengubah versi staking. Transaksi deployment, aktivasi proxy, dan aktivasi layanan dilacak dalam [catatan rilis operasional](../governance-operations/2026-09-24-staking-v931-autoclaim-record.json).
 
 Gunakan proxy staking untuk deposit, klaim, penarikan, dan perubahan persetujuan. `MonthlyAutoClaimUpgradeable` dikompilasi ke dalam implementasi V9.3.1 dan tidak di-deploy secara terpisah.
 

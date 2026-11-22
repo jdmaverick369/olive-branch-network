@@ -1,8 +1,8 @@
 # 非牺牲式捐赠:协议层面对大众慈善参与衰退的回答
 
-[English](THESIS.md) · [Tiếng Việt](THESIS.vi.md) · [한국어](THESIS.ko.md) · [日本語](THESIS.ja.md) · **简体中文** · [हिन्दी](THESIS.hi.md) · [العربية](THESIS.ar.md) · [Русский](THESIS.ru.md) · [Deutsch](THESIS.de.md) · [Português](THESIS.pt.md) · [Español](THESIS.es.md) · [Bahasa Indonesia](THESIS.id.md)
+[English](../THESIS.md) · [Tiếng Việt](THESIS.vi.md) · [한국어](THESIS.ko.md) · [日本語](THESIS.ja.md) · **简体中文** · [हिन्दी](THESIS.hi.md) · [العربية](THESIS.ar.md) · [Русский](THESIS.ru.md) · [Deutsch](THESIS.de.md) · [Português](THESIS.pt.md) · [Español](THESIS.es.md) · [Bahasa Indonesia](THESIS.id.md)
 
-> 本译文仅为方便阅读而提供。英文版([THESIS.md](THESIS.md))为权威版本;如有差异,以英文版为准。本译文基于修订版本 `3c740d855`,在 AI 协助下完成,尚未经过专业译者审校。合约名称、函数名称和地址均保留英文原文。
+> 本译文仅为方便阅读而提供。英文版([THESIS.md](../THESIS.md))为权威版本;如有差异,以英文版为准。本译文基于修订版本 `3c740d855`,在 AI 协助下完成,尚未经过专业译者审校。合约名称、函数名称和地址均保留英文原文。
 
 **Olive Branch Network 论文**
 
@@ -609,7 +609,7 @@ Olive Branch Network 以机制而不是劝诫作答。参与者质押并保留�
 ### 协议来源
 
 - OBN 白皮书 — [WHITEPAPER.md](WHITEPAPER.zh-CN.md)
-- 核心合约 — [`obn-project/contracts/`](obn-project/contracts/):`OBNToken.sol`、`StakingPoolsV931.sol`、`MonthlyAutoClaimUpgradeable.sol`、`TheOffering.sol`、`ExtendOliveBranch.sol`、`AnnualGovernanceV2.sol`、`OliveAssembly.sol`、`OBNTimeLock.sol`、`TeamVesting.sol`、`OliveNFT.sol`、`OBNStakingLens.sol`
+- 核心合约 — [`obn-project/contracts/`](../obn-project/contracts/):`OBNToken.sol`、`StakingPoolsV931.sol`、`MonthlyAutoClaimUpgradeable.sol`、`TheOffering.sol`、`ExtendOliveBranch.sol`、`AnnualGovernanceV2.sol`、`OliveAssembly.sol`、`OBNTimeLock.sol`、`TeamVesting.sol`、`OliveNFT.sol`、`OBNStakingLens.sol`
 - OBN 宪章 v0.1 和 *The Philosophy of Olive Branch Network* — 协议治理文件
 
 ---

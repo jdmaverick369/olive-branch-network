@@ -1,8 +1,8 @@
 # Memberi Tanpa Pengorbanan: Jawaban Protokol atas Menurunnya Partisipasi Amal Massal
 
-[English](THESIS.md) · [Tiếng Việt](THESIS.vi.md) · [한국어](THESIS.ko.md) · [日本語](THESIS.ja.md) · [简体中文](THESIS.zh-CN.md) · [हिन्दी](THESIS.hi.md) · [العربية](THESIS.ar.md) · [Русский](THESIS.ru.md) · [Deutsch](THESIS.de.md) · [Português](THESIS.pt.md) · [Español](THESIS.es.md) · **Bahasa Indonesia**
+[English](../THESIS.md) · [Tiếng Việt](THESIS.vi.md) · [한국어](THESIS.ko.md) · [日本語](THESIS.ja.md) · [简体中文](THESIS.zh-CN.md) · [हिन्दी](THESIS.hi.md) · [العربية](THESIS.ar.md) · [Русский](THESIS.ru.md) · [Deutsch](THESIS.de.md) · [Português](THESIS.pt.md) · [Español](THESIS.es.md) · **Bahasa Indonesia**
 
-> Terjemahan ini disediakan semata-mata untuk kemudahan. Versi bahasa Inggris ([THESIS.md](THESIS.md)) adalah versi resmi; jika terdapat perbedaan, versi bahasa Inggris yang berlaku. Terjemahan ini dibuat dengan bantuan AI dari revisi `3c740d855` dan belum ditinjau oleh penerjemah profesional. Nama kontrak, nama fungsi, dan alamat tetap dalam bahasa Inggris.
+> Terjemahan ini disediakan semata-mata untuk kemudahan. Versi bahasa Inggris ([THESIS.md](../THESIS.md)) adalah versi resmi; jika terdapat perbedaan, versi bahasa Inggris yang berlaku. Terjemahan ini dibuat dengan bantuan AI dari revisi `3c740d855` dan belum ditinjau oleh penerjemah profesional. Nama kontrak, nama fungsi, dan alamat tetap dalam bahasa Inggris.
 
 **Tesis Olive Branch Network**
 
@@ -609,7 +609,7 @@ Klaim terdalam tesis ini adalah yang paling sederhana: kedermawanan tidak seharu
 ### Sumber protokol
 
 - Whitepaper OBN — [WHITEPAPER.md](WHITEPAPER.id.md)
-- Kontrak inti — [`obn-project/contracts/`](obn-project/contracts/): `OBNToken.sol`, `StakingPoolsV931.sol`, `MonthlyAutoClaimUpgradeable.sol`, `TheOffering.sol`, `ExtendOliveBranch.sol`, `AnnualGovernanceV2.sol`, `OliveAssembly.sol`, `OBNTimeLock.sol`, `TeamVesting.sol`, `OliveNFT.sol`, `OBNStakingLens.sol`
+- Kontrak inti — [`obn-project/contracts/`](../obn-project/contracts/): `OBNToken.sol`, `StakingPoolsV931.sol`, `MonthlyAutoClaimUpgradeable.sol`, `TheOffering.sol`, `ExtendOliveBranch.sol`, `AnnualGovernanceV2.sol`, `OliveAssembly.sol`, `OBNTimeLock.sol`, `TeamVesting.sol`, `OliveNFT.sol`, `OBNStakingLens.sol`
 - Piagam OBN v0.1 dan *The Philosophy of Olive Branch Network* — dokumen tata kelola protokol
 
 ---

@@ -2,9 +2,9 @@
 
 # الورقة البيضاء لـ Olive Branch Network — Proof-of-Contribution
 
-[English](WHITEPAPER.md) · [Tiếng Việt](WHITEPAPER.vi.md) · [한국어](WHITEPAPER.ko.md) · [日本語](WHITEPAPER.ja.md) · [简体中文](WHITEPAPER.zh-CN.md) · [हिन्दी](WHITEPAPER.hi.md) · **العربية** · [Русский](WHITEPAPER.ru.md) · [Deutsch](WHITEPAPER.de.md) · [Português](WHITEPAPER.pt.md) · [Español](WHITEPAPER.es.md) · [Bahasa Indonesia](WHITEPAPER.id.md)
+[English](../WHITEPAPER.md) · [Tiếng Việt](WHITEPAPER.vi.md) · [한국어](WHITEPAPER.ko.md) · [日本語](WHITEPAPER.ja.md) · [简体中文](WHITEPAPER.zh-CN.md) · [हिन्दी](WHITEPAPER.hi.md) · **العربية** · [Русский](WHITEPAPER.ru.md) · [Deutsch](WHITEPAPER.de.md) · [Português](WHITEPAPER.pt.md) · [Español](WHITEPAPER.es.md) · [Bahasa Indonesia](WHITEPAPER.id.md)
 
-> تُقدَّم هذه الترجمة للتيسير فقط. النسخة الإنجليزية ([WHITEPAPER.md](WHITEPAPER.md)) هي النسخة المعتمدة، وعند وجود أي اختلاف تكون الأولوية للنسخة الإنجليزية. أُعدَّت هذه الترجمة بمساعدة الذكاء الاصطناعي انطلاقًا من المراجعة `3c740d855`، ولم يراجعها مترجم محترف بعد. تبقى أسماء العقود والدوال والعناوين باللغة الإنجليزية.
+> تُقدَّم هذه الترجمة للتيسير فقط. النسخة الإنجليزية ([WHITEPAPER.md](../WHITEPAPER.md)) هي النسخة المعتمدة، وعند وجود أي اختلاف تكون الأولوية للنسخة الإنجليزية. أُعدَّت هذه الترجمة بمساعدة الذكاء الاصطناعي انطلاقًا من المراجعة `3c740d855`، ولم يراجعها مترجم محترف بعد. تبقى أسماء العقود والدوال والعناوين باللغة الإنجليزية.
 
 ## الغرض
 
@@ -308,7 +308,7 @@ ExtendOliveBranch هو خزنة التوزيع السنوي غير الربحي 
 
 ### 3.6 AnnualGovernanceV2 (التنفيذ العامل؛ وكيل UUPS الحالي)
 
-ينسّق AnnualGovernance دورات القرار السنوية لكل من TheOffering وExtendOliveBranch. جرت ترقية وكيل UUPS الحالي المملوك لـ Timelock إلى AnnualGovernanceV2 في **7 أكتوبر 2026، عند كتلة Base رقم 52283807**، كما هو مسجل في [وثائق نشر المستودع](README.md#annual-governance). يوفر OliveAssembly تسجيل NFT بنقاط تحقق لقواعد التصويت الجديدة. ولا يبدأ النشر بحد ذاته دورة سنوية.
+ينسّق AnnualGovernance دورات القرار السنوية لكل من TheOffering وExtendOliveBranch. جرت ترقية وكيل UUPS الحالي المملوك لـ Timelock إلى AnnualGovernanceV2 في **7 أكتوبر 2026، عند كتلة Base رقم 52283807**، كما هو مسجل في [وثائق نشر المستودع](../README.md#annual-governance). يوفر OliveAssembly تسجيل NFT بنقاط تحقق لقواعد التصويت الجديدة. ولا يبدأ النشر بحد ذاته دورة سنوية.
 
 **هيكل الدورة:** تتضمن كل دورة سنوية مرحلتين متتاليتين:
 
@@ -948,7 +948,7 @@ OBN محاولة لإثبات أن المساهمة يمكن بناؤها مبا
 
 ## الملحق B — العقود المنشورة (Base Mainnet)
 
-يصف هذا المرجع سلوك التخزين في V9.3.1 وترقية AnnualGovernanceV2 المفعّلة في 7 أكتوبر 2026 (كتلة Base رقم 52283807). لا تغيّر مراجعة الحوكمة إصدار التخزين. تُتتبَّع معاملات النشر وتفعيل الوكيل وتفعيل الخدمة في [سجل الإصدار التشغيلي](governance-operations/2026-09-24-staking-v931-autoclaim-record.json).
+يصف هذا المرجع سلوك التخزين في V9.3.1 وترقية AnnualGovernanceV2 المفعّلة في 7 أكتوبر 2026 (كتلة Base رقم 52283807). لا تغيّر مراجعة الحوكمة إصدار التخزين. تُتتبَّع معاملات النشر وتفعيل الوكيل وتفعيل الخدمة في [سجل الإصدار التشغيلي](../governance-operations/2026-09-24-staking-v931-autoclaim-record.json).
 
 استخدم وكيل التخزين للإيداعات والمطالبات والسحوبات وتغييرات الموافقة. `MonthlyAutoClaimUpgradeable` مُجمَّع داخل تنفيذ V9.3.1 ولا يُنشر بشكل منفصل.
 

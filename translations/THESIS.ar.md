@@ -2,9 +2,9 @@
 
 # العطاء بلا تضحية: إجابة بروتوكولية على تراجع المشاركة الخيرية الجماهيرية
 
-[English](THESIS.md) · [Tiếng Việt](THESIS.vi.md) · [한국어](THESIS.ko.md) · [日本語](THESIS.ja.md) · [简体中文](THESIS.zh-CN.md) · [हिन्दी](THESIS.hi.md) · **العربية** · [Русский](THESIS.ru.md) · [Deutsch](THESIS.de.md) · [Português](THESIS.pt.md) · [Español](THESIS.es.md) · [Bahasa Indonesia](THESIS.id.md)
+[English](../THESIS.md) · [Tiếng Việt](THESIS.vi.md) · [한국어](THESIS.ko.md) · [日本語](THESIS.ja.md) · [简体中文](THESIS.zh-CN.md) · [हिन्दी](THESIS.hi.md) · **العربية** · [Русский](THESIS.ru.md) · [Deutsch](THESIS.de.md) · [Português](THESIS.pt.md) · [Español](THESIS.es.md) · [Bahasa Indonesia](THESIS.id.md)
 
-> تُقدَّم هذه الترجمة للتيسير فقط. النسخة الإنجليزية ([THESIS.md](THESIS.md)) هي النسخة المعتمدة، وعند وجود أي اختلاف تكون الأولوية للنسخة الإنجليزية. أُعدَّت هذه الترجمة بمساعدة الذكاء الاصطناعي انطلاقًا من المراجعة `3c740d855`، ولم يراجعها مترجم محترف بعد. تبقى أسماء العقود والدوال والعناوين باللغة الإنجليزية.
+> تُقدَّم هذه الترجمة للتيسير فقط. النسخة الإنجليزية ([THESIS.md](../THESIS.md)) هي النسخة المعتمدة، وعند وجود أي اختلاف تكون الأولوية للنسخة الإنجليزية. أُعدَّت هذه الترجمة بمساعدة الذكاء الاصطناعي انطلاقًا من المراجعة `3c740d855`، ولم يراجعها مترجم محترف بعد. تبقى أسماء العقود والدوال والعناوين باللغة الإنجليزية.
 
 **أطروحة Olive Branch Network**
 
@@ -611,7 +611,7 @@ flowchart TD
 ### مصادر البروتوكول
 
 - الورقة البيضاء لـ OBN — [WHITEPAPER.md](WHITEPAPER.ar.md)
-- العقود الأساسية — [`obn-project/contracts/`](obn-project/contracts/): `OBNToken.sol`، `StakingPoolsV931.sol`، `MonthlyAutoClaimUpgradeable.sol`، `TheOffering.sol`، `ExtendOliveBranch.sol`، `AnnualGovernanceV2.sol`، `OliveAssembly.sol`، `OBNTimeLock.sol`، `TeamVesting.sol`، `OliveNFT.sol`، `OBNStakingLens.sol`
+- العقود الأساسية — [`obn-project/contracts/`](../obn-project/contracts/): `OBNToken.sol`، `StakingPoolsV931.sol`، `MonthlyAutoClaimUpgradeable.sol`، `TheOffering.sol`، `ExtendOliveBranch.sol`، `AnnualGovernanceV2.sol`، `OliveAssembly.sol`، `OBNTimeLock.sol`، `TeamVesting.sol`، `OliveNFT.sol`، `OBNStakingLens.sol`
 - ميثاق OBN v0.1 و*The Philosophy of Olive Branch Network* — وثائق حوكمة البروتوكول
 
 ---

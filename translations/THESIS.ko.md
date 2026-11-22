@@ -1,8 +1,8 @@
 # 희생 없는 기부: 대중적 자선 참여의 감소에 대한 프로토콜의 해답
 
-[English](THESIS.md) · [Tiếng Việt](THESIS.vi.md) · **한국어** · [日本語](THESIS.ja.md) · [简体中文](THESIS.zh-CN.md) · [हिन्दी](THESIS.hi.md) · [العربية](THESIS.ar.md) · [Русский](THESIS.ru.md) · [Deutsch](THESIS.de.md) · [Português](THESIS.pt.md) · [Español](THESIS.es.md) · [Bahasa Indonesia](THESIS.id.md)
+[English](../THESIS.md) · [Tiếng Việt](THESIS.vi.md) · **한국어** · [日本語](THESIS.ja.md) · [简体中文](THESIS.zh-CN.md) · [हिन्दी](THESIS.hi.md) · [العربية](THESIS.ar.md) · [Русский](THESIS.ru.md) · [Deutsch](THESIS.de.md) · [Português](THESIS.pt.md) · [Español](THESIS.es.md) · [Bahasa Indonesia](THESIS.id.md)
 
-> 이 번역본은 편의를 위해 제공됩니다. 영어 원본([THESIS.md](THESIS.md))이 공식 문서이며, 내용이 다를 경우 영어 원본이 우선합니다. 이 번역본은 리비전 `3c740d855`을 바탕으로 AI의 도움을 받아 작성되었으며 아직 전문 번역가의 검토를 거치지 않았습니다. 컨트랙트 이름, 함수 이름, 주소는 영어 그대로 표기합니다.
+> 이 번역본은 편의를 위해 제공됩니다. 영어 원본([THESIS.md](../THESIS.md))이 공식 문서이며, 내용이 다를 경우 영어 원본이 우선합니다. 이 번역본은 리비전 `3c740d855`을 바탕으로 AI의 도움을 받아 작성되었으며 아직 전문 번역가의 검토를 거치지 않았습니다. 컨트랙트 이름, 함수 이름, 주소는 영어 그대로 표기합니다.
 
 **Olive Branch Network 논문**
 
@@ -609,7 +609,7 @@ Olive Branch Network는 권고가 아니라 메커니즘으로 답합니다. 참
 ### 프로토콜 자료
 
 - OBN 백서 — [WHITEPAPER.md](WHITEPAPER.ko.md)
-- 핵심 컨트랙트 — [`obn-project/contracts/`](obn-project/contracts/): `OBNToken.sol`, `StakingPoolsV931.sol`, `MonthlyAutoClaimUpgradeable.sol`, `TheOffering.sol`, `ExtendOliveBranch.sol`, `AnnualGovernanceV2.sol`, `OliveAssembly.sol`, `OBNTimeLock.sol`, `TeamVesting.sol`, `OliveNFT.sol`, `OBNStakingLens.sol`
+- 핵심 컨트랙트 — [`obn-project/contracts/`](../obn-project/contracts/): `OBNToken.sol`, `StakingPoolsV931.sol`, `MonthlyAutoClaimUpgradeable.sol`, `TheOffering.sol`, `ExtendOliveBranch.sol`, `AnnualGovernanceV2.sol`, `OliveAssembly.sol`, `OBNTimeLock.sol`, `TeamVesting.sol`, `OliveNFT.sol`, `OBNStakingLens.sol`
 - OBN 헌장 v0.1 및 *The Philosophy of Olive Branch Network* — 프로토콜 거버넌스 문서
 
 ---

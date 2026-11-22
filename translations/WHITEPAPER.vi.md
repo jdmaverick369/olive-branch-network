@@ -1,8 +1,8 @@
 # Sách trắng Olive Branch Network — Proof-of-Contribution
 
-[English](WHITEPAPER.md) · **Tiếng Việt** · [한국어](WHITEPAPER.ko.md) · [日本語](WHITEPAPER.ja.md) · [简体中文](WHITEPAPER.zh-CN.md) · [हिन्दी](WHITEPAPER.hi.md) · [العربية](WHITEPAPER.ar.md) · [Русский](WHITEPAPER.ru.md) · [Deutsch](WHITEPAPER.de.md) · [Português](WHITEPAPER.pt.md) · [Español](WHITEPAPER.es.md) · [Bahasa Indonesia](WHITEPAPER.id.md)
+[English](../WHITEPAPER.md) · **Tiếng Việt** · [한국어](WHITEPAPER.ko.md) · [日本語](WHITEPAPER.ja.md) · [简体中文](WHITEPAPER.zh-CN.md) · [हिन्दी](WHITEPAPER.hi.md) · [العربية](WHITEPAPER.ar.md) · [Русский](WHITEPAPER.ru.md) · [Deutsch](WHITEPAPER.de.md) · [Português](WHITEPAPER.pt.md) · [Español](WHITEPAPER.es.md) · [Bahasa Indonesia](WHITEPAPER.id.md)
 
-> Bản dịch này chỉ nhằm mục đích tiện tham khảo. Bản tiếng Anh ([WHITEPAPER.md](WHITEPAPER.md)) là bản có giá trị chính thức; nếu có khác biệt, bản tiếng Anh được ưu tiên áp dụng. Bản dịch được thực hiện với sự hỗ trợ của AI từ phiên bản `3c740d855` và chưa được dịch giả chuyên nghiệp rà soát. Tên hợp đồng, tên hàm và địa chỉ được giữ nguyên bằng tiếng Anh.
+> Bản dịch này chỉ nhằm mục đích tiện tham khảo. Bản tiếng Anh ([WHITEPAPER.md](../WHITEPAPER.md)) là bản có giá trị chính thức; nếu có khác biệt, bản tiếng Anh được ưu tiên áp dụng. Bản dịch được thực hiện với sự hỗ trợ của AI từ phiên bản `3c740d855` và chưa được dịch giả chuyên nghiệp rà soát. Tên hợp đồng, tên hàm và địa chỉ được giữ nguyên bằng tiếng Anh.
 
 ## Mục đích
 
@@ -306,7 +306,7 @@ Vào cuối mỗi chu kỳ, AnnualGovernance thực thi kết quả bỏ phiếu
 
 ### 3.6 AnnualGovernanceV2 (bản triển khai đang hoạt động; proxy UUPS hiện có)
 
-AnnualGovernance điều phối các chu kỳ quyết định hằng năm cho cả TheOffering và ExtendOliveBranch. Proxy UUPS hiện có do Timelock sở hữu của nó đã được nâng cấp lên AnnualGovernanceV2 vào **ngày 7 tháng 10 năm 2026, tại khối Base 52283807**, như được ghi nhận trong [tài liệu triển khai của kho mã nguồn](README.md#annual-governance). OliveAssembly cung cấp việc đăng ký NFT có checkpoint cho các quy tắc biểu quyết mới. Bản thân việc triển khai không khởi động một chu kỳ hằng năm.
+AnnualGovernance điều phối các chu kỳ quyết định hằng năm cho cả TheOffering và ExtendOliveBranch. Proxy UUPS hiện có do Timelock sở hữu của nó đã được nâng cấp lên AnnualGovernanceV2 vào **ngày 7 tháng 10 năm 2026, tại khối Base 52283807**, như được ghi nhận trong [tài liệu triển khai của kho mã nguồn](../README.md#annual-governance). OliveAssembly cung cấp việc đăng ký NFT có checkpoint cho các quy tắc biểu quyết mới. Bản thân việc triển khai không khởi động một chu kỳ hằng năm.
 
 **Cấu trúc chu kỳ:** Mỗi chu kỳ hằng năm gồm hai giai đoạn nối tiếp:
 
@@ -946,7 +946,7 @@ Và mỗi năm, cộng đồng quyết định sẽ chìa cành ô liu xa đến
 
 ## Phụ lục B — Các hợp đồng đã triển khai (Base Mainnet)
 
-Tài liệu tham khảo này mô tả hành vi staking V9.3.1 và bản nâng cấp AnnualGovernanceV2 được kích hoạt vào ngày 7 tháng 10 năm 2026 (khối Base 52283807). Bản sửa đổi quản trị không thay đổi phiên bản staking. Các giao dịch triển khai, việc kích hoạt proxy và kích hoạt dịch vụ được theo dõi trong [hồ sơ phát hành vận hành](governance-operations/2026-09-24-staking-v931-autoclaim-record.json).
+Tài liệu tham khảo này mô tả hành vi staking V9.3.1 và bản nâng cấp AnnualGovernanceV2 được kích hoạt vào ngày 7 tháng 10 năm 2026 (khối Base 52283807). Bản sửa đổi quản trị không thay đổi phiên bản staking. Các giao dịch triển khai, việc kích hoạt proxy và kích hoạt dịch vụ được theo dõi trong [hồ sơ phát hành vận hành](../governance-operations/2026-09-24-staking-v931-autoclaim-record.json).
 
 Hãy dùng proxy staking để nạp, nhận thưởng, rút và thay đổi sự đồng ý. `MonthlyAutoClaimUpgradeable` được biên dịch vào bản triển khai V9.3.1 và không được triển khai riêng.
 

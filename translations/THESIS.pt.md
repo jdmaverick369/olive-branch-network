@@ -1,8 +1,8 @@
 # Doação sem sacrifício: uma resposta de protocolo ao declínio da participação filantrópica em massa
 
-[English](THESIS.md) · [Tiếng Việt](THESIS.vi.md) · [한국어](THESIS.ko.md) · [日本語](THESIS.ja.md) · [简体中文](THESIS.zh-CN.md) · [हिन्दी](THESIS.hi.md) · [العربية](THESIS.ar.md) · [Русский](THESIS.ru.md) · [Deutsch](THESIS.de.md) · **Português** · [Español](THESIS.es.md) · [Bahasa Indonesia](THESIS.id.md)
+[English](../THESIS.md) · [Tiếng Việt](THESIS.vi.md) · [한국어](THESIS.ko.md) · [日本語](THESIS.ja.md) · [简体中文](THESIS.zh-CN.md) · [हिन्दी](THESIS.hi.md) · [العربية](THESIS.ar.md) · [Русский](THESIS.ru.md) · [Deutsch](THESIS.de.md) · **Português** · [Español](THESIS.es.md) · [Bahasa Indonesia](THESIS.id.md)
 
-> Esta tradução é fornecida apenas por conveniência. A versão em inglês ([THESIS.md](THESIS.md)) é a oficial; em caso de divergência, prevalece a versão em inglês. Esta tradução foi feita com auxílio de IA a partir da revisão `3c740d855` e ainda não foi revisada por um tradutor profissional. Nomes de contratos, nomes de funções e endereços permanecem em inglês.
+> Esta tradução é fornecida apenas por conveniência. A versão em inglês ([THESIS.md](../THESIS.md)) é a oficial; em caso de divergência, prevalece a versão em inglês. Esta tradução foi feita com auxílio de IA a partir da revisão `3c740d855` e ainda não foi revisada por um tradutor profissional. Nomes de contratos, nomes de funções e endereços permanecem em inglês.
 
 **Tese da Olive Branch Network**
 
@@ -609,7 +609,7 @@ A afirmação mais profunda desta tese é a mais simples: a generosidade não de
 ### Fontes do protocolo
 
 - Whitepaper da OBN — [WHITEPAPER.md](WHITEPAPER.pt.md)
-- Contratos centrais — [`obn-project/contracts/`](obn-project/contracts/): `OBNToken.sol`, `StakingPoolsV931.sol`, `MonthlyAutoClaimUpgradeable.sol`, `TheOffering.sol`, `ExtendOliveBranch.sol`, `AnnualGovernanceV2.sol`, `OliveAssembly.sol`, `OBNTimeLock.sol`, `TeamVesting.sol`, `OliveNFT.sol`, `OBNStakingLens.sol`
+- Contratos centrais — [`obn-project/contracts/`](../obn-project/contracts/): `OBNToken.sol`, `StakingPoolsV931.sol`, `MonthlyAutoClaimUpgradeable.sol`, `TheOffering.sol`, `ExtendOliveBranch.sol`, `AnnualGovernanceV2.sol`, `OliveAssembly.sol`, `OBNTimeLock.sol`, `TeamVesting.sol`, `OliveNFT.sol`, `OBNStakingLens.sol`
 - Carta da OBN v0.1 e *The Philosophy of Olive Branch Network* — documentos de governança do protocolo
 
 ---

@@ -1,8 +1,8 @@
 # Whitepaper de Olive Branch Network — Proof-of-Contribution
 
-[English](WHITEPAPER.md) · [Tiếng Việt](WHITEPAPER.vi.md) · [한국어](WHITEPAPER.ko.md) · [日本語](WHITEPAPER.ja.md) · [简体中文](WHITEPAPER.zh-CN.md) · [हिन्दी](WHITEPAPER.hi.md) · [العربية](WHITEPAPER.ar.md) · [Русский](WHITEPAPER.ru.md) · [Deutsch](WHITEPAPER.de.md) · [Português](WHITEPAPER.pt.md) · **Español** · [Bahasa Indonesia](WHITEPAPER.id.md)
+[English](../WHITEPAPER.md) · [Tiếng Việt](WHITEPAPER.vi.md) · [한국어](WHITEPAPER.ko.md) · [日本語](WHITEPAPER.ja.md) · [简体中文](WHITEPAPER.zh-CN.md) · [हिन्दी](WHITEPAPER.hi.md) · [العربية](WHITEPAPER.ar.md) · [Русский](WHITEPAPER.ru.md) · [Deutsch](WHITEPAPER.de.md) · [Português](WHITEPAPER.pt.md) · **Español** · [Bahasa Indonesia](WHITEPAPER.id.md)
 
-> Esta traducción se ofrece solo por comodidad. La versión en inglés ([WHITEPAPER.md](WHITEPAPER.md)) es la oficial; en caso de discrepancia, prevalece la versión en inglés. Esta traducción se realizó con ayuda de IA a partir de la revisión `3c740d855` y aún no ha sido revisada por un traductor profesional. Los nombres de contratos y funciones y las direcciones se mantienen en inglés.
+> Esta traducción se ofrece solo por comodidad. La versión en inglés ([WHITEPAPER.md](../WHITEPAPER.md)) es la oficial; en caso de discrepancia, prevalece la versión en inglés. Esta traducción se realizó con ayuda de IA a partir de la revisión `3c740d855` y aún no ha sido revisada por un traductor profesional. Los nombres de contratos y funciones y las direcciones se mantienen en inglés.
 
 ## Propósito
 
@@ -306,7 +306,7 @@ Al final de cada ciclo, AnnualGovernance ejecuta la votación de la Fase 2 de la
 
 ### 3.6 AnnualGovernanceV2 (implementación activa; proxy UUPS existente)
 
-AnnualGovernance coordina los ciclos anuales de decisión tanto de TheOffering como de ExtendOliveBranch. Su proxy UUPS existente, propiedad de Timelock, se actualizó a AnnualGovernanceV2 el **7 de octubre de 2026, en el bloque 52283807 de Base**, como consta en la [documentación de despliegue del repositorio](README.md#annual-governance). OliveAssembly proporciona el registro de NFT con checkpoints para las nuevas reglas de votación. El despliegue por sí solo no inicia un ciclo anual.
+AnnualGovernance coordina los ciclos anuales de decisión tanto de TheOffering como de ExtendOliveBranch. Su proxy UUPS existente, propiedad de Timelock, se actualizó a AnnualGovernanceV2 el **7 de octubre de 2026, en el bloque 52283807 de Base**, como consta en la [documentación de despliegue del repositorio](../README.md#annual-governance). OliveAssembly proporciona el registro de NFT con checkpoints para las nuevas reglas de votación. El despliegue por sí solo no inicia un ciclo anual.
 
 **Estructura del ciclo:** Cada ciclo anual tiene dos fases secuenciales:
 
@@ -946,7 +946,7 @@ Y cada año, la comunidad decide hasta dónde extender la rama de olivo.
 
 ## Apéndice B — Contratos desplegados (Base Mainnet)
 
-Esta referencia describe el comportamiento de staking de V9.3.1 y la actualización AnnualGovernanceV2 activada el 7 de octubre de 2026 (bloque 52283807 de Base). La revisión de gobernanza no cambia la versión de staking. Las transacciones de despliegue, la activación del proxy y la activación del servicio se registran en el [registro operativo de lanzamiento](governance-operations/2026-09-24-staking-v931-autoclaim-record.json).
+Esta referencia describe el comportamiento de staking de V9.3.1 y la actualización AnnualGovernanceV2 activada el 7 de octubre de 2026 (bloque 52283807 de Base). La revisión de gobernanza no cambia la versión de staking. Las transacciones de despliegue, la activación del proxy y la activación del servicio se registran en el [registro operativo de lanzamiento](../governance-operations/2026-09-24-staking-v931-autoclaim-record.json).
 
 Usa el proxy de staking para depósitos, reclamos, retiros y cambios de consentimiento. `MonthlyAutoClaimUpgradeable` está compilado en la implementación V9.3.1 y no se despliega por separado.
 

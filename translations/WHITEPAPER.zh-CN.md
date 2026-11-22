@@ -1,8 +1,8 @@
 # Olive Branch Network 白皮书 — Proof-of-Contribution
 
-[English](WHITEPAPER.md) · [Tiếng Việt](WHITEPAPER.vi.md) · [한국어](WHITEPAPER.ko.md) · [日本語](WHITEPAPER.ja.md) · **简体中文** · [हिन्दी](WHITEPAPER.hi.md) · [العربية](WHITEPAPER.ar.md) · [Русский](WHITEPAPER.ru.md) · [Deutsch](WHITEPAPER.de.md) · [Português](WHITEPAPER.pt.md) · [Español](WHITEPAPER.es.md) · [Bahasa Indonesia](WHITEPAPER.id.md)
+[English](../WHITEPAPER.md) · [Tiếng Việt](WHITEPAPER.vi.md) · [한국어](WHITEPAPER.ko.md) · [日本語](WHITEPAPER.ja.md) · **简体中文** · [हिन्दी](WHITEPAPER.hi.md) · [العربية](WHITEPAPER.ar.md) · [Русский](WHITEPAPER.ru.md) · [Deutsch](WHITEPAPER.de.md) · [Português](WHITEPAPER.pt.md) · [Español](WHITEPAPER.es.md) · [Bahasa Indonesia](WHITEPAPER.id.md)
 
-> 本译文仅为方便阅读而提供。英文版([WHITEPAPER.md](WHITEPAPER.md))为权威版本;如有差异,以英文版为准。本译文基于修订版本 `3c740d855`,在 AI 协助下完成,尚未经过专业译者审校。合约名称、函数名称和地址均保留英文原文。
+> 本译文仅为方便阅读而提供。英文版([WHITEPAPER.md](../WHITEPAPER.md))为权威版本;如有差异,以英文版为准。本译文基于修订版本 `3c740d855`,在 AI 协助下完成,尚未经过专业译者审校。合约名称、函数名称和地址均保留英文原文。
 
 ## 宗旨
 
@@ -306,7 +306,7 @@ ExtendOliveBranch 是协议的年度公益分配金库。质押合约将 1% 的 
 
 ### 3.6 AnnualGovernanceV2(上线实现;现有 UUPS 代理)
 
-AnnualGovernance 协调 TheOffering 和 ExtendOliveBranch 的年度决策周期。正如[代码库部署文档](README.md#annual-governance)所记录,其现有的由 Timelock 拥有的 UUPS 代理已于 **2026 年 10 月 7 日,在 Base 区块 52283807** 升级为 AnnualGovernanceV2。OliveAssembly 为新投票规则提供带检查点的 NFT 注册。部署本身不会启动年度周期。
+AnnualGovernance 协调 TheOffering 和 ExtendOliveBranch 的年度决策周期。正如[代码库部署文档](../README.md#annual-governance)所记录,其现有的由 Timelock 拥有的 UUPS 代理已于 **2026 年 10 月 7 日,在 Base 区块 52283807** 升级为 AnnualGovernanceV2。OliveAssembly 为新投票规则提供带检查点的 NFT 注册。部署本身不会启动年度周期。
 
 **周期结构:** 每个年度周期依次运行两个阶段:
 
@@ -946,7 +946,7 @@ OBN 不是围绕榨取而构建的。它是围绕一致性而构建的。
 
 ## 附录 B — 已部署合约(Base Mainnet)
 
-本参考资料描述 V9.3.1 质押行为以及于 2026 年 10 月 7 日(Base 区块 52283807)激活的 AnnualGovernanceV2 升级。治理修订不改变质押版本。部署交易、代理激活和服务激活在[运营发布记录](governance-operations/2026-09-24-staking-v931-autoclaim-record.json)中追踪。
+本参考资料描述 V9.3.1 质押行为以及于 2026 年 10 月 7 日(Base 区块 52283807)激活的 AnnualGovernanceV2 升级。治理修订不改变质押版本。部署交易、代理激活和服务激活在[运营发布记录](../governance-operations/2026-09-24-staking-v931-autoclaim-record.json)中追踪。
 
 存入、领取、提取和同意变更请使用质押代理。`MonthlyAutoClaimUpgradeable` 已编译到 V9.3.1 实现中,不单独部署。
 

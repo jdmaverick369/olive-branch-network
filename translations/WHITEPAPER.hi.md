@@ -1,8 +1,8 @@
 # Olive Branch Network व्हाइटपेपर — Proof-of-Contribution
 
-[English](WHITEPAPER.md) · [Tiếng Việt](WHITEPAPER.vi.md) · [한국어](WHITEPAPER.ko.md) · [日本語](WHITEPAPER.ja.md) · [简体中文](WHITEPAPER.zh-CN.md) · **हिन्दी** · [العربية](WHITEPAPER.ar.md) · [Русский](WHITEPAPER.ru.md) · [Deutsch](WHITEPAPER.de.md) · [Português](WHITEPAPER.pt.md) · [Español](WHITEPAPER.es.md) · [Bahasa Indonesia](WHITEPAPER.id.md)
+[English](../WHITEPAPER.md) · [Tiếng Việt](WHITEPAPER.vi.md) · [한국어](WHITEPAPER.ko.md) · [日本語](WHITEPAPER.ja.md) · [简体中文](WHITEPAPER.zh-CN.md) · **हिन्दी** · [العربية](WHITEPAPER.ar.md) · [Русский](WHITEPAPER.ru.md) · [Deutsch](WHITEPAPER.de.md) · [Português](WHITEPAPER.pt.md) · [Español](WHITEPAPER.es.md) · [Bahasa Indonesia](WHITEPAPER.id.md)
 
-> यह अनुवाद केवल सुविधा के लिए उपलब्ध कराया गया है। अंग्रेज़ी संस्करण ([WHITEPAPER.md](WHITEPAPER.md)) ही आधिकारिक है; किसी भी अंतर की स्थिति में अंग्रेज़ी संस्करण मान्य होगा। यह अनुवाद संशोधन `3c740d855` से AI की सहायता से तैयार किया गया है और किसी पेशेवर अनुवादक ने अभी इसकी समीक्षा नहीं की है। कॉन्ट्रैक्ट के नाम, फ़ंक्शन के नाम और पते अंग्रेज़ी में ही रखे गए हैं।
+> यह अनुवाद केवल सुविधा के लिए उपलब्ध कराया गया है। अंग्रेज़ी संस्करण ([WHITEPAPER.md](../WHITEPAPER.md)) ही आधिकारिक है; किसी भी अंतर की स्थिति में अंग्रेज़ी संस्करण मान्य होगा। यह अनुवाद संशोधन `3c740d855` से AI की सहायता से तैयार किया गया है और किसी पेशेवर अनुवादक ने अभी इसकी समीक्षा नहीं की है। कॉन्ट्रैक्ट के नाम, फ़ंक्शन के नाम और पते अंग्रेज़ी में ही रखे गए हैं।
 
 ## उद्देश्य
 
@@ -306,7 +306,7 @@ ExtendOliveBranch प्रोटोकॉल का वार्षिक ग�
 
 ### 3.6 AnnualGovernanceV2 (सक्रिय कार्यान्वयन; मौजूदा UUPS प्रॉक्सी)
 
-AnnualGovernance TheOffering और ExtendOliveBranch दोनों के वार्षिक निर्णय चक्रों का समन्वय करता है। इसका मौजूदा Timelock-स्वामित्व वाला UUPS प्रॉक्सी **7 अक्टूबर 2026 को Base ब्लॉक 52283807 पर** AnnualGovernanceV2 में अपग्रेड किया गया, जैसा कि [रिपॉज़िटरी डिप्लॉयमेंट दस्तावेज़](README.md#annual-governance) में दर्ज है। OliveAssembly नए वोटिंग नियमों के लिए चेकपॉइंट वाला NFT पंजीकरण प्रदान करता है। डिप्लॉयमेंट स्वयं कोई वार्षिक चक्र शुरू नहीं करता।
+AnnualGovernance TheOffering और ExtendOliveBranch दोनों के वार्षिक निर्णय चक्रों का समन्वय करता है। इसका मौजूदा Timelock-स्वामित्व वाला UUPS प्रॉक्सी **7 अक्टूबर 2026 को Base ब्लॉक 52283807 पर** AnnualGovernanceV2 में अपग्रेड किया गया, जैसा कि [रिपॉज़िटरी डिप्लॉयमेंट दस्तावेज़](../README.md#annual-governance) में दर्ज है। OliveAssembly नए वोटिंग नियमों के लिए चेकपॉइंट वाला NFT पंजीकरण प्रदान करता है। डिप्लॉयमेंट स्वयं कोई वार्षिक चक्र शुरू नहीं करता।
 
 **चक्र संरचना:** प्रत्येक वार्षिक चक्र में दो क्रमिक चरण चलते हैं:
 
@@ -946,7 +946,7 @@ OBN दोहन पर नहीं बना है। यह संरेख�
 
 ## परिशिष्ट B — डिप्लॉय किए गए कॉन्ट्रैक्ट (Base Mainnet)
 
-यह संदर्भ V9.3.1 स्टेकिंग व्यवहार और 7 अक्टूबर 2026 (Base ब्लॉक 52283807) को सक्रिय AnnualGovernanceV2 अपग्रेड का वर्णन करता है। गवर्नेंस संशोधन स्टेकिंग संस्करण नहीं बदलता। डिप्लॉयमेंट लेन-देन, प्रॉक्सी सक्रियण और सेवा सक्रियण [परिचालन रिलीज़ रिकॉर्ड](governance-operations/2026-09-24-staking-v931-autoclaim-record.json) में ट्रैक किए जाते हैं।
+यह संदर्भ V9.3.1 स्टेकिंग व्यवहार और 7 अक्टूबर 2026 (Base ब्लॉक 52283807) को सक्रिय AnnualGovernanceV2 अपग्रेड का वर्णन करता है। गवर्नेंस संशोधन स्टेकिंग संस्करण नहीं बदलता। डिप्लॉयमेंट लेन-देन, प्रॉक्सी सक्रियण और सेवा सक्रियण [परिचालन रिलीज़ रिकॉर्ड](../governance-operations/2026-09-24-staking-v931-autoclaim-record.json) में ट्रैक किए जाते हैं।
 
 जमा, क्लेम, निकासी और सहमति बदलाव के लिए स्टेकिंग प्रॉक्सी का उपयोग करें। `MonthlyAutoClaimUpgradeable` V9.3.1 कार्यान्वयन में कंपाइल है और अलग से डिप्लॉय नहीं है।
 

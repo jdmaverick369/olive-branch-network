@@ -1,8 +1,8 @@
 # Дарение без жертвы: протокольный ответ на упадок массового благотворительного участия
 
-[English](THESIS.md) · [Tiếng Việt](THESIS.vi.md) · [한국어](THESIS.ko.md) · [日本語](THESIS.ja.md) · [简体中文](THESIS.zh-CN.md) · [हिन्दी](THESIS.hi.md) · [العربية](THESIS.ar.md) · **Русский** · [Deutsch](THESIS.de.md) · [Português](THESIS.pt.md) · [Español](THESIS.es.md) · [Bahasa Indonesia](THESIS.id.md)
+[English](../THESIS.md) · [Tiếng Việt](THESIS.vi.md) · [한국어](THESIS.ko.md) · [日本語](THESIS.ja.md) · [简体中文](THESIS.zh-CN.md) · [हिन्दी](THESIS.hi.md) · [العربية](THESIS.ar.md) · **Русский** · [Deutsch](THESIS.de.md) · [Português](THESIS.pt.md) · [Español](THESIS.es.md) · [Bahasa Indonesia](THESIS.id.md)
 
-> Этот перевод предоставлен для удобства. Официальной является английская версия ([THESIS.md](THESIS.md)); при любых расхождениях преимущество имеет английская версия. Перевод выполнен с помощью ИИ на основе редакции `3c740d855` и ещё не проверен профессиональным переводчиком. Названия контрактов и функций, а также адреса приведены на английском языке.
+> Этот перевод предоставлен для удобства. Официальной является английская версия ([THESIS.md](../THESIS.md)); при любых расхождениях преимущество имеет английская версия. Перевод выполнен с помощью ИИ на основе редакции `3c740d855` и ещё не проверен профессиональным переводчиком. Названия контрактов и функций, а также адреса приведены на английском языке.
 
 **Тезис Olive Branch Network**
 
@@ -609,7 +609,7 @@ Olive Branch Network отвечает механизмом, а не призыв
 ### Источники протокола
 
 - Whitepaper OBN — [WHITEPAPER.md](WHITEPAPER.ru.md)
-- Основные контракты — [`obn-project/contracts/`](obn-project/contracts/): `OBNToken.sol`, `StakingPoolsV931.sol`, `MonthlyAutoClaimUpgradeable.sol`, `TheOffering.sol`, `ExtendOliveBranch.sol`, `AnnualGovernanceV2.sol`, `OliveAssembly.sol`, `OBNTimeLock.sol`, `TeamVesting.sol`, `OliveNFT.sol`, `OBNStakingLens.sol`
+- Основные контракты — [`obn-project/contracts/`](../obn-project/contracts/): `OBNToken.sol`, `StakingPoolsV931.sol`, `MonthlyAutoClaimUpgradeable.sol`, `TheOffering.sol`, `ExtendOliveBranch.sol`, `AnnualGovernanceV2.sol`, `OliveAssembly.sol`, `OBNTimeLock.sol`, `TeamVesting.sol`, `OliveNFT.sol`, `OBNStakingLens.sol`
 - Хартия OBN v0.1 и *The Philosophy of Olive Branch Network* — документы управления протоколом
 
 ---

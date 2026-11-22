@@ -1,8 +1,8 @@
 # बिना त्याग का दान: जन-स्तरीय परोपकारी भागीदारी के पतन का प्रोटोकॉल-आधारित उत्तर
 
-[English](THESIS.md) · [Tiếng Việt](THESIS.vi.md) · [한국어](THESIS.ko.md) · [日本語](THESIS.ja.md) · [简体中文](THESIS.zh-CN.md) · **हिन्दी** · [العربية](THESIS.ar.md) · [Русский](THESIS.ru.md) · [Deutsch](THESIS.de.md) · [Português](THESIS.pt.md) · [Español](THESIS.es.md) · [Bahasa Indonesia](THESIS.id.md)
+[English](../THESIS.md) · [Tiếng Việt](THESIS.vi.md) · [한국어](THESIS.ko.md) · [日本語](THESIS.ja.md) · [简体中文](THESIS.zh-CN.md) · **हिन्दी** · [العربية](THESIS.ar.md) · [Русский](THESIS.ru.md) · [Deutsch](THESIS.de.md) · [Português](THESIS.pt.md) · [Español](THESIS.es.md) · [Bahasa Indonesia](THESIS.id.md)
 
-> यह अनुवाद केवल सुविधा के लिए उपलब्ध कराया गया है। अंग्रेज़ी संस्करण ([THESIS.md](THESIS.md)) ही आधिकारिक है; किसी भी अंतर की स्थिति में अंग्रेज़ी संस्करण मान्य होगा। यह अनुवाद संशोधन `3c740d855` से AI की सहायता से तैयार किया गया है और किसी पेशेवर अनुवादक ने अभी इसकी समीक्षा नहीं की है। कॉन्ट्रैक्ट के नाम, फ़ंक्शन के नाम और पते अंग्रेज़ी में ही रखे गए हैं।
+> यह अनुवाद केवल सुविधा के लिए उपलब्ध कराया गया है। अंग्रेज़ी संस्करण ([THESIS.md](../THESIS.md)) ही आधिकारिक है; किसी भी अंतर की स्थिति में अंग्रेज़ी संस्करण मान्य होगा। यह अनुवाद संशोधन `3c740d855` से AI की सहायता से तैयार किया गया है और किसी पेशेवर अनुवादक ने अभी इसकी समीक्षा नहीं की है। कॉन्ट्रैक्ट के नाम, फ़ंक्शन के नाम और पते अंग्रेज़ी में ही रखे गए हैं।
 
 **Olive Branch Network थीसिस**
 
@@ -609,7 +609,7 @@ Olive Branch Network उपदेश नहीं, तंत्र से उत
 ### प्रोटोकॉल स्रोत
 
 - OBN व्हाइटपेपर — [WHITEPAPER.md](WHITEPAPER.hi.md)
-- मूल कॉन्ट्रैक्ट — [`obn-project/contracts/`](obn-project/contracts/): `OBNToken.sol`, `StakingPoolsV931.sol`, `MonthlyAutoClaimUpgradeable.sol`, `TheOffering.sol`, `ExtendOliveBranch.sol`, `AnnualGovernanceV2.sol`, `OliveAssembly.sol`, `OBNTimeLock.sol`, `TeamVesting.sol`, `OliveNFT.sol`, `OBNStakingLens.sol`
+- मूल कॉन्ट्रैक्ट — [`obn-project/contracts/`](../obn-project/contracts/): `OBNToken.sol`, `StakingPoolsV931.sol`, `MonthlyAutoClaimUpgradeable.sol`, `TheOffering.sol`, `ExtendOliveBranch.sol`, `AnnualGovernanceV2.sol`, `OliveAssembly.sol`, `OBNTimeLock.sol`, `TeamVesting.sol`, `OliveNFT.sol`, `OBNStakingLens.sol`
 - OBN चार्टर v0.1 और *The Philosophy of Olive Branch Network* — प्रोटोकॉल गवर्नेंस दस्तावेज़
 
 ---
