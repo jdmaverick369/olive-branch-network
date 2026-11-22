@@ -1,3 +1,5 @@
+> **This repository has moved.** Olive Branch Network is now maintained at [Olive-Branch-Network/protocol](https://github.com/Olive-Branch-Network/protocol). This copy is archived and no longer updated.
+
 # Olive Branch Network (OBN)
 
 The Olive Branch network is a staking protocol on Base that turns onchain participation into continuous nonprofit funding. Users stake OBN into nonprofit-specific pools, earn yield, and automatically direct a portion of every reward claim to the nonprofit pool they chose. No separate donation. No manual transfer. No offchain accounting.
